@@ -3,13 +3,13 @@ import sys
 from abc import ABC, abstractmethod
 from collections import UserList, defaultdict
 from collections.abc import Hashable, Sequence
-from datetime import datetime
 from enum import Enum
 from typing import Any, Generic, Literal, TypeAlias, cast
 
 from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
 
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms import (
     BaseModelObject,
     Constraint,
@@ -18,16 +18,11 @@ from cognite.neat._data_model.models.dms import (
     ContainerPropertyDefinition,
     ContainerReference,
     ContainerRequest,
-    DataModelReference,
     DataModelRequest,
     DataModelResource,
     Index,
-    NodeReference,
-    SpaceReference,
-    SpaceRequest,
     T_DataModelResource,
     T_ResourceId,
-    ViewReference,
     ViewRequest,
     ViewRequestProperty,
 )
@@ -85,6 +80,12 @@ class PrimitiveField(FieldChange, ABC):
     @property
     def severity(self) -> SeverityType:
         return self.item_severity
+
+    @property
+    @abstractmethod
+    def description(self) -> str:
+        """Human-readable description of the change."""
+        ...
 
 
 class AddedField(PrimitiveField):
@@ -231,15 +232,6 @@ class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, Contain
             ):
                 return True
         return False
-
-
-class SchemaSnapshot(BaseDeployObject):
-    timestamp: datetime
-    data_model: dict[DataModelReference, DataModelRequest]
-    views: dict[ViewReference, ViewRequest]
-    containers: dict[ContainerReference, ContainerRequest]
-    spaces: dict[SpaceReference, SpaceRequest]
-    node_types: dict[NodeReference, NodeReference]
 
 
 class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):

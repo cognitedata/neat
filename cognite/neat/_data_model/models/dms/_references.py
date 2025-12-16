@@ -114,6 +114,9 @@ class ContainerDirectReference(ReferenceObject):
         pattern=CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     )
 
+    def __str__(self) -> str:
+        return f"{self.source!s}.{self.identifier}"
+
 
 class ViewDirectReference(ReferenceObject):
     source: ViewReference = Field(
@@ -125,6 +128,9 @@ class ViewDirectReference(ReferenceObject):
         max_length=255,
         pattern=CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     )
+
+    def __str__(self) -> str:
+        return f"{self.source!s}.{self.identifier}"
 
 
 class ContainerIndexReference(ContainerReference):

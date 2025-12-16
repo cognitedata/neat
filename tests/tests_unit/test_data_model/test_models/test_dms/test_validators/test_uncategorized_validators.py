@@ -1,156 +1,43 @@
-from pathlib import Path
 from typing import cast
-from unittest.mock import MagicMock
 
-import pytest
-
-from cognite.neat._client.client import NeatClient
-from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.validation.dms import (
     ConnectionValueTypeUndefined,
     ConnectionValueTypeUnexisting,
-    DataModelMissingDescription,
-    DataModelMissingName,
     DmsDataModelValidation,
     ExternalContainerDoesNotExist,
     ExternalContainerPropertyDoesNotExist,
     ImplementedViewNotExisting,
     ReverseConnectionSourceViewMissing,
-    ViewMissingDescription,
-    ViewMissingName,
-    ViewPropertyMissingDescription,
-    ViewPropertyMissingName,
     ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
 from cognite.neat._data_model.validation.dms._containers import (
     RequiredContainerDoesNotExist,
-    UnnecessaryRequiresConstraint,
 )
 from cognite.neat._data_model.validation.dms._limits import ViewPropertyCountIsOutOfLimits
 from cognite.neat._issues import IssueList
-
-
-@pytest.fixture(scope="session")
-def valid_dms_yaml_with_consistency_errors() -> str:
-    return """Metadata:
-- Key: space
-  Value: my_space
-- Key: externalId
-  Value: TestModel
-- Key: version
-  Value: v1
-Properties:
-- View: MyDescribable
-  View Property: name
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: cdf_cdm:CogniteDescribable
-  Container Property: name
-  Index: btree:name(cursorable=True)
-  Connection: null
-- View: MyDescribable
-  View Property: altName
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: nospace:UnexistingContainer
-  Container Property: altName
-  Connection: null
-- View: MyDescribable
-  View Property: jargon
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: nospace:ExistingContainer
-  Container Property: unexistingProperty
-  Connection: null
-- View: MyDescribable
-  View Property: directLocal
-  Connection: direct
-  Value Type: my_space:UnexistingDirectConnectionLocal(version=v1)
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: my_space:DirectConnectionContainer
-  Container Property: directLocal
-- View: MyDescribable
-  View Property: directToNowhere
-  Connection: direct
-  Value Type: '#N/A'
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: my_space:DirectConnectionContainer
-  Container Property: directToNowhere
-- View: MyDescribable
-  View Property: directRemote
-  Connection: direct
-  Value Type: my_space:ExistingDirectConnectionRemote(version=v1)
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: my_space:DirectConnectionRemoteContainer
-  Container Property: directRemote
-- View: MyDescribable
-  View Property: singleEdgeProperty
-  Connection: edge(type=MyDescribable.singleEdgeProperty)
-  Value Type: not_my_space:ExistingEdgeConnection(version=v1)
-  Min Count: 0
-  Max Count: 1
-- View: MyDescribable
-  View Property: singleEdgePropertyToMyView
-  Connection: edge(type=MyDescribable.singleEdgeProperty)
-  Value Type: my_space:UnexistingEdgeConnection(version=v1)
-  Min Count: 0
-  Max Count: 1
-- View: MyDescribable
-  View Property: reverseDirectPropertyRemote
-  Connection: reverse(property=directPropertyRemote)
-  Value Type: my_space:SourceForReverseConnectionExistRemote(version=v1)
-  Min Count: 0
-  Max Count: 1
-- View: MyDescribable
-  View Property: reverseDirectPropertyMissingOtherEnd
-  Connection: reverse(property=directPropertyLocal)
-  Value Type: my_space:UnexistingSourceForReverseConnection(version=v1)
-  Min Count: 0
-  Max Count: 1
-Views:
-- View: MyDescribable
-  Implements: DomainDescribable
-- View: another_space:MissingProperties(version=v2)
-- View: my_space:MissingProperties(version=v2)
-Containers:
-- Container: cdf_cdm:CogniteDescribable
-  Used For: node
-  Constraint: requires:my_constraint(require=idonotexist:AndWillNeverExist)
-- Container: my_space:DirectConnectionContainer
-  Used For: node
-  Constraint: requires:my_constraint(require=my_space:SomethingThatDoesNotExist)
-"""
+from tests.data import SNAPSHOT_CATALOG
 
 
 class TestValidators:
-    def test_additive_modus_operandi(
-        self, validation_test_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: str
-    ) -> None:
-        read_yaml = MagicMock(spec=Path)
-        read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
-        importer = DMSTableImporter.from_yaml(read_yaml)
-        data_model = importer.to_data_model()
+    def test_additive_modus_operandi(self) -> None:
+        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+            local_scenario_name="uncategorized_validators",
+            cdf_scenario_name="for_validators",
+            modus_operandi="additive",
+            include_cdm=False,
+            format="snapshots",
+        )
+        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
 
-        on_success = DmsDataModelValidation(validation_test_cdf_client, modus_operandi="additive")
+        on_success = DmsDataModelValidation(cdf_snapshot=cdf_snapshot, limits=SchemaLimits(), modus_operandi="additive")
 
         on_success.run(data_model)
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 45
+        assert len(on_success.issues) == 20
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -161,13 +48,6 @@ class TestValidators:
             ExternalContainerDoesNotExist.code,
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
-            UnnecessaryRequiresConstraint.code,
-            DataModelMissingName.code,
-            DataModelMissingDescription.code,
-            ViewMissingDescription.code,
-            ViewMissingName.code,
-            ViewPropertyMissingDescription.code,
-            ViewPropertyMissingName.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 3
@@ -188,13 +68,15 @@ class TestValidators:
 
         assert found_connections == expected_connections
 
-        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 2
+        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 4
         version_space_inconsistency_messages = [
             issue.message for issue in by_code[ViewSpaceVersionInconsistentWithDataModel.code]
         ]
         expected_inconsistent_views = {
             "another_space:MissingProperties(version=v2)",
             "my_space:MissingProperties(version=v2)",
+            "prodigy:OutOfSpace(version=1992)",
+            "not_my_space:ExistingEdgeConnection(version=v1)",
         }
 
         # Check that both expected views are mentioned in the messages
@@ -231,10 +113,16 @@ class TestValidators:
         assert found_missing_containers == expected_missing_containers
         assert found_missing_container_properties == expected_missing_container_properties
 
-        assert len(by_code[ViewPropertyCountIsOutOfLimits.code]) == 2
+        assert len(by_code[ViewPropertyCountIsOutOfLimits.code]) == 5
 
         missing_view_properties_messages = [issue.message for issue in by_code[ViewPropertyCountIsOutOfLimits.code]]
-        expected_views = {"another_space:MissingProperties(version=v2)", "my_space:MissingProperties(version=v2)"}
+        expected_views = {
+            "another_space:MissingProperties(version=v2)",
+            "my_space:MissingProperties(version=v2)",
+            "my_space:DomainDescribable(version=v1)",
+            "not_my_space:ExistingEdgeConnection(version=v1)",
+            "my_space:ExistingDirectConnectionRemote(version=v1)",
+        }
 
         found_views = set()
         for message in missing_view_properties_messages:
@@ -243,13 +131,6 @@ class TestValidators:
                     found_views.add(expected_view)
 
         assert found_views == expected_views
-
-        assert len(by_code[DataModelMissingName.code]) == 1
-        assert len(by_code[DataModelMissingDescription.code]) == 1
-        assert len(by_code[ViewMissingDescription.code]) == 3
-        assert len(by_code[ViewMissingName.code]) == 3
-        assert len(by_code[ViewPropertyMissingDescription.code]) == 10
-        assert len(by_code[ViewPropertyMissingName.code]) == 10
 
         assert len(by_code[ExternalContainerDoesNotExist.code]) == 1
         assert "nospace:UnexistingContainer" in by_code[ExternalContainerDoesNotExist.code][0].message
@@ -267,39 +148,34 @@ class TestValidators:
                     found_missing_items.add(expected_item)
         assert found_missing_items == expected_missing_items
 
-    def test_rebuild_modus_operandi(
-        self, validation_test_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: str
-    ) -> None:
-        read_yaml = MagicMock(spec=Path)
-        read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
-        importer = DMSTableImporter.from_yaml(read_yaml)
-        data_model = importer.to_data_model()
+    def test_rebuild_modus_operandi(self) -> None:
+        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+            local_scenario_name="uncategorized_validators",
+            cdf_scenario_name="for_validators",
+            modus_operandi="rebuild",
+            include_cdm=False,
+            format="snapshots",
+        )
+        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
 
-        on_success = DmsDataModelValidation(validation_test_cdf_client, modus_operandi="rebuild")
+        on_success = DmsDataModelValidation(cdf_snapshot=cdf_snapshot, limits=SchemaLimits(), modus_operandi="rebuild")
 
         on_success.run(data_model)
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 50
+        assert len(on_success.issues) == 20
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
             ViewSpaceVersionInconsistentWithDataModel.code,
-            ReverseConnectionSourceViewMissing.code,
             ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
-            ImplementedViewNotExisting.code,
+            ReverseConnectionSourceViewMissing.code,
             ExternalContainerDoesNotExist.code,
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
-            UnnecessaryRequiresConstraint.code,
-            DataModelMissingName.code,
-            DataModelMissingDescription.code,
-            ViewMissingDescription.code,
-            ViewMissingName.code,
-            ViewPropertyMissingDescription.code,
-            ViewPropertyMissingName.code,
+            ImplementedViewNotExisting.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 5
@@ -387,11 +263,3 @@ class TestValidators:
                 if expected_item in issue.message:
                     found_missing_items.add(expected_item)
         assert found_missing_items == expected_missing_items
-
-        # AI Readiness
-        assert len(by_code[DataModelMissingName.code]) == 1
-        assert len(by_code[DataModelMissingDescription.code]) == 1
-        assert len(by_code[ViewMissingDescription.code]) == 3
-        assert len(by_code[ViewMissingName.code]) == 3
-        assert len(by_code[ViewPropertyMissingDescription.code]) == 10
-        assert len(by_code[ViewPropertyMissingName.code]) == 10

@@ -28,22 +28,23 @@ class ViewSpaceVersionInconsistentWithDataModel(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.local_resources.views_by_reference:
+        if not self.validation_resources.merged_data_model.views:
+            return recommendations
+
+        space = self.validation_resources.merged_data_model.space
+        version = self.validation_resources.merged_data_model.version
+
+        for view_ref in self.validation_resources.merged_data_model.views:
             issue_description = ""
 
             if view_ref.space not in COGNITE_SPACES:
-                # notify about inconsisten space
-                if view_ref.space != self.local_resources.data_model_reference.space:
-                    issue_description = (
-                        f"space (view: {view_ref.space}, data model: {self.local_resources.data_model_reference.space})"
-                    )
+                # notify about inconsistent space
+                if view_ref.space != space:
+                    issue_description = f"space (view: {view_ref.space}, data model: {space})"
 
                 # or version if spaces are same
-                elif view_ref.version != self.local_resources.data_model_reference.version:
-                    issue_description = (
-                        f"version (view: {view_ref.version}, "
-                        f"data model: {self.local_resources.data_model_reference.version})"
-                    )
+                elif view_ref.version != version:
+                    issue_description = f"version (view: {view_ref.version}, data model: {version})"
 
             if issue_description:
                 recommendations.append(

@@ -121,7 +121,7 @@ class AlphaFlagConfig(ConfigModel):
 
 
 class NeatConfig(ConfigModel):
-    """Configuration for a custom profile."""
+    """NeatSession configuration."""
 
     profile: str
     validation: ValidationConfig
@@ -139,7 +139,19 @@ class NeatConfig(ConfigModel):
 
     @classmethod
     def create_predefined(cls, profile: PredefinedProfile = "legacy-additive") -> "NeatConfig":
-        """Create NeatConfig from internal profiles."""
+        """Create NeatConfig from internal profiles.
+
+        Args:
+            profile: Profile name to use. Defaults to "legacy-additive".
+
+        !!! note "Predefined Profiles"
+            The following predefined profiles are available:
+
+            - `legacy-additive`: Additive modeling with legacy validation rules.
+            - `legacy-rebuild`: Rebuild modeling with legacy validation rules.
+            - `deep-additive`: Additive modeling with deep validation rules.
+            - `deep-rebuild`: Rebuild modeling with deep validation rules.
+        """
         available_profiles = internal_profiles()
         if profile not in available_profiles:
             raise UserInputError(

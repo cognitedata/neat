@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.validation.dms._containers import MissingRequiresConstraint
 from cognite.neat._data_model.validation.dms._limits import (
@@ -16,6 +15,8 @@ from cognite.neat._data_model.validation.dms._limits import (
 )
 from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
 from cognite.neat._utils.text import NEWLINE as NL
+from tests.data import SNAPSHOT_CATALOG
+from tests.data.snapshots.catalog import CDF_SNAPSHOTS_DIR
 
 
 def generate_implements_list(interface_count: int) -> str:
@@ -116,7 +117,7 @@ def dms_yaml_hitting_all_the_data_model_limits() -> tuple[str, dict[str, set]]:
 - Key: space
   Value: my_space
 - Key: externalId
-  Value: TestModel
+  Value: TestLimitsDataModel
 - Key: version
   Value: v1
 - Key: name
@@ -272,9 +273,7 @@ Enum:
     return yaml, expected_problems
 
 
-def test_validation(
-    validation_test_cdf_client: NeatClient, dms_yaml_hitting_all_the_data_model_limits: tuple[str, dict[str, set]]
-) -> None:
+def test_validation(dms_yaml_hitting_all_the_data_model_limits: tuple[str, dict[str, set]]) -> None:
     yaml_content, expected_problems = dms_yaml_hitting_all_the_data_model_limits
 
     read_yaml = MagicMock(spec=Path)
@@ -283,7 +282,10 @@ def test_validation(
     data_model = importer.to_data_model()
 
     # Run on success validators
-    on_success = DmsDataModelValidation(validation_test_cdf_client)
+    on_success = DmsDataModelValidation(
+        cdf_snapshot=SNAPSHOT_CATALOG.load_schema_snapshot(CDF_SNAPSHOTS_DIR / "for_validators"),
+        limits=SchemaLimits(),
+    )
     on_success.run(data_model)
 
     by_code = on_success.issues.by_code()
