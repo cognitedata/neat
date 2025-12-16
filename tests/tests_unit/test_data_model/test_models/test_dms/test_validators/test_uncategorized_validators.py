@@ -12,9 +12,7 @@ from cognite.neat._data_model.validation.dms import (
     ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
-from cognite.neat._data_model.validation.dms._containers import (
-    RequiredContainerDoesNotExist,
-)
+from cognite.neat._data_model.validation.dms._containers import RequiredContainerDoesNotExist
 from cognite.neat._data_model.validation.dms._limits import ViewPropertyCountIsOutOfLimits
 from cognite.neat._issues import IssueList
 from tests.data import SNAPSHOT_CATALOG
@@ -48,7 +46,6 @@ class TestValidators:
             ExternalContainerDoesNotExist.code,
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
-            # UnnecessaryRequiresConstraint no longer fires when required container doesn't exist
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 3
@@ -177,7 +174,6 @@ class TestValidators:
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
             ImplementedViewNotExisting.code,
-            # UnnecessaryRequiresConstraint no longer fires when required container doesn't exist
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 5
