@@ -1,6 +1,6 @@
 # NeatConfig
 
-`NeatConfig` allows you to configure your NEAT session with specific data modeling modes and validation rules. It provides pre-defined governance profiles that combine validation settings with data modeling behavior, or you can define custom profiles via a TOML configuration file.
+`NeatConfig` allows you to configure your NEAT session with specific [data modeling modes](../data_modeling/modes.md) and [validation rules](../validation/index.md). It provides pre-defined governance profiles that combine validation settings with data modeling behavior, or you can define custom profiles via a TOML configuration file. Make sure to get yourself familiar with the available [data modeling modes](../data_modeling/modes.md) and [validation rules](../validation/index.md) before configuring your own NEAT session and custom configurations.
 
 
 
