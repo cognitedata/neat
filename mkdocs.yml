@@ -22,16 +22,17 @@ nav:
       - Limits (NEAT-DMS-LIMITS): validation/index.html#limits-neat-dms-limits
       - Views (NEAT-DMS-VIEW): validation/index.html#views-neat-dms-view
   - Data Modeling:
-      - Principles: data-modeling-principles.md
+      - Principles: data_modeling/principles.md
+      - Modes: data_modeling/modes.md
       - Data Modeling in Excel:
-        - Overview: excel_data_modeling/data_model.md
+        - Overview: data_modeling/excel/data_model.md
         - Physical Data Model:
-            - Overview: excel_data_modeling/physical/overview.md
-            - Reference: excel_data_modeling/physical/reference.md
-            - Properties: excel_data_modeling/physical/properties.md
-            - Views: excel_data_modeling/physical/views.md
-            - Enum: excel_data_modeling/physical/enum.md
-            - Units: excel_data_modeling/physical/units.md
+            - Overview: data_modeling/excel/physical/overview.md
+            - Reference: data_modeling/excel/physical/reference.md
+            - Properties: data_modeling/excel/physical/properties.md
+            - Views: data_modeling/excel/physical/views.md
+            - Enum: data_modeling/excel/physical/enum.md
+            - Units: data_modeling/excel/physical/units.md
   - Reference: reference/NeatSession/session.md
   - Known Issues: known_issues.md
   - About:
