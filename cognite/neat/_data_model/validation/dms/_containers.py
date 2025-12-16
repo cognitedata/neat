@@ -400,11 +400,8 @@ class MissingRequiresConstraint(DataModelValidator):
             # Get what A already transitively requires
             transitively_required = _get_transitively_required_containers(container_a, self.merged_containers)
 
-            # Collect containers that A should require:
-            # - always_required: A always appears with B (strongest case)
-            # - optional_required: A appears with B in multi-container views, but alone in single-container views
+            # Collect containers that A always appears with (strongest recommendation)
             always_required: set[ContainerReference] = set()
-            optional_required: set[ContainerReference] = set()
 
             for container_b in containers_with_a:
                 # Skip if A already transitively requires B
@@ -413,52 +410,45 @@ class MissingRequiresConstraint(DataModelValidator):
 
                 views_with_b = container_to_views.get(str(container_b), set())
 
-                # Check if A ever appears without B
-                # If views_with_a is a subset of views_with_b, then A never appears without B
-                a_always_with_b = views_with_a <= views_with_b
-
-                if a_always_with_b:
+                # Check if A always appears with B (A never appears without B)
+                if views_with_a <= views_with_b:
                     # Check if there's a container C that A already requires, and C also always appears with B
                     # but C doesn't require B. If so, the proper recommendation is for C to require B, not A.
-                    # This avoids recommending "Field requires CogniteAsset" when "Asset requires CogniteAsset"
-                    # is the correct recommendation (where Field already requires Asset).
-                    should_skip = False
-                    for container_c in transitively_required:
-                        views_with_c = container_to_views.get(str(container_c), set())
-                        c_always_with_b = views_with_c <= views_with_b
-                        c_requires_b = container_b in _get_transitively_required_containers(
-                            container_c, self.merged_containers
-                        )
-                        if c_always_with_b and not c_requires_b:
-                            # C should require B, not A. Skip this recommendation for A.
-                            should_skip = True
-                            break
+                    should_skip = any(
+                        container_to_views.get(str(c), set()) <= views_with_b
+                        and container_b not in _get_transitively_required_containers(c, self.merged_containers)
+                        for c in transitively_required
+                    )
                     if not should_skip:
                         always_required.add(container_b)
-                else:
-                    # Check if A only appears without B in single-container views
-                    views_without_b = views_with_a - views_with_b
-                    all_single_container = all(
-                        len(view_to_containers.get(view_str, set())) == 1 for view_str in views_without_b
-                    )
-                    if all_single_container and views_without_b:
-                        optional_required.add(container_b)
 
             # Find the minimal set of constraints needed
             minimal_always = _find_minimal_set(always_required, self.merged_containers)
 
             # Find containers that A appears with in some views but not all (optional constraints)
-            # This includes both "better_coverage" (transitively covers always_required) and
-            # "optional_required" (A appears alone in single-container views)
-            partial_overlap = optional_required | {
-                c
-                for c in containers_with_a
-                if c not in transitively_required
-                and c not in always_required
-                and _get_transitively_required_containers(c, self.merged_containers) & always_required
-            }
+            # Include if: views without B are all single-container, OR B transitively covers always_required
+            partial_overlap: set[ContainerReference] = set()
+            for container_b in containers_with_a:
+                if container_b in transitively_required or container_b in always_required:
+                    continue
+
+                views_with_b = container_to_views.get(str(container_b), set())
+                views_without_b = views_with_a - views_with_b
+                if not views_without_b:
+                    continue  # A always appears with B - handled above
+
+                # Include if B transitively covers something in always_required
+                if _get_transitively_required_containers(container_b, self.merged_containers) & always_required:
+                    partial_overlap.add(container_b)
+                    continue
+
+                # Include if views where A appears without B are all single-container views
+                all_single_container = all(len(view_to_containers.get(v, set())) == 1 for v in views_without_b)
+                if all_single_container:
+                    partial_overlap.add(container_b)
+
             minimal_partial = _find_minimal_set(
-                partial_overlap - always_required, self.merged_containers, already_covered_by=always_required
+                partial_overlap, self.merged_containers, already_covered_by=always_required
             )
 
             for container_b in minimal_always:
@@ -537,27 +527,27 @@ class UnnecessaryRequiresConstraint(DataModelValidator):
                 if not isinstance(constraint, RequiresConstraintDefinition):
                     continue
 
-                required_container = constraint.require
-
                 # Get views that use each container
                 views_with_requiring = container_to_views.get(str(container_ref), set())
-                views_with_required = container_to_views.get(str(required_container), set())
+                views_with_required = container_to_views.get(str(constraint.require), set())
 
                 # Check if they ever appear together in any view
                 views_in_common = views_with_requiring & views_with_required
 
                 if not views_in_common:
-                    recommendations.append(
-                        Recommendation(
-                            message=(
-                                f"Container '{container_ref!s}' has a requires constraint on "
-                                f"'{required_container!s}', but they never appear together in any view. "
-                                f"This creates an unnecessary dependency and does not provide any performance benefit."
-                            ),
-                            fix="Remove the requires constraint if these containers are meant to be used independently",
-                            code=self.code,
-                        )
+                    continue
+
+                recommendations.append(
+                    Recommendation(
+                        message=(
+                            f"Container '{container_ref!s}' has a requires constraint on "
+                            f"'{constraint.require!s}', but they never appear together in any view. "
+                            f"This creates an unnecessary dependency and does not provide any performance benefit."
+                        ),
+                        fix="Remove the requires constraint if these containers are meant to be used independently",
+                        code=self.code,
                     )
+                )
 
         return recommendations
 
@@ -592,19 +582,21 @@ class RequiresConstraintCycle(DataModelValidator):
         # Check each local container for cycles
         for container_ref in self.local_resources.containers_by_reference:
             cycle = _find_requires_constraint_cycle(container_ref, container_ref, self.merged_containers)
-            if cycle:
-                # Create a frozenset of the cycle to avoid reporting the same cycle multiple times
-                cycle_set = frozenset(cycle[:-1])  # Exclude the duplicate end element
-                if cycle_set not in reported_cycles:
-                    reported_cycles.add(cycle_set)
-                    cycle_str = " -> ".join(str(c) for c in cycle)
-                    errors.append(
-                        ConsistencyError(
-                            message=f"Requires constraints form a cycle: {cycle_str}",
-                            fix="Remove one of the requires constraints to break the cycle",
-                            code=self.code,
-                        )
-                    )
+            if not cycle:
+                continue
+            # Create a frozenset of the cycle to avoid reporting the same cycle multiple times
+            cycle_set = frozenset(cycle[:-1])  # Exclude the duplicate end element
+            if cycle_set in reported_cycles:
+                continue
+            reported_cycles.add(cycle_set)
+            cycle_str = " -> ".join(str(c) for c in cycle)
+            errors.append(
+                ConsistencyError(
+                    message=f"Requires constraints form a cycle: {cycle_str}",
+                    fix="Remove one of the requires constraints to break the cycle",
+                    code=self.code,
+                )
+            )
 
         return errors
 
@@ -681,7 +673,7 @@ class RequiresConstraintComplicatesIngestion(DataModelValidator):
 
                 # Check if any view covers both A and all non-nullable properties of B
                 covers_all = False
-                for view_str, container_props in view_to_container_properties.items():
+                for container_props in view_to_container_properties.values():
                     # Check if this view maps to container A
                     maps_to_a = any(c_ref == container_a_ref for c_ref, _ in container_props)
                     if not maps_to_a:
