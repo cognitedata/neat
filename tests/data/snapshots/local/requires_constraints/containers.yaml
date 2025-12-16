@@ -1,0 +1,201 @@
+# Containers for MissingRequiresConstraint - always together (no requires constraint)
+- space: my_space
+  externalId: AssetContainer
+  usedFor: node
+  properties:
+    name:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: DescribableContainer
+  usedFor: node
+  properties:
+    description:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+# Containers for transitive requires test - B requires C
+- space: my_space
+  externalId: ContainerA
+  usedFor: node
+  properties:
+    fieldA:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: ContainerB
+  usedFor: node
+  properties:
+    fieldB:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_c:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: ContainerC
+        type: container
+
+- space: my_space
+  externalId: ContainerC
+  usedFor: node
+  properties:
+    fieldC:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+# Containers for partial overlap / better coverage test
+- space: my_space
+  externalId: TagContainer
+  usedFor: node
+  properties:
+    tagId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: TagAssetContainer
+  usedFor: node
+  properties:
+    assetName:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_describable:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: TagDescribableContainer
+        type: container
+
+- space: my_space
+  externalId: TagDescribableContainer
+  usedFor: node
+  properties:
+    description:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+# Containers for UnnecessaryRequiresConstraint - requires constraint but never used together
+- space: my_space
+  externalId: OrderContainer
+  usedFor: node
+  properties:
+    orderId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_customer:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: CustomerContainer
+        type: container
+
+- space: my_space
+  externalId: CustomerContainer
+  usedFor: node
+  properties:
+    customerId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+# Containers for RequiresConstraintCycle test - A requires B, B requires A
+- space: my_space
+  externalId: CycleContainerA
+  usedFor: node
+  properties:
+    propA:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_b:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: CycleContainerB
+        type: container
+
+- space: my_space
+  externalId: CycleContainerB
+  usedFor: node
+  properties:
+    propB:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_a:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: CycleContainerA
+        type: container
+
+# Containers for RequiresConstraintComplicatesIngestion test
+- space: my_space
+  externalId: IngestionAssetContainer
+  usedFor: node
+  properties:
+    assetId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_describable:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: IngestionDescribableContainer
+        type: container
+
+- space: my_space
+  externalId: IngestionDescribableContainer
+  usedFor: node
+  properties:
+    name:
+      immutable: false
+      nullable: false
+      type:
+        type: text
+        list: false
