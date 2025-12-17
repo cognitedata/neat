@@ -27,6 +27,26 @@
   description: A view missing properties
   properties: {}
 
+- space: another_space
+  externalId: HasPropertiesInCDF
+  version: v2
+  name: Has Properties in CDF
+  description: A view that has properties in CDF
+  properties:
+    directPropertyRemote:
+      name: directPropertyRemote
+      description: A direct property for testing reverse connections
+      container:
+        space: my_space
+        externalId: DirectConnectionRemoteContainer
+        type: container
+      containerPropertyIdentifier: directRemote
+      source:
+        space: my_space
+        externalId: MyDescribable
+        version: v1
+        type: view
+
 
 - space: my_space
   externalId: SourceForReverseConnectionExistRemote
