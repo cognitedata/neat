@@ -154,6 +154,10 @@ class ValidationResources:
                 # you are not adding to CDF, but replacing it
                 check_merged = in_schema_space
                 check_cdf = not in_schema_space
+            else:
+                raise RuntimeError(
+                    f"_resolve_resource_sources: Unknown modus_operandi: {self._modus_operandi}. This is a bug!"
+                )
 
         elif source == "merged":
             check_merged = True
