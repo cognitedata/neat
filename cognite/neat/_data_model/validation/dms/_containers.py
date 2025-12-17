@@ -3,130 +3,12 @@
 from typing import cast
 
 from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
-from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError, Recommendation
 
 BASE_CODE = "NEAT-DMS-CONTAINER"
-
-
-def _get_direct_required_containers(
-    container_ref: ContainerReference,
-    containers_by_reference: dict[ContainerReference, ContainerRequest],
-) -> set[ContainerReference]:
-    """Get all containers that a container directly requires."""
-    container = containers_by_reference.get(container_ref)
-    if not container or not container.constraints:
-        return set()
-
-    required: set[ContainerReference] = set()
-    for constraint in container.constraints.values():
-        if isinstance(constraint, RequiresConstraintDefinition):
-            required.add(constraint.require)
-    return required
-
-
-def _get_transitively_required_containers(
-    container_ref: ContainerReference,
-    containers_by_reference: dict[ContainerReference, ContainerRequest],
-    visited: set[ContainerReference] | None = None,
-) -> set[ContainerReference]:
-    """Get all containers that a container requires (transitively)."""
-    if visited is None:
-        visited = set()
-    if container_ref in visited:
-        return set()
-    visited.add(container_ref)
-
-    direct_required = _get_direct_required_containers(container_ref, containers_by_reference)
-    all_required = direct_required.copy()
-    for req in direct_required:
-        all_required.update(_get_transitively_required_containers(req, containers_by_reference, visited))
-    return all_required
-
-
-def _find_requires_constraint_cycle(
-    start: ContainerReference,
-    current: ContainerReference,
-    containers_by_reference: dict[ContainerReference, ContainerRequest],
-    visited: set[ContainerReference] | None = None,
-    path: list[ContainerReference] | None = None,
-) -> list[ContainerReference] | None:
-    """Find a cycle in requires constraints starting from 'start' through 'current'.
-
-    Returns the cycle path if found, None otherwise.
-    """
-    if visited is None:
-        visited = set()
-    if path is None:
-        path = []
-
-    if current in visited:
-        if start == current:
-            return [*path, current]
-        return None
-
-    visited.add(current)
-    path.append(current)
-
-    for required in _get_direct_required_containers(current, containers_by_reference):
-        cycle = _find_requires_constraint_cycle(start, required, containers_by_reference, visited, path)
-        if cycle:
-            return cycle
-
-    path.pop()
-    return None
-
-
-def _is_covered_by_any(
-    container: ContainerReference,
-    container_set: set[ContainerReference],
-    containers_by_reference: dict[ContainerReference, ContainerRequest],
-    exclude: ContainerReference | None = None,
-) -> bool:
-    """Check if container is transitively covered by any container in the set.
-
-    Args:
-        container: The container to check coverage for
-        container_set: Set of containers that might cover the target
-        containers_by_reference: Container lookup dictionary
-        exclude: Optionally exclude a specific container from consideration
-    """
-    for other in container_set:
-        if exclude is not None and other == exclude:
-            continue
-        if container in _get_transitively_required_containers(other, containers_by_reference):
-            return True
-    return False
-
-
-def _find_minimal_set(
-    candidates: set[ContainerReference],
-    containers_by_reference: dict[ContainerReference, ContainerRequest],
-    already_covered_by: set[ContainerReference] | None = None,
-) -> set[ContainerReference]:
-    """Find the minimal set of containers needed (removing those transitively covered by others).
-
-    Args:
-        candidates: Set of candidate containers
-        containers_by_reference: Container lookup dictionary
-        already_covered_by: Containers that already provide coverage (to filter out candidates)
-    """
-    if already_covered_by is None:
-        already_covered_by = set()
-
-    minimal: set[ContainerReference] = set()
-    for container in candidates:
-        # Skip if already covered by the pre-existing set
-        if _is_covered_by_any(container, already_covered_by, containers_by_reference):
-            continue
-        # Skip if covered by another container in the same candidates set
-        if _is_covered_by_any(container, candidates, containers_by_reference, exclude=container):
-            continue
-        minimal.add(container)
-    return minimal
 
 
 class ExternalContainerDoesNotExist(DataModelValidator):
@@ -371,7 +253,7 @@ class MissingRequiresConstraint(DataModelValidator):
             containers_with_a.discard(container_a)
 
             # Get what A already transitively requires
-            transitively_required = _get_transitively_required_containers(container_a, merged_containers)
+            transitively_required = self.validation_resources.get_transitively_required_containers(container_a)
 
             # Collect containers that A always appears with (strongest recommendation)
             always_required: set[ContainerReference] = set()
@@ -389,14 +271,14 @@ class MissingRequiresConstraint(DataModelValidator):
                     # but C doesn't require B. If so, the proper recommendation is for C to require B, not A.
                     should_skip = any(
                         container_to_views.get(str(c), set()) <= views_with_b
-                        and container_b not in _get_transitively_required_containers(c, merged_containers)
+                        and container_b not in self.validation_resources.get_transitively_required_containers(c)
                         for c in transitively_required
                     )
                     if not should_skip:
                         always_required.add(container_b)
 
             # Find the minimal set of constraints needed
-            minimal_always = _find_minimal_set(always_required, merged_containers)
+            minimal_always = self.validation_resources.find_minimal_requires_set(always_required)
 
             # Find containers that A appears with in some views but not all (optional constraints)
             # Include if: views without B are all single-container, OR B transitively covers always_required
@@ -411,7 +293,7 @@ class MissingRequiresConstraint(DataModelValidator):
                     continue  # A always appears with B - handled above
 
                 # Include if B transitively covers something in always_required
-                if _get_transitively_required_containers(container_b, merged_containers) & always_required:
+                if self.validation_resources.get_transitively_required_containers(container_b) & always_required:
                     partial_overlap.add(container_b)
                     continue
 
@@ -420,7 +302,9 @@ class MissingRequiresConstraint(DataModelValidator):
                 if all_single_container:
                     partial_overlap.add(container_b)
 
-            minimal_partial = _find_minimal_set(partial_overlap, merged_containers, already_covered_by=always_required)
+            minimal_partial = self.validation_resources.find_minimal_requires_set(
+                partial_overlap, already_covered_by=always_required
+            )
 
             for container_b in minimal_always:
                 recommendations.append(
@@ -556,7 +440,7 @@ class RequiresConstraintCycle(DataModelValidator):
 
         # Check each local container for cycles
         for container_ref in local_containers:
-            cycle = _find_requires_constraint_cycle(container_ref, container_ref, merged_containers)
+            cycle = self.validation_resources.find_requires_constraint_cycle(container_ref, container_ref)
             if not cycle:
                 continue
             # Create a frozenset of the cycle to avoid reporting the same cycle multiple times
@@ -574,115 +458,3 @@ class RequiresConstraintCycle(DataModelValidator):
             )
 
         return errors
-
-
-class RequiresConstraintComplicatesIngestion(DataModelValidator):
-    """
-    Validates that containers with requires constraints can be populated together in at least one view.
-
-    ## What it does
-    For each container A that has a requires constraint on container B, this validator checks
-    whether there exists at least one view that maps to both container A AND all non-nullable
-    properties of container B.
-
-    ## Why is this bad?
-    If container A requires container B, but no view maps to both A and all non-nullable properties
-    of B, then ingestion becomes more complex:
-    - Container B must be populated FIRST (before A can be used, due to the requires constraint)
-    - The non-nullable properties of B must be provided during this initial population
-    - There's no way to populate both containers in a single view-based ingestion
-
-    This forces a two-step ingestion process and may require using the containers API directly
-    for the initial B population.
-
-    ## Example
-    Container `my_space:AssetContainer` requires `my_space:DescribableContainer`. The
-    `DescribableContainer` has a non-nullable property `name`. If no view maps to both
-    `AssetContainer` and `DescribableContainer.name`, then `DescribableContainer` must be
-    populated separately before any view using `AssetContainer` can be used for ingestion.
-    """
-
-    code = f"{BASE_CODE}-007"
-    issue_type = Recommendation
-
-    def run(self) -> list[Recommendation]:
-        recommendations: list[Recommendation] = []
-
-        merged_views = self.validation_resources.merged.views
-        merged_containers = self.validation_resources.merged.containers
-        local_containers = self.validation_resources.local.containers
-
-        # Build mappings from view to (container, property) pairs
-        view_to_container_properties: dict[str, set[tuple[ContainerReference, str]]] = {}
-        for view_ref, view in merged_views.items():
-            if not view.properties:
-                continue
-            container_props: set[tuple[ContainerReference, str]] = set()
-            for property_ in view.properties.values():
-                if isinstance(property_, ViewCorePropertyRequest):
-                    container_props.add((property_.container, property_.container_property_identifier))
-            if container_props:
-                view_to_container_properties[str(view_ref)] = container_props
-
-        # Check each local container's requires constraints
-        for container_a_ref, container_a in local_containers.items():
-            if not container_a.constraints:
-                continue
-
-            for constraint in container_a.constraints.values():
-                if not isinstance(constraint, RequiresConstraintDefinition):
-                    continue
-
-                container_b_ref = constraint.require
-                container_b = merged_containers.get(container_b_ref)
-
-                if container_b is None:
-                    continue  # Handled by RequiredContainerDoesNotExist
-
-                if not self.validation_resources.containers_appear_together(container_a_ref, container_b_ref):
-                    continue  # Handled by UnnecessaryRequiresConstraint
-
-                # Get all non-nullable properties of container B
-                non_nullable_props: set[str] = set()
-                for prop_id, prop_def in container_b.properties.items():
-                    if prop_def.nullable is False:
-                        non_nullable_props.add(prop_id)
-
-                if not non_nullable_props:
-                    # No non-nullable properties in B - no issue
-                    continue
-
-                # Check if any view covers both A and all non-nullable properties of B
-                view_to_containers = self.validation_resources.view_to_containers
-                covers_all = False
-                for view_ref_str, container_props in view_to_container_properties.items():
-                    # Check if this view maps to container A
-                    if container_a_ref not in view_to_containers.get(view_ref_str, set()):
-                        continue
-
-                    # Check if this view maps to all non-nullable properties of B
-                    b_props_in_view = {prop_id for c_ref, prop_id in container_props if c_ref == container_b_ref}
-                    if non_nullable_props <= b_props_in_view:
-                        covers_all = True
-                        break
-
-                if not covers_all:
-                    missing_props_str = ", ".join(sorted(non_nullable_props))
-                    recommendations.append(
-                        Recommendation(
-                            message=(
-                                f"Container '{container_a_ref!s}' requires '{container_b_ref!s}', but no view "
-                                f"maps to both '{container_a_ref!s}' and all non-nullable properties of "
-                                f"'{container_b_ref!s}' (non-nullable properties: {missing_props_str}). "
-                                f"This means '{container_b_ref!s}' must be populated separately before views "
-                                f"using '{container_a_ref!s}' can be used for ingestion."
-                            ),
-                            fix=(
-                                "Create a view that maps to both containers including all non-nullable "
-                                "properties, or make the required container's properties nullable"
-                            ),
-                            code=self.code,
-                        )
-                    )
-
-        return recommendations

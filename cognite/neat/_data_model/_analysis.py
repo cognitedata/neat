@@ -4,6 +4,7 @@ from typing import Literal, TypeAlias
 from pyparsing import cached_property
 
 from cognite.neat._data_model._snapshot import SchemaSnapshot
+from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
@@ -403,3 +404,169 @@ class ValidationResources:
         views_with_a = self.container_to_views.get(str(container_a), set())
         views_with_b = self.container_to_views.get(str(container_b), set())
         return len(views_with_a) > 0 and views_with_a <= views_with_b
+
+    # =========================================================================
+    # Container Requires Constraint Methods
+    # =========================================================================
+
+    def get_direct_required_containers(self, container_ref: ContainerReference) -> set[ContainerReference]:
+        """Get all containers that a container directly requires.
+
+        Uses merged containers for lookup.
+        """
+        container = self.merged.containers.get(container_ref)
+        if not container or not container.constraints:
+            return set()
+
+        required: set[ContainerReference] = set()
+        for constraint in container.constraints.values():
+            if isinstance(constraint, RequiresConstraintDefinition):
+                required.add(constraint.require)
+        return required
+
+    def get_transitively_required_containers(
+        self,
+        container_ref: ContainerReference,
+        visited: set[ContainerReference] | None = None,
+    ) -> set[ContainerReference]:
+        """Get all containers that a container requires (transitively).
+
+        Uses merged containers for lookup.
+        """
+        if visited is None:
+            visited = set()
+        if container_ref in visited:
+            return set()
+        visited.add(container_ref)
+
+        direct_required = self.get_direct_required_containers(container_ref)
+        all_required = direct_required.copy()
+        for req in direct_required:
+            all_required.update(self.get_transitively_required_containers(req, visited))
+        return all_required
+
+    def find_container_pairs_without_hierarchy(
+        self, containers: set[ContainerReference]
+    ) -> list[tuple[ContainerReference, ContainerReference]]:
+        """Find container pairs where neither requires the other (directly or transitively).
+
+        Args:
+            containers: Set of containers to check
+
+        Returns:
+            List of (container_a, container_b) pairs with no requires relationship
+        """
+        containers_list = list(containers)
+        missing_hierarchy: list[tuple[ContainerReference, ContainerReference]] = []
+
+        for i, container_a in enumerate(containers_list):
+            transitively_required_by_a = self.get_transitively_required_containers(container_a)
+
+            for container_b in containers_list[i + 1 :]:
+                transitively_required_by_b = self.get_transitively_required_containers(container_b)
+
+                a_requires_b = container_b in transitively_required_by_a
+                b_requires_a = container_a in transitively_required_by_b
+
+                if not a_requires_b and not b_requires_a:
+                    missing_hierarchy.append((container_a, container_b))
+
+        return missing_hierarchy
+
+    def find_unmapped_required_containers(
+        self, containers_in_scope: set[ContainerReference]
+    ) -> dict[ContainerReference, set[ContainerReference]]:
+        """Find which containers require other containers not in the given scope.
+
+        Args:
+            containers_in_scope: Set of containers to check (e.g., containers in a view)
+
+        Returns:
+            Dict mapping each container to the set of required containers not in scope
+        """
+        requiring_containers: dict[ContainerReference, set[ContainerReference]] = {}
+
+        for container_ref in containers_in_scope:
+            all_required = self.get_transitively_required_containers(container_ref)
+            not_in_scope = all_required - containers_in_scope
+            if not_in_scope:
+                requiring_containers[container_ref] = not_in_scope
+
+        return requiring_containers
+
+    def find_requires_constraint_cycle(
+        self,
+        start: ContainerReference,
+        current: ContainerReference,
+        visited: set[ContainerReference] | None = None,
+        path: list[ContainerReference] | None = None,
+    ) -> list[ContainerReference] | None:
+        """Find a cycle in requires constraints starting from 'start' through 'current'.
+
+        Returns the cycle path if found, None otherwise.
+        """
+        if visited is None:
+            visited = set()
+        if path is None:
+            path = []
+
+        if current in visited:
+            if start == current:
+                return [*path, current]
+            return None
+
+        visited.add(current)
+        path.append(current)
+
+        for required in self.get_direct_required_containers(current):
+            cycle = self.find_requires_constraint_cycle(start, required, visited, path)
+            if cycle:
+                return cycle
+
+        path.pop()
+        return None
+
+    def is_container_covered_by_any(
+        self,
+        container: ContainerReference,
+        container_set: set[ContainerReference],
+        exclude: ContainerReference | None = None,
+    ) -> bool:
+        """Check if container is transitively covered by any container in the set.
+
+        Args:
+            container: The container to check coverage for
+            container_set: Set of containers that might cover the target
+            exclude: Optionally exclude a specific container from consideration
+        """
+        for other in container_set:
+            if exclude is not None and other == exclude:
+                continue
+            if container in self.get_transitively_required_containers(other):
+                return True
+        return False
+
+    def find_minimal_requires_set(
+        self,
+        candidates: set[ContainerReference],
+        already_covered_by: set[ContainerReference] | None = None,
+    ) -> set[ContainerReference]:
+        """Find the minimal set of containers needed (removing those transitively covered by others).
+
+        Args:
+            candidates: Set of candidate containers
+            already_covered_by: Containers that already provide coverage (to filter out candidates)
+        """
+        if already_covered_by is None:
+            already_covered_by = set()
+
+        minimal: set[ContainerReference] = set()
+        for container in candidates:
+            # Skip if already covered by the pre-existing set
+            if self.is_container_covered_by_any(container, already_covered_by):
+                continue
+            # Skip if covered by another container in the same candidates set
+            if self.is_container_covered_by_any(container, candidates, exclude=container):
+                continue
+            minimal.add(container)
+        return minimal

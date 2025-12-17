@@ -35,12 +35,3 @@ views:
   externalId: CycleTestView
   version: v1
   type: view
-# Views for RequiresConstraintComplicatesIngestion tests
-- space: my_space
-  externalId: IngestionComplicationView
-  version: v1
-  type: view
-- space: my_space
-  externalId: CoveredIngestionView
-  version: v1
-  type: view

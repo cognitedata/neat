@@ -6,7 +6,6 @@ from cognite.neat._config import internal_profiles
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.validation.dms._containers import (
     MissingRequiresConstraint,
-    RequiresConstraintComplicatesIngestion,
     RequiresConstraintCycle,
     UnnecessaryRequiresConstraint,
 )
@@ -17,7 +16,6 @@ PROBLEMS = {
     MissingRequiresConstraint: {"AssetContainer", "DescribableContainer", "TransitiveParent", "TagContainer"},
     UnnecessaryRequiresConstraint: {"OrderContainer", "CustomerContainer"},
     RequiresConstraintCycle: {"CycleContainerA", "CycleContainerB"},
-    RequiresConstraintComplicatesIngestion: {"IngestionAssetContainer", "IngestionDescribableContainer"},
 }
 
 
@@ -78,16 +76,6 @@ def test_transitivity_avoids_redundant_recommendations(validation_result: DmsDat
         f"Expected 1 issue for TransitiveParent (transitivity should prevent redundant Parent→Leaf), "
         f"got {len(parent_issues)}"
     )
-
-
-def test_no_ingestion_complication_when_view_covers_non_nullable_properties(
-    validation_result: DmsDataModelValidation,
-) -> None:
-    """CoveredAssetContainer should have no issue - its view covers all non-nullable properties."""
-    messages = [
-        issue.message for issue in validation_result.issues if issue.code == RequiresConstraintComplicatesIngestion.code
-    ]
-    assert not any("CoveredAssetContainer" in msg for msg in messages)
 
 
 def test_no_unnecessary_constraint_when_containers_appear_together(validation_result: DmsDataModelValidation) -> None:

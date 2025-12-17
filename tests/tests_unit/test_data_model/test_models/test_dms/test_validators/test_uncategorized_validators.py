@@ -9,6 +9,8 @@ from cognite.neat._data_model.validation.dms import (
     ExternalContainerPropertyDoesNotExist,
     ImplementedViewNotExisting,
     ReverseConnectionSourceViewMissing,
+    ViewMissingContainerRequiresHierarchy,
+    ViewRequiresUnmappedContainer,
     ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
@@ -35,7 +37,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 20
+        assert len(on_success.issues) == 22
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -46,6 +48,8 @@ class TestValidators:
             ExternalContainerDoesNotExist.code,
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
+            ViewMissingContainerRequiresHierarchy.code,
+            ViewRequiresUnmappedContainer.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 3
@@ -162,7 +166,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 20
+        assert len(on_success.issues) == 22
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -174,6 +178,8 @@ class TestValidators:
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
             ImplementedViewNotExisting.code,
+            ViewMissingContainerRequiresHierarchy.code,
+            ViewRequiresUnmappedContainer.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 5

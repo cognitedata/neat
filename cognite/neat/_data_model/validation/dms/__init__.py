@@ -27,7 +27,6 @@ from ._containers import (
     ExternalContainerPropertyDoesNotExist,
     MissingRequiresConstraint,
     RequiredContainerDoesNotExist,
-    RequiresConstraintComplicatesIngestion,
     RequiresConstraintCycle,
     UnnecessaryRequiresConstraint,
 )
@@ -40,7 +39,12 @@ from ._limits import (
     ViewPropertyCountIsOutOfLimits,
 )
 from ._orchestrator import DmsDataModelValidation
-from ._views import ImplementedViewNotExisting, ViewToContainerMappingNotPossible
+from ._views import (
+    ImplementedViewNotExisting,
+    ViewMissingContainerRequiresHierarchy,
+    ViewRequiresUnmappedContainer,
+    ViewToContainerMappingNotPossible,
+)
 
 __all__ = [
     "ConnectionValueTypeUndefined",
@@ -59,7 +63,6 @@ __all__ = [
     "ImplementedViewNotExisting",
     "MissingRequiresConstraint",
     "RequiredContainerDoesNotExist",
-    "RequiresConstraintComplicatesIngestion",
     "RequiresConstraintCycle",
     "ReverseConnectionContainerMissing",
     "ReverseConnectionContainerPropertyMissing",
@@ -73,11 +76,13 @@ __all__ = [
     "UnnecessaryRequiresConstraint",
     "ViewContainerCountIsOutOfLimits",
     "ViewImplementsCountIsOutOfLimits",
+    "ViewMissingContainerRequiresHierarchy",
     "ViewMissingDescription",
     "ViewMissingName",
     "ViewPropertyCountIsOutOfLimits",
     "ViewPropertyMissingDescription",
     "ViewPropertyMissingName",
+    "ViewRequiresUnmappedContainer",
     "ViewSpaceVersionInconsistentWithDataModel",
     "ViewToContainerMappingNotPossible",
 ]
