@@ -150,8 +150,8 @@ class ValidationResources:
                 check_merged = in_schema_space
                 check_cdf = True
             elif self._modus_operandi == "rebuild":
-                # In rebuild modus, schema space means the full desired state is in local schema
-                # you are not adding to CDF, but replacing it
+                # In rebuild modus, schema space means the full desired state is in local schema (i.e., merged)
+                # you are not adding to CDF, but replacing it, so never check CDF for schema space resources
                 check_merged = in_schema_space
                 check_cdf = not in_schema_space
             else:
