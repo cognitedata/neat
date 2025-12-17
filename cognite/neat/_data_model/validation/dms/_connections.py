@@ -625,7 +625,7 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
     issue_type = Recommendation
 
     def run(self) -> list[Recommendation]:
-        recommendation: list[Recommendation] = []
+        recommendations: list[Recommendation] = []
 
         for (target_view_ref, reverse_prop_name), (
             source_view_ref,
@@ -656,7 +656,7 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
                 continue  # Handled by ReverseConnectionTargetAncestor
 
             if actual_target_view != target_view_ref:
-                recommendation.append(
+                recommendations.append(
                     Recommendation(
                         message=(
                             f"The reverse connection '{reverse_prop_name}' in view {target_view_ref!s} "
@@ -669,4 +669,4 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
                     )
                 )
 
-        return recommendation
+        return recommendations
