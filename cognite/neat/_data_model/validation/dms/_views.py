@@ -37,8 +37,7 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
 
             if not view:
                 raise RuntimeError(
-                    f"ViewToContainerMappingNotPossible.run: View {view_ref!s} "
-                    "not found in local resources. This is a bug in NEAT."
+                    f"{type(self).__name__}: View {view_ref!s} not found in local resources. This is a bug in NEAT."
                 )
 
             if view.properties is None:
@@ -109,8 +108,7 @@ class ImplementedViewNotExisting(DataModelValidator):
 
             if not view:
                 raise RuntimeError(
-                    f"ImplementedViewNotExisting.run: View {view_ref!s} "
-                    "not found in local resources. This is a bug in NEAT."
+                    f"{type(self).__name__}: View {view_ref!s} not found in local resources. This is a bug in NEAT."
                 )
 
             if view.implements is None:

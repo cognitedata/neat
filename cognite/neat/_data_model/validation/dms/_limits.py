@@ -220,7 +220,15 @@ class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
         # Single loop over all containers
-        for container_ref, container in self.validation_resources.merged.containers.items():
+        for container_ref in self.validation_resources.merged.containers:
+            container = self.validation_resources.select_container(container_ref)
+
+            if not container:
+                raise RuntimeError(
+                    f"{type(self).__name__}: Container {container_ref!s} "
+                    "not found in local resources. This is a bug in NEAT."
+                )
+
             if (
                 container.properties
                 and len(container.properties) > self.validation_resources.limits.containers.properties()
@@ -277,7 +285,15 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelValidator):
         errors: list[ConsistencyError] = []
 
         # Single loop over all containers
-        for container_ref, container in self.validation_resources.merged.containers.items():
+        for container_ref in self.validation_resources.merged.containers:
+            container = self.validation_resources.select_container(container_ref)
+
+            if not container:
+                raise RuntimeError(
+                    f"{type(self).__name__}: Container {container_ref!s} "
+                    "not found in local resources. This is a bug in NEAT."
+                )
+
             properties_by_index_type = self.container_property_by_index_type(container)
 
             for property_id, property_ in container.properties.items():

@@ -139,11 +139,22 @@ class ValidationResources:
             Tuple of (check_merged, check_cdf) booleans indicating which sources to check
         """
         if source == "auto":
-            # Auto mode: driven by modus_operandi
-            # In "additive" mode or for resources outside local space, check both merged and CDF
-            # In "rebuild" mode for resources in local space, check only merged == local
-            check_merged = True
-            check_cdf = resource_ref.space != self.merged_data_model.space or self._modus_operandi == "additive"
+            # Auto mode: driven by data modeling modus (approach)
+            # If elements is in the schema space, we check merged, else we check CDF
+
+            in_schema_space = resource_ref.space == self.merged_data_model.space
+
+            if self._modus_operandi == "additive":
+                # In additive modus, schema space means local additions on top of CDF
+                # always check CDF, while do not check merged if resource is not in schema space
+                check_merged = in_schema_space
+                check_cdf = True
+            elif self._modus_operandi == "rebuild":
+                # In rebuild modus, schema space means the full desired state is in local schema
+                # you are not adding to CDF, but replacing it
+                check_merged = in_schema_space
+                check_cdf = not in_schema_space
+
         elif source == "merged":
             check_merged = True
             check_cdf = False

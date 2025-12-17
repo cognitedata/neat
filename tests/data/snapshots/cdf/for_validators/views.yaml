@@ -20,6 +20,13 @@
   description: An example view
   properties: {}
 
+- space: another_space
+  externalId: MissingProperties
+  version: v2
+  name: Missing Properties
+  description: A view missing properties
+  properties: {}
+
 
 - space: my_space
   externalId: SourceForReverseConnectionExistRemote
