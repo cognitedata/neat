@@ -107,7 +107,7 @@ class ViewMissingName(DataModelValidator):
             view = self.validation_resources.select_view(view_ref)
 
             if view is None:
-                raise RuntimeError(f"ViewMissingName.run: View {view_ref!s} not found. This is a bug.")
+                raise RuntimeError(f"{type(self).__name__}: View {view_ref!s} not found. This is a bug.")
 
             if not view.name:
                 recommendations.append(
@@ -158,7 +158,7 @@ class ViewMissingDescription(DataModelValidator):
             view = self.validation_resources.select_view(view_ref)
 
             if view is None:
-                raise RuntimeError(f"ViewMissingDescription.run: View {view_ref!s} not found. This is a bug.")
+                raise RuntimeError(f"{type(self).__name__}: View {view_ref!s} not found. This is a bug.")
 
             if not view.description:
                 recommendations.append(
@@ -199,7 +199,7 @@ class ViewPropertyMissingName(DataModelValidator):
             view = self.validation_resources.select_view(view_ref)
 
             if view is None:
-                raise RuntimeError(f"ViewMissingName.run: View {view_ref!s} not found. This is a bug.")
+                raise RuntimeError(f"{type(self).__name__}: View {view_ref!s} not found. This is a bug.")
 
             if not view.properties:
                 continue
@@ -255,7 +255,7 @@ class ViewPropertyMissingDescription(DataModelValidator):
             view = self.validation_resources.select_view(view_ref)
 
             if view is None:
-                raise RuntimeError(f"ViewMissingName.run: View {view_ref!s} not found. This is a bug.")
+                raise RuntimeError(f"{type(self).__name__}: View {view_ref!s} not found. This is a bug.")
 
             if not view.properties:
                 continue
@@ -296,7 +296,12 @@ class EnumerationMissingName(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for container_ref, container in self.validation_resources.merged.containers.items():
+        for container_ref in self.validation_resources.merged.containers:
+            container = self.validation_resources.select_container(container_ref)
+
+            if not container:
+                raise RuntimeError(f"{type(self).__name__}: Container {container_ref!s} not found. This is a bug.")
+
             for prop_ref, definition in container.properties.items():
                 if not isinstance(definition.type, EnumProperty):
                     continue
@@ -351,7 +356,11 @@ class EnumerationMissingDescription(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for container_ref, container in self.validation_resources.merged.containers.items():
+        for container_ref in self.validation_resources.merged.containers:
+            container = self.validation_resources.select_container(container_ref)
+            if not container:
+                raise RuntimeError(f"{self.__class__.__name__}: Container {container_ref!s} not found. This is a bug.")
+
             for prop_ref, definition in container.properties.items():
                 if not isinstance(definition.type, EnumProperty):
                     continue

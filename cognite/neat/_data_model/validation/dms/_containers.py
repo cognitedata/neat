@@ -44,8 +44,7 @@ class ExternalContainerDoesNotExist(DataModelValidator):
 
             if not view:
                 raise RuntimeError(
-                    f"ImplementedViewNotExisting.run: View {view_ref!s} "
-                    "not found in local resources. This is a bug in NEAT."
+                    f"{type(self).__name__}: View {view_ref!s} not found in local resources. This is a bug in NEAT."
                 )
 
             if view.properties is None:
@@ -107,8 +106,7 @@ class ExternalContainerPropertyDoesNotExist(DataModelValidator):
 
                 if not view:
                     raise RuntimeError(
-                        f"ImplementedViewNotExisting.run: View {view_ref!s} "
-                        "not found in local resources. This is a bug in NEAT."
+                        f"{type(self).__name__}: View {view_ref!s} not found in local resources. This is a bug in NEAT."
                     )
 
                 if view.properties is None:
@@ -170,7 +168,15 @@ class RequiredContainerDoesNotExist(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        for container_ref, container in self.validation_resources.merged.containers.items():
+        for container_ref in self.validation_resources.merged.containers:
+            container = self.validation_resources.select_container(container_ref)
+
+            if not container:
+                raise RuntimeError(
+                    f"{type(self).__name__}: Container {container_ref!s} "
+                    "not found in local resources. This is a bug in NEAT."
+                )
+
             if not container.constraints:
                 continue
 

@@ -12,6 +12,10 @@ views:
   externalId: MissingProperties
   version: v2
   type: view
+- space: another_space
+  externalId: HasPropertiesInCDF
+  version: v2
+  type: view
 - space: my_space
   externalId: MissingProperties
   version: v2

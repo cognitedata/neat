@@ -125,15 +125,21 @@
           version: v1
           type: view
         identifier: directPropertyLocal
+- space: my_space
+  externalId: MissingProperties
+  version: v2
+  name: Missing Properties
+  description: A view missing properties
+  properties: {}
 - space: another_space
   externalId: MissingProperties
   version: v2
   name: Missing Properties
   description: A view missing properties
   properties: {}
-- space: my_space
-  externalId: MissingProperties
+- space: another_space
+  externalId: HasPropertiesInCDF
   version: v2
-  name: Missing Properties
-  description: A view missing properties
+  name: Has Properties in CDF
+  description: A view that has properties in CDF
   properties: {}
