@@ -94,8 +94,7 @@ def view_filter_raw_data() -> Iterable[tuple]:
     yield pytest.param(
         {
             "nested": {
-                "property": ["edge", "endNode"],
-                "scope": ["node"],
+                "scope": ["my_space", "MyView/v1", "relation"],
                 "filter": {"equals": {"property": ["node", "space"], "value": "my_space"}},
             }
         },
