@@ -74,7 +74,7 @@ class MatchAllFilterData(FilterDataDefinition):
     filter_type: Literal["matchAll"] = Field("matchAll", exclude=True)
 
 
-class NestedFilterData(PropertyReference):
+class NestedFilterData(FilterDataDefinition):
     filter_type: Literal["nested"] = Field("nested", exclude=True)
     scope: list[str] = Field(..., min_length=1, max_length=3)
     filter: "Filter"
