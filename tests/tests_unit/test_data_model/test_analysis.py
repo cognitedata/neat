@@ -428,6 +428,11 @@ class TestValidationResources:
 
         By doing this, if we run `rebuild` mode, last view is not considered since it should be deleted in CDF
         after push of local schema to CDF, and thus properties from that view should not be inherited.
+
+        This test also verifies that property definition are properly overridden, specifically property
+        `name` which container mapping gets to be updated at each view in the chain, despite the property
+        being implemented from the deepest view in the chain (ImplementationChain4 for additive and
+        ImplementationChain3 for rebuild).
         """
         resources = scenarios[scenario]
         expanded_view = resources.expand_view(view_ref)
