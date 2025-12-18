@@ -36,10 +36,14 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
                 change = self._store.provenance[-1]
 
                 recommendation_count = (
-                    len(change.issues) if change.issues and change.issues.by_type().get(Recommendation) else 0
+                    len(recommendations)
+                    if change.issues and (recommendations := change.issues.by_type().get(Recommendation))
+                    else 0
                 )
                 consistency_errors_count = (
-                    len(change.errors) if change.errors and change.errors.by_type().get(ConsistencyError) else 0
+                    len(consistency_errors)
+                    if change.issues and (consistency_errors := change.issues.by_type().get(ConsistencyError))
+                    else 0
                 )
                 syntax_errors_count = len(change.errors) if change.errors else 0
                 errors_count = consistency_errors_count + syntax_errors_count

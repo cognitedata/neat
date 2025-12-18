@@ -227,6 +227,11 @@ class ValidationResources:
     def is_ancestor(self, offspring: ViewReference, ancestor: ViewReference) -> bool:
         return ancestor in self.ancestors_by_view.get(offspring, set())
 
+    # this needs to be fixed such that we simply expand the view properties and do not pre-calculate them
+    # as often like in this example below data model does not contain all the views that are referenced or used
+    # through out data model, it is safer to have method that expands properties on demand and store them in cache
+    # for re-use
+
     @cached_property
     def properties_by_view(self) -> dict[ViewReference, dict[str, ViewRequestProperty]]:
         """Get a mapping of view references to their corresponding properties, both directly defined and inherited

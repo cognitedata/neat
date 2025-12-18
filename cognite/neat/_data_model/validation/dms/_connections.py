@@ -205,6 +205,7 @@ class ReverseConnectionSourcePropertyMissing(DataModelValidator):
                 continue  # Handled by ReverseConnectionSourceViewMissing
 
             properties = self.validation_resources.properties_by_view.get(source_view_ref)
+
             # we need expanded properties here
             if not properties or through.identifier not in properties:
                 errors.append(
