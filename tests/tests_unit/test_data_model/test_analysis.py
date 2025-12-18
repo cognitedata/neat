@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest
 from pytest_regressions.data_regression import DataRegressionFixture
 
@@ -364,9 +366,9 @@ class TestValidationResources:
         scenarios: dict[str, ValidationResources],
     ) -> None:
         resources = scenarios[scenario]
-        properties_mapping = resources.properties_by_view
-        assert view_ref in properties_mapping
-        assert len(properties_mapping[view_ref]) == expected_property_count
+        expanded_view = resources.expanded_views(view_ref)
+        assert expanded_view
+        assert len(expanded_view.properties) == expected_property_count
 
     def test_properties_by_view_inherits_from_ancestors(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that properties_by_view includes inherited properties from ancestors"""
@@ -374,13 +376,11 @@ class TestValidationResources:
         descendant_ref = ViewReference(space="my_space", external_id="DescendantView", version="v1")
         ancestor_ref = ViewReference(space="my_space", external_id="AncestorView", version="v1")
 
-        properties_mapping = resources.properties_by_view
-
         # Get ancestor's properties
-        ancestor_props = properties_mapping.get(ancestor_ref, {})
-        descendant_props = properties_mapping.get(descendant_ref, {})
+        ancestor_expanded = cast(ViewRequest, resources.expanded_views(ancestor_ref))
+        descendant_expanded = cast(ViewRequest, resources.expanded_views(descendant_ref))
 
-        assert set(ancestor_props.keys()).issubset(set(descendant_props.keys())), (
+        assert set(ancestor_expanded.properties.keys()).issubset(set(descendant_expanded.properties.keys())), (
             "Descendant view does not include all properties from ancestor view"
         )
 
