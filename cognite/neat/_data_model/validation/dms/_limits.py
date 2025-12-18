@@ -86,7 +86,7 @@ class ViewPropertyCountIsOutOfLimits(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        for view_ref in self.validation_resources.merged.views:
+        for view_ref in self.validation_resources.merged_data_model.views or []:
             if not (view := self.validation_resources.expanded_views(view_ref)):
                 raise RuntimeError(f"{type(self).__name__}: View {view_ref!s} not found. This is a bug in NEAT.")
 
@@ -139,7 +139,7 @@ class ViewContainerCountIsOutOfLimits(DataModelValidator):
         errors: list[ConsistencyError] = []
 
         # Single loop over all views
-        for view_ref in self.validation_resources.merged.views:
+        for view_ref in self.validation_resources.merged_data_model.views or []:
             if not (view := self.validation_resources.expanded_views(view_ref)):
                 raise RuntimeError(f"{type(self).__name__}: View {view_ref!s} not found. This is a bug in NEAT.")
 
@@ -187,7 +187,8 @@ class ViewImplementsCountIsOutOfLimits(DataModelValidator):
         errors: list[ConsistencyError] = []
 
         # Single loop over all views
-        for view_ref, ancestors in self.validation_resources.ancestors_by_view.items():
+        for view_ref in self.validation_resources.merged_data_model.views or []:
+            ancestors = self.validation_resources.view_ancestors(view_ref)
             if ancestors and len(ancestors) > self.validation_resources.limits.views.implements:
                 errors.append(
                     ConsistencyError(

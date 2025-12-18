@@ -211,7 +211,6 @@ class ValidationResources:
             ancestors = []
 
         # Determine which view definition to use based on space and modus operandi
-
         view_definition = self.select_view(view_ref=offspring, source=source)
 
         # Base case: no view definition or no implements
@@ -228,13 +227,7 @@ class ValidationResources:
         return ancestors
 
     def is_ancestor(self, offspring: ViewReference, ancestor: ViewReference) -> bool:
-        return ancestor in self.ancestors_by_view.get(offspring, set())
-
-    # this needs to be fixed such that we simply expand the view properties and do not pre-calculate them
-    # as often like in this example below data model does not contain all the views that are referenced or used
-    # through out data model, it is safer to have method that expands properties on demand and store them in cache
-    # for re-use
-
+        return ancestor in self.view_ancestors(offspring)
 
     def expand_view(self, view_ref: ViewReference) -> ViewRequest | None:
         """Expand a view by including properties from its ancestors.
@@ -254,7 +247,7 @@ class ValidationResources:
         expanded_view = view.model_copy(deep=True)
 
         # Get all ancestor properties (oldest to newest)
-        ancestor_refs = self.ancestors_by_view.get(view_ref, [])
+        ancestor_refs = self.view_ancestors(view_ref)
         ancestor_properties: dict[str, ViewRequestProperty] = {}
 
         # Collect properties from ancestors, overriding with newer ancestors properties
@@ -272,7 +265,6 @@ class ValidationResources:
             expanded_view.properties = {**ancestor_properties, **expanded_view.properties}
 
         return expanded_view
-
 
     def expanded_views(self, view_ref: ViewReference) -> ViewRequest | None:
         """Get a mapping of view references to their corresponding properties, both directly defined and inherited

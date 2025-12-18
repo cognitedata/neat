@@ -205,11 +205,8 @@ class ReverseConnectionSourcePropertyMissing(DataModelValidator):
                 continue  # Handled by ReverseConnectionSourceViewMissing
 
             # critical to expand view properties to include inherited ones as otherwise we might miss the property
-            if not (source_view_expanded:= self.validation_resources.expanded_views(source_view_ref)):
-                raise RuntimeError(
-                    f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT."
-                )
-
+            if not (source_view_expanded := self.validation_resources.expanded_views(source_view_ref)):
+                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
 
             if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
                 errors.append(
@@ -259,11 +256,8 @@ class ReverseConnectionSourcePropertyWrongType(DataModelValidator):
             if not source_view:
                 continue  # Handled by ReverseConnectionSourceViewMissing
 
-            if not (source_view_expanded:= self.validation_resources.expanded_views(source_view_ref)):
-                raise RuntimeError(
-                    f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT."
-                )
-
+            if not (source_view_expanded := self.validation_resources.expanded_views(source_view_ref)):
+                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
 
             if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
                 continue  # Handled by ReverseConnectionSourcePropertyMissing
@@ -317,10 +311,8 @@ class ReverseConnectionContainerMissing(DataModelValidator):
             if not source_view:
                 continue  # Handled by ReverseConnectionSourceViewMissing
 
-            if not (source_view_expanded:= self.validation_resources.expanded_views(source_view_ref)):
-                raise RuntimeError(
-                    f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT."
-                )
+            if not (source_view_expanded := self.validation_resources.expanded_views(source_view_ref)):
+                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
 
             if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
                 continue  # Handled by ReverseConnectionSourcePropertyMissing
@@ -384,10 +376,8 @@ class ReverseConnectionContainerPropertyMissing(DataModelValidator):
             if not source_view:
                 continue  # Handled by ReverseConnectionSourceViewMissing
 
-            if not (source_view_expanded:= self.validation_resources.expanded_views(source_view_ref)):
-                raise RuntimeError(
-                    f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT."
-                )
+            if not (source_view_expanded := self.validation_resources.expanded_views(source_view_ref)):
+                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
 
             if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
                 continue  # Handled by ReverseConnectionSourcePropertyMissing
@@ -454,10 +444,8 @@ class ReverseConnectionContainerPropertyWrongType(DataModelValidator):
             if not source_view:
                 continue  # Handled by ReverseConnectionSourceViewMissing
 
-            if not (source_view_expanded:= self.validation_resources.expanded_views(source_view_ref)):
-                raise RuntimeError(
-                    f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT."
-                )
+            if not (source_view_expanded := self.validation_resources.expanded_views(source_view_ref)):
+                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
 
             if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
                 continue  # Handled by ReverseConnectionSourcePropertyMissing
@@ -526,10 +514,8 @@ class ReverseConnectionTargetMissing(DataModelValidator):
             if not source_view:
                 continue  # Handled by ReverseConnectionSourceViewMissing
 
-            if not (source_view_expanded:= self.validation_resources.expanded_views(source_view_ref)):
-                raise RuntimeError(
-                    f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT."
-                )
+            if not (source_view_expanded := self.validation_resources.expanded_views(source_view_ref)):
+                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
 
             if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
                 continue  # Handled by ReverseConnectionSourcePropertyMissing
@@ -592,10 +578,8 @@ class ReverseConnectionPointsToAncestor(DataModelValidator):
             if not source_view:
                 continue  # Handled by ReverseConnectionSourceViewMissing
 
-            if not (source_view_expanded:= self.validation_resources.expanded_views(source_view_ref)):
-                raise RuntimeError(
-                    f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT."
-                )
+            if not (source_view_expanded := self.validation_resources.expanded_views(source_view_ref)):
+                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
 
             if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
                 continue  # Handled by ReverseConnectionSourcePropertyMissing
@@ -661,10 +645,8 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
             if not source_view:
                 continue  # Handled by ReverseConnectionSourceViewMissing
 
-            if not (source_view_expanded:= self.validation_resources.expanded_views(source_view_ref)):
-                raise RuntimeError(
-                    f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT."
-                )
+            if not (source_view_expanded := self.validation_resources.expanded_views(source_view_ref)):
+                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
 
             if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
                 continue  # Handled by ReverseConnectionSourcePropertyMissing
