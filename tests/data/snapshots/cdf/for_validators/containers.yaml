@@ -1,10 +1,14 @@
-
 - space: nospace
   externalId: ExistingContainer
   name: ExistingContainer
   description: ExistingContainer
   usedFor: node
   properties:
+    name:
+      immutable: false
+      nullable: false
+      type:
+        type: text
     unused:
       immutable: false
       nullable: false

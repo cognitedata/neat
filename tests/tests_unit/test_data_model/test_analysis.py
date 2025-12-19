@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest
 from pytest_regressions.data_regression import DataRegressionFixture
 
@@ -22,6 +24,20 @@ def scenarios() -> dict[str, ValidationResources]:
         "bi-directional-rebuild": catalog.load_scenario(
             "bi_directional_connections",
             cdf_scenario_name="cdm",
+            modus_operandi="rebuild",
+            include_cdm=True,
+            format="validation-resource",
+        ),
+        "uncategorized_validators-additive": catalog.load_scenario(
+            "uncategorized_validators",
+            cdf_scenario_name="for_validators",
+            modus_operandi="additive",
+            include_cdm=True,
+            format="validation-resource",
+        ),
+        "uncategorized_validators-rebuild": catalog.load_scenario(
+            "uncategorized_validators",
+            cdf_scenario_name="for_validators",
             modus_operandi="rebuild",
             include_cdm=True,
             format="validation-resource",
@@ -254,9 +270,23 @@ class TestValidationResources:
                 id="view without implements has no ancestors",
             ),
             pytest.param(
-                "bi-directional-with-cdm",
-                ViewReference(space="my_space", external_id="DescendantView", version="v1"),
-                [ViewReference(space="my_space", external_id="AncestorView", version="v1")],
+                "uncategorized_validators-additive",
+                ViewReference(space="my_space", external_id="ImplementationChain1", version="v1"),
+                [
+                    ViewReference(type="view", space="another_space", external_id="ImplementationChain2", version="v1"),
+                    ViewReference(type="view", space="my_space", external_id="ImplementationChain3", version="v1"),
+                    ViewReference(type="view", space="my_space", external_id="ImplementationChain4", version="v1"),
+                ],
+                id="view with implements has ancestors",
+            ),
+            pytest.param(
+                "uncategorized_validators-rebuild",
+                ViewReference(space="my_space", external_id="ImplementationChain1", version="v1"),
+                [
+                    ViewReference(type="view", space="another_space", external_id="ImplementationChain2", version="v1"),
+                    ViewReference(type="view", space="my_space", external_id="ImplementationChain3", version="v1"),
+                    ViewReference(type="view", space="my_space", external_id="ImplementationChain4", version="v1"),
+                ],
                 id="view with implements has ancestors",
             ),
         ],
@@ -271,6 +301,149 @@ class TestValidationResources:
         resources = scenarios[scenario]
         ancestors = resources.view_ancestors(view_ref)
         assert ancestors == expected_ancestors
+
+    @pytest.mark.parametrize(
+        "scenario,view_ref,expected_properties",
+        [
+            pytest.param(
+                "uncategorized_validators-additive",
+                ViewReference(space="my_space", external_id="ImplementationChain1", version="v1"),
+                [
+                    ViewCorePropertyRequest(
+                        connection_type="primary_property",
+                        name="name1",
+                        description="name1",
+                        container=ContainerReference(
+                            type="container", space="cdf_cdm", external_id="CogniteDescribable"
+                        ),
+                        containerPropertyIdentifier="name",
+                        source=None,
+                    ),
+                    ViewCorePropertyRequest(
+                        connection_type="primary_property",
+                        name="name5",
+                        description="name5",
+                        container=ContainerReference(
+                            type="container", space="nospace", external_id="ExistingContainer"
+                        ),
+                        containerPropertyIdentifier="name",
+                        source=None,
+                    ),
+                    ViewCorePropertyRequest(
+                        connection_type="primary_property",
+                        name="name4",
+                        description="name4",
+                        container=ContainerReference(
+                            type="container", space="cdf_cdm", external_id="CogniteDescribable"
+                        ),
+                        containerPropertyIdentifier="name",
+                        source=None,
+                    ),
+                    ViewCorePropertyRequest(
+                        connection_type="primary_property",
+                        name="name3",
+                        description="name3",
+                        container=ContainerReference(
+                            type="container", space="nospace", external_id="ExistingContainer"
+                        ),
+                        containerPropertyIdentifier="name",
+                        source=None,
+                    ),
+                    ViewCorePropertyRequest(
+                        connection_type="primary_property",
+                        name="name2",
+                        description="name2",
+                        container=ContainerReference(
+                            type="container", space="cdf_cdm", external_id="CogniteDescribable"
+                        ),
+                        containerPropertyIdentifier="name",
+                        source=None,
+                    ),
+                ],
+                id="Additive mode which bring in additional view property from CDF",
+            ),
+            pytest.param(
+                "uncategorized_validators-rebuild",
+                ViewReference(space="my_space", external_id="ImplementationChain1", version="v1"),
+                [
+                    ViewCorePropertyRequest(
+                        connection_type="primary_property",
+                        name="name1",
+                        description="name1",
+                        container=ContainerReference(
+                            type="container", space="cdf_cdm", external_id="CogniteDescribable"
+                        ),
+                        containerPropertyIdentifier="name",
+                        source=None,
+                    ),
+                    ViewCorePropertyRequest(
+                        connection_type="primary_property",
+                        name="name4",
+                        description="name4",
+                        container=ContainerReference(
+                            type="container", space="cdf_cdm", external_id="CogniteDescribable"
+                        ),
+                        containerPropertyIdentifier="name",
+                        source=None,
+                    ),
+                    ViewCorePropertyRequest(
+                        connection_type="primary_property",
+                        name="name3",
+                        description="name3",
+                        container=ContainerReference(
+                            type="container", space="nospace", external_id="ExistingContainer"
+                        ),
+                        containerPropertyIdentifier="name",
+                        source=None,
+                    ),
+                    ViewCorePropertyRequest(
+                        connection_type="primary_property",
+                        name="name2",
+                        description="name2",
+                        container=ContainerReference(
+                            type="container", space="cdf_cdm", external_id="CogniteDescribable"
+                        ),
+                        containerPropertyIdentifier="name",
+                        source=None,
+                    ),
+                ],
+                id="Rebuild mode which should have one less property since view from CDF is not included",
+            ),
+        ],
+    )
+    def test_expand_view(
+        self,
+        scenario: str,
+        view_ref: ViewReference,
+        expected_properties: list[ViewCorePropertyRequest],
+        scenarios: dict[str, ValidationResources],
+    ) -> None:
+        """This test is doing very complicated PING-PONG of implements and corresponding property inheritance.
+
+        my_space:ImplementationChain1 -> another_space:ImplementationChain2 ->
+        my_space:ImplementationChain3 -> my_space:ImplementationChain4
+
+        where my_space is schema space, and another_space is external space, also
+        re the first three views exist both locally and in CDF, where as the last only exist in CDF.
+
+        By doing this, if we run `rebuild` mode, last view is not considered since it should be deleted in CDF
+        after push of local schema to CDF, and thus properties from that view should not be inherited.
+
+        This test also verifies that property definition are properly overridden, specifically property
+        `name` which container mapping gets to be updated at each view in the chain, despite the property
+        being implemented from the deepest view in the chain (ImplementationChain4 for additive and
+        ImplementationChain3 for rebuild).
+        """
+        resources = scenarios[scenario]
+        expanded_view = resources._expand_view(view_ref)
+        expanded_view_from_cache = resources.expand_view_properties(view_ref)
+
+        assert expanded_view
+        assert expanded_view_from_cache
+        assert expanded_view == expanded_view_from_cache
+        assert expanded_view.properties
+        assert expanded_view_from_cache.properties
+        assert list(expanded_view.properties.values()) == expected_properties
 
     @pytest.mark.parametrize(
         "scenario,view_ref,expected_has_ancestor_count",
@@ -364,9 +537,9 @@ class TestValidationResources:
         scenarios: dict[str, ValidationResources],
     ) -> None:
         resources = scenarios[scenario]
-        properties_mapping = resources.properties_by_view
-        assert view_ref in properties_mapping
-        assert len(properties_mapping[view_ref]) == expected_property_count
+        expanded_view = resources.expand_view_properties(view_ref)
+        assert expanded_view
+        assert len(expanded_view.properties) == expected_property_count
 
     def test_properties_by_view_inherits_from_ancestors(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that properties_by_view includes inherited properties from ancestors"""
@@ -374,13 +547,11 @@ class TestValidationResources:
         descendant_ref = ViewReference(space="my_space", external_id="DescendantView", version="v1")
         ancestor_ref = ViewReference(space="my_space", external_id="AncestorView", version="v1")
 
-        properties_mapping = resources.properties_by_view
-
         # Get ancestor's properties
-        ancestor_props = properties_mapping.get(ancestor_ref, {})
-        descendant_props = properties_mapping.get(descendant_ref, {})
+        ancestor_expanded = cast(ViewRequest, resources.expand_view_properties(ancestor_ref))
+        descendant_expanded = cast(ViewRequest, resources.expand_view_properties(descendant_ref))
 
-        assert set(ancestor_props.keys()).issubset(set(descendant_props.keys())), (
+        assert set(ancestor_expanded.properties.keys()).issubset(set(descendant_expanded.properties.keys())), (
             "Descendant view does not include all properties from ancestor view"
         )
 
