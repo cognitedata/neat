@@ -411,7 +411,7 @@ class TestValidationResources:
             ),
         ],
     )
-    def test_convoluted_property_inheritance(
+    def test_expand_view(
         self,
         scenario: str,
         view_ref: ViewReference,
