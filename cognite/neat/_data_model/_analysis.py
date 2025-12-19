@@ -229,7 +229,7 @@ class ValidationResources:
     def is_ancestor(self, offspring: ViewReference, ancestor: ViewReference) -> bool:
         return ancestor in self.view_ancestors(offspring)
 
-    def expand_view(self, view_ref: ViewReference) -> ViewRequest | None:
+    def _expand_view(self, view_ref: ViewReference) -> ViewRequest | None:
         """Expand a view by including properties from its ancestors.
 
         Args:
@@ -266,12 +266,12 @@ class ValidationResources:
 
         return expanded_view
 
-    def expanded_views(self, view_ref: ViewReference) -> ViewRequest | None:
+    def expand_view_properties(self, view_ref: ViewReference) -> ViewRequest | None:
         """Get a mapping of view references to their corresponding properties, both directly defined and inherited
         from ancestor views through implements."""
 
         if view_ref not in self._expanded_views_cache:
-            expanded_view = self.expand_view(view_ref)
+            expanded_view = self._expand_view(view_ref)
             if expanded_view:
                 self._expanded_views_cache[view_ref] = expanded_view
 

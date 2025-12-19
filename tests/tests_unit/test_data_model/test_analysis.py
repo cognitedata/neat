@@ -435,8 +435,8 @@ class TestValidationResources:
         ImplementationChain3 for rebuild).
         """
         resources = scenarios[scenario]
-        expanded_view = resources.expand_view(view_ref)
-        expanded_view_from_cache = resources.expanded_views(view_ref)
+        expanded_view = resources._expand_view(view_ref)
+        expanded_view_from_cache = resources.expand_view_properties(view_ref)
 
         assert expanded_view
         assert expanded_view_from_cache
@@ -537,7 +537,7 @@ class TestValidationResources:
         scenarios: dict[str, ValidationResources],
     ) -> None:
         resources = scenarios[scenario]
-        expanded_view = resources.expanded_views(view_ref)
+        expanded_view = resources.expand_view_properties(view_ref)
         assert expanded_view
         assert len(expanded_view.properties) == expected_property_count
 
@@ -548,8 +548,8 @@ class TestValidationResources:
         ancestor_ref = ViewReference(space="my_space", external_id="AncestorView", version="v1")
 
         # Get ancestor's properties
-        ancestor_expanded = cast(ViewRequest, resources.expanded_views(ancestor_ref))
-        descendant_expanded = cast(ViewRequest, resources.expanded_views(descendant_ref))
+        ancestor_expanded = cast(ViewRequest, resources.expand_view_properties(ancestor_ref))
+        descendant_expanded = cast(ViewRequest, resources.expand_view_properties(descendant_ref))
 
         assert set(ancestor_expanded.properties.keys()).issubset(set(descendant_expanded.properties.keys())), (
             "Descendant view does not include all properties from ancestor view"
