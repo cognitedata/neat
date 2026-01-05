@@ -232,8 +232,6 @@ class MissingRequiresConstraint(DataModelValidator):
 
         # For each local container, check if it should require other containers
         for container_a in self.validation_resources.local.containers:
-            if container_a.space != self.validation_resources.merged_data_model.space:
-                continue
             views_with_a = self.validation_resources.container_to_views.get(container_a, set())
             if not views_with_a:
                 continue  # Container not used in any view
@@ -250,17 +248,34 @@ class MissingRequiresConstraint(DataModelValidator):
             # Collect containers that A always appears with (strongest recommendation)
             always_required: set[ContainerReference] = set()
 
+            partial_overlap: set[ContainerReference] = set()
+
             for container_b in containers_with_a:
                 # Skip if A already transitively requires B
                 if container_b in transitively_required:
                     continue
 
-                views_with_b = self.validation_resources.container_to_views.get(container_b, set())
+                # Skip if B already transitively requires A (recommending A→B would create a cycle)
+                if container_a in self.validation_resources.get_transitively_required_containers(container_b):
+                    continue
 
-                # Check if A always appears with B (A never appears without B)
-                if views_with_a <= views_with_b:
-                    # Check if there's a container C that A already requires, and C also always appears with B
-                    # but C doesn't require B. If so, the proper recommendation is for C to require B, not A.
+                views_with_b = self.validation_resources.container_to_views.get(container_b, set())
+                views_with_both = views_with_a & views_with_b
+                views_without_b = views_with_a - views_with_b
+
+                # Skip if all views where A and B appear already have a full requires hierarchy
+                all_have_hierarchy = all(
+                    self.validation_resources.has_full_requires_hierarchy(
+                        self.validation_resources.view_to_containers.get(v, set())
+                    )
+                    for v in views_with_both
+                )
+                if all_have_hierarchy:
+                    continue
+
+                if not views_without_b:
+                    # A always appears with B - strongest recommendation
+                    # Check if there's a better candidate C that A already requires
                     should_skip = any(
                         self.validation_resources.container_to_views.get(c, set()) <= views_with_b
                         and container_b not in self.validation_resources.get_transitively_required_containers(c)
@@ -268,34 +283,19 @@ class MissingRequiresConstraint(DataModelValidator):
                     )
                     if not should_skip:
                         always_required.add(container_b)
+                else:
+                    # A appears with B in some views but not all - weaker recommendation
+                    # Include if B transitively covers something in always_required
+                    if self.validation_resources.get_transitively_required_containers(container_b) & always_required:
+                        partial_overlap.add(container_b)
+                    # Or if views where A appears without B are all single-container views
+                    elif all(
+                        len(self.validation_resources.view_to_containers.get(v, set())) == 1 for v in views_without_b
+                    ):
+                        partial_overlap.add(container_b)
 
             # Find the minimal set of constraints needed
             minimal_always = self.validation_resources.find_minimal_requires_set(always_required)
-
-            # Find containers that A appears with in some views but not all
-            # Include if: views without B are all single-container, OR B transitively covers always_required
-            partial_overlap: set[ContainerReference] = set()
-            for container_b in containers_with_a:
-                if container_b in transitively_required or container_b in always_required:
-                    continue
-
-                views_with_b = self.validation_resources.container_to_views.get(container_b, set())
-                views_without_b = views_with_a - views_with_b
-                if not views_without_b:
-                    continue  # A always appears with B - handled above
-
-                # Include if B transitively covers something in always_required
-                if self.validation_resources.get_transitively_required_containers(container_b) & always_required:
-                    partial_overlap.add(container_b)
-                    continue
-
-                # Include if views where A appears without B are all single-container views
-                all_single_container = all(
-                    len(self.validation_resources.view_to_containers.get(v, set())) == 1 for v in views_without_b
-                )
-                if all_single_container:
-                    partial_overlap.add(container_b)
-
             minimal_partial = self.validation_resources.find_minimal_requires_set(
                 partial_overlap, already_covered_by=always_required
             )
