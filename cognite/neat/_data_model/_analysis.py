@@ -477,8 +477,7 @@ class ValidationResources:
     def find_unrequired_containers(self, containers: set[ContainerReference]) -> set[ContainerReference]:
         """Find containers that are not transitively required by any other container in the set.
 
-        These are the "root candidates" - containers that could become the single root if
-        they had requires constraints on the other unrequired containers.
+        These are the candidates for the "outermost" container, i.e. containers that could require all other containers.
 
         Args:
             containers: Set of containers to check

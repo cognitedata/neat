@@ -218,7 +218,7 @@ class MissingRequiresConstraint(DataModelValidator):
     to several containers.
 
     ## Example
-    View `my_space:CogniteAsset` maps to containers `CogniteAsset`, `CogniteVisualizable`,
+    View `CogniteAsset` maps to containers `CogniteAsset`, `CogniteVisualizable`,
     `CogniteDescribable`, and `CogniteSourceable`. The `CogniteAsset` container should have requires
     constraints on all other containers. This allows queries to use a `hasData` filter with only
     the `CogniteAsset` container.
