@@ -622,3 +622,23 @@ class DeploymentResult(BaseDeployObject):
 
             output.update(counts)
         return output
+
+
+def humanize_changes(changes: list[FieldChange]) -> str:
+    primitive_changes = get_primitive_changes(changes)
+    lines = []
+    for change in primitive_changes:
+        lines.append(f"- Field '{change.field_path}': {change.description}")
+    return "\n".join(lines)
+
+
+def get_primitive_changes(changes: list[FieldChange]) -> list[PrimitiveField]:
+    primitive_changes: list[PrimitiveField] = []
+    for change in changes:
+        if isinstance(change, FieldChanges):
+            primitive_changes.extend(get_primitive_changes(change.changes))
+        elif isinstance(change, PrimitiveField):
+            primitive_changes.append(change)
+        else:
+            raise RuntimeError(f"Unknown FieldChange type: {type(change)}")
+    return primitive_changes
