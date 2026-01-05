@@ -367,33 +367,19 @@ class ValidationResources:
         """Get a mapping from views to the containers they use."""
         return {view_ref: view.used_containers for view_ref, view in self.merged.views.items() if view.used_containers}
 
-    def containers_appear_together(self, container_a: ContainerReference, container_b: ContainerReference) -> bool:
-        """Check if two containers ever appear together in any view.
+    def containers_are_mapped_together(self, container_a: ContainerReference, container_b: ContainerReference) -> bool:
+        """Check if two containers are mapped together in any view at least once.
 
         Args:
             container_a: First container reference
             container_b: Second container reference
 
         Returns:
-            True if the containers appear together in at least one view
+            True if the containers are mapped together in at least one view
         """
         views_with_a = self.container_to_views.get(container_a, set())
         views_with_b = self.container_to_views.get(container_b, set())
         return bool(views_with_a & views_with_b)
-
-    def container_always_with(self, container_a: ContainerReference, container_b: ContainerReference) -> bool:
-        """Check if container A always appears with container B (A never without B).
-
-        Args:
-            container_a: Container that might always appear with B
-            container_b: Container that A might always appear with
-
-        Returns:
-            True if container A never appears without container B
-        """
-        views_with_a = self.container_to_views.get(container_a, set())
-        views_with_b = self.container_to_views.get(container_b, set())
-        return len(views_with_a) > 0 and views_with_a <= views_with_b
 
     # =========================================================================
     # Container Requires Constraint Methods

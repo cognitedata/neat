@@ -157,11 +157,9 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
-        view_to_containers = self.validation_resources.view_to_containers
-        local_views = self.validation_resources.local.views
 
-        for view_ref in local_views:
-            containers_in_view = view_to_containers.get(view_ref, set())
+        for view_ref in self.validation_resources.local.views:
+            containers_in_view = self.validation_resources.view_to_containers.get(view_ref, set())
 
             if len(containers_in_view) < 2:
                 continue  # Single container or no containers - no hierarchy needed
@@ -221,11 +219,9 @@ class MappedContainerRequiresUnmappedContainer(DataModelValidator):
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
-        view_to_containers = self.validation_resources.view_to_containers
-        local_views = self.validation_resources.local.views
 
-        for view_ref in local_views:
-            containers_in_view = view_to_containers.get(view_ref, set())
+        for view_ref in self.validation_resources.local.views:
+            containers_in_view = self.validation_resources.view_to_containers.get(view_ref, set())
 
             if not containers_in_view:
                 continue
