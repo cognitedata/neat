@@ -7,17 +7,24 @@ from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer._differ_data_model import DataModelDiffer
 from cognite.neat._data_model.deployer._differ_view import ViewDiffer
 from cognite.neat._data_model.deployer.data_classes import (
+    AddedField,
     AppliedChanges,
+    ChangedField,
     ChangedFieldResult,
     ContainerDeploymentPlan,
     DeploymentResult,
+    FieldChange,
+    FieldChanges,
     HTTPChangeResult,
     MultiHTTPChangeResult,
+    PrimitiveField,
     RemovedField,
     ResourceChange,
     ResourceDeploymentPlan,
     ResourceDeploymentPlanList,
     SeverityType,
+    get_primitive_changes,
+    humanize_changes,
 )
 from cognite.neat._data_model.deployer.deployer import SchemaDeployer
 from cognite.neat._data_model.models.dms import (
@@ -415,3 +422,99 @@ class TestDeploymentResult:
             "status": "success",
             "views.update.SuccessResponseItems": 1,
         } == event
+
+
+class TestGetPrimitiveChanges:
+    @pytest.mark.parametrize(
+        "changes,expected_primitive_changes",
+        [
+            pytest.param(
+                [
+                    FieldChanges(
+                        field_path=".",
+                        changes=[
+                            AddedField(
+                                field_path="name",
+                                item_severity=SeverityType.SAFE,
+                                new_value="container2",
+                            ),
+                            ChangedField(
+                                field_path="description",
+                                item_severity=SeverityType.SAFE,
+                                current_value="Old description",
+                                new_value="New description",
+                            ),
+                        ],
+                    )
+                ],
+                [
+                    AddedField(
+                        field_path="name",
+                        item_severity=SeverityType.SAFE,
+                        new_value="container2",
+                    ),
+                    ChangedField(
+                        field_path="description",
+                        item_severity=SeverityType.SAFE,
+                        current_value="Old description",
+                        new_value="New description",
+                    ),
+                ],
+                id="multiple primitive changes",
+            ),
+            pytest.param(
+                [
+                    FieldChanges(
+                        field_path=".",
+                        changes=[],
+                    )
+                ],
+                [],
+                id="no changes",
+            ),
+            pytest.param(
+                [],
+                [],
+                id="empty changes list",
+            ),
+        ],
+    )
+    def test_get_primitive_changes(
+        self, changes: list[FieldChange], expected_primitive_changes: list[PrimitiveField]
+    ) -> None:
+        actual = get_primitive_changes(changes)
+
+        assert actual == expected_primitive_changes
+
+
+class TestHumanizeChanges:
+    def test_humanize_changes(self) -> None:
+        changes: list[FieldChange] = [
+            AddedField(
+                field_path="name",
+                item_severity=SeverityType.SAFE,
+                new_value="container2",
+            ),
+            ChangedField(
+                field_path="description",
+                item_severity=SeverityType.SAFE,
+                current_value="Old description",
+                new_value="New description",
+            ),
+            RemovedField(
+                field_path="indexes.index1",
+                item_severity=SeverityType.BREAKING,
+                current_value=BtreeIndex(properties=["prop1"]),
+            ),
+        ]
+
+        humanized = humanize_changes(changes)
+
+        expected = (
+            "- Field 'name': added with value 'container2'\n"
+            "- Field 'description': changed from 'Old description' to 'New description'\n"
+            "- Field 'indexes.index1': removed (was BtreeIndex(index_type='btree', "
+            "properties=['prop1'], by_space=None, cursorable=None))"
+        )
+
+        assert humanized == expected

@@ -640,5 +640,5 @@ def get_primitive_changes(changes: Sequence[FieldChange]) -> list[PrimitiveField
         elif isinstance(change, PrimitiveField):
             primitive_changes.append(change)
         else:
-            raise RuntimeError(f"Unknown FieldChange type: {type(change)}")
+            raise NotImplementedError(f"Unknown FieldChange type: {type(change)}")
     return primitive_changes
