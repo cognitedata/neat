@@ -7,8 +7,9 @@ import pytest
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer._differ_view import ViewDiffer
 from cognite.neat._data_model.deployer.data_classes import (
-    FieldChanges,
     SeverityType,
+    get_primitive_changes,
+    humanize_changes,
 )
 from cognite.neat._data_model.models.dms import (
     ContainerPropertyDefinition,
@@ -60,7 +61,10 @@ def supporting_container(neat_test_space: SpaceResponse, neat_client: NeatClient
     )
     try:
         created = neat_client.containers.apply([container])
-        assert len(created) == 1
+        if len(created) != 1:
+            raise AssertionError(
+                "Failed to set up supporting container for testing how the view API reacts to changes."
+            )
         yield created[0].as_request()
     finally:
         neat_client.containers.delete([container.as_reference()])
@@ -83,7 +87,10 @@ def supporting_container2(neat_test_space: SpaceResponse, neat_client: NeatClien
     )
     try:
         created = neat_client.containers.apply([container])
-        assert len(created) == 1
+        if len(created) != 1:
+            raise AssertionError(
+                "Failed to set up supporting containers for testing how the view API reacts to changes."
+            )
         yield created[0].as_request()
     finally:
         neat_client.containers.delete([container.as_reference()])
@@ -108,7 +115,10 @@ def supporting_edge_container(neat_test_space: SpaceResponse, neat_client: NeatC
     )
     try:
         created = neat_client.containers.apply([container])
-        assert len(created) == 1
+        if len(created) != 1:
+            raise AssertionError(
+                "Failed to set up supporting edge container for testing how the view API reacts to changes."
+            )
         yield created[0].as_request()
     finally:
         neat_client.containers.delete([container.as_reference()])
@@ -139,7 +149,8 @@ def supporting_view(
     )
     try:
         created = neat_client.views.apply([view])
-        assert len(created) == 1
+        if len(created) != 1:
+            raise AssertionError("Failed to set up supporting view for testing how the view API reacts to changes.")
         yield created[0].as_request()
     finally:
         neat_client.views.delete([view.as_reference()])
@@ -174,7 +185,8 @@ def supporting_view2(
     )
     try:
         created = neat_client.views.apply([view])
-        assert len(created) == 1
+        if len(created) != 1:
+            raise AssertionError("Failed to set up supporting views for testing how the view API reacts to changes.")
         yield created[0].as_request()
     finally:
         neat_client.views.delete([view.as_reference()])
@@ -203,7 +215,10 @@ def supporting_edge_view(
     )
     try:
         created = neat_client.views.apply([view])
-        assert len(created) == 1
+        if len(created) != 1:
+            raise AssertionError(
+                "Failed to set up supporting edge view for testing how the view API reacts to changes."
+            )
         yield created[0].as_request()
     finally:
         neat_client.views.delete([view.as_reference()])
@@ -232,7 +247,10 @@ def supporting_edge_view2(
     )
     try:
         created = neat_client.views.apply([view])
-        assert len(created) == 1
+        if len(created) != 1:
+            raise AssertionError(
+                "Failed to set up supporting edge view for testing how the view API reacts to changes."
+            )
         yield created[0].as_request()
     finally:
         neat_client.views.delete([view.as_reference()])
@@ -294,7 +312,8 @@ def current_view(
     )
     try:
         created = neat_client.views.apply([view])
-        assert len(created) == 1
+        if len(created) != 1:
+            raise AssertionError("Failed to set up a view for testing how the view API reacts to changes.")
         created_view = created[0]
         yield created_view.as_request()
     finally:
@@ -324,7 +343,9 @@ class TestViewDiffer:
     ) -> None:
         new_view = current_view.model_copy(deep=True)
         diffs = ViewDiffer(all_supporting_containers, all_supporting_containers).diff(current_view, new_view)
-        assert len(diffs) == 0
+        if len(diffs) != 0:
+            messages = humanize_changes(diffs)
+            raise AssertionError(f"Updating a view without changes should yield no diffs. Got:\n{messages}")
 
         assert_allowed_change(new_view, neat_client)
 
@@ -351,13 +372,21 @@ class TestViewDiffer:
         assert_change(current_view, new_view, neat_client, field_path="implements")
 
     def test_diff_implements_remove(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
-        assert current_view.implements is not None and len(current_view.implements) > 0, "Precondition failed."
+        if current_view.implements is None or len(current_view.implements) == 0:
+            raise AssertionError(
+                "The test view should have implements configured, but none were found. "
+                "The test setup may have changed or the API may be returning different default values."
+            )
         new_implements = current_view.implements[:-1] if len(current_view.implements) > 1 else []
         new_view = current_view.model_copy(deep=True, update={"implements": new_implements})
         assert_change(current_view, new_view, neat_client, field_path="implements")
 
     def test_diff_implements_order(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
-        assert current_view.implements is not None and len(current_view.implements) >= 2
+        if current_view.implements is None or len(current_view.implements) < 2:
+            raise AssertionError(
+                "The test view should have at least two implements configured for this test, but it does not. "
+                "The test setup may have changed or the API may be returning different default values."
+            )
         new_implements = list(reversed(current_view.implements))
         new_view = current_view.model_copy(deep=True, update={"implements": new_implements})
         assert_change(current_view, new_view, neat_client, field_path="implements")
@@ -651,45 +680,85 @@ def assert_change(
             though they are not technically breaking from a CDF API perspective.
 
     """
-    diffs = ViewDiffer(all_supporting_containers or {}, all_supporting_containers or {}).diff(current_view, new_view)
-    assert len(diffs) == 1
+    view_diffs = ViewDiffer(all_supporting_containers or {}, all_supporting_containers or {}).diff(
+        current_view, new_view
+    )
+    diffs = get_primitive_changes(view_diffs)
+    if len(diffs) == 0:
+        raise AssertionError(f"Updating a view failed to change {field_path!r}. No changes were detected.")
+    elif len(diffs) > 1:
+        raise AssertionError(
+            f"Updating a view changed {field_path!r}, expected exactly one change, but multiple changes were detected. "
+            f"Changes detected:\n{humanize_changes(diffs)}"
+        )
     diff = diffs[0]
-    # Drill down to the actual field change
-    while isinstance(diff, FieldChanges):
-        assert len(diff.changes) == 1
-        diff = diff.changes[0]
 
     if neat_override_breaking_changes:
-        assert diff.severity == SeverityType.BREAKING, "Expected diff to be breaking when overriding breaking changes."
+        if diff.severity != SeverityType.BREAKING:
+            raise AssertionError(
+                f"The change to '{field_path}' should be classified as BREAKING by Neat's internal rules, "
+                f"but it was classified as {diff.severity}. This indicates a change in how Neat classifies "
+                "breaking changes has changed."
+            )
 
     # Ensure that the diff is on the expected field path
-    assert field_path == diff.field_path, f"Expected diff on field path {field_path}, got {diff.field_path}"
+    if field_path != diff.field_path:
+        raise AssertionError(
+            f"Updated a view expected to change field '{field_path}', but the detected change was on "
+            f"'{diff.field_path}'."
+        )
     if diff.severity == SeverityType.BREAKING and not neat_override_breaking_changes:
         if in_error_message is None:
             in_error_message = field_path.rsplit(".", maxsplit=1)[-1]
-        assert_breaking_change(new_view, neat_client, in_error_message)
+        assert_breaking_change(new_view, neat_client, in_error_message, field_path)
     else:
         # Both WARNING and SAFE are allowed changes
-        assert_allowed_change(new_view, neat_client)
+        assert_allowed_change(new_view, neat_client, field_path)
 
 
-def assert_breaking_change(new_view: ViewRequest, neat_client: NeatClient, in_error_message: str) -> None:
-    with pytest.raises(CDFAPIException) as exc_info:
+def assert_breaking_change(
+    new_view: ViewRequest, neat_client: NeatClient, in_error_message: str, field_path: str
+) -> None:
+    try:
         _ = neat_client.views.apply([new_view])
+        raise AssertionError(
+            f"Updating a view with a breaking change to field '{field_path}' should fail, but it succeeded."
+        )
+    except CDFAPIException as exc_info:
+        responses = exc_info.messages
+        if len(responses) != 1:
+            raise AssertionError(
+                f"The API response should contain exactly one response when rejecting a breaking view change, "
+                f"but got {len(responses)} responses. The field changed was '{field_path}'."
+            ) from None
+        response = responses[0]
+        if not isinstance(response, FailedResponse):
+            raise AssertionError(
+                f"The API response should be a FailedResponse when rejecting a breaking view change, "
+                f"but got {type(response).__name__}: {response!s}. The field changed was '{field_path}'."
+            ) from None
+        if response.error.code != 400:
+            raise AssertionError(
+                f"Expected HTTP 400 Bad Request for breaking view change, got {response.error.code} with "
+                f"message: {response.error.message}. The field changed was '{field_path}'."
+            ) from None
+        if in_error_message not in response.error.message:
+            raise AssertionError(
+                f"The error message for breaking view change should mention '{in_error_message}', "
+                f"but got: {response.error.message}. The field changed was '{field_path}'."
+            ) from None
 
-    responses = exc_info.value.messages
-    assert len(responses) == 1
-    response = responses[0]
-    assert isinstance(response, FailedResponse)
-    assert response.error.code == 400, (
-        f"Expected HTTP 400 Bad Request for breaking change, got {response.error.code} with {response.error.message}"
-    )
-    assert in_error_message in response.error.message
 
-
-def assert_allowed_change(new_view: ViewRequest, neat_client: NeatClient) -> None:
+def assert_allowed_change(new_view: ViewRequest, neat_client: NeatClient, field_path: str | None = None) -> None:
     updated_view = neat_client.views.apply([new_view])
-    assert len(updated_view) == 1
-    assert updated_view[0].as_request().model_dump(by_alias=True, exclude_none=False) == new_view.model_dump(
-        by_alias=True, exclude_none=False
-    ), "View after update does not match the desired state."
+    if len(updated_view) != 1:
+        field_info = f" The field changed was '{field_path}'." if field_path else ""
+        raise AssertionError(
+            f"Updating a view with an allowed change should succeed and return exactly one view, "
+            f"but got {len(updated_view)} views.{field_info}"
+        )
+    actual_dump = updated_view[0].as_request().model_dump(by_alias=True, exclude_none=False)
+    expected_dump = new_view.model_dump(by_alias=True, exclude_none=False)
+    if actual_dump != expected_dump:
+        field_info = f"field '{field_path}'" if field_path else "the view"
+        raise AssertionError(f"Failed to update {field_info}, the change was silently ignored by the API.")
