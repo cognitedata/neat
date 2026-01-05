@@ -306,7 +306,11 @@ class TestContainerPropertyDiffer:
         self, current_container: ContainerRequest, neat_client: NeatClient
     ) -> None:
         float_property = cast(Float32Property, current_container.properties[FLOAT_PROPERTY_ID].type)
-        assert float_property.unit is not None
+        if float_property.unit is None:
+            raise AssertionError(
+                "The test container's float property should have a unit configured, but it was missing. "
+                "The test setup may have changed or the API may be returning different default values."
+            )
         new_float_property = current_container.properties[FLOAT_PROPERTY_ID].model_copy(
             deep=True,
             update={
@@ -330,7 +334,11 @@ class TestContainerPropertyDiffer:
         self, current_container: ContainerRequest, neat_client: NeatClient
     ) -> None:
         float_property = cast(Float32Property, current_container.properties[FLOAT_PROPERTY_ID].type)
-        assert float_property.unit is not None
+        if float_property.unit is None:
+            raise AssertionError(
+                "The test container's float property should have a unit configured, but it was missing. "
+                "The test setup may have changed or the API may be returning different default values."
+            )
         new_float_property = current_container.properties[FLOAT_PROPERTY_ID].model_copy(
             deep=True,
             update={
@@ -475,7 +483,11 @@ class TestContainerPropertyDiffer:
 
 class TestContainerConstraintDiffer:
     def test_change_constraint_type(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
-        assert current_container.constraints is not None
+        if current_container.constraints is None:
+            raise AssertionError(
+                "The test container should have constraints configured, but none were found. "
+                "The test setup may have changed or the API may be returning different default values."
+            )
         new_constraint = RequiresConstraintDefinition(
             require=ContainerReference(space="cdf_cdm", external_id="CogniteAsset")
         )
@@ -492,7 +504,11 @@ class TestContainerConstraintDiffer:
         )
 
     def test_change_constraint_properties(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
-        assert current_container.constraints is not None
+        if current_container.constraints is None:
+            raise AssertionError(
+                "The test container should have constraints configured, but none were found. "
+                "The test setup may have changed or the API may be returning different default values."
+            )
         uniqueness_constraint = cast(
             UniquenessConstraintDefinition, current_container.constraints[UNIQUENESS_CONSTRAINT_ID]
         )
@@ -512,7 +528,11 @@ class TestContainerConstraintDiffer:
         )
 
     def test_change_constraint_by_space(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
-        assert current_container.constraints is not None
+        if current_container.constraints is None:
+            raise AssertionError(
+                "The test container should have constraints configured, but none were found. "
+                "The test setup may have changed or the API may be returning different default values."
+            )
         uniqueness_constraint = cast(
             UniquenessConstraintDefinition, current_container.constraints[UNIQUENESS_CONSTRAINT_ID]
         )
@@ -530,7 +550,11 @@ class TestContainerConstraintDiffer:
         )
 
     def test_change_constraint_require(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
-        assert current_container.constraints is not None
+        if current_container.constraints is None:
+            raise AssertionError(
+                "The test container should have constraints configured, but none were found. "
+                "The test setup may have changed or the API may be returning different default values."
+            )
         requires_constraint = cast(RequiresConstraintDefinition, current_container.constraints[REQUIRES_CONSTRAINT_ID])
         new_constraint = requires_constraint.model_copy(
             deep=True,
@@ -551,7 +575,11 @@ class TestContainerConstraintDiffer:
 
 class TestContainerIndexDiffer:
     def test_change_index_type(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
-        assert current_container.indexes is not None
+        if current_container.indexes is None:
+            raise AssertionError(
+                "The test container should have indexes configured, but none were found. "
+                "The test setup may have changed or the API may be returning different default values."
+            )
         new_index = InvertedIndex(properties=[TEXT_PROPERTY_ID])
         new_container = current_container.model_copy(
             update={"indexes": {**current_container.indexes, BTREE_INDEX_ID: new_index}}
@@ -566,7 +594,11 @@ class TestContainerIndexDiffer:
         )
 
     def test_change_index_properties(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
-        assert current_container.indexes is not None
+        if current_container.indexes is None:
+            raise AssertionError(
+                "The test container should have indexes configured, but none were found. "
+                "The test setup may have changed or the API may be returning different default values."
+            )
         btree_index = cast(BtreeIndex, current_container.indexes[BTREE_INDEX_ID])
         new_index = btree_index.model_copy(deep=True, update={"properties": [TEXT_PROPERTY_ID, FLOAT_PROPERTY_ID]})
         new_container = current_container.model_copy(
@@ -582,7 +614,11 @@ class TestContainerIndexDiffer:
         )
 
     def test_change_btree_index_by_space(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
-        assert current_container.indexes is not None
+        if current_container.indexes is None:
+            raise AssertionError(
+                "The test container should have indexes configured, but none were found. "
+                "The test setup may have changed or the API may be returning different default values."
+            )
         btree_index = cast(BtreeIndex, current_container.indexes[BTREE_INDEX_ID])
         new_index = btree_index.model_copy(deep=True, update={"by_space": False})
         new_container = current_container.model_copy(
@@ -598,7 +634,11 @@ class TestContainerIndexDiffer:
         )
 
     def test_change_btree_index_cursorable(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
-        assert current_container.indexes is not None
+        if current_container.indexes is None:
+            raise AssertionError(
+                "The test container should have indexes configured, but none were found. "
+                "The test setup may have changed or the API may be returning different default values."
+            )
         btree_index = cast(BtreeIndex, current_container.indexes[BTREE_INDEX_ID])
         new_index = btree_index.model_copy(deep=True, update={"cursorable": False})
         new_container = current_container.model_copy(
@@ -639,20 +679,36 @@ def assert_change(
             though they are not technically breaking from a CDF API perspective.
     """
     diffs = ContainerDiffer().diff(current_container, new_container)
-    assert len(diffs) == 1
+    if len(diffs) != 1:
+        raise AssertionError(
+            f"The Container Differ should detect exactly one change when modifying '{field_path}'. "
+            f"Instead, it detected {len(diffs)} changes. This indicates the API may have changed how "
+            f"container modifications are tracked."
+        )
     diff = diffs[0]
     # Drill down to the actual field change
     while isinstance(diff, FieldChanges):
-        assert len(diff.changes) == 1
+        if len(diff.changes) != 1:
+            raise AssertionError(
+                f"Expected a single nested change for '{field_path}', but found {len(diff.changes)} changes. "
+                f"The API may have changed how container field changes are structured."
+            )
         diff = diff.changes[0]
 
     if neat_override_breaking_changes:
-        assert diff.severity == SeverityType.BREAKING, (
-            "Expected diff to be BREAKING when neat_override_breaking_changes is True"
-        )
+        if diff.severity != SeverityType.BREAKING:
+            raise AssertionError(
+                f"The change to '{field_path}' should be classified as BREAKING by Neat's internal rules, "
+                f"but it was classified as {diff.severity}. This indicates a change in how Neat classifies "
+                f"breaking changes."
+            )
 
     # Ensure that the diff is on the expected field path
-    assert field_path == diff.field_path, f"Expected diff on field path {field_path}, got {diff.field_path}"
+    if field_path != diff.field_path:
+        raise AssertionError(
+            f"The detected change was on field '{diff.field_path}' instead of the expected '{field_path}'. "
+            f"This indicates the API may have changed how container field paths are reported."
+        )
 
     if diff.severity == SeverityType.BREAKING and not neat_override_breaking_changes:
         if in_error_message is None:
@@ -664,23 +720,54 @@ def assert_change(
 
 
 def assert_breaking_change(new_container: ContainerRequest, neat_client: NeatClient, in_error_message: str) -> None:
-    with pytest.raises(CDFAPIException) as exc_info:
+    try:
         _ = neat_client.containers.apply([new_container])
-
-    responses = exc_info.value.messages
-    assert len(responses) == 1
-    response = responses[0]
-    assert isinstance(response, FailedResponse)
-    assert response.error.code == 400, (
-        f"Expected HTTP 400 Bad Request for breaking change, got {response.error.code} with {response.error.message}"
-    )
-    # The API considers the type change if the list property is changed
-    assert in_error_message in response.error.message
+        raise AssertionError(
+            f"Applying a breaking change to the container should have been rejected by the API, "
+            f"but it was accepted. The API may have changed its validation rules for container updates. "
+            f"Expected error message to contain: '{in_error_message}'."
+        )
+    except CDFAPIException as exc_info:
+        responses = exc_info.messages
+        if len(responses) != 1:
+            raise AssertionError(
+                f"The API should return exactly one error response for a breaking container change, "
+                f"but returned {len(responses)} responses. The error handling behavior may have changed."
+            ) from None
+        response = responses[0]
+        if not isinstance(response, FailedResponse):
+            raise AssertionError(
+                "The API response should be a failed response for a breaking container change, "
+                "but received a different response type. The API error format may have changed."
+            ) from None
+        if response.error.code != 400:
+            raise AssertionError(
+                f"The API should return HTTP status 400 (Bad Request) when rejecting a breaking container change, "
+                f"but returned status {response.error.code} with message: '{response.error.message}'. "
+                f"The API may have changed how it reports validation errors."
+            ) from None
+        # The API considers the type change if the list property is changed
+        if in_error_message not in response.error.message:
+            raise AssertionError(
+                f"The API error message should mention '{in_error_message}' when rejecting this breaking change, "
+                f"but the actual message was: '{response.error.message}'. "
+                f"The API may have changed its error message format."
+            ) from None
 
 
 def assert_allowed_change(new_container: ContainerRequest, neat_client: NeatClient) -> None:
     updated_container = neat_client.containers.apply([new_container])
-    assert len(updated_container) == 1
-    assert updated_container[0].as_request().model_dump(by_alias=True, exclude_none=False) == new_container.model_dump(
-        by_alias=True, exclude_none=False
-    ), "Container after update does not match the desired state."
+    if len(updated_container) != 1:
+        raise AssertionError(
+            f"Applying an allowed container update should return exactly one container, "
+            f"but returned {len(updated_container)} containers. The API may have changed "
+            f"how it processes container updates."
+        )
+    actual_dump = updated_container[0].as_request().model_dump(by_alias=True, exclude_none=False)
+    expected_dump = new_container.model_dump(by_alias=True, exclude_none=False)
+    if actual_dump != expected_dump:
+        raise AssertionError(
+            "After applying the container update, the container in the API does not match the requested state. "
+            "This indicates the API may have changed how it applies container modifications, or some fields "
+            "are now being ignored or transformed differently."
+        )
