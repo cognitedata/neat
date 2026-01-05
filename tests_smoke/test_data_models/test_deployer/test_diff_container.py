@@ -9,6 +9,7 @@ from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer.data_classes import (
     FieldChanges,
     SeverityType,
+    humanize_changes,
 )
 from cognite.neat._data_model.models.dms import (
     BooleanProperty,
@@ -94,7 +95,8 @@ def current_container(neat_test_space: SpaceResponse, neat_client: NeatClient) -
     )
     try:
         created = neat_client.containers.apply([container])
-        assert len(created) == 1
+        if len(created) != 1:
+            raise AssertionError("Failed to set up container for testing deployer differ tests.")
         created_container = created[0]
         yield created_container.as_request()
     finally:
@@ -105,7 +107,9 @@ class TestContainerDiffer:
     def test_diff_no_changes(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
         new_container = current_container.model_copy(deep=True)
         diffs = ContainerDiffer().diff(current_container, new_container)
-        assert len(diffs) == 0
+        if len(diffs) != 0:
+            messages = humanize_changes(diffs)
+            raise AssertionError(f"Updating a container without changes should yield no diffs. Got:\n{messages}")
 
         assert_allowed_change(new_container, neat_client)
 
