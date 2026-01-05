@@ -143,7 +143,7 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
     When querying a view without filters, the API uses `hasData` filters on all mapped containers.
     If there's no requires hierarchy, each container needs a separate `hasData` check, which
     triggers expensive joins. With a proper requires hierarchy, the `hasData` check can be
-    optimized to only check the "root" container.
+    optimized to only check the "outermost" container.
 
     ## Example
     View `Pump` maps to containers `Pump` and `CogniteDescribable`.
@@ -168,11 +168,11 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
                 continue  # Single container or no containers - no hierarchy needed
 
             # Check if there's a container that requires all others (directly or indirectly)
-            if self.validation_resources.has_root_container(containers_in_view):
+            if self.validation_resources.has_full_requires_hierarchy(containers_in_view):
                 continue  # Performance optimization is possible
 
             # Find containers that aren't required by any other - these need to be connected
-            uncovered = self.validation_resources.find_uncovered_containers(containers_in_view)
+            uncovered = self.validation_resources.find_unrequired_containers(containers_in_view)
             if len(uncovered) > 1:
                 uncovered_str = ", ".join(f"'{c!s}'" for c in sorted(uncovered, key=str))
                 recommendations.append(

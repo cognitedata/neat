@@ -473,11 +473,11 @@ class ValidationResources:
 
         return missing_hierarchy
 
-    def has_root_container(self, containers: set[ContainerReference]) -> bool:
+    def has_full_requires_hierarchy(self, containers: set[ContainerReference]) -> bool:
         """Check if there's a container that transitively requires all other containers in the set.
 
-        For query performance optimization, we only need ONE container (the "root") to require
-        all others. This allows the hasData filter to use only the root container.
+        For query performance optimization, we only need ONE container to require all others.
+        This allows the hasData filter to use only that outermost container.
 
         Args:
             containers: Set of containers to check
@@ -498,11 +498,11 @@ class ValidationResources:
 
         return False
 
-    def find_uncovered_containers(self, containers: set[ContainerReference]) -> set[ContainerReference]:
+    def find_unrequired_containers(self, containers: set[ContainerReference]) -> set[ContainerReference]:
         """Find containers that are not transitively required by any other container in the set.
 
         These are the "root candidates" - containers that could become the single root if
-        they had requires constraints on the other uncovered containers.
+        they had requires constraints on the other unrequired containers.
 
         Args:
             containers: Set of containers to check
@@ -578,17 +578,19 @@ class ValidationResources:
         path.pop()
         return None
 
-    def is_container_covered_by_any(
+    def is_transitively_required_by_any(
         self,
         container: ContainerReference,
         container_set: set[ContainerReference],
         exclude: ContainerReference | None = None,
     ) -> bool:
-        """Check if container is transitively covered by any container in the set.
+        """Check if container is transitively required by any container in the set.
+
+        For example, if A requires B requires C, then C is "covered by" A (and B).
 
         Args:
-            container: The container to check coverage for
-            container_set: Set of containers that might cover the target
+            container: The container to check
+            container_set: Set of containers that might transitively require the target
             exclude: Optionally exclude a specific container from consideration
         """
         for other in container_set:
@@ -603,11 +605,15 @@ class ValidationResources:
         candidates: set[ContainerReference],
         already_covered_by: set[ContainerReference] | None = None,
     ) -> set[ContainerReference]:
-        """Find the minimal set of containers needed (removing those transitively covered by others).
+        """Remove containers that are already transitively required by other containers in the set.
+
+        For example, if candidates = {A, B, C} and A requires B, the result is {A, C}
+        because B is already covered by A's requires constraint.
 
         Args:
-            candidates: Set of candidate containers
-            already_covered_by: Containers that already provide coverage (to filter out candidates)
+            candidates: Set of candidate containers to reduce
+            already_covered_by: Additional containers whose transitive requirements
+                should also be excluded from the result
         """
         if already_covered_by is None:
             already_covered_by = set()
@@ -615,10 +621,10 @@ class ValidationResources:
         minimal: set[ContainerReference] = set()
         for container in candidates:
             # Skip if already covered by the pre-existing set
-            if self.is_container_covered_by_any(container, already_covered_by):
+            if self.is_transitively_required_by_any(container, already_covered_by):
                 continue
             # Skip if covered by another container in the same candidates set
-            if self.is_container_covered_by_any(container, candidates, exclude=container):
+            if self.is_transitively_required_by_any(container, candidates, exclude=container):
                 continue
             minimal.add(container)
         return minimal
