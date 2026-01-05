@@ -7,8 +7,6 @@ import pytest
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer._differ_view import ViewDiffer
 from cognite.neat._data_model.deployer.data_classes import (
-    SeverityType,
-    get_primitive_changes,
     humanize_changes,
 )
 from cognite.neat._data_model.models.dms import (
@@ -30,8 +28,8 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
-from cognite.neat._exceptions import CDFAPIException
-from cognite.neat._utils.http_client import FailedResponse
+
+from .utils import assert_allowed_change, assert_change
 
 CORE_PROPERTY_ID = "coreProperty"
 EDGE_PROPERTY_ID = "edgeProperty"
@@ -347,29 +345,29 @@ class TestViewDiffer:
             messages = humanize_changes(diffs)
             raise AssertionError(f"Updating a view without changes should yield no diffs. Got:\n{messages}")
 
-        assert_allowed_change(new_view, neat_client, "no changes", expect_silently_ignore=False)
+        assert_allowed_change(new_view, neat_client.views, "no changes", expect_silent_ignore=False)
 
     def test_diff_name(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
         new_view = current_view.model_copy(deep=True, update={"name": "Updated name"})
-        assert_change(current_view, new_view, neat_client, field_path="name")
+        assert_change(ViewDiffer({}, {}), current_view, new_view, neat_client.views, field_path="name")
 
     def test_diff_description(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
         new_view = current_view.model_copy(deep=True, update={"description": "Updated description"})
-        assert_change(current_view, new_view, neat_client, field_path="description")
+        assert_change(ViewDiffer({}, {}), current_view, new_view, neat_client.views, field_path="description")
 
     def test_diff_filter(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
         new_view = current_view.model_copy(
             deep=True,
             update={"filter": {"equals": {"property": ["node", "externalId"], "value": "something"}}},
         )
-        assert_change(current_view, new_view, neat_client, field_path="filter")
+        assert_change(ViewDiffer({}, {}), current_view, new_view, neat_client.views, field_path="filter")
 
     def test_diff_implements_add(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
         new_implements = (current_view.implements or []) + [
             ViewReference(space="cdf_cdm", external_id="CogniteSourceable", version="v1")
         ]
         new_view = current_view.model_copy(deep=True, update={"implements": new_implements})
-        assert_change(current_view, new_view, neat_client, field_path="implements")
+        assert_change(ViewDiffer({}, {}), current_view, new_view, neat_client.views, field_path="implements")
 
     def test_diff_implements_remove(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
         if current_view.implements is None or len(current_view.implements) == 0:
@@ -379,7 +377,7 @@ class TestViewDiffer:
             )
         new_implements = current_view.implements[:-1] if len(current_view.implements) > 1 else []
         new_view = current_view.model_copy(deep=True, update={"implements": new_implements})
-        assert_change(current_view, new_view, neat_client, field_path="implements")
+        assert_change(ViewDiffer({}, {}), current_view, new_view, neat_client.views, field_path="implements")
 
     def test_diff_implements_order(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
         if current_view.implements is None or len(current_view.implements) < 2:
@@ -389,7 +387,7 @@ class TestViewDiffer:
             )
         new_implements = list(reversed(current_view.implements))
         new_view = current_view.model_copy(deep=True, update={"implements": new_implements})
-        assert_change(current_view, new_view, neat_client, field_path="implements")
+        assert_change(ViewDiffer({}, {}), current_view, new_view, neat_client.views, field_path="implements")
 
     def test_add_property(
         self, current_view: ViewRequest, supporting_container: ContainerRequest, neat_client: NeatClient
@@ -404,7 +402,9 @@ class TestViewDiffer:
             update={"properties": {**current_view.properties, new_property_id: new_property}}
         )
 
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{new_property_id}")
+        assert_change(
+            ViewDiffer({}, {}), current_view, new_view, neat_client.views, field_path=f"properties.{new_property_id}"
+        )
 
     def test_remove_property(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
         new_properties = current_view.properties.copy()
@@ -412,9 +412,10 @@ class TestViewDiffer:
         new_view = current_view.model_copy(update={"properties": new_properties})
 
         assert_change(
+            ViewDiffer({}, {}),
             current_view,
             new_view,
-            neat_client,
+            neat_client.views,
             field_path=f"properties.{CORE_PROPERTY_ID}",
             expect_silent_ignore=True,
             neat_override_breaking_changes=True,
@@ -439,11 +440,11 @@ class TestViewCorePropertyDiffer:
         )
 
         assert_change(
+            ViewDiffer(all_supporting_containers, all_supporting_containers),
             current_view,
             new_view,
-            neat_client,
+            neat_client.views,
             field_path=f"properties.{CORE_PROPERTY_ID}.container",
-            all_supporting_containers=all_supporting_containers,
         )
 
     def test_diff_container_property_identifier_same_property_type(
@@ -462,11 +463,11 @@ class TestViewCorePropertyDiffer:
         )
 
         assert_change(
+            ViewDiffer(all_supporting_containers, all_supporting_containers),
             current_view,
             new_view,
-            neat_client,
+            neat_client.views,
             field_path=f"properties.{CORE_PROPERTY_ID}.containerPropertyIdentifier",
-            all_supporting_containers=all_supporting_containers,
         )
 
     def test_diff_container_property_identifier_change_property_type(
@@ -483,11 +484,11 @@ class TestViewCorePropertyDiffer:
         )
 
         assert_change(
+            ViewDiffer(all_supporting_containers, all_supporting_containers),
             current_view,
             new_view,
-            neat_client,
+            neat_client.views,
             field_path=f"properties.{CORE_PROPERTY_ID}.containerPropertyIdentifier",
-            all_supporting_containers=all_supporting_containers,
             in_error_message=f"property '{CORE_PROPERTY_ID}' would change type",
         )
 
@@ -500,7 +501,13 @@ class TestViewCorePropertyDiffer:
             update={"properties": {**current_view.properties, DIRECT_PROPERTY_ID: new_direct_property}}
         )
 
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{DIRECT_PROPERTY_ID}.source")
+        assert_change(
+            ViewDiffer({}, {}),
+            current_view,
+            new_view,
+            neat_client.views,
+            field_path=f"properties.{DIRECT_PROPERTY_ID}.source",
+        )
 
 
 class TestViewEdgePropertyDiffer:
@@ -515,9 +522,10 @@ class TestViewEdgePropertyDiffer:
         )
 
         assert_change(
+            ViewDiffer({}, {}),
             current_view,
             new_view,
-            neat_client,
+            neat_client.views,
             field_path=f"properties.{EDGE_PROPERTY_ID}.connectionType",
             in_error_message="'edgeProperty' would change type from single_edge_connection to multi_edge_connection",
         )
@@ -535,7 +543,13 @@ class TestViewEdgePropertyDiffer:
             update={"properties": {**current_view.properties, EDGE_PROPERTY_ID: new_edge_property}}
         )
 
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{EDGE_PROPERTY_ID}.source")
+        assert_change(
+            ViewDiffer({}, {}),
+            current_view,
+            new_view,
+            neat_client.views,
+            field_path=f"properties.{EDGE_PROPERTY_ID}.source",
+        )
 
     def test_diff_type(
         self, current_view: ViewRequest, neat_test_space: SpaceResponse, neat_client: NeatClient
@@ -549,7 +563,13 @@ class TestViewEdgePropertyDiffer:
             update={"properties": {**current_view.properties, EDGE_PROPERTY_ID: new_edge_property}}
         )
 
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{EDGE_PROPERTY_ID}.type")
+        assert_change(
+            ViewDiffer({}, {}),
+            current_view,
+            new_view,
+            neat_client.views,
+            field_path=f"properties.{EDGE_PROPERTY_ID}.type",
+        )
 
     def test_diff_edge_source(
         self,
@@ -567,9 +587,10 @@ class TestViewEdgePropertyDiffer:
         )
 
         assert_change(
+            ViewDiffer({}, {}),
             current_view,
             new_view,
-            neat_client,
+            neat_client.views,
             field_path=f"properties.{EDGE_PROPERTY_ID}.edgeSource",
             neat_override_breaking_changes=True,
         )
@@ -582,9 +603,10 @@ class TestViewEdgePropertyDiffer:
         )
 
         assert_change(
+            ViewDiffer({}, {}),
             current_view,
             new_view,
-            neat_client,
+            neat_client.views,
             field_path=f"properties.{EDGE_PROPERTY_ID}.direction",
             neat_override_breaking_changes=True,
         )
@@ -608,9 +630,10 @@ class TestViewReverseDirectRelationPropertyDiffer:
             }
         )
         assert_change(
+            ViewDiffer({}, {}),
             current_view,
             new_view,
-            neat_client,
+            neat_client.views,
             field_path=f"properties.{REVERSE_DIRECT_RELATION_PROPERTY_ID}.connectionType",
             in_error_message="'reverseDirectRelationProperty' would change type from single_reverse_direct_relation to "
             "multi_reverse_direct_relation",
@@ -633,7 +656,11 @@ class TestViewReverseDirectRelationPropertyDiffer:
         )
 
         assert_change(
-            current_view, new_view, neat_client, field_path=f"properties.{REVERSE_DIRECT_RELATION_PROPERTY_ID}.source"
+            ViewDiffer({}, {}),
+            current_view,
+            new_view,
+            neat_client.views,
+            field_path=f"properties.{REVERSE_DIRECT_RELATION_PROPERTY_ID}.source",
         )
 
     def test_diff_through(
@@ -657,123 +684,9 @@ class TestViewReverseDirectRelationPropertyDiffer:
         )
 
         assert_change(
-            current_view, new_view, neat_client, field_path=f"properties.{REVERSE_DIRECT_RELATION_PROPERTY_ID}.through"
+            ViewDiffer({}, {}),
+            current_view,
+            new_view,
+            neat_client.views,
+            field_path=f"properties.{REVERSE_DIRECT_RELATION_PROPERTY_ID}.through",
         )
-
-
-def assert_change(
-    current_view: ViewRequest,
-    new_view: ViewRequest,
-    neat_client: NeatClient,
-    field_path: str,
-    all_supporting_containers: dict[ContainerReference, ContainerRequest] | None = None,
-    in_error_message: str | None = None,
-    neat_override_breaking_changes: bool = False,
-    expect_silent_ignore: bool = False,
-) -> None:
-    """Assert that changing from current_view to new_view results in a diff on field_path, and that applying the change
-    either succeeds or fails with a breaking change, depending on the diff severity.
-
-    Args:
-        current_view (ViewRequest): The current view before changes.
-        new_view (ViewRequest): The desired view after changes.
-        neat_client (NeatClient): The NEAT client to use for applying changes.
-        field_path (str): The expected field path where the change occurs.
-        all_supporting_containers (dict[ContainerReference, ContainerRequest] | None):
-            Optional dict of all supporting containers for accurate diffing.
-        in_error_message (str | None): Optional substring to look for in the error message if the change is breaking.
-        neat_override_breaking_changes (bool): If True, all changes are treated as allowed, even if the severity is
-            breaking. This is used for changes that we in the Neat team have decided to consider BREAKING, even
-            though they are not technically breaking from a CDF API perspective.
-        expect_silent_ignore (bool): If True, do not raise an exception if any changes fail.
-    """
-    view_diffs = ViewDiffer(all_supporting_containers or {}, all_supporting_containers or {}).diff(
-        current_view, new_view
-    )
-    diffs = get_primitive_changes(view_diffs)
-    if len(diffs) == 0:
-        raise AssertionError(f"Updating a view failed to change {field_path!r}. No changes were detected.")
-    elif len(diffs) > 1:
-        raise AssertionError(
-            f"Updating a view changed {field_path!r}, expected exactly one change, but multiple changes were detected. "
-            f"Changes detected:\n{humanize_changes(diffs)}"
-        )
-    diff = diffs[0]
-
-    if neat_override_breaking_changes:
-        if diff.severity != SeverityType.BREAKING:
-            raise AssertionError(
-                f"The change to '{field_path}' should be classified as BREAKING by Neat's internal rules, "
-                f"but it was classified as {diff.severity}. This indicates a change in how Neat classifies "
-                "breaking changes has changed."
-            )
-
-    # Ensure that the diff is on the expected field path
-    if field_path != diff.field_path:
-        raise AssertionError(
-            f"Updated a view expected to change field '{field_path}', but the detected change was on "
-            f"'{diff.field_path}'."
-        )
-    if diff.severity == SeverityType.BREAKING and not neat_override_breaking_changes:
-        if in_error_message is None:
-            in_error_message = field_path.rsplit(".", maxsplit=1)[-1]
-        assert_breaking_change(new_view, neat_client, in_error_message, field_path)
-    else:
-        # Both WARNING and SAFE are allowed changes
-        assert_allowed_change(new_view, neat_client, field_path, expect_silent_ignore)
-
-
-def assert_breaking_change(
-    new_view: ViewRequest, neat_client: NeatClient, in_error_message: str, field_path: str
-) -> None:
-    try:
-        _ = neat_client.views.apply([new_view])
-        raise AssertionError(
-            f"Updating a view with a breaking change to field '{field_path}' should fail, but it succeeded."
-        )
-    except CDFAPIException as exc_info:
-        responses = exc_info.messages
-        if len(responses) != 1:
-            raise AssertionError(
-                f"The API response should contain exactly one response when rejecting a breaking view change, "
-                f"but got {len(responses)} responses. The field changed was '{field_path}'."
-            ) from None
-        response = responses[0]
-        if not isinstance(response, FailedResponse):
-            raise AssertionError(
-                f"The API response should be a FailedResponse when rejecting a breaking view change, "
-                f"but got {type(response).__name__}: {response!s}. The field changed was '{field_path}'."
-            ) from None
-        if response.error.code != 400:
-            raise AssertionError(
-                f"Expected HTTP 400 Bad Request for breaking view change, got {response.error.code} with "
-                f"message: {response.error.message}. The field changed was '{field_path}'."
-            ) from None
-        if in_error_message not in response.error.message:
-            raise AssertionError(
-                f"The error message for breaking view change should mention '{in_error_message}', "
-                f"but got: {response.error.message}. The field changed was '{field_path}'."
-            ) from None
-
-
-def assert_allowed_change(
-    new_view: ViewRequest, neat_client: NeatClient, field_path: str, expect_silently_ignore: bool
-) -> None:
-    updated_view = neat_client.views.apply([new_view])
-    if len(updated_view) != 1:
-        raise AssertionError(
-            f"Updating a view with an allowed change should succeed and return exactly one view, "
-            f"but got {len(updated_view)} views. The field changed was '{field_path}'."
-        )
-    actual_dump = updated_view[0].as_request().model_dump(by_alias=True, exclude_none=False)
-    expected_dump = new_view.model_dump(by_alias=True, exclude_none=False)
-
-    if expect_silently_ignore:
-        if actual_dump == expected_dump:
-            raise AssertionError(
-                f"Expected the change to field '{field_path}' to be silently ignored by the API, but it was applied."
-            )
-    else:
-        if actual_dump != expected_dump:
-            field_info = f"field '{field_path}'"
-            raise AssertionError(f"Failed to update {field_info}, the change was silently ignored by the API.")
