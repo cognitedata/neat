@@ -232,6 +232,7 @@ class TestContainerPropertyDiffer:
             neat_client.containers,
             field_path=f"properties.{LISTABLE_INT_PROPERTY_ID}.autoIncrement",
             expect_500=True,
+            in_error_message="Internal server error",
         )
 
     def test_diff_property_default_value(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
@@ -337,7 +338,7 @@ class TestContainerPropertyDiffer:
             new_container,
             neat_client.containers,
             field_path=f"properties.{FLOAT_PROPERTY_ID}.type.unit",
-            neat_override_breaking_changes=True,
+            neat_override_breaking_changes=False,
             expect_silent_ignore=True,
         )
 

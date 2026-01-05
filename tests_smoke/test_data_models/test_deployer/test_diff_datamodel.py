@@ -87,5 +87,6 @@ class TestDataModelDiffer:
             new_data_model,
             neat_client.data_models,
             field_path="views",
+            neat_override_breaking_changes=True,
             expect_silent_ignore=True,
         )
