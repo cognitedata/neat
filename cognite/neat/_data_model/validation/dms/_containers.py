@@ -311,7 +311,8 @@ class MissingRequiresConstraint(DataModelValidator):
                     Recommendation(
                         message=(
                             f"Container '{container_a!s}' is always used together with container "
-                            f"'{container_b!s}' but does not have a requires constraint on it."
+                            f"'{container_b!s}' in views, but does not have a requires constraint on it. "
+                            "This can cause suboptimal performance when querying instances through these views."
                         ),
                         fix="Add a requires constraint between the containers",
                         code=self.code,

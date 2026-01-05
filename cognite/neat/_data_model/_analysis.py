@@ -473,6 +473,58 @@ class ValidationResources:
 
         return missing_hierarchy
 
+    def has_root_container(self, containers: set[ContainerReference]) -> bool:
+        """Check if there's a container that transitively requires all other containers in the set.
+
+        For query performance optimization, we only need ONE container (the "root") to require
+        all others. This allows the hasData filter to use only the root container.
+
+        Args:
+            containers: Set of containers to check
+
+        Returns:
+            True if at least one container requires all others (directly or transitively)
+        """
+        if len(containers) <= 1:
+            return True
+
+        others = containers.copy()
+        for candidate in containers:
+            others.discard(candidate)
+            transitively_required = self.get_transitively_required_containers(candidate)
+            if others <= transitively_required:
+                return True
+            others.add(candidate)
+
+        return False
+
+    def find_uncovered_containers(self, containers: set[ContainerReference]) -> set[ContainerReference]:
+        """Find containers that are not transitively required by any other container in the set.
+
+        These are the "root candidates" - containers that could become the single root if
+        they had requires constraints on the other uncovered containers.
+
+        Args:
+            containers: Set of containers to check
+
+        Returns:
+            Set of containers not required by any other container in the set
+        """
+        uncovered: set[ContainerReference] = set()
+
+        for candidate in containers:
+            is_required_by_another = False
+            for other in containers:
+                if other == candidate:
+                    continue
+                if candidate in self.get_transitively_required_containers(other):
+                    is_required_by_another = True
+                    break
+            if not is_required_by_another:
+                uncovered.add(candidate)
+
+        return uncovered
+
     def find_unmapped_required_containers(
         self, containers_in_scope: set[ContainerReference]
     ) -> dict[ContainerReference, set[ContainerReference]]:

@@ -1,5 +1,6 @@
 """Validators for checking views in the data model."""
 
+from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError, Recommendation
@@ -128,7 +129,7 @@ class ImplementedViewNotExisting(DataModelValidator):
         return errors
 
 
-class ViewMissingContainerRequiresHierarchy(DataModelValidator):
+class MappedContainersMissingRequiresConstraint(DataModelValidator):
     """
     Validates that views mapping to multiple containers have a requires hierarchy between them.
 
@@ -145,9 +146,9 @@ class ViewMissingContainerRequiresHierarchy(DataModelValidator):
     optimized to only check the "root" container.
 
     ## Example
-    View `Equipment` maps to containers `EquipmentContainer` and `DescribableContainer`.
+    View `Pump` maps to containers `Pump` and `CogniteDescribable`.
     If neither container requires the other, queries will perform two separate `hasData` checks
-    with a join. Adding `EquipmentContainer requires DescribableContainer` allows the query
+    with a join. Adding `Pump requires CogniteDescribable` allows the query
     optimizer to reduce this to a single `hasData` check.
     """
 
@@ -166,20 +167,25 @@ class ViewMissingContainerRequiresHierarchy(DataModelValidator):
             if len(containers_in_view) < 2:
                 continue  # Single container or no containers - no hierarchy needed
 
-            missing_hierarchy = self.validation_resources.find_container_pairs_without_hierarchy(containers_in_view)
+            # Check if there's a container that requires all others (directly or indirectly)
+            if self.validation_resources.has_root_container(containers_in_view):
+                continue  # Performance optimization is possible
 
-            if missing_hierarchy:
-                pairs_str = ", ".join(f"'{a!s}' and '{b!s}'" for a, b in missing_hierarchy)
+            # Find containers that aren't required by any other - these need to be connected
+            uncovered = self.validation_resources.find_uncovered_containers(containers_in_view)
+            if len(uncovered) > 1:
+                uncovered_str = ", ".join(f"'{c!s}'" for c in sorted(uncovered, key=str))
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"View '{view_ref!s}' maps to multiple containers without a complete requires "
-                            f"hierarchy. The following container pairs have no requires relationship: {pairs_str}. "
-                            f"This causes suboptimal query performance due to multiple hasData filters."
+                            f"View '{view_ref!s}' maps to {len(containers_in_view)} containers but no single "
+                            f"container requires all the others. The following containers are missing a requires "
+                            f"constraint with another container: {uncovered_str}. "
+                            f"This can cause suboptimal performance when querying instances through this view."
                         ),
                         fix=(
-                            "Add requires constraints between the containers to establish a hierarchy, "
-                            "e.g., make one container require the other"
+                            "Add requires constraints between the containers, such that one container "
+                            "requires all the others, either directly or indirectly"
                         ),
                         code=self.code,
                     )
@@ -188,7 +194,7 @@ class ViewMissingContainerRequiresHierarchy(DataModelValidator):
         return recommendations
 
 
-class ViewRequiresUnmappedContainer(DataModelValidator):
+class MappedContainerRequiresUnmappedContainer(DataModelValidator):
     """
     Validates that views don't map to containers that require unmapped containers.
 
@@ -202,12 +208,12 @@ class ViewRequiresUnmappedContainer(DataModelValidator):
     then ingestion through this view is complicated:
     - Container B must be populated separately before data can be ingested through this view
     - The view cannot be used for initial data population
-    - Users must use the containers API or another view to populate B first
+    - Users must use the containers API or another view to populate container B first
 
     ## Example
-    View `Equipment` maps only to `EquipmentContainer`, but `EquipmentContainer` requires
-    `DescribableContainer` (which has a non-nullable `name` property). Since `DescribableContainer`
-    is not mapped in the view, you cannot ingest data through `Equipment` until `DescribableContainer`
+    View `Equipment` maps only to `CogniteEquipment`, but `CogniteEquipment` requires
+    `CogniteDescribable` (which has a non-nullable `name` property). Since `CogniteDescribable`
+    is not mapped in the view, you cannot ingest data through `Equipment` until `CogniteDescribable`
     instances are created separately.
     """
 
@@ -229,22 +235,21 @@ class ViewRequiresUnmappedContainer(DataModelValidator):
             requiring_containers = self.validation_resources.find_unmapped_required_containers(containers_in_view)
 
             if requiring_containers:
-                # Build a clear message showing which containers require which unmapped containers
-                details = []
-                for req_container, unmapped in sorted(requiring_containers.items(), key=lambda x: str(x[0])):
-                    unmapped_str = ", ".join(f"'{c!s}'" for c in sorted(unmapped, key=str))
-                    details.append(f"'{req_container!s}' requires {unmapped_str}")
-                details_str = "; ".join(details)
+                # Collect all unique unmapped containers
+                all_unmapped: set[ContainerReference] = set()
+                for unmapped in requiring_containers.values():
+                    all_unmapped.update(unmapped)
+                unmapped_str = ", ".join(f"'{c!s}'" for c in sorted(all_unmapped, key=str))
 
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"View '{view_ref!s}' maps to containers that require unmapped containers: "
-                            f"{details_str}. Ingestion through this view requires the unmapped containers "
-                            f"to be populated separately first."
+                            f"View '{view_ref!s}' maps to containers that require (directly or indirectly) "
+                            f"the following unmapped containers: {unmapped_str}. Ingestion through this view "
+                            f"requires the unmapped containers to be populated separately first."
                         ),
                         fix=(
-                            "Either add mappings for the required containers to this view, "
+                            "Consider adding mappings for the required containers to this view, "
                             "or remove the requires constraints if they're not needed"
                         ),
                         code=self.code,
