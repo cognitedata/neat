@@ -7,8 +7,8 @@ import pytest
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer.data_classes import (
-    FieldChanges,
     SeverityType,
+    get_primitive_changes,
     humanize_changes,
 )
 from cognite.neat._data_model.models.dms import (
@@ -96,7 +96,7 @@ def current_container(neat_test_space: SpaceResponse, neat_client: NeatClient) -
     try:
         created = neat_client.containers.apply([container])
         if len(created) != 1:
-            raise AssertionError("Failed to set up container for testing deployer differ tests.")
+            raise AssertionError("Failed to set up container for testing how the container API reacts to changes.")
         created_container = created[0]
         yield created_container.as_request()
     finally:
@@ -111,7 +111,7 @@ class TestContainerDiffer:
             messages = humanize_changes(diffs)
             raise AssertionError(f"Updating a container without changes should yield no diffs. Got:\n{messages}")
 
-        assert_allowed_change(new_container, neat_client)
+        assert_allowed_change(new_container, neat_client, "no changes")
 
     def test_diff_used_for(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
         new_container = current_container.model_copy(deep=True, update={"used_for": "edge"})
@@ -678,96 +678,86 @@ def assert_change(
             breaking. This is used for changes that we in the Neat team have decided to consider BREAKING, even
             though they are not technically breaking from a CDF API perspective.
     """
-    diffs = ContainerDiffer().diff(current_container, new_container)
-    if len(diffs) != 1:
+    container_diffs = ContainerDiffer().diff(current_container, new_container)
+    diffs = get_primitive_changes(container_diffs)
+    if len(diffs) == 0:
+        raise AssertionError(f"Updating a container failed to change {field_path!r}. No changes were detected.")
+    elif len(diffs) > 1:
         raise AssertionError(
-            f"The Container Differ should detect exactly one change when modifying '{field_path}'. "
-            f"Instead, it detected {len(diffs)} changes. This indicates the API may have changed how "
-            f"container modifications are tracked."
+            f"Updating a container changed {field_path!r}, expected exactly one change,"
+            f" but multiple changes were detected. "
+            f"Changes detected:\n{humanize_changes(container_diffs)}"
         )
     diff = diffs[0]
-    # Drill down to the actual field change
-    while isinstance(diff, FieldChanges):
-        if len(diff.changes) != 1:
-            raise AssertionError(
-                f"Expected a single nested change for '{field_path}', but found {len(diff.changes)} changes. "
-                f"The API may have changed how container field changes are structured."
-            )
-        diff = diff.changes[0]
 
     if neat_override_breaking_changes:
         if diff.severity != SeverityType.BREAKING:
             raise AssertionError(
                 f"The change to '{field_path}' should be classified as BREAKING by Neat's internal rules, "
                 f"but it was classified as {diff.severity}. This indicates a change in how Neat classifies "
-                f"breaking changes."
+                "breaking changes has changed."
             )
 
     # Ensure that the diff is on the expected field path
     if field_path != diff.field_path:
         raise AssertionError(
-            f"The detected change was on field '{diff.field_path}' instead of the expected '{field_path}'. "
-            f"This indicates the API may have changed how container field paths are reported."
+            f"Updated a container expected to change field '{field_path}', but the detected change was on "
+            f"{diff.field_path}'. "
         )
 
     if diff.severity == SeverityType.BREAKING and not neat_override_breaking_changes:
         if in_error_message is None:
             in_error_message = field_path.rsplit(".", maxsplit=1)[-1]
-        assert_breaking_change(new_container, neat_client, in_error_message)
+        assert_breaking_change(new_container, neat_client, in_error_message, field_path)
     else:
         # Both WARNING and SAFE are allowed changes
-        assert_allowed_change(new_container, neat_client)
+        assert_allowed_change(new_container, neat_client, field_path)
 
 
-def assert_breaking_change(new_container: ContainerRequest, neat_client: NeatClient, in_error_message: str) -> None:
+def assert_breaking_change(
+    new_container: ContainerRequest, neat_client: NeatClient, in_error_message: str, field_path: str
+) -> None:
     try:
         _ = neat_client.containers.apply([new_container])
         raise AssertionError(
-            f"Applying a breaking change to the container should have been rejected by the API, "
-            f"but it was accepted. The API may have changed its validation rules for container updates. "
-            f"Expected error message to contain: '{in_error_message}'."
+            f"Updating a container with a breaking change to field '{field_path}' should fail, but it succeeded."
         )
     except CDFAPIException as exc_info:
         responses = exc_info.messages
         if len(responses) != 1:
             raise AssertionError(
-                f"The API should return exactly one error response for a breaking container change, "
-                f"but returned {len(responses)} responses. The error handling behavior may have changed."
+                f"The API response should contain exactly one response when rejecting a breaking contaienr change, "
+                f"but got {len(responses)} responses. The field changed was '{field_path}'. "
             ) from None
         response = responses[0]
         if not isinstance(response, FailedResponse):
             raise AssertionError(
-                "The API response should be a failed response for a breaking container change, "
-                "but received a different response type. The API error format may have changed."
+                f"The API response should be a FailedResponse when rejecting a breaking container change, "
+                f"but got {type(response).__name__}: {response!s}. The field changed was '{field_path}'. "
             ) from None
         if response.error.code != 400:
             raise AssertionError(
-                f"The API should return HTTP status 400 (Bad Request) when rejecting a breaking container change, "
-                f"but returned status {response.error.code} with message: '{response.error.message}'. "
-                f"The API may have changed how it reports validation errors."
+                f"Expected HTTP 400 Bad Request for breaking container change, got {response.error.code} with "
+                f"message: {response.error.message}. The field changed was '{field_path}'. "
             ) from None
         # The API considers the type change if the list property is changed
         if in_error_message not in response.error.message:
             raise AssertionError(
-                f"The API error message should mention '{in_error_message}' when rejecting this breaking change, "
-                f"but the actual message was: '{response.error.message}'. "
-                f"The API may have changed its error message format."
+                f"The error message for breaking container change should mention '{in_error_message}', "
+                f"but got: {response.error.message}. The field changed was '{field_path}'. "
             ) from None
 
 
-def assert_allowed_change(new_container: ContainerRequest, neat_client: NeatClient) -> None:
+def assert_allowed_change(new_container: ContainerRequest, neat_client: NeatClient, field_path: str) -> None:
     updated_container = neat_client.containers.apply([new_container])
     if len(updated_container) != 1:
         raise AssertionError(
-            f"Applying an allowed container update should return exactly one container, "
-            f"but returned {len(updated_container)} containers. The API may have changed "
-            f"how it processes container updates."
+            f"Updating a container with an allowed change should succeed and return exactly one container, "
+            f"but got {len(updated_container)} containers. The field changed was '{field_path}'. "
         )
     actual_dump = updated_container[0].as_request().model_dump(by_alias=True, exclude_none=False)
     expected_dump = new_container.model_dump(by_alias=True, exclude_none=False)
     if actual_dump != expected_dump:
         raise AssertionError(
-            "After applying the container update, the container in the API does not match the requested state. "
-            "This indicates the API may have changed how it applies container modifications, or some fields "
-            "are now being ignored or transformed differently."
+            f"Failed to the container field {field_path!r}, the change was silently ignored by the API. "
         )
