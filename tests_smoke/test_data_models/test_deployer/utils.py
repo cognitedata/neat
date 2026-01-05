@@ -23,10 +23,10 @@ def assert_change(
     expect_silent_ignore: bool = False,
     expect_500: bool = False,
 ) -> None:
-    """Asserts that the change between current_container and new_container is detected on the given field_path.
+    """Asserts that the change between current_resource and new_resource is detected on the given field_path.
 
-    If the change is breaking, it asserts that applying the new_container raises an error containing in_error_message.
-    If the change is allowed, it asserts that applying the new_container succeeds.
+    If the change is breaking, it asserts that applying the new_resource raises an error containing in_error_message.
+    If the change is allowed, it asserts that applying the new_resource succeeds.
 
     Args:
         differ (ItemDiffer): The differ to use for detecting changes.
