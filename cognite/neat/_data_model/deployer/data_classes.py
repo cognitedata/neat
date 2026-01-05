@@ -624,7 +624,7 @@ class DeploymentResult(BaseDeployObject):
         return output
 
 
-def humanize_changes(changes: list[FieldChange]) -> str:
+def humanize_changes(changes: Sequence[FieldChange]) -> str:
     primitive_changes = get_primitive_changes(changes)
     lines = []
     for change in primitive_changes:
@@ -632,7 +632,7 @@ def humanize_changes(changes: list[FieldChange]) -> str:
     return "\n".join(lines)
 
 
-def get_primitive_changes(changes: list[FieldChange]) -> list[PrimitiveField]:
+def get_primitive_changes(changes: Sequence[FieldChange]) -> list[PrimitiveField]:
     primitive_changes: list[PrimitiveField] = []
     for change in changes:
         if isinstance(change, FieldChanges):

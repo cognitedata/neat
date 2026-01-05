@@ -686,7 +686,7 @@ def assert_change(
         raise AssertionError(
             f"Updating a container changed {field_path!r}, expected exactly one change,"
             f" but multiple changes were detected. "
-            f"Changes detected:\n{humanize_changes(container_diffs)}"
+            f"Changes detected:\n{humanize_changes(diffs)}"
         )
     diff = diffs[0]
 
