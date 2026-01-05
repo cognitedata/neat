@@ -55,7 +55,7 @@ class TestDataModelDiffer:
                 f"but {len(diffs)} differences were detected.: {humanize_changes(diffs)}"
             )
 
-        assert_allowed_change(new_data_model, neat_client, "no changes")
+        assert_allowed_change(new_data_model, neat_client, "no changes", expect_silently_ignore=False)
 
     def test_diff_add_view(self, current_data_model: DataModelRequest, neat_client: NeatClient) -> None:
         new_data_model = current_data_model.model_copy(deep=True)
@@ -73,7 +73,6 @@ class TestDataModelDiffer:
             field_path="views",
         )
 
-    @pytest.mark.skip(reason="API returns 200 but does not add the view. What to do?")
     def test_diff_remove_view(self, current_data_model: DataModelRequest, neat_client: NeatClient) -> None:
         new_data_model = current_data_model.model_copy(deep=True)
         if new_data_model.views is None or len(new_data_model.views) == 0:
@@ -88,6 +87,7 @@ class TestDataModelDiffer:
             new_data_model,
             neat_client,
             field_path="views",
+            expect_silently_ignore=True,
         )
 
 
@@ -96,6 +96,7 @@ def assert_change(
     new_data_model: DataModelRequest,
     neat_client: NeatClient,
     field_path: str,
+    expect_silently_ignore: bool = False,
 ) -> None:
     model_diffs = DataModelDiffer().diff(current_data_model, new_data_model)
     diffs = get_primitive_changes(model_diffs)
@@ -119,7 +120,7 @@ def assert_change(
         assert_breaking_change(new_data_model, neat_client, field_name)
     else:
         # Both WARNING and SAFE are allowed changes
-        assert_allowed_change(new_data_model, neat_client, field_path)
+        assert_allowed_change(new_data_model, neat_client, field_path, expect_silently_ignore)
 
 
 def assert_breaking_change(new_data_model: DataModelRequest, neat_client: NeatClient, field_name: str) -> None:
@@ -155,7 +156,9 @@ def assert_breaking_change(new_data_model: DataModelRequest, neat_client: NeatCl
             ) from None
 
 
-def assert_allowed_change(new_data_model: DataModelRequest, neat_client: NeatClient, field_name: str) -> None:
+def assert_allowed_change(
+    new_data_model: DataModelRequest, neat_client: NeatClient, field_name: str, expect_silently_ignore: bool
+) -> None:
     updated_data_model = neat_client.data_models.apply([new_data_model])
     if len(updated_data_model) != 1:
         raise AssertionError(
@@ -164,7 +167,14 @@ def assert_allowed_change(new_data_model: DataModelRequest, neat_client: NeatCli
         )
     actual_dump = updated_data_model[0].as_request().model_dump(by_alias=True, exclude_none=False)
     expected_dump = new_data_model.model_dump(by_alias=True, exclude_none=False)
-    if actual_dump != expected_dump:
-        raise AssertionError(
-            f"Failed to update the data model field '{field_name}', the change was silently ignored by the API."
-        )
+
+    if expect_silently_ignore:
+        if actual_dump == expected_dump:
+            raise AssertionError(
+                f"Expected the change to field '{field_name}' to be silently ignored by the API, but it was applied."
+            )
+    else:
+        if actual_dump != expected_dump:
+            raise AssertionError(
+                f"Failed to update the data model field '{field_name}', the change was silently ignored by the API."
+            )

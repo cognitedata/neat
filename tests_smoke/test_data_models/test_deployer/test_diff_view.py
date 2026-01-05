@@ -347,7 +347,7 @@ class TestViewDiffer:
             messages = humanize_changes(diffs)
             raise AssertionError(f"Updating a view without changes should yield no diffs. Got:\n{messages}")
 
-        assert_allowed_change(new_view, neat_client)
+        assert_allowed_change(new_view, neat_client, "no changes", expect_silently_ignore=False)
 
     def test_diff_name(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
         new_view = current_view.model_copy(deep=True, update={"name": "Updated name"})
@@ -406,13 +406,19 @@ class TestViewDiffer:
 
         assert_change(current_view, new_view, neat_client, field_path=f"properties.{new_property_id}")
 
-    @pytest.mark.skip(reason="API returns 200 but silently ignores the removal. What should we do?")
     def test_remove_property(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
         new_properties = current_view.properties.copy()
         del new_properties[CORE_PROPERTY_ID]
         new_view = current_view.model_copy(update={"properties": new_properties})
 
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{CORE_PROPERTY_ID}")
+        assert_change(
+            current_view,
+            new_view,
+            neat_client,
+            field_path=f"properties.{CORE_PROPERTY_ID}",
+            expect_silent_ignore=True,
+            neat_override_breaking_changes=True,
+        )
 
 
 class TestViewCorePropertyDiffer:
@@ -663,6 +669,7 @@ def assert_change(
     all_supporting_containers: dict[ContainerReference, ContainerRequest] | None = None,
     in_error_message: str | None = None,
     neat_override_breaking_changes: bool = False,
+    expect_silent_ignore: bool = False,
 ) -> None:
     """Assert that changing from current_view to new_view results in a diff on field_path, and that applying the change
     either succeeds or fails with a breaking change, depending on the diff severity.
@@ -678,7 +685,7 @@ def assert_change(
         neat_override_breaking_changes (bool): If True, all changes are treated as allowed, even if the severity is
             breaking. This is used for changes that we in the Neat team have decided to consider BREAKING, even
             though they are not technically breaking from a CDF API perspective.
-
+        expect_silent_ignore (bool): If True, do not raise an exception if any changes fail.
     """
     view_diffs = ViewDiffer(all_supporting_containers or {}, all_supporting_containers or {}).diff(
         current_view, new_view
@@ -713,7 +720,7 @@ def assert_change(
         assert_breaking_change(new_view, neat_client, in_error_message, field_path)
     else:
         # Both WARNING and SAFE are allowed changes
-        assert_allowed_change(new_view, neat_client, field_path)
+        assert_allowed_change(new_view, neat_client, field_path, expect_silent_ignore)
 
 
 def assert_breaking_change(
@@ -749,16 +756,24 @@ def assert_breaking_change(
             ) from None
 
 
-def assert_allowed_change(new_view: ViewRequest, neat_client: NeatClient, field_path: str | None = None) -> None:
+def assert_allowed_change(
+    new_view: ViewRequest, neat_client: NeatClient, field_path: str, expect_silently_ignore: bool
+) -> None:
     updated_view = neat_client.views.apply([new_view])
     if len(updated_view) != 1:
-        field_info = f" The field changed was '{field_path}'." if field_path else ""
         raise AssertionError(
             f"Updating a view with an allowed change should succeed and return exactly one view, "
-            f"but got {len(updated_view)} views.{field_info}"
+            f"but got {len(updated_view)} views. The field changed was '{field_path}'."
         )
     actual_dump = updated_view[0].as_request().model_dump(by_alias=True, exclude_none=False)
     expected_dump = new_view.model_dump(by_alias=True, exclude_none=False)
-    if actual_dump != expected_dump:
-        field_info = f"field '{field_path}'" if field_path else "the view"
-        raise AssertionError(f"Failed to update {field_info}, the change was silently ignored by the API.")
+
+    if expect_silently_ignore:
+        if actual_dump == expected_dump:
+            raise AssertionError(
+                f"Expected the change to field '{field_path}' to be silently ignored by the API, but it was applied."
+            )
+    else:
+        if actual_dump != expected_dump:
+            field_info = f"field '{field_path}'"
+            raise AssertionError(f"Failed to update {field_info}, the change was silently ignored by the API.")
