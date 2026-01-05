@@ -8,9 +8,9 @@ from cognite.neat._data_model.validation.dms import (
     ExternalContainerDoesNotExist,
     ExternalContainerPropertyDoesNotExist,
     ImplementedViewNotExisting,
-    ReverseConnectionSourceViewMissing,
-    MappedContainersMissingRequiresConstraint,
     MappedContainerRequiresUnmappedContainer,
+    MappedContainersMissingRequiresConstraint,
+    ReverseConnectionSourceViewMissing,
     ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
@@ -70,11 +70,12 @@ class TestValidators:
 
         assert found_connections == expected_connections
 
-        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 4
+        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 5
         version_space_inconsistency_messages = [
             issue.message for issue in by_code[ViewSpaceVersionInconsistentWithDataModel.code]
         ]
         expected_inconsistent_views = {
+            "another_space:HasPropertiesInCDF(version=v2)",
             "another_space:MissingProperties(version=v2)",
             "my_space:MissingProperties(version=v2)",
             "prodigy:OutOfSpace(version=1992)",
@@ -201,11 +202,12 @@ class TestValidators:
 
         assert found_connections == expected_connections
 
-        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 2
+        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 3
         version_space_inconsistency_messages = [
             issue.message for issue in by_code[ViewSpaceVersionInconsistentWithDataModel.code]
         ]
         expected_inconsistent_views = {
+            "another_space:HasPropertiesInCDF(version=v2)",
             "another_space:MissingProperties(version=v2)",
             "my_space:MissingProperties(version=v2)",
         }
@@ -232,7 +234,7 @@ class TestValidators:
                     found_affected_reverse_properties.add(expected_property)
         assert found_affected_reverse_properties == expected_affected_reverse_properties
 
-        assert len(by_code[ViewToContainerMappingNotPossible.code]) == 3
+        assert len(by_code[ViewToContainerMappingNotPossible.code]) == 4
         referenced_containers_messages = [issue.message for issue in by_code[ViewToContainerMappingNotPossible.code]]
         expected_missing_containers = {"nospace:UnexistingContainer", "my_space:DirectConnectionRemoteContainer"}
         expected_missing_container_properties = {"unexistingProperty"}

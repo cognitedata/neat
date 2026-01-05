@@ -56,6 +56,9 @@ class ValidationResources:
         # need this shortcut for easier access and also to avoid mypy to complains
         self.merged_data_model = self.merged.data_model[next(iter(self.merged.data_model.keys()))]
 
+        # For caching of expanded views
+        self._expanded_views_cache: dict[ViewReference, ViewRequest] = {}
+
     def select_view(
         self, view_ref: ViewReference, property_: str | None = None, source: ResourceSource = "auto"
     ) -> ViewRequest | None:
@@ -140,11 +143,26 @@ class ValidationResources:
             Tuple of (check_merged, check_cdf) booleans indicating which sources to check
         """
         if source == "auto":
-            # Auto mode: driven by modus_operandi
-            # In "additive" mode or for resources outside local space, check both merged and CDF
-            # In "rebuild" mode for resources in local space, check only merged == local
-            check_merged = True
-            check_cdf = resource_ref.space != self.merged_data_model.space or self._modus_operandi == "additive"
+            # Auto mode: driven by data modeling modus (approach)
+            # If elements is in the schema space, we check merged, else we check CDF
+
+            in_schema_space = resource_ref.space == self.merged_data_model.space
+
+            if self._modus_operandi == "additive":
+                # In additive modus, schema space means local additions on top of CDF
+                # always check CDF, while do not check merged if resource is not in schema space
+                check_merged = in_schema_space
+                check_cdf = True
+            elif self._modus_operandi == "rebuild":
+                # In rebuild modus, schema space means the full desired state is in local schema (i.e., merged)
+                # you are not adding to CDF, but replacing it, so never check CDF for schema space resources
+                check_merged = in_schema_space
+                check_cdf = not in_schema_space
+            else:
+                raise RuntimeError(
+                    f"_resolve_resource_sources: Unknown modus_operandi: {self._modus_operandi}. This is a bug!"
+                )
+
         elif source == "merged":
             check_merged = True
             check_cdf = False
@@ -194,7 +212,6 @@ class ValidationResources:
             ancestors = []
 
         # Determine which view definition to use based on space and modus operandi
-
         view_definition = self.select_view(view_ref=offspring, source=source)
 
         # Base case: no view definition or no implements
@@ -211,37 +228,55 @@ class ValidationResources:
         return ancestors
 
     def is_ancestor(self, offspring: ViewReference, ancestor: ViewReference) -> bool:
-        return ancestor in self.ancestors_by_view.get(offspring, set())
+        return ancestor in self.view_ancestors(offspring)
 
-    @cached_property
-    def properties_by_view(self) -> dict[ViewReference, dict[str, ViewRequestProperty]]:
+    def _expand_view(self, view_ref: ViewReference) -> ViewRequest | None:
+        """Expand a view by including properties from its ancestors.
+
+        Args:
+            view_ref: The view to expand.
+
+        Returns:
+            ViewRequest with expanded properties, or None if view not found.
+        """
+        view = self.select_view(view_ref)
+
+        if not view:
+            return None
+
+        # Create a deep copy to avoid mutating the original
+        expanded_view = view.model_copy(deep=True)
+
+        # Get all ancestor properties (oldest to newest)
+        ancestor_refs = self.view_ancestors(view_ref)
+        ancestor_properties: dict[str, ViewRequestProperty] = {}
+
+        # Collect properties from ancestors, overriding with newer ancestors properties
+        for ancestor_ref in reversed(ancestor_refs):
+            ancestor = self.select_view(ancestor_ref)
+            if ancestor and ancestor.properties:
+                ancestor_properties.update(ancestor.properties)
+
+        # Merge: ancestor properties first, then override with view's own properties
+        if ancestor_properties:
+            if not expanded_view.properties:
+                expanded_view.properties = {}
+
+            # Ancestor properties are base, view properties override
+            expanded_view.properties = {**ancestor_properties, **expanded_view.properties}
+
+        return expanded_view
+
+    def expand_view_properties(self, view_ref: ViewReference) -> ViewRequest | None:
         """Get a mapping of view references to their corresponding properties, both directly defined and inherited
         from ancestor views through implements."""
 
-        properties_mapping: dict[ViewReference, dict[str, ViewRequestProperty]] = {}
+        if view_ref not in self._expanded_views_cache:
+            expanded_view = self._expand_view(view_ref)
+            if expanded_view:
+                self._expanded_views_cache[view_ref] = expanded_view
 
-        if self.merged_data_model.views:
-            for view_ref in self.merged_data_model.views:
-                view = self.select_view(view_ref)
-                # This should never happen, if it happens, it's a bug
-                if not view:
-                    raise RuntimeError(f"properties_by_view: View {view_ref!s} not found. This is a bug!")
-
-                combined_properties: dict[str, ViewRequestProperty] = {}
-                ancestors = self.ancestors_by_view.get(view_ref, [])
-                # Start with properties from ancestor views
-                for ancestor_ref in reversed(ancestors):
-                    ancestor_view = self.select_view(ancestor_ref)
-                    if ancestor_view:
-                        combined_properties.update(ancestor_view.properties)
-
-                # Finally, add properties from the current view, overriding any inherited ones
-                if view.properties:
-                    combined_properties.update(view.properties)
-
-                properties_mapping[view_ref] = combined_properties
-
-        return properties_mapping
+        return self._expanded_views_cache.get(view_ref)
 
     @cached_property
     def referenced_containers(self) -> set[ContainerReference]:

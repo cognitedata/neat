@@ -20,6 +20,33 @@
   description: An example view
   properties: {}
 
+- space: another_space
+  externalId: MissingProperties
+  version: v2
+  name: Missing Properties
+  description: A view missing properties
+  properties: {}
+
+- space: another_space
+  externalId: HasPropertiesInCDF
+  version: v2
+  name: Has Properties in CDF
+  description: A view that has properties in CDF
+  properties:
+    directPropertyRemote:
+      name: directPropertyRemote
+      description: A direct property for testing reverse connections
+      container:
+        space: my_space
+        externalId: DirectConnectionRemoteContainer
+        type: container
+      containerPropertyIdentifier: directRemote
+      source:
+        space: my_space
+        externalId: MyDescribable
+        version: v1
+        type: view
+
 
 - space: my_space
   externalId: SourceForReverseConnectionExistRemote
@@ -60,3 +87,111 @@
         externalId: MyDescribable
         version: v1
         type: view
+
+
+- space: my_space
+  externalId: ImplementationChain1
+  version: v1
+  name: FirstLink
+  description: a first link in implementation chain
+  properties:
+    name:
+      name: name1
+      description: name1
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: name
+    name_name:
+      name: name2
+      description: name2
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: name
+  implements:
+  - space: another_space
+    externalId: ImplementationChain2
+    version: v1
+    type: view
+
+- space: another_space
+  externalId: ImplementationChain2
+  version: v1
+  name: SecondLink
+  description: a second link in implementation chain
+  properties:
+    name:
+      name: name2
+      description: name2
+      container:
+        space: nospace
+        externalId: ExistingContainer
+        type: container
+      containerPropertyIdentifier: name
+    name_name_name:
+      name: name3
+      description: name3
+      container:
+        space: nospace
+        externalId: ExistingContainer
+        type: container
+      containerPropertyIdentifier: name
+  implements:
+  - space: my_space
+    externalId: ImplementationChain3
+    version: v1
+    type: view
+
+- space: my_space
+  externalId: ImplementationChain3
+  version: v1
+  name: ThirdLink
+  description: a third link in implementation chain
+  properties:
+    name:
+      name: name3
+      description: name3
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: name
+    name_name_name_name:
+      name: name4
+      description: name4
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: name
+  implements:
+  - space: my_space
+    externalId: ImplementationChain4
+    version: v1
+    type: view
+
+- space: my_space
+  externalId: ImplementationChain4
+  version: v1
+  name: FourthLink
+  description: a fourth link in implementation chain
+  properties:
+    name:
+      name: name4
+      description: name4
+      container:
+        space: nospace
+        externalId: ExistingContainer
+        type: container
+      containerPropertyIdentifier: name
+    name_name_name_name_name:
+      name: name5
+      description: name5
+      container:
+        space: nospace
+        externalId: ExistingContainer
+        type: container
+      containerPropertyIdentifier: name

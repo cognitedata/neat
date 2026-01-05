@@ -1,5 +1,5 @@
-- space: cdf_cdm
-  externalId: CogniteDescribable
+- space: my_space
+  externalId: MissingContainer
   usedFor: node
   properties:
     name:
@@ -21,6 +21,7 @@
       properties:
       - name
       cursorable: true
+
 - space: my_space
   externalId: DirectConnectionContainer
   usedFor: node
