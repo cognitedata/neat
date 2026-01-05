@@ -41,8 +41,8 @@ from ._limits import (
 from ._orchestrator import DmsDataModelValidation
 from ._views import (
     ImplementedViewNotExisting,
-    ViewMissingContainerRequiresHierarchy,
-    ViewRequiresUnmappedContainer,
+    MappedContainerRequiresUnmappedContainer,
+    MappedContainersMissingRequiresConstraint,
     ViewToContainerMappingNotPossible,
 )
 
@@ -76,13 +76,13 @@ __all__ = [
     "UnnecessaryRequiresConstraint",
     "ViewContainerCountIsOutOfLimits",
     "ViewImplementsCountIsOutOfLimits",
-    "ViewMissingContainerRequiresHierarchy",
+    "MappedContainersMissingRequiresConstraint",
+    "MappedContainerRequiresUnmappedContainer",
     "ViewMissingDescription",
     "ViewMissingName",
     "ViewPropertyCountIsOutOfLimits",
     "ViewPropertyMissingDescription",
     "ViewPropertyMissingName",
-    "ViewRequiresUnmappedContainer",
     "ViewSpaceVersionInconsistentWithDataModel",
     "ViewToContainerMappingNotPossible",
 ]

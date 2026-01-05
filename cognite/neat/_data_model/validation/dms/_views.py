@@ -161,8 +161,7 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
         local_views = self.validation_resources.local.views
 
         for view_ref in local_views:
-            view_ref_str = str(view_ref)
-            containers_in_view = view_to_containers.get(view_ref_str, set())
+            containers_in_view = view_to_containers.get(view_ref, set())
 
             if len(containers_in_view) < 2:
                 continue  # Single container or no containers - no hierarchy needed
@@ -226,8 +225,7 @@ class MappedContainerRequiresUnmappedContainer(DataModelValidator):
         local_views = self.validation_resources.local.views
 
         for view_ref in local_views:
-            view_ref_str = str(view_ref)
-            containers_in_view = view_to_containers.get(view_ref_str, set())
+            containers_in_view = view_to_containers.get(view_ref, set())
 
             if not containers_in_view:
                 continue

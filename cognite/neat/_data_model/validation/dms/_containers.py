@@ -242,14 +242,14 @@ class MissingRequiresConstraint(DataModelValidator):
         for container_a in local_containers:
             if container_a.space != model_space:
                 continue
-            views_with_a = container_to_views.get(str(container_a), set())
+            views_with_a = container_to_views.get(container_a, set())
             if not views_with_a:
                 continue  # Container not used in any view
 
             # Find all containers that appear with A in any view
             containers_with_a: set[ContainerReference] = set()
-            for view_str in views_with_a:
-                containers_with_a.update(view_to_containers.get(view_str, set()))
+            for view_ref in views_with_a:
+                containers_with_a.update(view_to_containers.get(view_ref, set()))
             containers_with_a.discard(container_a)
 
             # Get what A already transitively requires
@@ -263,14 +263,14 @@ class MissingRequiresConstraint(DataModelValidator):
                 if container_b in transitively_required:
                     continue
 
-                views_with_b = container_to_views.get(str(container_b), set())
+                views_with_b = container_to_views.get(container_b, set())
 
                 # Check if A always appears with B (A never appears without B)
                 if views_with_a <= views_with_b:
                     # Check if there's a container C that A already requires, and C also always appears with B
                     # but C doesn't require B. If so, the proper recommendation is for C to require B, not A.
                     should_skip = any(
-                        container_to_views.get(str(c), set()) <= views_with_b
+                        container_to_views.get(c, set()) <= views_with_b
                         and container_b not in self.validation_resources.get_transitively_required_containers(c)
                         for c in transitively_required
                     )
@@ -287,7 +287,7 @@ class MissingRequiresConstraint(DataModelValidator):
                 if container_b in transitively_required or container_b in always_required:
                     continue
 
-                views_with_b = container_to_views.get(str(container_b), set())
+                views_with_b = container_to_views.get(container_b, set())
                 views_without_b = views_with_a - views_with_b
                 if not views_without_b:
                     continue  # A always appears with B - handled above
@@ -321,12 +321,12 @@ class MissingRequiresConstraint(DataModelValidator):
 
             # Recommend partial overlap containers with contextual details
             for container_b in minimal_partial:
-                views_with_b = container_to_views.get(str(container_b), set())
+                views_with_b = container_to_views.get(container_b, set())
                 views_with_both = views_with_a & views_with_b
                 views_without_b = views_with_a - views_with_b
 
-                views_with_both_str = ", ".join(sorted(views_with_both))
-                views_without_b_str = ", ".join(sorted(views_without_b))
+                views_with_both_str = ", ".join(sorted(str(v) for v in views_with_both))
+                views_without_b_str = ", ".join(sorted(str(v) for v in views_without_b))
 
                 recommendations.append(
                     Recommendation(

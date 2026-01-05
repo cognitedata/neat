@@ -346,36 +346,26 @@ class ValidationResources:
         return connection_end_node_types
 
     @cached_property
-    def container_to_views(self) -> dict[str, set[str]]:
-        """Get a mapping from container reference strings to the views that use them.
-
-        Returns:
-            Dictionary mapping container string (e.g., 'space:containerId') to set of view strings
-        """
-        container_to_views: dict[str, set[str]] = {}
+    def container_to_views(self) -> dict[ContainerReference, set[ViewReference]]:
+        """Get a mapping from containers to the views that use them."""
+        container_to_views: dict[ContainerReference, set[ViewReference]] = {}
 
         for view_ref, view in self.merged.views.items():
             if not view.properties:
                 continue
             for property_ in view.properties.values():
                 if isinstance(property_, ViewCorePropertyRequest):
-                    container_str = str(property_.container)
-                    if container_str not in container_to_views:
-                        container_to_views[container_str] = set()
-                    container_to_views[container_str].add(str(view_ref))
+                    container = property_.container
+                    if container not in container_to_views:
+                        container_to_views[container] = set()
+                    container_to_views[container].add(view_ref)
 
         return container_to_views
 
     @cached_property
-    def view_to_containers(self) -> dict[str, set[ContainerReference]]:
-        """Get a mapping from view reference strings to the containers they use.
-
-        Returns:
-            Dictionary mapping view string (e.g., 'space:viewId(version=v1)') to set of ContainerReferences
-        """
-        return {
-            str(view_ref): view.used_containers for view_ref, view in self.merged.views.items() if view.used_containers
-        }
+    def view_to_containers(self) -> dict[ViewReference, set[ContainerReference]]:
+        """Get a mapping from views to the containers they use."""
+        return {view_ref: view.used_containers for view_ref, view in self.merged.views.items() if view.used_containers}
 
     def containers_appear_together(self, container_a: ContainerReference, container_b: ContainerReference) -> bool:
         """Check if two containers ever appear together in any view.
@@ -387,8 +377,8 @@ class ValidationResources:
         Returns:
             True if the containers appear together in at least one view
         """
-        views_with_a = self.container_to_views.get(str(container_a), set())
-        views_with_b = self.container_to_views.get(str(container_b), set())
+        views_with_a = self.container_to_views.get(container_a, set())
+        views_with_b = self.container_to_views.get(container_b, set())
         return bool(views_with_a & views_with_b)
 
     def container_always_with(self, container_a: ContainerReference, container_b: ContainerReference) -> bool:
@@ -401,8 +391,8 @@ class ValidationResources:
         Returns:
             True if container A never appears without container B
         """
-        views_with_a = self.container_to_views.get(str(container_a), set())
-        views_with_b = self.container_to_views.get(str(container_b), set())
+        views_with_a = self.container_to_views.get(container_a, set())
+        views_with_b = self.container_to_views.get(container_b, set())
         return len(views_with_a) > 0 and views_with_a <= views_with_b
 
     # =========================================================================

@@ -9,8 +9,8 @@ from cognite.neat._data_model.validation.dms import (
     ExternalContainerPropertyDoesNotExist,
     ImplementedViewNotExisting,
     ReverseConnectionSourceViewMissing,
-    ViewMissingContainerRequiresHierarchy,
-    ViewRequiresUnmappedContainer,
+    MappedContainersMissingRequiresConstraint,
+    MappedContainerRequiresUnmappedContainer,
     ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
@@ -48,8 +48,8 @@ class TestValidators:
             ExternalContainerDoesNotExist.code,
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
-            ViewMissingContainerRequiresHierarchy.code,
-            ViewRequiresUnmappedContainer.code,
+            MappedContainersMissingRequiresConstraint.code,
+            MappedContainerRequiresUnmappedContainer.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 3
@@ -178,8 +178,8 @@ class TestValidators:
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
             ImplementedViewNotExisting.code,
-            ViewMissingContainerRequiresHierarchy.code,
-            ViewRequiresUnmappedContainer.code,
+            MappedContainersMissingRequiresConstraint.code,
+            MappedContainerRequiresUnmappedContainer.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 5
