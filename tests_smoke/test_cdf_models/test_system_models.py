@@ -5,7 +5,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer._differ_data_model import DataModelDiffer
 from cognite.neat._data_model.deployer._differ_view import ViewDiffer
-from cognite.neat._data_model.deployer.data_classes import FieldChange, FieldChanges, PrimitiveField
+from cognite.neat._data_model.deployer.data_classes import humanize_changes
 from cognite.neat._data_model.models.dms import (
     ContainerReference,
     ContainerRequest,
@@ -118,23 +118,3 @@ class TestCogniteCoreModel:
             raise AssertionError(
                 f"Container {local_container.as_reference()!s} has changed:\n {humanize_changes(changes)}"
             )
-
-
-def humanize_changes(changes: list[FieldChange]) -> str:
-    primitive_changes = get_primitive_changes(changes)
-    lines = []
-    for change in primitive_changes:
-        lines.append(f"- Field '{change.field_path}': {change.description}")
-    return "\n".join(lines)
-
-
-def get_primitive_changes(changes: list[FieldChange]) -> list[PrimitiveField]:
-    primitive_changes: list[PrimitiveField] = []
-    for change in changes:
-        if isinstance(change, FieldChanges):
-            primitive_changes.extend(get_primitive_changes(change.changes))
-        elif isinstance(change, PrimitiveField):
-            primitive_changes.append(change)
-        else:
-            raise RuntimeError(f"Unknown FieldChange type: {type(change)}")
-    return primitive_changes
