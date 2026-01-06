@@ -384,25 +384,48 @@ class ValidationResources:
 
     @cached_property
     def container_to_views(self) -> dict[ContainerReference, set[ViewReference]]:
-        """Get a mapping from containers to the views that use them."""
+        """Get a mapping from containers to the views that use them.
+
+        Includes views from both the merged schema and all CDF views to capture
+        container-view relationships across the entire CDF environment.
+        Uses expanded views to include inherited properties.
+        """
         container_to_views: dict[ContainerReference, set[ViewReference]] = {}
 
-        for view_ref, view in self.merged.views.items():
-            if not view.properties:
+        # Include all unique views from merged and CDF
+        all_view_refs = set(self.merged.views.keys()) | set(self.cdf.views.keys())
+
+        for view_ref in all_view_refs:
+            # Use expanded view to include inherited properties, fall back to regular view
+            view = self.expand_view_properties(view_ref) or self.select_view(view_ref)
+            if not view:
                 continue
-            for property_ in view.properties.values():
-                if isinstance(property_, ViewCorePropertyRequest):
-                    container = property_.container
-                    if container not in container_to_views:
-                        container_to_views[container] = set()
-                    container_to_views[container].add(view_ref)
+            for container in view.used_containers:
+                if container not in container_to_views:
+                    container_to_views[container] = set()
+                container_to_views[container].add(view_ref)
 
         return container_to_views
 
     @cached_property
     def view_to_containers(self) -> dict[ViewReference, set[ContainerReference]]:
-        """Get a mapping from views to the containers they use."""
-        return {view_ref: view.used_containers for view_ref, view in self.merged.views.items() if view.used_containers}
+        """Get a mapping from views to the containers they use.
+
+        Includes views from both the merged schema and all CDF views.
+        Uses expanded views to include inherited properties.
+        """
+        view_to_containers: dict[ViewReference, set[ContainerReference]] = {}
+
+        # Include all unique views from merged and CDF
+        all_view_refs = set(self.merged.views.keys()) | set(self.cdf.views.keys())
+
+        for view_ref in all_view_refs:
+            # Use expanded view to include inherited properties, fall back to regular view
+            view = self.expand_view_properties(view_ref) or self.select_view(view_ref)
+            if view and view.used_containers:
+                view_to_containers[view_ref] = view.used_containers
+
+        return view_to_containers
 
     def are_containers_mapped_together(self, container_a: ContainerReference, container_b: ContainerReference) -> bool:
         """Check if two containers are mapped together in any view at least once.
@@ -586,9 +609,12 @@ class ValidationResources:
     def find_outermost_container(self, containers_in_view: set[ContainerReference]) -> ContainerReference | None:
         """Find the container that is 'outermost' for a set of containers.
 
-        A container is outermost if it only appears in views whose containers are supersets
+        A container is outermost if it only appears in LOCAL views whose containers are supersets
         of the given container set. This means adding requires constraints to this container
-        will benefit all views where it appears.
+        will benefit all local views where it appears.
+
+        Note: Only considers local views (not CDF views) because we want to find the outermost
+        container in the context of the data model being validated.
 
         Example:
             View Activity: [CogniteDescribable, CogniteSchedulable, Activity]
@@ -605,13 +631,16 @@ class ValidationResources:
             The outermost container if exactly one exists, None otherwise.
         """
         outermost_candidates: list[ContainerReference] = []
+        local_views = set(self.local.views.keys())
 
         for container in containers_in_view:
             views_with_container = self.container_to_views.get(container, set())
+            # Only consider local views for outermost determination
+            local_views_with_container = views_with_container & local_views
 
-            # Check if all views containing this container have at least the same containers
+            # Check if all local views containing this container have at least the same containers
             is_outermost = True
-            for other_view in views_with_container:
+            for other_view in local_views_with_container:
                 other_containers = self.view_to_containers.get(other_view, set())
                 if not containers_in_view.issubset(other_containers):
                     is_outermost = False
