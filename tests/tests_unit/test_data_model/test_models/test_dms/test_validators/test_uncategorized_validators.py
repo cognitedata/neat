@@ -35,7 +35,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 20
+        assert len(on_success.issues) == 21
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -66,11 +66,12 @@ class TestValidators:
 
         assert found_connections == expected_connections
 
-        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 4
+        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 5
         version_space_inconsistency_messages = [
             issue.message for issue in by_code[ViewSpaceVersionInconsistentWithDataModel.code]
         ]
         expected_inconsistent_views = {
+            "another_space:HasPropertiesInCDF(version=v2)",
             "another_space:MissingProperties(version=v2)",
             "my_space:MissingProperties(version=v2)",
             "prodigy:OutOfSpace(version=1992)",
@@ -162,7 +163,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 20
+        assert len(on_success.issues) == 22
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -195,11 +196,12 @@ class TestValidators:
 
         assert found_connections == expected_connections
 
-        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 2
+        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 3
         version_space_inconsistency_messages = [
             issue.message for issue in by_code[ViewSpaceVersionInconsistentWithDataModel.code]
         ]
         expected_inconsistent_views = {
+            "another_space:HasPropertiesInCDF(version=v2)",
             "another_space:MissingProperties(version=v2)",
             "my_space:MissingProperties(version=v2)",
         }
@@ -226,7 +228,7 @@ class TestValidators:
                     found_affected_reverse_properties.add(expected_property)
         assert found_affected_reverse_properties == expected_affected_reverse_properties
 
-        assert len(by_code[ViewToContainerMappingNotPossible.code]) == 3
+        assert len(by_code[ViewToContainerMappingNotPossible.code]) == 4
         referenced_containers_messages = [issue.message for issue in by_code[ViewToContainerMappingNotPossible.code]]
         expected_missing_containers = {"nospace:UnexistingContainer", "my_space:DirectConnectionRemoteContainer"}
         expected_missing_container_properties = {"unexistingProperty"}
