@@ -396,8 +396,8 @@ class ValidationResources:
         all_view_refs = set(self.merged.views.keys()) | set(self.cdf.views.keys())
 
         for view_ref in all_view_refs:
-            # Use expanded view to include inherited properties, fall back to regular view
-            view = self.expand_view_properties(view_ref) or self.select_view(view_ref)
+            # Use expanded view to include inherited properties
+            view = self.expand_view_properties(view_ref)
             if not view:
                 continue
             for container in view.used_containers:
@@ -420,8 +420,8 @@ class ValidationResources:
         all_view_refs = set(self.merged.views.keys()) | set(self.cdf.views.keys())
 
         for view_ref in all_view_refs:
-            # Use expanded view to include inherited properties, fall back to regular view
-            view = self.expand_view_properties(view_ref) or self.select_view(view_ref)
+            # Use expanded view to include inherited properties
+            view = self.expand_view_properties(view_ref)
             if view and view.used_containers:
                 view_to_containers[view_ref] = view.used_containers
 
