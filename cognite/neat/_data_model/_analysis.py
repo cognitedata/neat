@@ -1,5 +1,5 @@
 from collections.abc import Set as AbstractSet
-from functools import lru_cache
+from functools import cache
 from itertools import chain
 from typing import Literal, TypeAlias
 
@@ -464,7 +464,7 @@ class ValidationResources:
         """
         return self._compute_transitive_requirements(container_ref, frozenset())
 
-    @lru_cache(maxsize=None)
+    @cache
     def _compute_transitive_requirements(
         self, container_ref: ContainerReference, visited: frozenset[ContainerReference]
     ) -> frozenset[ContainerReference]:
