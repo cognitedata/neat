@@ -4,16 +4,18 @@ import pytest
 
 from cognite.neat._config import internal_profiles
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
-from cognite.neat._data_model.validation.dms._containers import (
-    MissingRequiresConstraint,
-    RequiresConstraintCycle,
-    UnnecessaryRequiresConstraint,
-)
+from cognite.neat._data_model.validation.dms._containers import RequiresConstraintCycle, UnnecessaryRequiresConstraint
 from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
+from cognite.neat._data_model.validation.dms._views import MappedContainersMissingRequiresConstraint
 from tests.data import SNAPSHOT_CATALOG
 
 PROBLEMS = {
-    MissingRequiresConstraint: {"AssetContainer", "DescribableContainer", "TransitiveParent", "TagContainer"},
+    MappedContainersMissingRequiresConstraint: {
+        "AssetContainer",
+        "DescribableContainer",
+        "TransitiveParent",
+        "TagContainer",
+    },
     UnnecessaryRequiresConstraint: {"OrderContainer", "CustomerContainer"},
     RequiresConstraintCycle: {"CycleContainerA", "CycleContainerB"},
 }
@@ -70,8 +72,12 @@ def test_requires_constraints_validation(validation_result: DmsDataModelValidati
 
 def test_transitivity_avoids_redundant_recommendations(validation_result: DmsDataModelValidation) -> None:
     """When Middle requires Leaf, Parent should only get one recommendation (Parent→Middle), not two."""
-    messages = [issue.message for issue in validation_result.issues if issue.code == MissingRequiresConstraint.code]
-    parent_issues = [msg for msg in messages if msg.startswith("Container 'my_space:TransitiveParent'")]
+    messages = [
+        issue.message
+        for issue in validation_result.issues
+        if issue.code == MappedContainersMissingRequiresConstraint.code
+    ]
+    parent_issues = [msg for msg in messages if "TransitiveParent" in msg]
     assert len(parent_issues) == 1, (
         f"Expected 1 issue for TransitiveParent (transitivity should prevent redundant Parent→Leaf), "
         f"got {len(parent_issues)}"

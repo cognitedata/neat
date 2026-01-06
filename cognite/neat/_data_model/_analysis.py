@@ -456,34 +456,6 @@ class ValidationResources:
             all_required.update(self.get_transitively_required_containers(req, visited))
         return all_required
 
-    def find_container_pairs_without_hierarchy(
-        self, containers: set[ContainerReference]
-    ) -> list[tuple[ContainerReference, ContainerReference]]:
-        """Find container pairs where neither requires the other (directly or transitively).
-
-        Args:
-            containers: Set of containers to check
-
-        Returns:
-            List of (container_a, container_b) pairs with no requires relationship
-        """
-        containers_list = list(containers)
-        missing_hierarchy: list[tuple[ContainerReference, ContainerReference]] = []
-
-        for i, container_a in enumerate(containers_list):
-            transitively_required_by_a = self.get_transitively_required_containers(container_a)
-
-            for container_b in containers_list[i + 1 :]:
-                transitively_required_by_b = self.get_transitively_required_containers(container_b)
-
-                a_requires_b = container_b in transitively_required_by_a
-                b_requires_a = container_a in transitively_required_by_b
-
-                if not a_requires_b and not b_requires_a:
-                    missing_hierarchy.append((container_a, container_b))
-
-        return missing_hierarchy
-
     def has_full_requires_hierarchy(self, containers: set[ContainerReference]) -> bool:
         """Check if there's a container that transitively requires all other containers in the set.
 
@@ -535,26 +507,46 @@ class ValidationResources:
 
         return uncovered
 
-    def find_unmapped_required_containers(
-        self, containers_in_scope: set[ContainerReference]
-    ) -> dict[ContainerReference, set[ContainerReference]]:
-        """Find which containers require other containers not in the given scope.
+    def find_outermost_container(self, containers_in_view: set[ContainerReference]) -> ContainerReference | None:
+        """Find the container that is 'outermost' for a set of containers.
+
+        A container is outermost if it only appears in views whose containers are supersets
+        of the given container set. This means adding requires constraints to this container
+        will benefit all views where it appears.
+
+        Example:
+            View Activity: [CogniteDescribable, CogniteSchedulable, Activity]
+            View ActivityExtended: [CogniteDescribable, CogniteSchedulable, Activity, ActivityExtended]
+
+            For Activity view's containers, "Activity" is outermost because:
+            - Activity appears in Activity view (exact match) and ActivityExtended view (superset)
+            - Both views have containers ⊇ Activity view's containers
 
         Args:
-            containers_in_scope: Set of containers to check (e.g., containers in a view)
+            containers_in_view: Set of containers to find the outermost for.
 
         Returns:
-            Dict mapping each container to the set of required containers not in scope
+            The outermost container if exactly one exists, None otherwise.
         """
-        requiring_containers: dict[ContainerReference, set[ContainerReference]] = {}
+        outermost_candidates: list[ContainerReference] = []
 
-        for container_ref in containers_in_scope:
-            all_required = self.get_transitively_required_containers(container_ref)
-            not_in_scope = all_required - containers_in_scope
-            if not_in_scope:
-                requiring_containers[container_ref] = not_in_scope
+        for container in containers_in_view:
+            views_with_container = self.container_to_views.get(container, set())
 
-        return requiring_containers
+            # Check if all views containing this container have at least the same containers
+            is_outermost = True
+            for other_view in views_with_container:
+                other_containers = self.view_to_containers.get(other_view, set())
+                if not containers_in_view.issubset(other_containers):
+                    is_outermost = False
+                    break
+
+            if is_outermost:
+                outermost_candidates.append(container)
+
+        if len(outermost_candidates) == 1:
+            return outermost_candidates[0]
+        return None
 
     def find_requires_constraint_cycle(
         self,
