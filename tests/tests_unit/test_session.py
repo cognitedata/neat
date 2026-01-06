@@ -16,6 +16,86 @@ from cognite.neat._issues import IssueList
 from cognite.neat._session._physical import ReadPhysicalDataModel
 from cognite.neat._session._session import NeatSession
 from cognite.neat._session._usage_analytics._collector import Collector
+from tests.data import SNAPSHOT_CATALOG
+
+VALID_TOOLKIT_SCHEMA_YAML = """
+dataModel:
+  space: sp_command_centre_v1
+  externalId: CommandCentreModel
+  name: Command Centre Prototype V1
+  version: v1
+  description: >
+    The comprehensive Data Model for the Command Centre. It unifies OT, IT,
+    Logistics, and Financial data to enable 'Atlas AI' agents to detect
+    supply chain risks and simulate mitigation scenarios.
+  views:
+    - space: sp_command_centre_v1
+      externalId: Organization
+      version: v1
+    - space: cdf_cdm
+      externalId: CogniteAsset
+      version: v1
+
+views:
+- space: sp_command_centre_v1
+  externalId: Organization
+  name: Organization
+  version: v1
+  description: The top-level node representing the corporate entity.
+  properties:
+    name:
+      name: Name
+      description: The name of the organization.
+      container:
+        type: container
+        space: cdf_cdm
+        externalId: CogniteDescribable
+      containerPropertyIdentifier: name
+    totalRevenueRisk:
+      name: Total Revenue Risk
+      description: Aggregated financial risk ($) across all regions.
+      container:
+        type: container
+        space: sp_command_centre_v1
+        externalId: cont_enterprise_hierarchy
+      containerPropertyIdentifier: totalRevenueRisk
+
+containers:
+- space: sp_command_centre_v1
+  externalId: cont_enterprise_hierarchy
+  name: Enterprise Hierarchy Container
+  usedFor: node
+  properties:
+    totalRevenueRisk:
+      immutable: false
+      nullable: true
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      name: null
+      type:
+        type: float64
+        list: false
+        maxListSize: null
+    globalStockValue:
+      immutable: false
+      nullable: true
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      name: null
+      type:
+        type: float64
+        list: false
+        maxListSize: null
+
+spaces:
+- space: sp_command_centre_v1
+  name: Command Centre Prototype V1
+  description: >
+    A dedicated space for the Manufacturing Command Centre Knowledge Graph.
+    It hosts specific extensions for Supply Chain risk, Financial impact, and
+    multi-site Inventory visibility, supporting the 'Derisking Manufacturing Supply Chain' prototype."""
 
 
 @pytest.fixture()
@@ -224,6 +304,28 @@ class TestNeatSession:
 
         # we remain in physical state even though we hit Forbidden state, auto-recovery
         assert isinstance(session._store.state, states.PhysicalState)
+
+
+def test_toolkit_to_excel_conversion(neat_config: NeatClientConfig, respx_mock: respx.MockRouter) -> None:
+    # prepare response
+    _, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+        "ai_readiness", "for_validators", format="snapshots", include_cdm=True
+    )
+    # update mock router with snapshot data
+    _ = SNAPSHOT_CATALOG.snapshot_to_mock_router(cdf_snapshot, neat_config, respx_mock)  # type: ignore
+    session = NeatSession(neat_config)
+
+    read_yaml = MagicMock(spec=Path)
+    read_yaml.read_text.return_value = VALID_TOOLKIT_SCHEMA_YAML
+    read_yaml.name = "toolkit.yaml"
+    read_yaml.suffix = ".yaml"
+    write_yaml = MagicMock(spec=Path)
+
+    session.physical_data_model.read.yaml(read_yaml, format="toolkit")
+    session.physical_data_model.write.yaml(write_yaml, format="neat")
+
+    # missing container from toolkit schema should be added in neat schema
+    assert "- Container: cdf_cdm:CogniteDescribable" in write_yaml.write_text.call_args[0][0]
 
 
 @pytest.mark.serial
