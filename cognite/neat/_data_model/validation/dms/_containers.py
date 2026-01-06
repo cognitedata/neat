@@ -236,9 +236,16 @@ class MissingRequiresConstraint(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        # For each local container, check if it should require other containers
-        for container_a in self.validation_resources.local.containers:
-            views_with_a = self.validation_resources.container_to_views.get(container_a, set())
+        for container_a_ref in self.validation_resources.merged.containers:
+            container_a = self.validation_resources.select_container(container_a_ref)
+
+            if not container_a:
+                raise RuntimeError(
+                    f"{type(self).__name__}: Container {container_a_ref!s} "
+                    "not found in local resources. This is a bug in NEAT."
+                )
+
+            views_with_a = self.validation_resources.container_to_views.get(container_a_ref, set())
             if not views_with_a:
                 continue  # Container not used in any view
 
@@ -246,35 +253,40 @@ class MissingRequiresConstraint(DataModelValidator):
             containers_with_a: set[ContainerReference] = set()
             for view_ref in views_with_a:
                 containers_with_a.update(self.validation_resources.view_to_containers.get(view_ref, set()))
-            containers_with_a.discard(container_a)
+            containers_with_a.discard(container_a_ref)
 
             # Get what A already transitively requires
-            transitively_required = self.validation_resources.get_transitively_required_containers(container_a)
+            transitively_required = self.validation_resources.get_transitively_required_containers(container_a_ref)
 
             # Collect containers that A always appears with (strongest recommendation)
             always_required: set[ContainerReference] = set()
 
             partial_overlap: set[ContainerReference] = set()
 
-            for container_b in containers_with_a:
+            for container_b_ref in containers_with_a:
+                container_b = self.validation_resources.select_container(container_b_ref)
+
+                if not container_b:
+                    continue  # Covered by RequiredContainerDoesNotExist
+
                 # Skip if A already transitively requires B
-                if container_b in transitively_required:
+                if container_b_ref in transitively_required:
                     continue
 
                 # Skip if B already transitively requires A (recommending A→B would create a cycle)
-                if container_a in self.validation_resources.get_transitively_required_containers(container_b):
+                if container_a_ref in self.validation_resources.get_transitively_required_containers(container_b_ref):
                     continue
 
-                views_with_b = self.validation_resources.container_to_views.get(container_b, set())
+                views_with_b = self.validation_resources.container_to_views.get(container_b_ref, set())
                 views_with_both = views_with_a & views_with_b
                 views_without_b = views_with_a - views_with_b
 
                 # Skip if all views where A and B appear already have a full requires hierarchy
                 all_have_hierarchy = all(
                     self.validation_resources.has_full_requires_hierarchy(
-                        self.validation_resources.view_to_containers.get(v, set())
+                        self.validation_resources.view_to_containers.get(view_ref, set())
                     )
-                    for v in views_with_both
+                    for view_ref in views_with_both
                 )
                 if all_have_hierarchy:
                     continue
@@ -284,21 +296,24 @@ class MissingRequiresConstraint(DataModelValidator):
                     # Check if there's a better candidate C that A already requires
                     should_skip = any(
                         self.validation_resources.container_to_views.get(c, set()) <= views_with_b
-                        and container_b not in self.validation_resources.get_transitively_required_containers(c)
+                        and container_b_ref not in self.validation_resources.get_transitively_required_containers(c)
                         for c in transitively_required
                     )
                     if not should_skip:
-                        always_required.add(container_b)
+                        always_required.add(container_b_ref)
                 else:
                     # A appears with B in some views but not all - weaker recommendation
                     # Include if B transitively covers something in always_required
-                    if self.validation_resources.get_transitively_required_containers(container_b) & always_required:
-                        partial_overlap.add(container_b)
+                    if (
+                        self.validation_resources.get_transitively_required_containers(container_b_ref)
+                        & always_required
+                    ):
+                        partial_overlap.add(container_b_ref)
                     # Or if views where A appears without B are all single-container views
                     elif all(
                         len(self.validation_resources.view_to_containers.get(v, set())) == 1 for v in views_without_b
                     ):
-                        partial_overlap.add(container_b)
+                        partial_overlap.add(container_b_ref)
 
             # Find the minimal set of constraints needed
             minimal_always = self.validation_resources.find_minimal_requires_set(always_required)
@@ -310,8 +325,8 @@ class MissingRequiresConstraint(DataModelValidator):
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"Container '{container_a!s}' is always used together with container "
-                            f"'{container_b!s}' in views, but does not have a requires constraint on it. "
+                            f"Container '{container_a_ref!s}' is always used together with container "
+                            f"'{container_b_ref!s}' in views, but does not have a requires constraint on it. "
                             "This can cause suboptimal performance when querying instances through these views."
                         ),
                         fix="Add a requires constraint between the containers",
@@ -331,11 +346,11 @@ class MissingRequiresConstraint(DataModelValidator):
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"Container '{container_a!s}' appears with container '{container_b!s}' "
+                            f"Container '{container_a_ref!s}' appears with container '{container_b_ref!s}' "
                             f"in views: [{views_with_both_str}], but not in: [{views_without_b_str}]. "
-                            f"Adding a requires constraint in '{container_a!s}' on '{container_b!s}' "
+                            f"Adding a requires constraint in '{container_a_ref!s}' on '{container_b_ref!s}' "
                             f"would improve query performance for these views, but may complicate "
-                            f"ingestion for views where '{container_a!s}' appears without '{container_b!s}'."
+                            f"ingestion for views where '{container_a_ref!s}' appears without '{container_b_ref!s}'."
                         ),
                         fix=(
                             "Consider adding a requires constraint if query performance "
@@ -376,8 +391,14 @@ class UnnecessaryRequiresConstraint(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        # Check each local container's requires constraints
-        for container_ref, container in self.validation_resources.local.containers.items():
+        for container_ref in self.validation_resources.merged.containers:
+            container = self.validation_resources.select_container(container_ref)
+
+            if not container:
+                raise RuntimeError(
+                    f"{type(self).__name__}: Container {container_ref!s} not found in local resources. This is a bug in NEAT."
+                )
+
             if not container.constraints:
                 continue
 
@@ -433,8 +454,7 @@ class RequiresConstraintCycle(DataModelValidator):
         # Track which containers we've already reported cycles for
         reported_cycles: set[frozenset[ContainerReference]] = set()
 
-        # Check each local container for cycles
-        for container_ref in self.validation_resources.local.containers:
+        for container_ref in self.validation_resources.merged.containers:
             cycle = self.validation_resources.find_requires_constraint_cycle(container_ref, container_ref)
             if not cycle:
                 continue
