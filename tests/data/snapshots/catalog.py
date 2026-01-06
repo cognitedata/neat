@@ -196,7 +196,14 @@ class Catalog:
             model_dump["usedFor"] = "all"
             model_dump["mappedContainers"] = view.used_containers
 
-            properties: dict[str, Any] = {}
+            properties: dict[
+                str,
+                ViewCorePropertyResponse
+                | SingleReverseDirectRelationPropertyResponse
+                | MultiReverseDirectRelationPropertyResponse
+                | SingleEdgeProperty
+                | MultiEdgeProperty,
+            ] = {}
             for id, prop in view.properties.items():
                 response: (
                     ViewCorePropertyResponse
