@@ -41,7 +41,6 @@ from ._limits import (
 from ._orchestrator import DmsDataModelValidation
 from ._views import (
     ImplementedViewNotExisting,
-    MappedContainerRequiresUnmappedContainer,
     MappedContainersMissingRequiresConstraint,
     ViewToContainerMappingNotPossible,
 )
@@ -61,7 +60,6 @@ __all__ = [
     "ExternalContainerDoesNotExist",
     "ExternalContainerPropertyDoesNotExist",
     "ImplementedViewNotExisting",
-    "MappedContainerRequiresUnmappedContainer",
     "MappedContainersMissingRequiresConstraint",
     "MissingRequiresConstraint",
     "RequiredContainerDoesNotExist",

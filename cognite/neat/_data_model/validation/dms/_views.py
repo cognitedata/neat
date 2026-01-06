@@ -1,6 +1,5 @@
 """Validators for checking views in the data model."""
 
-from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError, Recommendation
@@ -181,68 +180,6 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
                         fix=(
                             "Add requires constraints between the containers, such that one container "
                             "requires all the others, either directly or indirectly"
-                        ),
-                        code=self.code,
-                    )
-                )
-
-        return recommendations
-
-
-class MappedContainerRequiresUnmappedContainer(DataModelValidator):
-    """
-    Validates that views don't map to containers that require unmapped containers.
-
-    ## What it does
-    For each view, this validator checks whether any mapped container requires a container
-    that is NOT mapped in the same view. This includes both direct and transitive requires
-    constraints.
-
-    ## Why is this bad?
-    If a view maps to container A which requires container B, but B is not mapped in the view,
-    then ingestion through this view is complicated:
-    - Container B must be populated separately before data can be ingested through this view
-    - The view cannot be used for initial data population
-    - Users must use the containers API or another view to populate container B first
-
-    ## Example
-    View `Equipment` maps only to `CogniteEquipment`, but `CogniteEquipment` requires
-    `CogniteDescribable` (which has a non-nullable `name` property). Since `CogniteDescribable`
-    is not mapped in the view, you cannot ingest data through `Equipment` until `CogniteDescribable`
-    instances are created separately.
-    """
-
-    code = f"{BASE_CODE}-004"
-    issue_type = Recommendation
-
-    def run(self) -> list[Recommendation]:
-        recommendations: list[Recommendation] = []
-
-        for view_ref in self.validation_resources.local.views:
-            containers_in_view = self.validation_resources.view_to_containers.get(view_ref, set())
-
-            if not containers_in_view:
-                continue
-
-            requiring_containers = self.validation_resources.find_unmapped_required_containers(containers_in_view)
-
-            if requiring_containers:
-                # Collect all unique unmapped containers
-                all_unmapped: set[ContainerReference] = set()
-                for unmapped in requiring_containers.values():
-                    all_unmapped.update(unmapped)
-                unmapped_str = ", ".join(f"'{c!s}'" for c in sorted(all_unmapped, key=str))
-
-                recommendations.append(
-                    Recommendation(
-                        message=(
-                            f"View '{view_ref!s}' maps to containers that require (directly or indirectly) "
-                            f"the following unmapped containers: {unmapped_str}. Ingestion through this view "
-                            f"requires the unmapped containers to be populated separately first."
-                        ),
-                        fix=(
-                            "Consider adding mappings for the required containers to this view, "
-                            "or remove the requires constraints if they're not needed"
                         ),
                         code=self.code,
                     )
