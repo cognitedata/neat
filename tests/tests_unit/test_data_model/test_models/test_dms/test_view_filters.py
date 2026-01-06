@@ -180,3 +180,13 @@ class TestViewFilters:
             subclass.model_fields["filter_type"].default for subclass in get_concrete_subclasses(FilterDataDefinition)
         }
         assert filter_data_types == AVAILABLE_FILTERS
+
+    def test_nulling_legacy_filter(self) -> None:
+        raw_data = {
+            "invalid": {
+                "previouslyReferencedProperties": [["fa-governed-space", "Property", "type"]],
+                "filterType": "equals",
+            }
+        }
+        loaded = FilterAdapter.validate_python(raw_data)
+        assert loaded is None

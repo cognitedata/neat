@@ -250,6 +250,9 @@ def _move_filter_key(value: Any) -> Any:
         return value
     if len(value) != 1:
         raise ValueError("Filter data must have exactly one key.")
+    # legacy filter which we want to ignore
+    if "invalid" in value:
+        return None
     if "filterType" in value:
         # Already in the correct format
         return value
@@ -280,6 +283,6 @@ def _move_filter_key(value: Any) -> Any:
         return value
 
 
-Filter = Annotated[dict[FilterTypes, FilterData], BeforeValidator(_move_filter_key)]
+Filter = Annotated[dict[FilterTypes, FilterData] | None, BeforeValidator(_move_filter_key)]
 
 FilterAdapter: TypeAdapter[Filter] = TypeAdapter(Filter)
