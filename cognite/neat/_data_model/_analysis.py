@@ -397,7 +397,7 @@ class ValidationResources:
 
         for view_ref in all_view_refs:
             # Use expanded view to include inherited properties
-            view = self.expand_view_properties(view_ref) or self.select_view(view_ref)
+            view = self.expand_view_properties(view_ref)
             if not view:
                 continue
             for container in view.used_containers:
@@ -421,7 +421,7 @@ class ValidationResources:
 
         for view_ref in all_view_refs:
             # Use expanded view to include inherited properties
-            view = self.expand_view_properties(view_ref) or self.select_view(view_ref)
+            view = self.expand_view_properties(view_ref)
             if view and view.used_containers:
                 view_to_containers[view_ref] = view.used_containers
 
