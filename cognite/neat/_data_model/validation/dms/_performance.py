@@ -19,16 +19,14 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
     targeted recommendations for which specific requires constraints to add.
 
     ## Why is this bad?
-    When querying a view without filters, the API uses `hasData` filters on all mapped containers.
-    If there's no requires hierarchy, each container needs a separate `hasData` check, which
-    triggers expensive joins. With a proper requires hierarchy, the `hasData` check can be
-    optimized to only check the "outermost" container.
+    Without a requires hierarchy, queries on views with multiple containers may perform
+    expensive joins. With a proper requires hierarchy, the query optimizer can use more
+    efficient execution plans.
 
     ## Example
     View `Pump` maps to containers `Pump` and `CogniteDescribable`.
-    If neither container requires the other, queries will perform two separate `hasData` checks
-    with a join. Adding `Pump requires CogniteDescribable` allows the query
-    optimizer to reduce this to a single `hasData` check.
+    If neither container requires the other, queries may be slower.
+    Adding `Pump requires CogniteDescribable` allows query optimization.
     """
 
     code = f"{BASE_CODE}-001"
@@ -77,8 +75,7 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
                         Recommendation(
                             message=(
                                 f"View '{view_ref!s}': Container '{requirer!s}' should require "
-                                f"'{require_target!s}' to enable query optimization. "
-                                f"Without this constraint, queries through this view use multiple hasData filters."
+                                f"'{require_target!s}' to enable query optimization."
                             ),
                             fix="Add requires constraints between the containers",
                             code=self.code,
@@ -108,8 +105,7 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
                                 Recommendation(
                                     message=(
                                         f"View '{view_ref!s}': Container '{other!s}' should require "
-                                        f"'{best_candidate!s}' to enable query optimization. "
-                                        f"'{best_candidate!s}' already requires other containers in this view."
+                                        f"'{best_candidate!s}' to enable query optimization."
                                     ),
                                     fix="Add requires constraints between the containers",
                                     code=self.code,
@@ -122,14 +118,11 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
                             Recommendation(
                                 message=(
                                     f"View '{view_ref!s}' maps to {len(containers_in_view)} containers but no single "
-                                    f"container requires all the others. The following containers are missing a "
-                                    f"requires constraint with another container: {uncovered_str}. "
-                                    f"This can cause suboptimal performance when querying instances through this view."
+                                    f"container requires all the others (directly or indirectly). "
+                                    f"Containers without requires constraints between them: {uncovered_str}. "
+                                    "This can cause suboptimal query performance."
                                 ),
-                                fix=(
-                                    "Add requires constraints between the containers, such that one container "
-                                    "requires all the others, either directly or indirectly"
-                                ),
+                                fix="Add requires constraints between the containers",
                                 code=self.code,
                             )
                         )
