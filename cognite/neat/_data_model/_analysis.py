@@ -1,3 +1,4 @@
+from collections.abc import Set as AbstractSet
 from functools import lru_cache
 from itertools import chain
 from typing import Literal, TypeAlias
@@ -505,6 +506,82 @@ class ValidationResources:
                 uncovered.add(candidate)
 
         return uncovered
+
+    def find_bridge_and_requirer(
+        self,
+        target: ContainerReference,
+        chain_containers: AbstractSet[ContainerReference],
+        containers_in_scope: AbstractSet[ContainerReference] | None = None,
+    ) -> tuple[ContainerReference, ContainerReference] | None:
+        """Find a bridge container and the chain container that should require it.
+
+        A bridge container is useful when recommending requires constraints: instead of
+        recommending A → target directly, if there's a container B that already requires
+        target, we can recommend A → B (which transitively gives A → target).
+
+        The search prioritizes:
+        1. Bridges where the potential requirer is higher in the chain
+        2. Bridges in containers_in_scope that appear with chain containers
+        3. Bridges outside scope that appear with chain containers in other views
+        4. Smallest coverage (most specific bridge)
+
+        Args:
+            target: The container we want to transitively require.
+            chain_containers: Containers in the requires chain (outermost + its transitive requirements).
+            containers_in_scope: Containers to prefer (e.g., current view's containers).
+
+        Returns:
+            Tuple of (bridge, requirer) where requirer is the chain container that should
+            require the bridge, or None if no suitable bridge exists.
+        """
+        in_scope = containers_in_scope or set()
+
+        # Collect candidates: (bridge, best_requirer, coverage, in_scope, best_requirer_height)
+        candidates: list[tuple[ContainerReference, ContainerReference | None, int, bool, int]] = []
+
+        for container_ref in self.merged.containers:
+            if container_ref == target:
+                continue
+            transitively_required = self.get_transitively_required_containers(container_ref)
+            if target in transitively_required:
+                coverage = len(transitively_required)
+                is_in_scope = container_ref in in_scope
+
+                # Find the chain container with the most transitive requirements that appears with this bridge
+                bridge_views = self.container_to_views.get(container_ref, set())
+                best_requirer: ContainerReference | None = None
+                best_requirer_height = -1  # -1 means no chain container appears with this bridge
+                for chain_container in chain_containers:
+                    chain_container_views = self.container_to_views.get(chain_container, set())
+                    if chain_container_views & bridge_views:
+                        height = len(self.get_transitively_required_containers(chain_container))
+                        if height > best_requirer_height:
+                            best_requirer_height = height
+                            best_requirer = chain_container
+
+                candidates.append((container_ref, best_requirer, coverage, is_in_scope, best_requirer_height))
+
+        if not candidates:
+            return None
+
+        # Filter: only consider bridges that are relevant (in scope OR appear with chain)
+        relevant_candidates = [c for c in candidates if c[3] or c[4] >= 0]  # in_scope or appears_with_chain
+
+        if not relevant_candidates:
+            return None  # No relevant bridge, recommend target directly
+
+        # Sort priority:
+        # 1. Highest requirer height (chain container closest to outermost) - DESCENDING
+        # 2. In scope
+        # 3. Smallest coverage (most specific bridge) - ASCENDING
+        relevant_candidates.sort(key=lambda x: (-x[4], not x[3], x[2]))
+        best = relevant_candidates[0]
+        bridge, requirer = best[0], best[1]
+
+        if requirer is None:
+            return None  # Should not happen if appears_with_chain is true, but be safe
+
+        return (bridge, requirer)
 
     def find_outermost_container(self, containers_in_view: set[ContainerReference]) -> ContainerReference | None:
         """Find the container that is 'outermost' for a set of containers.

@@ -57,13 +57,27 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
 
                 # Find minimal set of containers that need requires constraints
                 minimal_missing = self.validation_resources.find_minimal_requires_container_set(missing)
+                chain_containers = transitively_required | {outermost}
 
                 for target in sorted(minimal_missing, key=str):
+                    # Check if there's a bridge container that already requires target
+                    bridge_result = self.validation_resources.find_bridge_and_requirer(
+                        target,
+                        chain_containers=chain_containers,
+                        containers_in_scope=containers_in_view,
+                    )
+
+                    if bridge_result:
+                        require_target, requirer = bridge_result
+                    else:
+                        requirer = outermost
+                        require_target = target
+
                     recommendations.append(
                         Recommendation(
                             message=(
-                                f"View '{view_ref!s}': Container '{outermost!s}' should require "
-                                f"'{target!s}' to enable query optimization. "
+                                f"View '{view_ref!s}': Container '{requirer!s}' should require "
+                                f"'{require_target!s}' to enable query optimization. "
                                 f"Without this constraint, queries through this view use multiple hasData filters."
                             ),
                             fix="Add requires constraints between the containers",
@@ -71,24 +85,53 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
                         )
                     )
             else:
-                # No clear outermost container - provide generic recommendation
+                # No clear outermost container - try to find the best candidate among unrequired containers
                 uncovered = self.validation_resources.find_unrequired_containers(containers_in_view)
+
                 if len(uncovered) > 1:
-                    uncovered_str = ", ".join(f"'{c!s}'" for c in sorted(uncovered, key=str))
-                    recommendations.append(
-                        Recommendation(
-                            message=(
-                                f"View '{view_ref!s}' maps to {len(containers_in_view)} containers but no single "
-                                f"container requires all the others. The following containers are missing a requires "
-                                f"constraint with another container: {uncovered_str}. "
-                                f"This can cause suboptimal performance when querying instances through this view."
-                            ),
-                            fix=(
-                                "Add requires constraints between the containers, such that one container "
-                                "requires all the others, either directly or indirectly"
-                            ),
-                            code=self.code,
+                    # Find which unrequired container already covers the most via existing requires
+                    # This container is the best candidate for others to require
+                    best_candidate = None
+                    best_coverage = -1
+
+                    for candidate in uncovered:
+                        coverage = len(self.validation_resources.get_transitively_required_containers(candidate))
+                        if coverage > best_coverage:
+                            best_coverage = coverage
+                            best_candidate = candidate
+
+                    if best_candidate and best_coverage > 0:
+                        # This container already has requires, recommend others require it
+                        others = uncovered - {best_candidate}
+                        for other in sorted(others, key=str):
+                            recommendations.append(
+                                Recommendation(
+                                    message=(
+                                        f"View '{view_ref!s}': Container '{other!s}' should require "
+                                        f"'{best_candidate!s}' to enable query optimization. "
+                                        f"'{best_candidate!s}' already requires other containers in this view."
+                                    ),
+                                    fix="Add requires constraints between the containers",
+                                    code=self.code,
+                                )
+                            )
+                    else:
+                        # No container has existing requires, use generic message
+                        uncovered_str = ", ".join(f"'{c!s}'" for c in sorted(uncovered, key=str))
+                        recommendations.append(
+                            Recommendation(
+                                message=(
+                                    f"View '{view_ref!s}' maps to {len(containers_in_view)} containers but no single "
+                                    f"container requires all the others. The following containers are missing a "
+                                    f"requires constraint with another container: {uncovered_str}. "
+                                    f"This can cause suboptimal performance when querying instances through this view."
+                                ),
+                                fix=(
+                                    "Add requires constraints between the containers, such that one container "
+                                    "requires all the others, either directly or indirectly"
+                                ),
+                                code=self.code,
+                            )
                         )
-                    )
 
         return recommendations
