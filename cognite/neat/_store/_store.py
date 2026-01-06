@@ -11,7 +11,9 @@ from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._data_model.deployer.deployer import SchemaDeployer
 from cognite.neat._data_model.exporters import DMSExporter, DMSFileExporter
 from cognite.neat._data_model.exporters._api_exporter import DMSAPIExporter
+from cognite.neat._data_model.exporters._table_exporter.exporter import DMSTableExporter
 from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
+from cognite.neat._data_model.importers._api_importer import DMSAPIImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._exceptions import DataModelImportException
@@ -62,7 +64,9 @@ class NeatStore:
         else:
             activity = writer.export
 
-        change, _ = self._do_activity(activity, on_success, data_model=self.physical_data_model[-1], **kwargs)
+        data_model = self._gather_data_model(writer)
+
+        change, _ = self._do_activity(activity, on_success, data_model=data_model, **kwargs)
 
         if not change.issues:
             change.target_entity = "ExternalEntity"
@@ -78,6 +82,35 @@ class NeatStore:
         ):
             # Update CDF snapshot after successful deployment
             self.cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
+
+    def _gather_data_model(self, writer: DMSExporter) -> PhysicalDataModel:
+        """Gather the current physical data model from the store
+
+        Args:
+            writer (DMSExporter): The exporter that will be used to write the data model.
+        """
+        # getting provenance of the last successful physical data model read
+        change = self.provenance.last_successful_physical_data_model_read()
+
+        if not change:
+            raise RuntimeError("No successful physical data model read found in provenance.")
+
+        # We do not want to modify the data model for API representations
+        if not change.agent == DMSAPIImporter.__name__ or not isinstance(writer, DMSTableExporter):
+            return self.physical_data_model[-1]
+
+        # This will handle data model that are partially and require to be converted to
+        # tabular representation to include all containers referenced by views.
+        copy = self.physical_data_model[-1].model_copy(deep=True)
+        container_refs = {container.as_reference() for container in copy.containers}
+
+        for view in copy.views:
+            for container in view.used_containers:
+                if container not in container_refs and (cdf_container := self.cdf_snapshot.containers.get(container)):
+                    copy.containers.append(cdf_container)
+                    container_refs.add(container)
+
+        return copy
 
     def _can_agent_do_activity(self, agent: Agents) -> None:
         """Validate if activity can be performed in the current state and considering provenance"""
