@@ -38,11 +38,8 @@ from ._limits import (
     ViewPropertyCountIsOutOfLimits,
 )
 from ._orchestrator import DmsDataModelValidation
-from ._views import (
-    ImplementedViewNotExisting,
-    MappedContainersMissingRequiresConstraint,
-    ViewToContainerMappingNotPossible,
-)
+from ._performance import MappedContainersMissingRequiresConstraint
+from ._views import ImplementedViewNotExisting, ViewToContainerMappingNotPossible
 
 __all__ = [
     "ConnectionValueTypeUndefined",

@@ -1,3 +1,4 @@
+from functools import lru_cache
 from itertools import chain
 from typing import Literal, TypeAlias
 
@@ -402,7 +403,7 @@ class ValidationResources:
         """Get a mapping from views to the containers they use."""
         return {view_ref: view.used_containers for view_ref, view in self.merged.views.items() if view.used_containers}
 
-    def containers_are_mapped_together(self, container_a: ContainerReference, container_b: ContainerReference) -> bool:
+    def are_containers_mapped_together(self, container_a: ContainerReference, container_b: ContainerReference) -> bool:
         """Check if two containers are mapped together in any view at least once.
 
         Args:
@@ -421,40 +422,38 @@ class ValidationResources:
     # =========================================================================
 
     def get_direct_required_containers(self, container_ref: ContainerReference) -> set[ContainerReference]:
-        """Get all containers that a container directly requires.
-
-        Uses merged containers for lookup.
-        """
-        container = self.merged.containers.get(container_ref)
+        """Get all containers that a container directly requires."""
+        container = self.select_container(container_ref)
         if not container or not container.constraints:
             return set()
 
-        required: set[ContainerReference] = set()
-        for constraint in container.constraints.values():
-            if isinstance(constraint, RequiresConstraintDefinition):
-                required.add(constraint.require)
-        return required
+        return {
+            constraint.require
+            for constraint in container.constraints.values()
+            if isinstance(constraint, RequiresConstraintDefinition)
+        }
 
-    def get_transitively_required_containers(
-        self,
-        container_ref: ContainerReference,
-        visited: set[ContainerReference] | None = None,
-    ) -> set[ContainerReference]:
+    def get_transitively_required_containers(self, container_ref: ContainerReference) -> frozenset[ContainerReference]:
         """Get all containers that a container requires (transitively).
 
-        Uses merged containers for lookup.
+        Handles cycles gracefully by tracking visited containers.
         """
-        if visited is None:
-            visited = set()
+        return self._compute_transitive_requirements(container_ref, frozenset())
+
+    @lru_cache(maxsize=None)
+    def _compute_transitive_requirements(
+        self, container_ref: ContainerReference, visited: frozenset[ContainerReference]
+    ) -> frozenset[ContainerReference]:
+        """Cached recursive computation of transitive requirements with cycle detection."""
         if container_ref in visited:
-            return set()
-        visited.add(container_ref)
+            return frozenset()  # Cycle detected
 
         direct_required = self.get_direct_required_containers(container_ref)
-        all_required = direct_required.copy()
+        all_required: set[ContainerReference] = set(direct_required)
+        new_visited = visited | {container_ref}
         for req in direct_required:
-            all_required.update(self.get_transitively_required_containers(req, visited))
-        return all_required
+            all_required.update(self._compute_transitive_requirements(req, new_visited))
+        return frozenset(all_required)
 
     def has_full_requires_hierarchy(self, containers: set[ContainerReference]) -> bool:
         """Check if there's a container that transitively requires all other containers in the set.
@@ -559,8 +558,7 @@ class ValidationResources:
 
         Returns the cycle path if found, None otherwise.
         """
-        if visited is None:
-            visited = set()
+        visited = visited or set()
         if path is None:
             path = []
 
@@ -602,7 +600,7 @@ class ValidationResources:
                 return True
         return False
 
-    def find_minimal_requires_set(
+    def find_minimal_requires_container_set(
         self,
         candidates: set[ContainerReference],
         already_covered_by: set[ContainerReference] | None = None,
@@ -617,8 +615,7 @@ class ValidationResources:
             already_covered_by: Additional containers whose transitive requirements
                 should also be excluded from the result
         """
-        if already_covered_by is None:
-            already_covered_by = set()
+        already_covered_by = already_covered_by or set()
 
         minimal: set[ContainerReference] = set()
         for container in candidates:

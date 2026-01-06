@@ -211,8 +211,8 @@ class UnnecessaryRequiresConstraint(DataModelValidator):
     Requires constraints could still be useful for consistency checks however.
 
     ## Why is this bad?
-    A requires constraint means that the required container must be populated before
-    the requiring container can be used. If these containers never appear together in
+    A requires constraint means that instances in the required container must be populated before
+    they can be populated in the requiring container. If these containers never appear together in
     any view, this constraint creates an unnecessary dependency - the required container
     must be populated first, even though it's not used alongside the requiring container.
 
@@ -246,7 +246,7 @@ class UnnecessaryRequiresConstraint(DataModelValidator):
                 if constraint.require not in self.validation_resources.merged.containers:
                     continue  # Handled by RequiredContainerDoesNotExist
 
-                if self.validation_resources.containers_are_mapped_together(container_ref, constraint.require):
+                if self.validation_resources.are_containers_mapped_together(container_ref, constraint.require):
                     continue  # They appear together, constraint is useful
 
                 recommendations.append(

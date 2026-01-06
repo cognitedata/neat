@@ -6,7 +6,7 @@ from cognite.neat._config import internal_profiles
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.validation.dms._containers import RequiresConstraintCycle, UnnecessaryRequiresConstraint
 from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
-from cognite.neat._data_model.validation.dms._views import MappedContainersMissingRequiresConstraint
+from cognite.neat._data_model.validation.dms._performance import MappedContainersMissingRequiresConstraint
 from tests.data import SNAPSHOT_CATALOG
 
 PROBLEMS = {

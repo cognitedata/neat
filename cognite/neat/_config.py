@@ -176,7 +176,7 @@ def internal_profiles() -> dict[_AllProfiles, NeatConfig]:
                     "NEAT-DMS-CONSISTENCY-001",
                     "NEAT-DMS-CONTAINER-005",
                     "NEAT-DMS-CONTAINER-006",
-                    "NEAT-DMS-VIEW-003",
+                    "NEAT-DMS-PERFORMANCE-001",
                 ]
             ),
         ),
@@ -192,7 +192,7 @@ def internal_profiles() -> dict[_AllProfiles, NeatConfig]:
                     "NEAT-DMS-CONSISTENCY-001",
                     "NEAT-DMS-CONTAINER-005",
                     "NEAT-DMS-CONTAINER-006",
-                    "NEAT-DMS-VIEW-003",
+                    "NEAT-DMS-PERFORMANCE-001",
                 ]
             ),
         ),
