@@ -1,8 +1,8 @@
 from collections.abc import Set as AbstractSet
-from functools import cache
 from itertools import chain
 from typing import Literal, TypeAlias
 
+import networkx as nx
 from pyparsing import cached_property
 
 from cognite.neat._data_model._snapshot import SchemaSnapshot
@@ -396,7 +396,7 @@ class ValidationResources:
         all_view_refs = set(self.merged.views.keys()) | set(self.cdf.views.keys())
 
         for view_ref in all_view_refs:
-            # Use expanded view to include inherited properties, fall back to regular view
+            # Use expanded view to include inherited properties
             view = self.expand_view_properties(view_ref) or self.select_view(view_ref)
             if not view:
                 continue
@@ -420,7 +420,7 @@ class ValidationResources:
         all_view_refs = set(self.merged.views.keys()) | set(self.cdf.views.keys())
 
         for view_ref in all_view_refs:
-            # Use expanded view to include inherited properties, fall back to regular view
+            # Use expanded view to include inherited properties
             view = self.expand_view_properties(view_ref) or self.select_view(view_ref)
             if view and view.used_containers:
                 view_to_containers[view_ref] = view.used_containers
@@ -442,48 +442,55 @@ class ValidationResources:
         return bool(views_with_a & views_with_b)
 
     # =========================================================================
-    # Container Requires Constraint Methods
+    # Container Requires Constraint Methods (using networkx for graph operations)
     # =========================================================================
+
+    @cached_property
+    def requires_graph(self) -> nx.DiGraph:
+        """Build a directed graph of container requires constraints.
+
+        Nodes are ContainerReferences, edges represent requires constraints.
+        An edge A → B means container A requires container B.
+        """
+        graph: nx.DiGraph = nx.DiGraph()
+
+        # Add all containers as nodes
+        for container_ref in self.merged.containers:
+            graph.add_node(container_ref)
+
+        # Add edges for requires constraints
+        for container_ref in self.merged.containers:
+            container = self.select_container(container_ref)
+            if not container or not container.constraints:
+                continue
+            for constraint in container.constraints.values():
+                if isinstance(constraint, RequiresConstraintDefinition):
+                    graph.add_edge(container_ref, constraint.require)
+
+        return graph
 
     def get_direct_required_containers(self, container_ref: ContainerReference) -> set[ContainerReference]:
         """Get all containers that a container directly requires."""
-        container = self.select_container(container_ref)
-        if not container or not container.constraints:
+        if container_ref not in self.requires_graph:
             return set()
-
-        return {
-            constraint.require
-            for constraint in container.constraints.values()
-            if isinstance(constraint, RequiresConstraintDefinition)
-        }
+        return set(self.requires_graph.successors(container_ref))
 
     def get_transitively_required_containers(self, container_ref: ContainerReference) -> frozenset[ContainerReference]:
         """Get all containers that a container requires (transitively).
 
-        Handles cycles gracefully by tracking visited containers.
+        Uses networkx descendants() which handles cycles gracefully.
         """
-        return self._compute_transitive_requirements(container_ref, frozenset())
-
-    @cache
-    def _compute_transitive_requirements(
-        self, container_ref: ContainerReference, visited: frozenset[ContainerReference]
-    ) -> frozenset[ContainerReference]:
-        """Cached recursive computation of transitive requirements with cycle detection."""
-        if container_ref in visited:
-            return frozenset()  # Cycle detected
-
-        direct_required = self.get_direct_required_containers(container_ref)
-        all_required: set[ContainerReference] = set(direct_required)
-        new_visited = visited | {container_ref}
-        for req in direct_required:
-            all_required.update(self._compute_transitive_requirements(req, new_visited))
-        return frozenset(all_required)
+        if container_ref not in self.requires_graph:
+            return frozenset()
+        return frozenset(nx.descendants(self.requires_graph, container_ref))
 
     def has_full_requires_hierarchy(self, containers: set[ContainerReference]) -> bool:
         """Check if there's a container that transitively requires all other containers in the set.
 
         For query performance optimization, we only need ONE container to require all others.
         This allows the hasData filter to use only that outermost container.
+
+        Uses nx.descendants() (via get_transitively_required_containers) to check reachability.
 
         Args:
             containers: Set of containers to check
@@ -494,13 +501,10 @@ class ValidationResources:
         if len(containers) <= 1:
             return True
 
-        others = containers.copy()
         for candidate in containers:
-            others.discard(candidate)
-            transitively_required = self.get_transitively_required_containers(candidate)
-            if others <= transitively_required:
+            others = containers - {candidate}
+            if others.issubset(self.get_transitively_required_containers(candidate)):
                 return True
-            others.add(candidate)
 
         return False
 
@@ -515,20 +519,7 @@ class ValidationResources:
         Returns:
             Set of containers not required by any other container in the set
         """
-        uncovered: set[ContainerReference] = set()
-
-        for candidate in containers:
-            is_required_by_another = False
-            for other in containers:
-                if other == candidate:
-                    continue
-                if candidate in self.get_transitively_required_containers(other):
-                    is_required_by_another = True
-                    break
-            if not is_required_by_another:
-                uncovered.add(candidate)
-
-        return uncovered
+        return self.find_minimal_requires_container_set(containers)
 
     def find_bridge_and_requirer(
         self,
@@ -542,11 +533,7 @@ class ValidationResources:
         recommending A → target directly, if there's a container B that already requires
         target, we can recommend A → B (which transitively gives A → target).
 
-        The search prioritizes:
-        1. Bridges where the potential requirer is higher in the chain
-        2. Bridges in containers_in_scope that appear with chain containers
-        3. Bridges outside scope that appear with chain containers in other views
-        4. Smallest coverage (most specific bridge)
+        Uses nx.ancestors() to efficiently find all containers that can reach target.
 
         Args:
             target: The container we want to transitively require.
@@ -557,54 +544,51 @@ class ValidationResources:
             Tuple of (bridge, requirer) where requirer is the chain container that should
             require the bridge, or None if no suitable bridge exists.
         """
+        if target not in self.requires_graph:
+            return None
+
         in_scope = containers_in_scope or set()
 
-        # Collect candidates: (bridge, best_requirer, coverage, in_scope, best_requirer_height)
-        candidates: list[tuple[ContainerReference, ContainerReference | None, int, bool, int]] = []
+        # Find all containers that transitively require target (in one traversal)
+        # Filter to only merged containers (excludes external containers that may be in the graph)
+        potential_bridges = nx.ancestors(self.requires_graph, target) & set(self.merged.containers)
 
-        for container_ref in self.merged.containers:
-            if container_ref == target:
-                continue
-            transitively_required = self.get_transitively_required_containers(container_ref)
-            if target in transitively_required:
-                coverage = len(transitively_required)
-                is_in_scope = container_ref in in_scope
+        # Collect candidates: (bridge, best_requirer, coverage, in_scope, best_requirer_shared_count)
+        candidates: list[tuple[ContainerReference, ContainerReference, int, bool, int]] = []
 
-                # Find the chain container with the most transitive requirements that appears with this bridge
-                bridge_views = self.container_to_views.get(container_ref, set())
-                best_requirer: ContainerReference | None = None
-                best_requirer_height = -1  # -1 means no chain container appears with this bridge
-                for chain_container in chain_containers:
-                    chain_container_views = self.container_to_views.get(chain_container, set())
-                    if chain_container_views & bridge_views:
-                        height = len(self.get_transitively_required_containers(chain_container))
-                        if height > best_requirer_height:
-                            best_requirer_height = height
-                            best_requirer = chain_container
+        # Only consider views from merged schema (current model scope, not old CDF versions)
+        merged_views = set(self.merged.views.keys())
 
-                candidates.append((container_ref, best_requirer, coverage, is_in_scope, best_requirer_height))
+        for bridge in potential_bridges:
+            bridge_views = self.container_to_views.get(bridge, set())
+
+            # Find the chain container that appears with this bridge in the MOST views
+            # More shared views = more consistent recommendation across the data model
+            best_requirer: ContainerReference | None = None
+            best_shared_count = 0
+            for chain_container in chain_containers:
+                chain_views = self.container_to_views.get(chain_container, set())
+                # Only consider views from merged schema (excludes old CDF versions)
+                shared_views = chain_views & bridge_views & merged_views
+                if shared_views:
+                    shared_count = len(shared_views)
+                    if shared_count > best_shared_count:
+                        best_shared_count = shared_count
+                        best_requirer = chain_container
+
+            is_in_scope = bridge in in_scope
+
+            # Only include relevant bridges (in scope or appears with chain)
+            if best_shared_count > 0 and best_requirer is not None:
+                coverage = len(self.get_transitively_required_containers(bridge))
+                candidates.append((bridge, best_requirer, coverage, is_in_scope, best_shared_count))
 
         if not candidates:
             return None
 
-        # Filter: only consider bridges that are relevant (in scope OR appear with chain)
-        relevant_candidates = [c for c in candidates if c[3] or c[4] >= 0]  # in_scope or appears_with_chain
-
-        if not relevant_candidates:
-            return None  # No relevant bridge, recommend target directly
-
-        # Sort priority:
-        # 1. Highest requirer height (chain container closest to outermost) - DESCENDING
-        # 2. In scope
-        # 3. Smallest coverage (most specific bridge) - ASCENDING
-        relevant_candidates.sort(key=lambda x: (-x[4], not x[3], x[2]))
-        best = relevant_candidates[0]
-        bridge, requirer = best[0], best[1]
-
-        if requirer is None:
-            return None  # Should not happen if appears_with_chain is true, but be safe
-
-        return (bridge, requirer)
+        # Sort priority: most shared views (most consistent), in scope, smallest coverage
+        candidates.sort(key=lambda x: (-x[4], not x[3], x[2]))
+        return (candidates[0][0], candidates[0][1])
 
     def find_outermost_container(self, containers_in_view: set[ContainerReference]) -> ContainerReference | None:
         """Find the container that is 'outermost' for a set of containers.
@@ -634,77 +618,31 @@ class ValidationResources:
         local_views = set(self.local.views.keys())
 
         for container in containers_in_view:
-            views_with_container = self.container_to_views.get(container, set())
-            # Only consider local views for outermost determination
-            local_views_with_container = views_with_container & local_views
+            local_views_with_container = self.container_to_views.get(container, set()) & local_views
 
-            # Check if all local views containing this container have at least the same containers
-            is_outermost = True
-            for other_view in local_views_with_container:
-                other_containers = self.view_to_containers.get(other_view, set())
-                if not containers_in_view.issubset(other_containers):
-                    is_outermost = False
-                    break
+            is_outermost = all(
+                containers_in_view.issubset(self.view_to_containers.get(view, set()))
+                for view in local_views_with_container
+            )
 
             if is_outermost:
                 outermost_candidates.append(container)
 
-        if len(outermost_candidates) == 1:
-            return outermost_candidates[0]
-        return None
+        return outermost_candidates[0] if len(outermost_candidates) == 1 else None
 
-    def find_requires_constraint_cycle(
-        self,
-        start: ContainerReference,
-        current: ContainerReference,
-        visited: set[ContainerReference] | None = None,
-        path: list[ContainerReference] | None = None,
-    ) -> list[ContainerReference] | None:
-        """Find a cycle in requires constraints starting from 'start' through 'current'.
+    @cached_property
+    def requires_constraint_cycles(self) -> list[set[ContainerReference]]:
+        """Find all cycles in the requires constraint graph using Tarjan's algorithm.
 
-        Returns the cycle path if found, None otherwise.
+        Uses strongly connected components (SCC) to identify cycles efficiently.
+        An SCC with more than one node indicates a cycle.
+
+        Returns:
+            List of sets, where each set contains the containers involved in a cycle.
         """
-        visited = visited or set()
-        if path is None:
-            path = []
-
-        if current in visited:
-            if start == current:
-                return [*path, current]
-            return None
-
-        visited.add(current)
-        path.append(current)
-
-        for required in self.get_direct_required_containers(current):
-            cycle = self.find_requires_constraint_cycle(start, required, visited, path)
-            if cycle:
-                return cycle
-
-        path.pop()
-        return None
-
-    def is_transitively_required_by_any(
-        self,
-        container: ContainerReference,
-        container_set: set[ContainerReference],
-        exclude: ContainerReference | None = None,
-    ) -> bool:
-        """Check if container is transitively required by any container in the set.
-
-        For example, if A requires B requires C, then C is "covered by" A (and B).
-
-        Args:
-            container: The container to check
-            container_set: Set of containers that might transitively require the target
-            exclude: Optionally exclude a specific container from consideration
-        """
-        for other in container_set:
-            if exclude is not None and other == exclude:
-                continue
-            if container in self.get_transitively_required_containers(other):
-                return True
-        return False
+        sccs = nx.strongly_connected_components(self.requires_graph)
+        # Only SCCs with more than one node represent cycles
+        return [scc for scc in sccs if len(scc) > 1]
 
     def find_minimal_requires_container_set(
         self,
@@ -716,20 +654,28 @@ class ValidationResources:
         For example, if candidates = {A, B, C} and A requires B, the result is {A, C}
         because B is already covered by A's requires constraint.
 
+        Uses nx.ancestors() to find all containers that can reach each candidate.
+
         Args:
             candidates: Set of candidate containers to reduce
             already_covered_by: Additional containers whose transitive requirements
                 should also be excluded from the result
         """
         already_covered_by = already_covered_by or set()
+        excluders = candidates | already_covered_by
 
         minimal: set[ContainerReference] = set()
         for container in candidates:
-            # Skip if already covered by the pre-existing set
-            if self.is_transitively_required_by_any(container, already_covered_by):
+            if container not in self.requires_graph:
+                minimal.add(container)  # Not in graph, can't be reached
                 continue
-            # Skip if covered by another container in the same candidates set
-            if self.is_transitively_required_by_any(container, candidates, exclude=container):
+
+            # Find all containers that can reach this one
+            ancestors = nx.ancestors(self.requires_graph, container)
+
+            # Skip if any excluder (other candidate or already_covered_by) can reach it
+            if ancestors & (excluders - {container}):
                 continue
+
             minimal.add(container)
         return minimal

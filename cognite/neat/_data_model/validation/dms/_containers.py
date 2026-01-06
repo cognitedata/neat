@@ -3,7 +3,6 @@
 from typing import cast
 
 from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
-from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError, Recommendation
@@ -288,19 +287,11 @@ class RequiresConstraintCycle(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        # Track which containers we've already reported cycles for
-        reported_cycles: set[frozenset[ContainerReference]] = set()
-
-        for container_ref in self.validation_resources.merged.containers:
-            cycle = self.validation_resources.find_requires_constraint_cycle(container_ref, container_ref)
-            if not cycle:
-                continue
-            # Create a frozenset of the cycle to avoid reporting the same cycle multiple times
-            cycle_set = frozenset(cycle[:-1])  # Exclude the duplicate end element
-            if cycle_set in reported_cycles:
-                continue
-            reported_cycles.add(cycle_set)
-            cycle_str = " -> ".join(str(c) for c in cycle)
+        # Use pre-computed cycles from SCC (Tarjan's algorithm)
+        for cycle_set in self.validation_resources.requires_constraint_cycles:
+            # Format cycle for display
+            cycle_list = list(cycle_set)
+            cycle_str = " -> ".join(str(c) for c in cycle_list) + f" -> {cycle_list[0]!s}"
             errors.append(
                 ConsistencyError(
                     message=f"Requires constraints form a cycle: {cycle_str}",

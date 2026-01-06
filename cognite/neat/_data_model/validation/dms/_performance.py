@@ -43,7 +43,7 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
 
             # Check if there's a container that requires all others (directly or indirectly)
             if self.validation_resources.has_full_requires_hierarchy(containers_in_view):
-                continue  # Performance optimization is possible
+                continue  # Hierarchy is complete, no recommendation needed
 
             # Try to find a clear "outermost" container for targeted recommendations
             outermost = self.validation_resources.find_outermost_container(containers_in_view)
@@ -55,7 +55,8 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
 
                 # Find minimal set of containers that need requires constraints
                 minimal_missing = self.validation_resources.find_minimal_requires_container_set(missing)
-                chain_containers = transitively_required | {outermost}
+                # Only include chain containers that are actually in this view
+                chain_containers = (transitively_required | {outermost}) & containers_in_view
 
                 for target in sorted(minimal_missing, key=str):
                     # Check if there's a bridge container that already requires target
@@ -88,16 +89,11 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
                 if len(uncovered) > 1:
                     # Find which unrequired container already covers the most via existing requires
                     # This container is the best candidate for others to require
-                    best_candidate = None
-                    best_coverage = -1
+                    get_coverage = self.validation_resources.get_transitively_required_containers
+                    best_candidate = max(uncovered, key=lambda c: len(get_coverage(c)))
+                    best_coverage = len(get_coverage(best_candidate))
 
-                    for candidate in uncovered:
-                        coverage = len(self.validation_resources.get_transitively_required_containers(candidate))
-                        if coverage > best_coverage:
-                            best_coverage = coverage
-                            best_candidate = candidate
-
-                    if best_candidate and best_coverage > 0:
+                    if best_coverage > 0:
                         # This container already has requires, recommend others require it
                         others = uncovered - {best_candidate}
                         for other in sorted(others, key=str):
