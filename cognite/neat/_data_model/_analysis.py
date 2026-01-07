@@ -626,23 +626,11 @@ class ValidationResources:
         if not user_containers:
             return []
 
-        # Build a working graph: existing requires + MST recommendations for this view
+        # Build a working graph: existing requires + relevant MST recommendations
         work_graph = self.requires_graph.copy()
         all_recs: list[tuple[ContainerReference, ContainerReference]] = []
+        mst_connected_pairs = {frozenset({src, dst}) for src, dst in self.optimal_requires_tree}
 
-        # Step 1: Add MST recommendations where BOTH src and dst are in this view.
-        for src, dst in self.optimal_requires_tree:
-            if src not in containers_in_view or dst not in containers_in_view:
-                continue
-            if src.space in CDF_BUILTIN_SPACES:
-                continue
-            work_graph.add_edge(src, dst)
-            all_recs.append((src, dst))
-
-        # Step 2: Add edges to complete the hierarchy.
-        # First, check if any MST recommendation (even with dst outside view) helps.
-        # Then, add local edges from outermost to uncovered containers.
-        #
         # Outermost = most specific container (appears in fewest views).
         # Tiebreaker 1: fewer ancestors (containers that require this one) = at top of hierarchy.
         # Tiebreaker 2: fewer descendants = less existing coverage = better root candidate.
@@ -656,33 +644,36 @@ class ValidationResources:
             ),
         )
 
-        # Step 2a: Add MST recommendations where src is a user container in view
-        # and dst's transitive chain covers uncovered containers.
+        # Step 1: Add relevant MST recommendations
+        # Include recs where src is a user container in this view, and either:
+        # - dst is also in the view, OR
+        # - dst's transitive chain covers uncovered containers in the view
         covered = (nx.descendants(work_graph, outermost) if work_graph.has_node(outermost) else set()) | {outermost}
         uncovered = containers_in_view - covered
 
         for src, dst in self.optimal_requires_tree:
-            if src not in user_containers or src.space in CDF_BUILTIN_SPACES:
+            if src not in user_containers:
                 continue
-            if dst in containers_in_view:
-                continue  # Already handled in Step 1
 
             # Skip if this would create a cycle
             if self.requires_graph.has_node(dst) and src in nx.descendants(self.requires_graph, dst):
                 continue
 
-            # Check if dst's transitive chain covers any uncovered container
+            # Include if dst is in view
+            if dst in containers_in_view:
+                work_graph.add_edge(src, dst)
+                all_recs.append((src, dst))
+                continue
+
+            # Include if dst's transitive chain covers uncovered containers
             dst_coverage = nx.descendants(self.requires_graph, dst) if self.requires_graph.has_node(dst) else set()
             if dst_coverage & uncovered:
                 work_graph.add_edge(src, dst)
                 all_recs.append((src, dst))
-                # Update coverage
                 covered = nx.descendants(work_graph, outermost) | {outermost}
                 uncovered = containers_in_view - covered
 
-        # Step 2b: Add local edges from outermost to remaining uncovered containers
-        # Skip if MST already connected these containers (even in opposite direction)
-        mst_connected_pairs = {frozenset({src, dst}) for src, dst in self.optimal_requires_tree}
+        # Step 2: Add local edges from outermost to remaining uncovered containers
 
         while uncovered:
             user_uncovered = [c for c in uncovered if c.space not in CDF_BUILTIN_SPACES]
@@ -762,8 +753,6 @@ class ValidationResources:
 
         # Factor 2: User vs CDF built-in - user containers should require CDF containers, not vice versa
         src_is_user = src.space not in CDF_BUILTIN_SPACES
-        dst_is_user = dst.space not in CDF_BUILTIN_SPACES
-
         if not src_is_user:
             # CDF built-in container as source - users cannot modify these, so effectively forbidden
             base_weight += 1e9
