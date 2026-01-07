@@ -1,6 +1,3 @@
-
-from cognite.neat._utils.auxiliary import get_concrete_subclasses
-
 from ._ai_readiness import (
     DataModelMissingDescription,
     DataModelMissingName,
