@@ -9,8 +9,6 @@ from cognite.neat._issues import ConsistencyError, ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.useful_types import ModusOperandi
 
-from cognite.neat._data_model.validation.dms._orchestrator import VALIDATORS
-
 if sys.version_info >= (3, 11):
     import tomllib as tomli  # Python 3.11+
 else:
@@ -50,24 +48,12 @@ class ValidationConfig(ConfigModel):
         """
 
         is_excluded = self._is_excluded(code, self.exclude)
-        is_alpha = self._is_alpha(code)
-
-        if is_alpha and not self.enable_alpha_validators:
-            return False
 
         if issue_type in [ModelSyntaxError, ConsistencyError] and is_excluded and not self.override:
             print(f"Validator {code} was excluded however it is a critical validator and will still run.")
             return True
         else:
             return not is_excluded
-
-    @classmethod
-    def _is_alpha(cls, code: str) -> bool:
-        """Check if the validator with the given code is an alpha validator."""
-
-        if (validator_class := VALIDATORS.get(code)):
-            return validator_class.alpha
-        return False
 
     @classmethod
     def _is_excluded(cls, code: str, patterns: list[str]) -> bool:
@@ -115,6 +101,10 @@ class AlphaFlagConfig(ConfigModel):
     fix_validation_issues: bool = Field(
         default=False,
         description="If enabled, Neat will attempt to automatically fix certain validation issues in the data model.",
+    )
+    enable_experimental_validators: bool = Field(
+        default=False,
+        description="If enabled, Neat will run experimental validators that are still in alpha stage.",
     )
 
     def __setattr__(self, key: str, value: Any) -> None:
