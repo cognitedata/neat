@@ -1,4 +1,4 @@
-# Containers for MissingRequiresConstraint - always together (no requires constraint)
+# Containers for MappedContainersMissingRequiresConstraint - always together (no requires constraint)
 - space: my_space
   externalId: AssetContainer
   usedFor: node

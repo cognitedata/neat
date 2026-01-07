@@ -4,7 +4,7 @@ version: v1
 name: Requires Constraints Test Model
 description: A test data model for validating requires constraint validators
 views:
-# Views for MissingRequiresConstraint tests
+# Views for MappedContainersMissingRequiresConstraint tests
 - space: my_space
   externalId: AlwaysTogetherView
   version: v1

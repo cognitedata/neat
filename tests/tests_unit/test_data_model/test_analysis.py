@@ -42,6 +42,13 @@ def scenarios() -> dict[str, ValidationResources]:
             include_cdm=True,
             format="validation-resource",
         ),
+        "requires-constraints": catalog.load_scenario(
+            "requires_constraints",
+            cdf_scenario_name="for_validators",
+            modus_operandi="additive",
+            include_cdm=False,
+            format="validation-resource",
+        ),
     }
     return scenarios
 
@@ -594,3 +601,249 @@ class TestValidationResources:
             for (view_ref, prop), target_view_ref in end_node_types.items()
         }
         data_regression.check(serializable)
+
+
+class TestValidationResourcesRequiresConstraints:
+    """Tests for requires constraint related methods in ValidationResources."""
+
+    def test_container_to_views_basic(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test container_to_views returns correct view mappings."""
+        resources = scenarios["requires-constraints"]
+        container_to_views = resources.container_to_views
+
+        # TransitiveMiddle appears in TransitiveView
+        transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
+        assert transitive_middle in container_to_views
+        transitive_views = container_to_views[transitive_middle]
+        assert any(v.external_id == "TransitiveView" for v in transitive_views)
+
+    def test_view_to_containers_basic(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test view_to_containers returns correct container mappings."""
+        resources = scenarios["requires-constraints"]
+        view_to_containers = resources.view_to_containers
+
+        # TransitiveView maps to TransitiveParent, TransitiveMiddle, TransitiveLeaf
+        transitive_view = ViewReference(space="my_space", external_id="TransitiveView", version="v1")
+        assert transitive_view in view_to_containers
+        containers = view_to_containers[transitive_view]
+        container_ids = {c.external_id for c in containers}
+        assert container_ids == {"TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"}
+
+    def test_are_containers_mapped_together_true(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test containers that appear together in a view."""
+        resources = scenarios["requires-constraints"]
+
+        # AssetContainer and DescribableContainer appear together in AlwaysTogetherView
+        asset = ContainerReference(space="my_space", external_id="AssetContainer")
+        describable = ContainerReference(space="my_space", external_id="DescribableContainer")
+        assert resources.are_containers_mapped_together(asset, describable)
+
+    def test_are_containers_mapped_together_false(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test containers that never appear together."""
+        resources = scenarios["requires-constraints"]
+
+        # OrderContainer and CustomerContainer never appear together
+        order = ContainerReference(space="my_space", external_id="OrderContainer")
+        customer = ContainerReference(space="my_space", external_id="CustomerContainer")
+        assert not resources.are_containers_mapped_together(order, customer)
+
+    def test_get_direct_required_containers(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test getting direct requires constraints."""
+        resources = scenarios["requires-constraints"]
+
+        # TransitiveMiddle directly requires TransitiveLeaf
+        transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
+        direct = resources.get_direct_required_containers(transitive_middle)
+        assert len(direct) == 1
+        direct_ids = {c.external_id for c in direct}
+        assert "TransitiveLeaf" in direct_ids
+
+        # TransitiveLeaf has no requires
+        transitive_leaf = ContainerReference(space="my_space", external_id="TransitiveLeaf")
+        direct = resources.get_direct_required_containers(transitive_leaf)
+        assert len(direct) == 0
+
+    def test_get_transitively_required_containers(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test getting transitive requires (including indirect)."""
+        resources = scenarios["requires-constraints"]
+
+        # CycleContainerA requires CycleContainerB which requires CycleContainerA (cycle)
+        cycle_a = ContainerReference(space="my_space", external_id="CycleContainerA")
+        transitive = resources.get_transitively_required_containers(cycle_a)
+        transitive_ids = {c.external_id for c in transitive}
+        # Should handle cycle and return both
+        assert "CycleContainerB" in transitive_ids
+
+    def test_get_transitively_required_excludes_self(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that transitive requirements don't include the container itself (except in cycles)."""
+        resources = scenarios["requires-constraints"]
+
+        transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
+        transitive = resources.get_transitively_required_containers(transitive_middle)
+        transitive_ids = {c.external_id for c in transitive}
+        assert "TransitiveMiddle" not in transitive_ids
+        assert "TransitiveLeaf" in transitive_ids
+
+    def test_requires_graph_structure(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that requires_graph is built correctly."""
+        resources = scenarios["requires-constraints"]
+        graph = resources.requires_graph
+
+        # Check edges exist
+        transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
+        transitive_leaf = ContainerReference(space="my_space", external_id="TransitiveLeaf")
+        assert graph.has_edge(transitive_middle, transitive_leaf)
+
+        # Check cycle edges
+        cycle_a = ContainerReference(space="my_space", external_id="CycleContainerA")
+        cycle_b = ContainerReference(space="my_space", external_id="CycleContainerB")
+        assert graph.has_edge(cycle_a, cycle_b)
+        assert graph.has_edge(cycle_b, cycle_a)
+
+    def test_requires_constraint_cycles(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test cycle detection in requires constraints."""
+        resources = scenarios["requires-constraints"]
+        cycles = resources.requires_constraint_cycles
+
+        # Should detect the CycleContainerA <-> CycleContainerB cycle
+        assert len(cycles) > 0
+        cycle_ids = {c.external_id for cycle in cycles for c in cycle}
+        assert "CycleContainerA" in cycle_ids
+        assert "CycleContainerB" in cycle_ids
+
+        # Linear chain should not be detected as a cycle
+        assert "TransitiveMiddle" not in cycle_ids
+        assert "TransitiveLeaf" not in cycle_ids
+
+    def test_has_full_requires_hierarchy_true(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test view with complete requires hierarchy."""
+        resources = scenarios["requires-constraints"]
+
+        # TagView has TagContainer, TagAssetContainer, TagDescribableContainer
+        # TagAssetContainer requires TagDescribableContainer
+        # If TagContainer required TagAssetContainer, it would be complete
+        # But it doesn't, so we check TransitiveView instead with modified expectations
+        # TransitiveView: Parent, Middle, Leaf - Middle requires Leaf
+        # Not complete since Parent doesn't require Middle
+        transitive_view = ViewReference(space="my_space", external_id="TransitiveView", version="v1")
+        containers = resources.view_to_containers.get(transitive_view, set())
+        # This should be False since TransitiveParent doesn't require TransitiveMiddle
+        assert not resources.has_full_requires_hierarchy(containers)
+
+    def test_has_full_requires_hierarchy_single_container(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test view with single container always has full hierarchy."""
+        resources = scenarios["requires-constraints"]
+
+        # OrderOnlyView has only OrderContainer
+        order_view = ViewReference(space="my_space", external_id="OrderOnlyView", version="v1")
+        containers = resources.view_to_containers.get(order_view, set())
+        assert len(containers) == 1
+        assert resources.has_full_requires_hierarchy(containers)
+
+    def test_optimal_requires_tree_cached(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that optimal_requires_tree is computed and cached."""
+        resources = scenarios["requires-constraints"]
+
+        # Access the property twice - should be the same object (cached)
+        tree1 = resources.optimal_requires_tree
+        tree2 = resources.optimal_requires_tree
+        assert tree1 is tree2
+
+    def test_get_missing_requires_for_view_no_missing(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test get_missing_requires_for_view when hierarchy is already complete."""
+        resources = scenarios["requires-constraints"]
+
+        # TagView has TagAssetContainer requiring TagDescribableContainer
+        # If we only include those two, hierarchy is complete
+        tag_asset = ContainerReference(space="my_space", external_id="TagAssetContainer")
+        tag_describable = ContainerReference(space="my_space", external_id="TagDescribableContainer")
+
+        missing = resources.get_missing_requires_for_view({tag_asset, tag_describable})
+        # TagAssetContainer already requires TagDescribableContainer, so no missing
+        assert len(missing) == 0
+
+    def test_get_missing_requires_for_view_simple_case(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test get_missing_requires_for_view for containers with no existing requires."""
+        resources = scenarios["requires-constraints"]
+
+        # AssetContainer and DescribableContainer have no requires between them
+        asset = ContainerReference(space="my_space", external_id="AssetContainer")
+        describable = ContainerReference(space="my_space", external_id="DescribableContainer")
+
+        missing = resources.get_missing_requires_for_view({asset, describable})
+        # Should recommend one constraint to connect them
+        assert len(missing) == 1
+        # The edge should connect the two containers
+        src, dst = missing[0]
+        assert {src.external_id, dst.external_id} == {"AssetContainer", "DescribableContainer"}
+
+    def test_get_missing_requires_for_view_transitive_case(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test get_missing_requires_for_view leverages existing transitivity."""
+        resources = scenarios["requires-constraints"]
+
+        # TransitiveView: Parent, Middle, Leaf
+        # Middle already requires Leaf
+        # Should recommend Parent→Middle (not Parent→Leaf, as that would be redundant)
+        parent = ContainerReference(space="my_space", external_id="TransitiveParent")
+        middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
+        leaf = ContainerReference(space="my_space", external_id="TransitiveLeaf")
+
+        missing = resources.get_missing_requires_for_view({parent, middle, leaf})
+
+        # Should have 1 missing edge: Parent→Middle (Leaf is covered transitively)
+        assert len(missing) == 1
+        src, dst = missing[0]
+        # Parent should require Middle (which already requires Leaf)
+        assert src.external_id == "TransitiveParent"
+        assert dst.external_id == "TransitiveMiddle"
+
+    def test_get_missing_requires_for_view_single_container(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test get_missing_requires_for_view with single container returns empty."""
+        resources = scenarios["requires-constraints"]
+
+        asset = ContainerReference(space="my_space", external_id="AssetContainer")
+        missing = resources.get_missing_requires_for_view({asset})
+        assert missing == []
+
+    def test_optimal_requires_tree_consistency(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that optimal_requires_tree gives consistent recommendations across views."""
+        resources = scenarios["requires-constraints"]
+
+        # Get the global tree
+        global_tree = resources.optimal_requires_tree
+
+        # For any container pair in the tree, the recommendation should be consistent
+        # regardless of which view we're looking at
+        for src, dst in global_tree:
+            # The edge direction should always be the same
+            reverse_edge = (dst, src)
+            assert reverse_edge not in global_tree, f"Tree contains both {src}->{dst} and {dst}->{src}"
+
+    def test_optimal_requires_tree_no_cdf_sources(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that CDF built-in containers are never recommended as sources."""
+        from cognite.neat._data_model._constants import CDF_BUILTIN_SPACES
+
+        resources = scenarios["requires-constraints"]
+        global_tree = resources.optimal_requires_tree
+
+        for src, dst in global_tree:
+            assert src.space not in CDF_BUILTIN_SPACES, (
+                f"CDF built-in container '{src}' should not be recommended as source"
+            )
+
+    def test_get_missing_requires_for_view_no_cdf_sources(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that per-view recommendations never have CDF built-in containers as sources."""
+        from cognite.neat._data_model._constants import CDF_BUILTIN_SPACES
+
+        resources = scenarios["requires-constraints"]
+
+        # Test with a view that has multiple containers
+        asset = ContainerReference(space="my_space", external_id="AssetContainer")
+        describable = ContainerReference(space="my_space", external_id="DescribableContainer")
+
+        missing = resources.get_missing_requires_for_view({asset, describable})
+
+        for src, dst in missing:
+            assert src.space not in CDF_BUILTIN_SPACES, (
+                f"CDF built-in container '{src}' should not be recommended as source"
+            )

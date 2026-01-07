@@ -1,4 +1,4 @@
-# Views for MissingRequiresConstraint - containers always appear together
+# Views for MappedContainersMissingRequiresConstraint - containers always appear together
 - space: my_space
   externalId: AlwaysTogetherView
   version: v1

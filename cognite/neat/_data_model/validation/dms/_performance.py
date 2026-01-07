@@ -1,5 +1,6 @@
 """Validators for checking performance-related aspects of the data model."""
 
+from cognite.neat._data_model._constants import CDF_BUILTIN_SPACES
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import Recommendation
 
@@ -15,8 +16,11 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
     a complete hierarchy of requires constraints between all mapped containers. Specifically,
     there should be one "outermost" container that requires all others (directly or transitively).
 
-    When possible, the validator identifies the appropriate "outermost" container and provides
-    targeted recommendations for which specific requires constraints to add.
+    Uses Minimum Spanning Arborescence (Edmonds' algorithm) to find the optimal set of requires
+    constraints that completes the hierarchy with minimal "cost", where cost is based on:
+    - How often containers appear together in views (prefer common pairs)
+    - Whether containers are user vs CDF built-in (prefer user containers)
+    - Existing transitivity (leverage existing requires chains)
 
     ## Why is this bad?
     Without a requires hierarchy, queries on views with multiple containers may perform
@@ -35,92 +39,92 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.validation_resources.local.views:
+        for view_ref in self.validation_resources.merged.views:
             containers_in_view = self.validation_resources.view_to_containers.get(view_ref, set())
 
             if len(containers_in_view) < 2:
                 continue  # Single container or no containers - no hierarchy needed
 
-            # Check if there's a container that requires all others (directly or indirectly)
+            # Skip if hierarchy is already complete
             if self.validation_resources.has_full_requires_hierarchy(containers_in_view):
-                continue  # Hierarchy is complete, no recommendation needed
+                continue
 
-            # Try to find a clear "outermost" container for targeted recommendations
-            outermost = self.validation_resources.find_outermost_container(containers_in_view)
+            # Get missing requires from the globally optimal tree (computed once, cached)
+            missing_requires = self.validation_resources.get_missing_requires_for_view(containers_in_view)
 
-            if outermost:
-                # Generate targeted recommendations for this outermost container
-                transitively_required = self.validation_resources.get_transitively_required_containers(outermost)
-                missing = containers_in_view - transitively_required - {outermost}
-
-                # Find minimal set of containers that need requires constraints
-                minimal_missing = self.validation_resources.find_minimal_requires_container_set(missing)
-                # Only include chain containers that are actually in this view
-                chain_containers = (transitively_required | {outermost}) & containers_in_view
-
-                for target in sorted(minimal_missing, key=str):
-                    # Check if there's a bridge container that already requires target
-                    bridge_result = self.validation_resources.find_bridge_and_requirer(
-                        target,
-                        chain_containers=chain_containers,
-                        containers_in_scope=containers_in_view,
+            if missing_requires:
+                # Generate targeted recommendations for each missing constraint
+                for src, dst in sorted(missing_requires, key=lambda x: (str(x[0]), str(x[1]))):
+                    # Check if this recommendation might affect other views
+                    affected_views = self.validation_resources.find_views_affected_by_requires(
+                        src, dst, exclude_view=view_ref
                     )
 
-                    if bridge_result:
-                        require_target, requirer = bridge_result
-                    else:
-                        requirer = outermost
-                        require_target = target
+                    if affected_views:
+                        # Check if there are "superset" views that contain both src and dst
+                        # These can serve as ingestion points for the affected views
+                        superset_views = self.validation_resources.find_views_with_both_containers(src, dst)
+                        # Exclude the current view from superset consideration
+                        superset_views = superset_views - {view_ref}
 
-                    recommendations.append(
-                        Recommendation(
-                            message=(
-                                f"View '{view_ref!s}': Container '{requirer!s}' should require "
-                                f"'{require_target!s}' to enable query optimization."
-                            ),
-                            fix="Add requires constraints between the containers",
-                            code=self.code,
-                        )
-                    )
-            else:
-                # No clear outermost container - try to find the best candidate among unrequired containers
-                uncovered = self.validation_resources.find_unrequired_containers(containers_in_view)
-
-                if len(uncovered) > 1:
-                    # Find which unrequired container already covers the most via existing requires
-                    # This container is the best candidate for others to require
-                    get_coverage = self.validation_resources.get_transitively_required_containers
-                    best_candidate = max(uncovered, key=lambda c: len(get_coverage(c)))
-                    best_coverage = len(get_coverage(best_candidate))
-
-                    if best_coverage > 0:
-                        # This container already has requires, recommend others require it
-                        others = uncovered - {best_candidate}
-                        for other in sorted(others, key=str):
+                        if superset_views:
+                            # Dependency case: affected views will depend on superset views
+                            superset_example = min(superset_views, key=str)
                             recommendations.append(
                                 Recommendation(
                                     message=(
-                                        f"View '{view_ref!s}': Container '{other!s}' should require "
-                                        f"'{best_candidate!s}' to enable query optimization."
+                                        f"View '{view_ref!s}': Container '{src!s}' should require "
+                                        f"'{dst!s}' to enable query optimization. "
+                                        f"Note that this will make populating instances through this view dependent on '{src!s}' being populated "
+                                        f"separately first, or through a view that maps to both '{src!s}' and '{dst!s}' (e.g., '{superset_example!s}')."
+                                    ),
+                                    fix="Add requires constraints between the containers",
+                                    code=self.code,
+                                )
+                            )
+                        else:
+                            # No superset view exists - truly problematic case
+                            affected_names = ", ".join(str(v) for v in sorted(affected_views, key=str)[:3])
+                            if len(affected_views) > 3:
+                                affected_names += f" and {len(affected_views) - 3} more"
+                            recommendations.append(
+                                Recommendation(
+                                    message=(
+                                        f"View '{view_ref!s}': Container '{src!s}' could require "
+                                        f"'{dst!s}' to enable query optimization. "
+                                        f"Note that this will make populating instances through {affected_names} "
+                                        f"dependent on '{dst!s}' being populated first."
                                     ),
                                     fix="Add requires constraints between the containers",
                                     code=self.code,
                                 )
                             )
                     else:
-                        # No container has existing requires, use generic message
-                        uncovered_str = ", ".join(f"'{c!s}'" for c in sorted(uncovered, key=str))
                         recommendations.append(
                             Recommendation(
                                 message=(
-                                    f"View '{view_ref!s}' maps to {len(containers_in_view)} containers but no single "
-                                    f"container requires all the others (directly or indirectly). "
-                                    f"Containers without requires constraints between them: {uncovered_str}. "
-                                    "This can cause suboptimal query performance."
+                                    f"View '{view_ref!s}': Container '{src!s}' should require "
+                                    f"'{dst!s}' to enable query optimization."
                                 ),
                                 fix="Add requires constraints between the containers",
                                 code=self.code,
                             )
                         )
+            elif view_ref.space not in CDF_BUILTIN_SPACES:
+                # No recommendations but hierarchy is incomplete - unsolvable case
+                # This happens when all mapped containers are CDF built-in (not modifiable)
+                user_containers = [c for c in containers_in_view if c.space not in CDF_BUILTIN_SPACES]
+                if not user_containers:
+                    recommendations.append(
+                        Recommendation(
+                            message=(
+                                f"View '{view_ref!s}' maps to multiple CDF built-in containers "
+                                f"without a complete requires hierarchy between them, which may cause performance issues. "
+                                "This cannot be fixed as these containers are not modifiable."
+                            ),
+                            fix="Consider restructuring the view or adding a new container that requires the other containers",
+                            code=self.code,
+                        )
+                    )
 
         return recommendations
