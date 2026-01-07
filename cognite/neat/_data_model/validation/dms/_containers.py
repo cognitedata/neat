@@ -221,7 +221,7 @@ class UnnecessaryRequiresConstraint(DataModelValidator):
     before `OrderContainer` can be used, even though they serve independent views.
     """
 
-    code = f"{BASE_CODE}-005"
+    code = f"{BASE_CODE}-004"
     issue_type = Recommendation
 
     def run(self) -> list[Recommendation]:
@@ -281,7 +281,7 @@ class RequiresConstraintCycle(DataModelValidator):
     requires `my_space:OrderContainer`. This creates a cycle and will be rejected.
     """
 
-    code = f"{BASE_CODE}-006"
+    code = f"{BASE_CODE}-005"
     issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
