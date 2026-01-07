@@ -416,7 +416,7 @@ class TestContainerPropertyDiffer:
             neat_client.containers,
             field_path=f"properties.{TEXT_PROPERTY_ID}.type.collation",
             expect_500=True,
-            in_error_message="Internal Server Error",
+            in_error_message="Internal server error",
         )
 
     def test_diff_text_property_max_text_size_increase(
