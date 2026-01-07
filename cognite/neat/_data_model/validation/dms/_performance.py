@@ -73,10 +73,10 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
                             recommendations.append(
                                 Recommendation(
                                     message=(
-                                        f"View '{view_ref!s}': Container '{src!s}' should require "
-                                        f"'{dst!s}' to enable query optimization. "
+                                        f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
+                                        f"Add a 'requires' constraint from '{src!s}' to '{dst!s}' to mitigate this. "
                                         f"Note that this will make populating instances through this view dependent on '{src!s}' being populated "
-                                        f"separately first, or through a view that maps to both '{src!s}' and '{dst!s}' (e.g., '{superset_example!s}')."
+                                        f"separately first, or through a view that maps to both (e.g., '{superset_example!s}')."
                                     ),
                                     fix="Add requires constraints between the containers",
                                     code=self.code,
@@ -90,8 +90,8 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
                             recommendations.append(
                                 Recommendation(
                                     message=(
-                                        f"View '{view_ref!s}': Container '{src!s}' could require "
-                                        f"'{dst!s}' to enable query optimization. "
+                                        f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
+                                        f"Add a 'requires' constraint from '{src!s}' to '{dst!s}' to mitigate this. "
                                         f"Note that this will make populating instances through {affected_names} "
                                         f"dependent on '{dst!s}' being populated first."
                                     ),
@@ -103,8 +103,8 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
                         recommendations.append(
                             Recommendation(
                                 message=(
-                                    f"View '{view_ref!s}': Container '{src!s}' should require "
-                                    f"'{dst!s}' to enable query optimization."
+                                    f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
+                                    f"Add a 'requires' constraint from '{src!s}' to '{dst!s}' to mitigate this."
                                 ),
                                 fix="Add requires constraints between the containers",
                                 code=self.code,
@@ -118,11 +118,12 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
                     recommendations.append(
                         Recommendation(
                             message=(
-                                f"View '{view_ref!s}' maps to multiple CDF built-in containers "
-                                f"without a complete requires hierarchy between them, which may cause performance issues. "
-                                "This cannot be fixed as these containers are not modifiable."
+                                f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
+                                f"The view maps to multiple CDF built-in containers {', '.join(str(c) for c in containers_in_view)} "
+                                " without a complete requires hierarchy between them, but because these containers are not modifiable, "
+                                " this cannot be fixed by adding requires constraints."
                             ),
-                            fix="Consider restructuring the view or adding a new container that requires the other containers",
+                            fix="Consider restructuring the view",
                             code=self.code,
                         )
                     )

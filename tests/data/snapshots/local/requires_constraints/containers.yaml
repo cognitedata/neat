@@ -103,6 +103,182 @@
         type: text
         list: false
 
+# Containers for FunctionalLocation/Tag/CogniteAsset scenario (isolated test)
+# Key: FuncLocTagContainer ONLY appears with FuncLocAssetContainer (no reduced view)
+- space: my_space
+  externalId: FuncLocContainer
+  usedFor: node
+  properties:
+    funcLocId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: FuncLocTagContainer
+  usedFor: node
+  properties:
+    tagName:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: FuncLocAssetContainer
+  usedFor: node
+  properties:
+    assetId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_describable:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: FuncLocDescribableContainer
+        type: container
+
+- space: my_space
+  externalId: FuncLocDescribableContainer
+  usedFor: node
+  properties:
+    description:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+# Containers for "Tag requires Sourceable instead of Asset" bridge test
+# Key: BridgeTagContainer requires SourceableContainer (suboptimal choice)
+#      BridgeAssetContainer requires SourceableContainer AND BridgeDescribableContainer
+#      BridgeCompressorContainer should recommend BridgeTagContainer → BridgeAssetContainer
+- space: my_space
+  externalId: BridgeSourceableContainer
+  usedFor: node
+  properties:
+    sourceId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: BridgeDescribableContainer
+  usedFor: node
+  properties:
+    description:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: BridgeAssetContainer
+  usedFor: node
+  properties:
+    assetName:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_sourceable:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: BridgeSourceableContainer
+        type: container
+    req_describable:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: BridgeDescribableContainer
+        type: container
+
+- space: my_space
+  externalId: BridgeTagContainer
+  usedFor: node
+  properties:
+    tagName:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_sourceable:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: BridgeSourceableContainer
+        type: container
+
+- space: my_space
+  externalId: BridgeCompressorContainer
+  usedFor: node
+  properties:
+    compressorId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_tag:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+
+# Additional equipment containers - independent of each other but share Tag and Describable
+- space: my_space
+  externalId: BridgeEquipmentBContainer
+  usedFor: node
+  properties:
+    equipmentBId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_tag:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+
+- space: my_space
+  externalId: BridgeEquipmentCContainer
+  usedFor: node
+  properties:
+    equipmentCId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_tag:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+
 # Containers for UnnecessaryRequiresConstraint - requires constraint but never used together
 - space: my_space
   externalId: OrderContainer
@@ -169,4 +345,3 @@
         space: my_space
         externalId: CycleContainerA
         type: container
-

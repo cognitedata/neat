@@ -245,7 +245,7 @@ class UnnecessaryRequiresConstraint(DataModelValidator):
                 if constraint.require not in self.validation_resources.merged.containers:
                     continue  # Handled by RequiredContainerDoesNotExist
 
-                if self.validation_resources.are_containers_mapped_together(container_ref, constraint.require):
+                if self.validation_resources.find_views_with_both_containers(container_ref, constraint.require):
                     continue  # They appear together, constraint is useful
 
                 recommendations.append(

@@ -428,19 +428,21 @@ class ValidationResources:
 
         return view_to_containers
 
-    def are_containers_mapped_together(self, container_a: ContainerReference, container_b: ContainerReference) -> bool:
-        """Check if two containers are mapped together in any view at least once.
+    def find_views_with_both_containers(
+        self, container_a: ContainerReference, container_b: ContainerReference
+    ) -> set[ViewReference]:
+        """Find views that contain both containers.
 
         Args:
-            container_a: First container reference
-            container_b: Second container reference
+            container_a: First container
+            container_b: Second container
 
         Returns:
-            True if the containers are mapped together in at least one view
+            Set of views containing both containers
         """
-        views_with_a = self.container_to_views.get(container_a, set())
-        views_with_b = self.container_to_views.get(container_b, set())
-        return bool(views_with_a & views_with_b)
+        views_a = self.container_to_views.get(container_a, set())
+        views_b = self.container_to_views.get(container_b, set())
+        return views_a & views_b
 
     # =========================================================================
     # Container Requires Constraint Methods (using networkx for graph operations)
@@ -459,31 +461,18 @@ class ValidationResources:
         for container_ref in self.merged.containers:
             graph.add_node(container_ref)
 
-        # Add edges for requires constraints
+        # Add edges for requires constraints (only if target container exists)
         for container_ref in self.merged.containers:
             container = self.select_container(container_ref)
             if not container or not container.constraints:
                 continue
             for constraint in container.constraints.values():
                 if isinstance(constraint, RequiresConstraintDefinition):
-                    graph.add_edge(container_ref, constraint.require)
+                    # Only add edge if the required container actually exists
+                    if self.select_container(constraint.require):
+                        graph.add_edge(container_ref, constraint.require)
 
         return graph
-
-    def get_direct_required_containers(self, container_ref: ContainerReference) -> set[ContainerReference]:
-        """Get all containers that a container directly requires."""
-        if container_ref not in self.requires_graph:
-            return set()
-        return set(self.requires_graph.successors(container_ref))
-
-    def get_transitively_required_containers(self, container_ref: ContainerReference) -> frozenset[ContainerReference]:
-        """Get all containers that a container requires (transitively).
-
-        Uses networkx descendants() which handles cycles gracefully.
-        """
-        if container_ref not in self.requires_graph:
-            return frozenset()
-        return frozenset(nx.descendants(self.requires_graph, container_ref))
 
     def has_full_requires_hierarchy(self, containers: set[ContainerReference]) -> bool:
         """Check if there's a container that transitively requires all other containers in the set.
@@ -491,7 +480,7 @@ class ValidationResources:
         For query performance optimization, we only need ONE container to require all others.
         This allows the hasData filter to use only that outermost container.
 
-        Uses nx.descendants() (via get_transitively_required_containers) to check reachability.
+        Uses nx.descendants() to check reachability.
 
         Args:
             containers: Set of containers to check
@@ -504,7 +493,7 @@ class ValidationResources:
 
         for candidate in containers:
             others = containers - {candidate}
-            if others.issubset(self.get_transitively_required_containers(candidate)):
+            if others.issubset(nx.descendants(self.requires_graph, candidate)):
                 return True
 
         return False
@@ -573,28 +562,24 @@ class ValidationResources:
 
         # Add edges only between containers that must be connected
         for pair in must_connect:
-            c1, c2 = tuple(pair)
+            # Sort for deterministic ordering (frozenset iteration order is not guaranteed)
+            c1, c2 = sorted(pair, key=str)
             # Add both directions, let MST pick the best
             G.add_edge(c1, c2, weight=self._compute_requires_edge_weight(c1, c2))
             G.add_edge(c2, c1, weight=self._compute_requires_edge_weight(c2, c1))
 
         # Existing requires get weight 0 (free to keep)
         for src in all_containers:
-            for dst in self.get_direct_required_containers(src):
+            for dst in self.requires_graph.successors(src):
                 if dst in all_containers and G.has_edge(src, dst):
                     G[src][dst]["weight"] = 0.0
 
         # Step 4: Find minimum spanning arborescence
-        # IMPORTANT: Arborescence edges point AWAY from the root.
-        # We want user containers as roots (edges: user → CDF built-in).
-        # To achieve this, we reverse the graph, find arborescence (edges point TO CDF),
-        # then reverse the result back.
-        G_reversed = G.reverse()
-
+        # Arborescence: edges point AWAY from the root (root is the source).
+        # We want outermost containers as roots, which the algorithm naturally selects
+        # based on edge weights (outermost containers have more descendants coverage).
         try:
-            arborescence_reversed = nx.minimum_spanning_arborescence(G_reversed, attr="weight")
-            # Reverse edges back to get the correct direction
-            arborescence = arborescence_reversed.reverse()
+            arborescence = nx.minimum_spanning_arborescence(G, attr="weight")
         except nx.NetworkXException:
             # Graph may be disconnected - try to find forest of arborescences
             arborescence = nx.DiGraph()
@@ -602,10 +587,8 @@ class ValidationResources:
                 if len(component) < 2:
                     continue
                 subgraph = G.subgraph(component).copy()
-                subgraph_reversed = subgraph.reverse()
                 try:
-                    sub_arb_rev = nx.minimum_spanning_arborescence(subgraph_reversed, attr="weight")
-                    sub_arb = sub_arb_rev.reverse()
+                    sub_arb = nx.minimum_spanning_arborescence(subgraph, attr="weight")
                     arborescence = nx.compose(arborescence, sub_arb)
                 except nx.NetworkXException:
                     continue
@@ -615,7 +598,7 @@ class ValidationResources:
         return {
             (src, dst)
             for src, dst in arborescence.edges()
-            if dst not in self.get_direct_required_containers(src) and src.space not in CDF_BUILTIN_SPACES
+            if dst not in set(self.requires_graph.successors(src)) and src.space not in CDF_BUILTIN_SPACES
         }
 
     def get_missing_requires_for_view(
@@ -627,10 +610,6 @@ class ValidationResources:
         relevant to this view. The global MST ensures consistency across views
         (e.g., "Tag → CogniteAsset" is recommended for all views containing Tag).
 
-        For each view, we report global recommendations where:
-        1. The source container is in this view (the constraint helps this view)
-        2. The constraint is not already transitively satisfied
-
         Args:
             containers_in_view: Set of containers in the view being validated.
 
@@ -640,116 +619,117 @@ class ValidationResources:
         if len(containers_in_view) < 2:
             return []
 
-        # Check if hierarchy is already complete for this view
         if self.has_full_requires_hierarchy(containers_in_view):
             return []
 
-        # Get the globally optimal recommendations from MST
-        global_recs = self.optimal_requires_tree
+        user_containers = [c for c in containers_in_view if c.space not in CDF_BUILTIN_SPACES]
+        if not user_containers:
+            return []
 
-        # Filter to recommendations where the source is in this view
-        # We include ALL global MST recommendations for containers in this view,
-        # trusting the MST's global optimization. The redundancy pruning will
-        # remove any that aren't actually needed.
-        relevant_recs: list[tuple[ContainerReference, ContainerReference]] = []
+        # Build a working graph: existing requires + MST recommendations for this view
+        work_graph = self.requires_graph.copy()
+        all_recs: list[tuple[ContainerReference, ContainerReference]] = []
 
-        for src, dst in global_recs:
-            if src not in containers_in_view:
+        # Step 1: Add MST recommendations where BOTH src and dst are in this view.
+        for src, dst in self.optimal_requires_tree:
+            if src not in containers_in_view or dst not in containers_in_view:
                 continue
-
-            # Skip CDF containers as sources - users cannot modify them
             if src.space in CDF_BUILTIN_SPACES:
                 continue
+            work_graph.add_edge(src, dst)
+            all_recs.append((src, dst))
 
-            relevant_recs.append((src, dst))
-
-        # Step 1: Build simulated coverage after applying MST recommendations
-        simulated_requires: dict[ContainerReference, set[ContainerReference]] = {}
-        for c in containers_in_view:
-            simulated_requires[c] = set(self.get_transitively_required_containers(c))
-
-        # Apply MST recommendations to simulated coverage
-        for src, dst in relevant_recs:
-            if src in simulated_requires:
-                simulated_requires[src].add(dst)
-                simulated_requires[src].update(self.get_transitively_required_containers(dst))
-
-        # Find user containers in this view (containers not in CDF built-in spaces)
-        user_containers = [c for c in containers_in_view if c.space not in CDF_BUILTIN_SPACES]
-
-        # Step 2: Add edges between user containers if hierarchy is still incomplete
-        # (MST might not connect all user containers within this view)
-        all_recs = list(relevant_recs)
-
-        # Check if any user container covers all others
-        hierarchy_complete = any(
-            (simulated_requires.get(c, set()) | {c}) >= containers_in_view for c in user_containers
+        # Step 2: Add edges to complete the hierarchy.
+        # First, check if any MST recommendation (even with dst outside view) helps.
+        # Then, add local edges from outermost to uncovered containers.
+        #
+        # Outermost = most specific container (appears in fewest views).
+        # Tiebreaker 1: fewer ancestors (containers that require this one) = at top of hierarchy.
+        # Tiebreaker 2: fewer descendants = less existing coverage = better root candidate.
+        outermost = min(
+            user_containers,
+            key=lambda c: (
+                len(self.container_to_views.get(c, set())),
+                len(nx.ancestors(self.requires_graph, c)) if self.requires_graph.has_node(c) else 0,
+                len(nx.descendants(self.requires_graph, c)) if self.requires_graph.has_node(c) else 0,
+                str(c),  # Final tiebreaker for determinism
+            ),
         )
 
-        if not hierarchy_complete and user_containers:
-            # Find the best outermost candidate (most coverage, fewest views = most specific)
-            outermost = max(
-                user_containers,
-                key=lambda c: (
-                    len((simulated_requires.get(c, set()) | {c}) & containers_in_view),
-                    -len(self.container_to_views.get(c, set())),
-                ),
-            )
-            covered = simulated_requires.get(outermost, set()) | {outermost}
-            uncovered = containers_in_view - covered
+        # Step 2a: Add MST recommendations where src is a user container in view
+        # and dst's transitive chain covers uncovered containers.
+        covered = (nx.descendants(work_graph, outermost) if work_graph.has_node(outermost) else set()) | {outermost}
+        uncovered = containers_in_view - covered
 
-            # Add edges from outermost to uncovered user containers
-            # Prefer user containers as targets (they provide more transitive coverage)
-            while uncovered:
-                best_target = None
-                best_coverage: set[ContainerReference] = set()
+        for src, dst in self.optimal_requires_tree:
+            if src not in user_containers or src.space in CDF_BUILTIN_SPACES:
+                continue
+            if dst in containers_in_view:
+                continue  # Already handled in Step 1
 
-                # Prefer user containers as targets
-                user_uncovered = [c for c in uncovered if c.space not in CDF_BUILTIN_SPACES]
-                candidates = user_uncovered if user_uncovered else list(uncovered)
-
-                for candidate in candidates:
-                    # What would requiring this candidate cover?
-                    candidate_sim_cov = simulated_requires.get(candidate, set()) | {candidate}
-                    candidate_covers = candidate_sim_cov & uncovered
-                    if len(candidate_covers) > len(best_coverage):
-                        best_coverage = candidate_covers
-                        best_target = candidate
-
-                if best_target is None:
-                    break
-
-                all_recs.append((outermost, best_target))
-                # Update simulated coverage
-                simulated_requires[outermost].add(best_target)
-                simulated_requires[outermost].update(self.get_transitively_required_containers(best_target))
-                covered = simulated_requires.get(outermost, set()) | {outermost}
-                uncovered = containers_in_view - covered
-
-        # Step 3: Prune redundant recommendations using graph reachability
-        # Build a temporary graph with existing edges + all recommendations
-        # Then check if each recommendation is redundant (dst reachable without it)
-        needed_recs: list[tuple[ContainerReference, ContainerReference]] = []
-
-        for src, dst in all_recs:
-            # Check existing transitive coverage (without any recommendations)
-            existing_coverage = self.get_transitively_required_containers(src)
-            if dst in existing_coverage:
+            # Skip if this would create a cycle
+            if self.requires_graph.has_node(dst) and src in nx.descendants(self.requires_graph, dst):
                 continue
 
-            # Build graph with existing edges + OTHER recommendations
-            temp_graph = self.requires_graph.copy()
-            for other_src, other_dst in all_recs:
-                if (other_src, other_dst) != (src, dst):
-                    temp_graph.add_edge(other_src, other_dst)
+            # Check if dst's transitive chain covers any uncovered container
+            dst_coverage = nx.descendants(self.requires_graph, dst) if self.requires_graph.has_node(dst) else set()
+            if dst_coverage & uncovered:
+                work_graph.add_edge(src, dst)
+                all_recs.append((src, dst))
+                # Update coverage
+                covered = nx.descendants(work_graph, outermost) | {outermost}
+                uncovered = containers_in_view - covered
 
-            # Check if dst is reachable from src in this graph (without the current edge)
-            if temp_graph.has_node(src) and temp_graph.has_node(dst):
-                reachable = nx.descendants(temp_graph, src)
-                if dst in reachable:
-                    continue  # Redundant - covered by other recommendations
+        # Step 2b: Add local edges from outermost to remaining uncovered containers
+        # Skip if MST already connected these containers (even in opposite direction)
+        mst_connected_pairs = {frozenset({src, dst}) for src, dst in self.optimal_requires_tree}
 
-            needed_recs.append((src, dst))
+        while uncovered:
+            user_uncovered = [c for c in uncovered if c.space not in CDF_BUILTIN_SPACES]
+            candidates = user_uncovered if user_uncovered else list(uncovered)
+
+            best_target = max(
+                candidates,
+                key=lambda c: len((nx.descendants(work_graph, c) if work_graph.has_node(c) else set()) & uncovered),
+                default=None,
+            )
+            if best_target is None:
+                break
+
+            # Skip if MST already has an edge between these (in either direction)
+            if frozenset({outermost, best_target}) in mst_connected_pairs:
+                uncovered.remove(best_target)
+                continue
+
+            # Skip if adding this edge would create a cycle (best_target already requires outermost)
+            if self.requires_graph.has_node(best_target) and outermost in nx.descendants(
+                self.requires_graph, best_target
+            ):
+                uncovered.remove(best_target)
+                continue
+
+            work_graph.add_edge(outermost, best_target)
+            all_recs.append((outermost, best_target))
+            covered = nx.descendants(work_graph, outermost) | {outermost}
+            uncovered = containers_in_view - covered
+
+        # Step 3: Prune redundant recommendations
+        # Build graph with all recs, then check each: is dst reachable without this edge?
+        needed_recs: list[tuple[ContainerReference, ContainerReference]] = []
+        for src, dst in all_recs:
+            # Already exists in original graph?
+            if dst in nx.descendants(self.requires_graph, src):
+                continue
+
+            # Temporarily remove this edge and check reachability via other recs
+            work_graph.remove_edge(src, dst)
+            is_redundant = (
+                work_graph.has_node(src) and work_graph.has_node(dst) and dst in nx.descendants(work_graph, src)
+            )
+            work_graph.add_edge(src, dst)  # Restore for next iteration
+
+            if not is_redundant:
+                needed_recs.append((src, dst))
 
         return sorted(needed_recs, key=lambda x: (str(x[0]), str(x[1])))
 
@@ -785,30 +765,44 @@ class ValidationResources:
         dst_is_user = dst.space not in CDF_BUILTIN_SPACES
 
         if not src_is_user:
-            # CDF built-in container as source - user CAN'T modify these!
-            # This should almost never be recommended
-            base_weight += 100.0
-        elif src_is_user and not dst_is_user:
-            # User container requiring CDF built-in - this is ideal
-            base_weight -= 0.3
-        elif src_is_user and dst_is_user:
-            # User requiring user is fine
+            # CDF built-in container as source - users cannot modify these, so effectively forbidden
+            base_weight += 1e9
+        else:
+            # User container as source - this is the actionable case
             base_weight -= 0.1
 
         # Factor 3: Existing transitivity - leverage existing chains
-        if src in self.get_transitively_required_containers(dst):
+        if src in nx.descendants(self.requires_graph, dst):
             # dst already requires src, so src->dst would create a cycle - effectively forbidden
             base_weight += 1e9
-        elif dst in self.get_transitively_required_containers(src):
+        elif dst in nx.descendants(self.requires_graph, src):
             # src already transitively requires dst, this edge is redundant but cheap
             base_weight = 0.01
 
-        # Factor 4: Transitive coverage - prefer targets that already require other containers
-        # This makes Parent→Middle preferable to Parent→Leaf if Middle→Leaf exists
-        dst_transitive_coverage = len(self.get_transitively_required_containers(dst))
-        # More coverage = lower weight (bonus of 0.1 per transitively required container)
-        coverage_bonus = min(dst_transitive_coverage * 0.1, 0.4)
+        # Factor 4: Strongly prefer targets that already have requires (leverage existing chains)
+        # This is the key factor for choosing intermediate nodes over leaf nodes
+        # (e.g., Tag → Asset over Tag → Describable when Asset requires Describable)
+        dst_coverage = len(nx.descendants(self.requires_graph, dst))
+        src_coverage = len(nx.descendants(self.requires_graph, src))
+
+        # Prefer edges TO containers with more transitive coverage
+        coverage_bonus = min(dst_coverage * 0.25, 0.6)
         base_weight -= coverage_bonus
+
+        # Prefer edges TO containers with more coverage (intermediate nodes provide more value)
+        # But penalize "leaf → root" edges where a leaf container requires a root container
+        if dst_coverage > src_coverage:
+            # Pointing TO a container with more coverage - generally good
+            # But if src is a TRUE leaf (0 coverage), it's backwards to have it require a root
+            if src_coverage == 0 and dst_coverage > 1:
+                # Leaf → Root is backwards (e.g., Describable → Compressor)
+                base_weight += dst_coverage * 0.1
+            else:
+                # Normal case: specific → intermediate (e.g., Parent → Middle, Tag → Asset)
+                base_weight -= 0.15
+        elif dst_coverage < src_coverage:
+            # Pointing TO a container with less coverage - backwards
+            base_weight += 0.2
 
         return max(base_weight, 0.01)
 
@@ -835,37 +829,21 @@ class ValidationResources:
         """
         src_views = self.container_to_views.get(src, set())
 
+        # Containers that transitively require dst
+        containers_requiring_dst = (
+            nx.ancestors(self.requires_graph, dst) if self.requires_graph.has_node(dst) else set()
+        )
+
         affected: set[ViewReference] = set()
         for view_ref in src_views:
             if view_ref == exclude_view:
                 continue
             view_containers = self.view_to_containers.get(view_ref, set())
 
-            # Check if dst is already covered in this view:
-            # 1. dst is directly in the view, OR
-            # 2. Some container in the view already requires dst (transitively)
-            dst_is_covered = dst in view_containers or any(
-                dst in self.get_transitively_required_containers(c) for c in view_containers
-            )
+            # dst is covered if: dst is in view OR any container in view already requires dst
+            dst_is_covered = dst in view_containers or bool(containers_requiring_dst & view_containers)
 
             if not dst_is_covered:
                 affected.add(view_ref)
 
         return affected
-
-    def find_views_with_both_containers(self, src: ContainerReference, dst: ContainerReference) -> set[ViewReference]:
-        """Find views that contain both src and dst containers.
-
-        These "superset" views can serve as ingestion points for views that only
-        have src (and would be affected by adding src → dst).
-
-        Args:
-            src: Source container
-            dst: Target container
-
-        Returns:
-            Set of views containing both containers
-        """
-        src_views = self.container_to_views.get(src, set())
-        dst_views = self.container_to_views.get(dst, set())
-        return src_views & dst_views
