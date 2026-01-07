@@ -33,7 +33,6 @@ class ValidationConfig(ConfigModel):
 
     exclude: list[str] = Field(default_factory=list)
     override: bool = Field(False, description="If enabled, all validators are skipped.")
-    enable_alpha_validators: bool = Field(False, description="If enabled, alpha validators are run.")
 
     def can_run_validator(self, code: str, issue_type: type) -> bool:
         """
