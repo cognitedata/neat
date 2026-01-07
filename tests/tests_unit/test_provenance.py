@@ -24,6 +24,7 @@ class TestProvenance:
         provenance = Provenance()
         assert len(provenance) == 0
         assert provenance.last_change is None
+        assert provenance.last_physical_data_model_read() is None
 
     def test_append_change(self) -> None:
         provenance = Provenance()
