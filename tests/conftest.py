@@ -1,6 +1,113 @@
 import pytest
 
 
+@pytest.fixture
+def example_statistics_response() -> dict:
+    """Example DMS statistics API response."""
+    return {
+        "spaces": {"count": 5, "limit": 100},
+        "containers": {"count": 42, "limit": 1000},
+        "views": {"count": 123, "limit": 2000},
+        "dataModels": {"count": 8, "limit": 500},
+        "containerProperties": {"count": 1234, "limit": 100},
+        "instances": {
+            "edges": 5000,
+            "softDeletedEdges": 100,
+            "nodes": 10000,
+            "softDeletedNodes": 200,
+            "instances": 15000,
+            "instancesLimit": 5000000,
+            "softDeletedInstances": 300,
+            "softDeletedInstancesLimit": 10000000,
+        },
+        "concurrentReadLimit": 10,
+        "concurrentWriteLimit": 5,
+        "concurrentDeleteLimit": 3,
+    }
+
+
+@pytest.fixture(scope="session")
+def valid_dms_toolkit_yaml_format() -> str:
+    return """
+dataModel:
+  space: sp_command_centre_v1
+  externalId: CommandCentreModel
+  name: Command Centre Prototype V1
+  version: v1
+  description: >
+    The comprehensive Data Model for the Command Centre. It unifies OT, IT,
+    Logistics, and Financial data to enable 'Atlas AI' agents to detect
+    supply chain risks and simulate mitigation scenarios.
+  views:
+    - space: sp_command_centre_v1
+      externalId: Organization
+      version: v1
+    - space: cdf_cdm
+      externalId: CogniteAsset
+      version: v1
+
+views:
+- space: sp_command_centre_v1
+  externalId: Organization
+  name: Organization
+  version: v1
+  description: The top-level node representing the corporate entity.
+  properties:
+    name:
+      name: Name
+      description: The name of the organization.
+      container:
+        type: container
+        space: cdf_cdm
+        externalId: CogniteDescribable
+      containerPropertyIdentifier: name
+    totalRevenueRisk:
+      name: Total Revenue Risk
+      description: Aggregated financial risk ($) across all regions.
+      container:
+        type: container
+        space: sp_command_centre_v1
+        externalId: cont_enterprise_hierarchy
+      containerPropertyIdentifier: totalRevenueRisk
+
+containers:
+- space: sp_command_centre_v1
+  externalId: cont_enterprise_hierarchy
+  name: Enterprise Hierarchy Container
+  usedFor: node
+  properties:
+    totalRevenueRisk:
+      immutable: false
+      nullable: true
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      name: null
+      type:
+        type: float64
+        list: false
+        maxListSize: null
+    globalStockValue:
+      immutable: false
+      nullable: true
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      name: null
+      type:
+        type: float64
+        list: false
+        maxListSize: null
+
+spaces:
+- space: sp_command_centre_v1
+  name: Command Centre Prototype V1
+  description: >
+    A dedicated space for the Manufacturing Command Centre Knowledge Graph.
+    It hosts specific extensions for Supply Chain risk, Financial impact, and
+    multi-site Inventory visibility, supporting the 'Derisking Manufacturing Supply Chain' prototype."""
+
+
 @pytest.fixture(scope="session")
 def valid_dms_yaml_format() -> str:
     return """Metadata:

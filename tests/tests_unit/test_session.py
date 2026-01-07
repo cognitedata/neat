@@ -16,6 +16,8 @@ from cognite.neat._issues import IssueList
 from cognite.neat._session._physical import ReadPhysicalDataModel
 from cognite.neat._session._session import NeatSession
 from cognite.neat._session._usage_analytics._collector import Collector
+from tests.data import SNAPSHOT_CATALOG
+from tests.data.snapshots.utils import update_mock_router
 
 
 @pytest.fixture()
@@ -92,6 +94,39 @@ def physical_written_session(physical_state_session: NeatSession) -> NeatSession
     write_yaml = MagicMock(spec=Path)
     physical_state_session.physical_data_model.write.yaml(write_yaml)
     return physical_state_session
+
+
+@pytest.fixture()
+def not_empty_cdf(
+    neat_config: NeatClientConfig, example_statistics_response: dict, respx_mock: respx.MockRouter
+) -> respx.MockRouter:
+    config = neat_config
+    # prepare response
+    _, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+        "ai_readiness", "for_validators", format="snapshots", include_cdm=True
+    )
+
+    respx_mock.get(
+        config.create_api_url("/models/statistics"),
+    ).respond(
+        status_code=200,
+        json=example_statistics_response,
+    )
+
+    # update mock router with snapshot data simulating response from CDF API
+    update_mock_router(cdf_snapshot, neat_config, respx_mock)  # type: ignore
+    return respx_mock
+
+
+@pytest.fixture
+def session_with_toolkit_schema(new_session: NeatSession, valid_dms_toolkit_yaml_format: str) -> NeatSession:
+    read_yaml = MagicMock(spec=Path)
+    read_yaml.read_text.return_value = valid_dms_toolkit_yaml_format
+    read_yaml.name = "toolkit.yaml"
+    read_yaml.suffix = ".yaml"
+
+    new_session.physical_data_model.read.yaml(read_yaml, format="toolkit")
+    return new_session
 
 
 @pytest.mark.usefixtures("empty_cdf")
@@ -301,3 +336,13 @@ class TestRender:
         html_repr = session._repr_html_()
 
         assert isinstance(html_repr, str)
+
+
+@pytest.mark.usefixtures("not_empty_cdf")
+class TestDMSSerialization:
+    def test_toolkit_to_neat_tabular(self, session_with_toolkit_schema: NeatSession) -> None:
+        write_yaml = MagicMock(spec=Path)
+        session_with_toolkit_schema.physical_data_model.write.yaml(write_yaml, format="neat")
+
+        # missing container from toolkit schema should be added in neat schema
+        assert "- Container: cdf_cdm:CogniteDescribable" in write_yaml.write_text.call_args[0][0]
