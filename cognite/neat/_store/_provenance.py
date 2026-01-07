@@ -80,8 +80,8 @@ class Provenance(UserList[Change]):
         """This method removes all the failed changes from the provenance list."""
         raise NotImplementedError("Not implemented yet")
 
-    def last_successful_physical_data_model_read(self) -> Change | None:
-        """Get last successful physical data model read change"""
+    def last_physical_data_model_read(self) -> Change | None:
+        """Get last physical data model read change"""
         for change in self:
             if change.activity.startswith("to_data_model"):
                 return change

@@ -90,13 +90,13 @@ class NeatStore:
             writer (DMSExporter): The exporter that will be used to write the data model.
         """
         # getting provenance of the last successful physical data model read
-        change = self.provenance.last_successful_physical_data_model_read()
+        change = self.provenance.last_physical_data_model_read()
 
         if not change:
             raise RuntimeError("No successful physical data model read found in provenance.")
 
         # We do not want to modify the data model for API representations
-        if not change.agent == DMSAPIImporter.__name__ or not isinstance(writer, DMSTableExporter):
+        if not (change.agent == DMSAPIImporter.__name__ and isinstance(writer, DMSTableExporter)):
             return self.physical_data_model[-1]
 
         # This will handle data model that are partially and require to be converted to
