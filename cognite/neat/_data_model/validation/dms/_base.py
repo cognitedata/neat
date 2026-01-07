@@ -10,6 +10,7 @@ class DataModelValidator(ABC):
 
     code: ClassVar[str]
     issue_type: ClassVar[type[ConsistencyError] | type[Recommendation]]
+    alpha: ClassVar[bool] = False
 
     def __init__(
         self,

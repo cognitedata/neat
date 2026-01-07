@@ -11,6 +11,8 @@ from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._base import DataModelValidator
 
+VALIDATORS = {validator.code: validator for validator in get_concrete_subclasses(DataModelValidator)}
+
 
 class DmsDataModelValidation(OnSuccessIssuesChecker):
     """Placeholder for DMS Quality Assessment functionality."""
@@ -36,7 +38,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
         # Initialize all validators
         validators: list[DataModelValidator] = [
-            validator(validation_resources) for validator in get_concrete_subclasses(DataModelValidator)
+            validator(validation_resources) for validator in VALIDATORS.values()
         ]
 
         # Run validators
