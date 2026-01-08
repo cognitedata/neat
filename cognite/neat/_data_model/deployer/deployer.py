@@ -257,7 +257,7 @@ class SchemaDeployer(OnSuccessResultProducer):
             return f"Skipping resource as it is in the reserved Cognite space '{resource_id.space}'."
         elif resource_id.space != model_space:
             return (
-                f"Skipping resource at it is in the space '{resource_id.space}'"
+                f"Skipping resource as it is in the space '{resource_id.space}'"
                 f" not matching data model space '{model_space}'."
             )
         return None
