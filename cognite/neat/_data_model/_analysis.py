@@ -452,22 +452,23 @@ class ValidationResources:
 
         Nodes are ContainerReferences, edges represent requires constraints.
         An edge A → B means container A requires container B.
+
+        Includes containers from both merged schema and CDF
         """
         graph: nx.DiGraph = nx.DiGraph()
 
-        # Add all containers as nodes
         for container_ref in self.merged.containers:
             graph.add_node(container_ref)
+        for container_ref in self.cdf.containers:
+            graph.add_node(container_ref)
 
-        # Add edges for requires constraints (only if target container exists)
-        for container_ref in self.merged.containers:
+        # Add edges for requires constraints from all known containers
+        for container_ref in graph.nodes():
             container = self.select_container(container_ref)
             if not container or not container.constraints:
                 continue
             for constraint in container.constraints.values():
                 if not isinstance(constraint, RequiresConstraintDefinition):
-                    continue
-                if not self.select_container(constraint.require):
                     continue
                 graph.add_edge(container_ref, constraint.require)
 
