@@ -1108,18 +1108,33 @@ class TestValidationResourcesRequiresConstraints:
             f"Should NOT recommend Tag → SiblingA (would create cycle with existing SiblingA → Tag), got: {missing}"
         )
 
-    def test_step2_replaces_cdf_source_with_user_source(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test Step 2 adds user→CDF edge when MST has CDF→user edge.
+    def test_cdf_source_edges_are_flipped_in_mst(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that CDF source edges are flipped to user source edges in optimal_requires_tree.
 
-        Real scenario:
-        - Step2ViewA: {CdfBridge, UserA}
-        - Step2ViewB: {CdfBridge, UserB}
-        - MST picks ONE user as source (e.g., UserA → CdfBridge)
-        - MST uses CDF as source for the OTHER (CdfBridge → UserB, unactionable)
+        With Step2CombinedView mapping to {UserA, UserB, CdfBridge}, the MST picks
+        a user container as root and connects everything from there.
+        No CDF containers should ever be sources in the MST.
+        """
+        resources = scenarios["requires-constraints"]
 
-        For the view where CDF is source:
-        - Step 1: Skips CdfBridge → User (CDF source not in user_containers)
-        - Step 2: Adds User → CdfBridge (actionable alternative)
+        mst_edges = set(resources.optimal_requires_tree)
+
+        # No CDF source edges should exist (all are flipped to user sources)
+        cdf_source_edges = [(src, dst) for src, dst in mst_edges if src.space == "cdf_cdm"]
+        assert len(cdf_source_edges) == 0, f"Expected no CDF source edges, got: {cdf_source_edges}"
+
+        # All edges should have user containers as sources
+        for src, _ in mst_edges:
+            assert src.space != "cdf_cdm", f"CDF container should not be source: {src}"
+
+    def test_three_container_view_with_cdf_bridge(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test REAL view with 3 containers: UserA, UserB, and CDF bridge.
+
+        Step2CombinedView maps to all three: {UserA, UserB, CdfBridge}
+        The MST should create edges so that one user container is the root
+        and can reach all other containers.
+
+        Expected: A complete hierarchy with a user container as outermost.
         """
         resources = scenarios["requires-constraints"]
 
@@ -1127,38 +1142,38 @@ class TestValidationResourcesRequiresConstraints:
         user_b = ContainerReference(space="my_space", external_id="Step2UserBContainer")
         cdf_bridge = ContainerReference(space="cdf_cdm", external_id="CdfBridgeContainer")
 
-        mst_edges = set(resources.optimal_requires_tree)
+        # Use the REAL view that maps to all 3 containers
+        combined_view = ViewReference(space="my_space", external_id="Step2CombinedView", version="1")
+        view_containers = resources.view_to_containers.get(combined_view, set())
 
-        # Find which user has user source vs CDF source in MST
-        user_a_has_user_source = (user_a, cdf_bridge) in mst_edges
-        user_b_has_user_source = (user_b, cdf_bridge) in mst_edges
-        user_a_has_cdf_source = (cdf_bridge, user_a) in mst_edges
-        user_b_has_cdf_source = (cdf_bridge, user_b) in mst_edges
-
-        # Exactly one should have user source, one should have CDF source
-        assert user_a_has_user_source != user_b_has_user_source, (
-            f"Expected exactly one user source. A={user_a_has_user_source}, B={user_b_has_user_source}"
-        )
-        assert user_a_has_cdf_source != user_b_has_cdf_source, (
-            f"Expected exactly one CDF source. A={user_a_has_cdf_source}, B={user_b_has_cdf_source}"
+        assert view_containers == {user_a, user_b, cdf_bridge}, (
+            f"Expected view to have all 3 containers, got: {view_containers}"
         )
 
-        # The user with CDF source needs Step 2
-        user_with_cdf_source = user_a if user_a_has_cdf_source else user_b
-
-        # Get recommendations for that user's view
-        view_containers = {user_with_cdf_source, cdf_bridge}
         missing = resources.get_missing_requires_for_view(view_containers)
+        missing_ids = {(src.external_id, dst.external_id) for src, dst in missing}
 
-        # Step 2 should add User → CdfBridge (replacing the unactionable CDF → User)
-        assert len(missing) == 1, f"Expected exactly 1 recommendation, got: {missing}"
-        src, dst = missing[0]
-        assert src == user_with_cdf_source, f"Expected source {user_with_cdf_source.external_id}, got {src}"
-        assert dst == cdf_bridge, f"Expected target CdfBridge, got {dst}"
+        # At minimum, we need edges to connect all 3 containers
+        assert len(missing) >= 2, f"Expected at least 2 recommendations to connect 3 containers, got: {missing_ids}"
 
-        # The recommended edge should be the REVERSE of what MST had
-        assert (cdf_bridge, user_with_cdf_source) in mst_edges, "MST had CDF→User"
-        assert (user_with_cdf_source, cdf_bridge) not in mst_edges, "MST should NOT have User→CDF (Step 2 adds it)"
+        # All sources should be user containers (no CDF sources)
+        for src, _ in missing:
+            assert src.space != "cdf_cdm", f"CDF container should not be source: {src}"
+
+        # Verify hierarchy is complete after applying recommendations
+        work_graph = resources.requires_graph.copy()
+        for src, dst in missing:
+            work_graph.add_edge(src, dst)
+
+        # Check that some user container can reach all others
+        user_containers = [c for c in view_containers if c.space != "cdf_cdm"]
+        hierarchy_complete = any(
+            all(c in nx.descendants(work_graph, u) | {u} for c in view_containers) for u in user_containers
+        )
+        assert hierarchy_complete, (
+            f"Recommendations should create complete hierarchy. "
+            f"Missing: {missing_ids}, Graph edges: {list(work_graph.edges())[:20]}"
+        )
 
     @pytest.mark.parametrize(
         "container_id,expected_conflicting",

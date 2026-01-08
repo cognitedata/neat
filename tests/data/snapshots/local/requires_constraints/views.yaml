@@ -408,7 +408,7 @@
 # Disconnected component test - View for Group A (never appears with Group B)
 - space: my_space
   externalId: DisconnectedGroupAView
-  version: "1"
+  version: '1'
   properties:
     groupAField1:
       name: groupAField1
@@ -430,7 +430,7 @@
 # Disconnected component test - View for Group B (never appears with Group A)
 - space: my_space
   externalId: DisconnectedGroupBView
-  version: "1"
+  version: '1'
   properties:
     groupBField1:
       name: groupBField1
@@ -453,7 +453,7 @@
 # View A: CdfBridge + UserA (UserB NOT here)
 - space: my_space
   externalId: Step2ViewA
-  version: "1"
+  version: '1'
   properties:
     bridgeField:
       name: bridgeField
@@ -475,7 +475,7 @@
 # View B: CdfBridge + UserB (UserA NOT here)
 - space: my_space
   externalId: Step2ViewB
-  version: "1"
+  version: '1'
   properties:
     bridgeField:
       name: bridgeField
@@ -485,6 +485,36 @@
         externalId: CdfBridgeContainer
         type: container
       containerPropertyIdentifier: bridgeField
+    userBField:
+      name: userBField
+      description: Field from UserB
+      container:
+        space: my_space
+        externalId: Step2UserBContainer
+        type: container
+      containerPropertyIdentifier: userBField
+
+# View with ALL THREE: UserA, UserB, CdfBridge
+- space: my_space
+  externalId: Step2CombinedView
+  version: '1'
+  properties:
+    bridgeField:
+      name: bridgeField
+      description: Field from CDF bridge
+      container:
+        space: cdf_cdm
+        externalId: CdfBridgeContainer
+        type: container
+      containerPropertyIdentifier: bridgeField
+    userAField:
+      name: userAField
+      description: Field from UserA
+      container:
+        space: my_space
+        externalId: Step2UserAContainer
+        type: container
+      containerPropertyIdentifier: userAField
     userBField:
       name: userBField
       description: Field from UserB

@@ -564,9 +564,6 @@ class ValidationResources:
                 G[src][dst]["weight"] = 0.0
 
         # Step 4: Find minimum spanning arborescence (forest if disconnected)
-        # Arborescence: edges point AWAY from the root (root is the source).
-        # We want outermost containers as roots, which the algorithm naturally selects
-        # based on edge weights (outermost containers have more descendants coverage).
         arborescence = nx.DiGraph()
         for component in nx.weakly_connected_components(G):
             if len(component) < 2:
@@ -575,10 +572,21 @@ class ValidationResources:
             sub_arb = nx.minimum_spanning_arborescence(subgraph, attr="weight")
             arborescence = nx.compose(arborescence, sub_arb)
 
-        # Step 5: Filter to only NEW edges (no existing path in requires_graph)
-        # Note: CDF source edges are kept here; they're filtered in get_missing_requires_for_view
-        # where we have view context. This keeps optimal_requires_tree as a pure MST result.
-        return {(src, dst) for src, dst in arborescence.edges() if not nx.has_path(self.requires_graph, src, dst)}
+        # Step 5: Transform CDF source edges to user source edges
+        # The MST may have picked CDF → User edges, which are unactionable.
+        # We flip these to User → CDF, preserving the connectivity.
+        actionable_edges: set[tuple[ContainerReference, ContainerReference]] = set()
+        for src, dst in arborescence.edges():
+            if src.space in CDF_BUILTIN_SPACES and dst.space not in CDF_BUILTIN_SPACES:
+                # Flip CDF → User to User → CDF
+                # Only flip if it won't create a cycle
+                if not nx.has_path(self.requires_graph, dst, src):
+                    actionable_edges.add((dst, src))
+            else:
+                actionable_edges.add((src, dst))
+
+        # Step 6: Filter to only NEW edges (no existing path in requires_graph)
+        return {(src, dst) for src, dst in actionable_edges if not nx.has_path(self.requires_graph, src, dst)}
 
     def get_missing_requires_for_view(
         self, containers_in_view: set[ContainerReference]
@@ -605,10 +613,6 @@ class ValidationResources:
         # Build a working graph: existing requires + relevant MST recommendations
         work_graph = self.requires_graph.copy()
         all_recs: list[tuple[ContainerReference, ContainerReference]] = []
-        # Only include user source edges in mst_connected_pairs (CDF sources are unactionable)
-        mst_connected_pairs = {
-            frozenset({src, dst}) for src, dst in self.optimal_requires_tree if src.space not in CDF_BUILTIN_SPACES
-        }
 
         # Outermost = most specific container (appears in fewest views).
         # Tiebreaker 1: fewer ancestors (containers that require this one) = at top of hierarchy.
@@ -642,33 +646,7 @@ class ValidationResources:
                 covered = nx.descendants(work_graph, outermost) | {outermost}
                 uncovered = containers_in_view - covered
 
-        # Step 2: Add local edges from outermost to remaining uncovered containers
-
-        while uncovered:
-            user_uncovered = [c for c in uncovered if c.space not in CDF_BUILTIN_SPACES]
-            candidates = user_uncovered if user_uncovered else list(uncovered)
-
-            best_target = max(
-                candidates,
-                key=lambda c: len(nx.descendants(work_graph, c) & uncovered),
-                default=None,
-            )
-            if best_target is None:
-                break
-
-            # Skip if MST already has an edge between these (in either direction)
-            if frozenset({outermost, best_target}) in mst_connected_pairs:
-                uncovered.remove(best_target)
-                continue
-
-            # Only add if edge doesn't already exist (we only recommend NEW edges)
-            if not nx.has_path(self.requires_graph, outermost, best_target):
-                work_graph.add_edge(outermost, best_target)
-                all_recs.append((outermost, best_target))
-            covered = nx.descendants(work_graph, outermost) | {outermost}
-            uncovered = containers_in_view - covered
-
-        # Step 3: Prune redundant recommendations
+        # Step 2: Prune redundant recommendations
         # Check each: is dst reachable without this edge (via other recommendations)?
         needed_recs: list[tuple[ContainerReference, ContainerReference]] = []
         for src, dst in all_recs:
