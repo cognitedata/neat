@@ -576,11 +576,9 @@ class ValidationResources:
             arborescence = nx.compose(arborescence, sub_arb)
 
         # Step 5: Filter to only NEW edges (no existing path in requires_graph)
-        new_edges = {(src, dst) for src, dst in arborescence.edges() if not nx.has_path(self.requires_graph, src, dst)}
-
-        # Step 6: Filter to only actionable edges (user containers as sources)
-        # Users cannot modify CDF built-in containers
-        return {(src, dst) for src, dst in new_edges if src.space not in CDF_BUILTIN_SPACES}
+        # Note: CDF source edges are kept here; they're filtered in get_missing_requires_for_view
+        # where we have view context. This keeps optimal_requires_tree as a pure MST result.
+        return {(src, dst) for src, dst in arborescence.edges() if not nx.has_path(self.requires_graph, src, dst)}
 
     def get_missing_requires_for_view(
         self, containers_in_view: set[ContainerReference]
@@ -607,7 +605,10 @@ class ValidationResources:
         # Build a working graph: existing requires + relevant MST recommendations
         work_graph = self.requires_graph.copy()
         all_recs: list[tuple[ContainerReference, ContainerReference]] = []
-        mst_connected_pairs = {frozenset({src, dst}) for src, dst in self.optimal_requires_tree}
+        # Only include user source edges in mst_connected_pairs (CDF sources are unactionable)
+        mst_connected_pairs = {
+            frozenset({src, dst}) for src, dst in self.optimal_requires_tree if src.space not in CDF_BUILTIN_SPACES
+        }
 
         # Outermost = most specific container (appears in fewest views).
         # Tiebreaker 1: fewer ancestors (containers that require this one) = at top of hierarchy.

@@ -897,12 +897,21 @@ class TestValidationResourcesRequiresConstraints:
             reverse_edge = (dst, src)
             assert reverse_edge not in global_tree, f"Tree contains both {src}->{dst} and {dst}->{src}"
 
-    def test_optimal_requires_tree_no_cdf_sources(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that CDF built-in containers are never recommended as sources."""
+    def test_get_missing_requires_never_recommends_cdf_sources(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that get_missing_requires_for_view never recommends CDF containers as sources."""
         resources = scenarios["requires-constraints"]
 
-        for src, _ in resources.optimal_requires_tree:
-            assert src.space not in CDF_BUILTIN_SPACES, f"CDF container '{src}' should not be source"
+        # Check all views - none should have CDF sources in recommendations
+        for view_ref in resources.merged.views:
+            containers = resources.view_to_containers.get(view_ref, set())
+            if len(containers) < 2:
+                continue
+
+            missing = resources.get_missing_requires_for_view(containers)
+            for src, _ in missing:
+                assert src.space not in CDF_BUILTIN_SPACES, (
+                    f"View {view_ref}: CDF container '{src}' should not be recommended as source"
+                )
 
     @pytest.mark.parametrize(
         "path_from,path_to,error_desc",
@@ -1099,19 +1108,18 @@ class TestValidationResourcesRequiresConstraints:
             f"Should NOT recommend Tag → SiblingA (would create cycle with existing SiblingA → Tag), got: {missing}"
         )
 
-    def test_step2_triggers_for_disconnected_mst_container(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test Step 2 fallback when a container is disconnected in MST due to CDF filtering.
+    def test_step2_replaces_cdf_source_with_user_source(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test Step 2 adds user→CDF edge when MST has CDF→user edge.
 
         Real scenario:
         - Step2ViewA: {CdfBridge, UserA}
         - Step2ViewB: {CdfBridge, UserB}
-        - MST picks ONE of UserA or UserB to connect to CdfBridge (non-deterministic)
-        - The OTHER is disconnected due to CDF filtering (CdfBridge can't be source)
-        - Step 2 must add the edge for the disconnected container's view
+        - MST picks ONE user as source (e.g., UserA → CdfBridge)
+        - MST uses CDF as source for the OTHER (CdfBridge → UserB, unactionable)
 
-        For the disconnected container's view:
-        - Step 1: No MST edges where src = disconnected_container
-        - Step 2: Adds disconnected_container → CdfBridge
+        For the view where CDF is source:
+        - Step 1: Skips CdfBridge → User (CDF source not in user_containers)
+        - Step 2: Adds User → CdfBridge (actionable alternative)
         """
         resources = scenarios["requires-constraints"]
 
@@ -1121,32 +1129,36 @@ class TestValidationResourcesRequiresConstraints:
 
         mst_edges = set(resources.optimal_requires_tree)
 
-        # Find which user container is connected (MST may pick either due to non-determinism)
-        user_a_connected = any(src == user_a for src, _ in mst_edges)
-        user_b_connected = any(src == user_b for src, _ in mst_edges)
+        # Find which user has user source vs CDF source in MST
+        user_a_has_user_source = (user_a, cdf_bridge) in mst_edges
+        user_b_has_user_source = (user_b, cdf_bridge) in mst_edges
+        user_a_has_cdf_source = (cdf_bridge, user_a) in mst_edges
+        user_b_has_cdf_source = (cdf_bridge, user_b) in mst_edges
 
-        # Exactly one should be connected (MST only needs one edge to connect CdfBridge)
-        assert user_a_connected != user_b_connected, (
-            f"Expected exactly one of UserA/UserB connected. A={user_a_connected}, B={user_b_connected}"
+        # Exactly one should have user source, one should have CDF source
+        assert user_a_has_user_source != user_b_has_user_source, (
+            f"Expected exactly one user source. A={user_a_has_user_source}, B={user_b_has_user_source}"
+        )
+        assert user_a_has_cdf_source != user_b_has_cdf_source, (
+            f"Expected exactly one CDF source. A={user_a_has_cdf_source}, B={user_b_has_cdf_source}"
         )
 
-        # The disconnected container needs Step 2
-        disconnected_user = user_b if user_a_connected else user_a
+        # The user with CDF source needs Step 2
+        user_with_cdf_source = user_a if user_a_has_cdf_source else user_b
 
-        # Get recommendations for the disconnected container's view
-        view_containers = {disconnected_user, cdf_bridge}
+        # Get recommendations for that user's view
+        view_containers = {user_with_cdf_source, cdf_bridge}
         missing = resources.get_missing_requires_for_view(view_containers)
 
-        # Step 2 should add disconnected_user → CdfBridge
+        # Step 2 should add User → CdfBridge (replacing the unactionable CDF → User)
         assert len(missing) == 1, f"Expected exactly 1 recommendation, got: {missing}"
         src, dst = missing[0]
-        assert src == disconnected_user, f"Expected source {disconnected_user.external_id}, got {src}"
+        assert src == user_with_cdf_source, f"Expected source {user_with_cdf_source.external_id}, got {src}"
         assert dst == cdf_bridge, f"Expected target CdfBridge, got {dst}"
 
-        # Verify this edge is NOT from MST (it's from Step 2)
-        assert (src, dst) not in mst_edges, (
-            f"Expected Step 2 edge (not in MST). But {src.external_id} → {dst.external_id} is in MST."
-        )
+        # The recommended edge should be the REVERSE of what MST had
+        assert (cdf_bridge, user_with_cdf_source) in mst_edges, "MST had CDF→User"
+        assert (user_with_cdf_source, cdf_bridge) not in mst_edges, "MST should NOT have User→CDF (Step 2 adds it)"
 
     @pytest.mark.parametrize(
         "container_id,expected_conflicting",
