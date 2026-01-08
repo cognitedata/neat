@@ -1,0 +1,450 @@
+# Views for MappedContainersMissingRequiresConstraint - containers always appear together
+- space: my_space
+  externalId: AlwaysTogetherView
+  version: v1
+  name: Always Together View
+  description: View mapping to containers that always appear together
+  properties:
+    name:
+      name: name
+      description: Name property
+      container:
+        space: my_space
+        externalId: AssetContainer
+        type: container
+      containerPropertyIdentifier: name
+    description:
+      name: description
+      description: Description property
+      container:
+        space: my_space
+        externalId: DescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+# View for transitive requires test - Parent, Middle, Leaf together where Middle requires Leaf
+- space: my_space
+  externalId: TransitiveView
+  version: v1
+  name: Transitive View
+  description: View for testing transitive requires recommendations
+  properties:
+    fieldA:
+      name: fieldA
+      description: Field A
+      container:
+        space: my_space
+        externalId: TransitiveParent
+        type: container
+      containerPropertyIdentifier: fieldA
+    fieldB:
+      name: fieldB
+      description: Field B
+      container:
+        space: my_space
+        externalId: TransitiveMiddle
+        type: container
+      containerPropertyIdentifier: fieldB
+    fieldC:
+      name: fieldC
+      description: Field C
+      container:
+        space: my_space
+        externalId: TransitiveLeaf
+        type: container
+      containerPropertyIdentifier: fieldC
+
+# Views for partial overlap / better coverage test
+- space: my_space
+  externalId: TagReducedView
+  version: v1
+  name: TagReduced View
+  description: View with Tag and Describable only
+  properties:
+    tagId:
+      name: tagId
+      description: Tag ID
+      container:
+        space: my_space
+        externalId: TagContainer
+        type: container
+      containerPropertyIdentifier: tagId
+    tagDescription:
+      name: tagDescription
+      description: Tag description
+      container:
+        space: my_space
+        externalId: TagDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+- space: my_space
+  externalId: TagView
+  version: v1
+  name: Tag View
+  description: View with Tag, Asset, and Describable
+  properties:
+    tagId:
+      name: tagId
+      description: Tag ID
+      container:
+        space: my_space
+        externalId: TagContainer
+        type: container
+      containerPropertyIdentifier: tagId
+    assetName:
+      name: assetName
+      description: Asset name
+      container:
+        space: my_space
+        externalId: TagAssetContainer
+        type: container
+      containerPropertyIdentifier: assetName
+    tagDescription:
+      name: tagDescription
+      description: Tag description
+      container:
+        space: my_space
+        externalId: TagDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+# Views for FunctionalLocation/Tag/CogniteAsset scenario (isolated test)
+# Key: FuncLocTagContainer ONLY appears with FuncLocAssetContainer - no reduced view
+- space: my_space
+  externalId: FuncLocView
+  version: v1
+  name: FuncLoc View
+  description: Maps to FuncLoc, Tag, Describable (NOT Asset)
+  properties:
+    funcLocId:
+      name: funcLocId
+      description: FuncLoc ID
+      container:
+        space: my_space
+        externalId: FuncLocContainer
+        type: container
+      containerPropertyIdentifier: funcLocId
+    tagName:
+      name: tagName
+      description: Tag name
+      container:
+        space: my_space
+        externalId: FuncLocTagContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    description:
+      name: description
+      description: Description
+      container:
+        space: my_space
+        externalId: FuncLocDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+- space: my_space
+  externalId: FuncLocTagView
+  version: v1
+  name: FuncLoc Tag View
+  description: Maps to Tag, Asset, Describable
+  properties:
+    tagName:
+      name: tagName
+      description: Tag name
+      container:
+        space: my_space
+        externalId: FuncLocTagContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    assetId:
+      name: assetId
+      description: Asset ID
+      container:
+        space: my_space
+        externalId: FuncLocAssetContainer
+        type: container
+      containerPropertyIdentifier: assetId
+    description:
+      name: description
+      description: Description
+      container:
+        space: my_space
+        externalId: FuncLocDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+# Views for UnnecessaryRequiresConstraint - containers never appear together
+- space: my_space
+  externalId: OrderOnlyView
+  version: v1
+  name: Order Only View
+  description: View with only order container
+  properties:
+    orderId:
+      name: orderId
+      description: Order ID
+      container:
+        space: my_space
+        externalId: OrderContainer
+        type: container
+      containerPropertyIdentifier: orderId
+
+- space: my_space
+  externalId: CustomerOnlyView
+  version: v1
+  name: Customer Only View
+  description: View with only customer container
+  properties:
+    customerId:
+      name: customerId
+      description: Customer ID
+      container:
+        space: my_space
+        externalId: CustomerContainer
+        type: container
+      containerPropertyIdentifier: customerId
+
+# Views for "Tag requires Sourceable instead of Asset" bridge test
+# BridgeCompressorView: maps to Compressor, Tag, Describable (NOT Asset)
+# BridgeTagView: maps to Tag, Asset, Describable
+# Expected: BridgeTagContainer → BridgeAssetContainer should be recommended for BridgeCompressorView
+- space: my_space
+  externalId: BridgeCompressorView
+  version: v1
+  name: Bridge Compressor View
+  description: View mapping to Compressor, Tag, Describable (NOT Asset)
+  properties:
+    compressorId:
+      name: compressorId
+      description: Compressor ID
+      container:
+        space: my_space
+        externalId: BridgeCompressorContainer
+        type: container
+      containerPropertyIdentifier: compressorId
+    tagName:
+      name: tagName
+      description: Tag Name
+      container:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    description:
+      name: description
+      description: Description
+      container:
+        space: my_space
+        externalId: BridgeDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+# Additional equipment views - independent of each other but share Tag and Describable
+- space: my_space
+  externalId: BridgeEquipmentBView
+  version: v1
+  name: Bridge Equipment B View
+  description: View mapping to EquipmentB, Tag, Describable
+  properties:
+    equipmentBId:
+      name: equipmentBId
+      description: Equipment B ID
+      container:
+        space: my_space
+        externalId: BridgeEquipmentBContainer
+        type: container
+      containerPropertyIdentifier: equipmentBId
+    tagName:
+      name: tagName
+      description: Tag Name
+      container:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    description:
+      name: description
+      description: Description
+      container:
+        space: my_space
+        externalId: BridgeDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+- space: my_space
+  externalId: BridgeEquipmentCView
+  version: v1
+  name: Bridge Equipment C View
+  description: View mapping to EquipmentC, Tag, Describable
+  properties:
+    equipmentCId:
+      name: equipmentCId
+      description: Equipment C ID
+      container:
+        space: my_space
+        externalId: BridgeEquipmentCContainer
+        type: container
+      containerPropertyIdentifier: equipmentCId
+    tagName:
+      name: tagName
+      description: Tag Name
+      container:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    description:
+      name: description
+      description: Description
+      container:
+        space: my_space
+        externalId: BridgeDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+- space: my_space
+  externalId: BridgeTagView
+  version: v1
+  name: Bridge Tag View
+  description: View mapping to Tag, Asset, Describable
+  properties:
+    tagName:
+      name: tagName
+      description: Tag Name
+      container:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    assetName:
+      name: assetName
+      description: Asset Name
+      container:
+        space: my_space
+        externalId: BridgeAssetContainer
+        type: container
+      containerPropertyIdentifier: assetName
+    description:
+      name: description
+      description: Description
+      container:
+        space: my_space
+        externalId: BridgeDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+# View for RequiresConstraintCycle test
+- space: my_space
+  externalId: CycleTestView
+  version: v1
+  name: Cycle Test View
+  description: View for testing cycle detection
+  properties:
+    propCycleA:
+      name: propCycleA
+      description: Property from CycleContainerA
+      container:
+        space: my_space
+        externalId: CycleContainerA
+        type: container
+      containerPropertyIdentifier: propA
+    propCycleB:
+      name: propCycleB
+      description: Property from CycleContainerB
+      container:
+        space: my_space
+        externalId: CycleContainerB
+        type: container
+      containerPropertyIdentifier: propB
+
+# Views for conflicting siblings test
+# SharedConflictContainer appears in both views with different siblings
+- space: my_space
+  externalId: ConflictFileView
+  version: v1
+  name: Conflict File View
+  description: View with SharedConflictContainer and ConflictFileContainer
+  properties:
+    sharedField:
+      name: sharedField
+      description: Field from SharedConflictContainer
+      container:
+        space: my_space
+        externalId: SharedConflictContainer
+        type: container
+      containerPropertyIdentifier: sharedField
+    fileField:
+      name: fileField
+      description: Field from ConflictFileContainer
+      container:
+        space: my_space
+        externalId: ConflictFileContainer
+        type: container
+      containerPropertyIdentifier: fileField
+
+- space: my_space
+  externalId: ConflictTimeSeriesView
+  version: v1
+  name: Conflict TimeSeries View
+  description: View with SharedConflictContainer and ConflictTimeSeriesContainer
+  properties:
+    sharedField:
+      name: sharedField
+      description: Field from SharedConflictContainer
+      container:
+        space: my_space
+        externalId: SharedConflictContainer
+        type: container
+      containerPropertyIdentifier: sharedField
+    tsField:
+      name: tsField
+      description: Field from ConflictTimeSeriesContainer
+      container:
+        space: my_space
+        externalId: ConflictTimeSeriesContainer
+        type: container
+      containerPropertyIdentifier: tsField
+
+# Disconnected component test - View for Group A (never appears with Group B)
+- space: my_space
+  externalId: DisconnectedGroupAView
+  version: "1"
+  properties:
+    groupAField1:
+      name: groupAField1
+      description: Field from DisconnectedGroupAContainer1
+      container:
+        space: my_space
+        externalId: DisconnectedGroupAContainer1
+        type: container
+      containerPropertyIdentifier: groupAField1
+    groupAField2:
+      name: groupAField2
+      description: Field from DisconnectedGroupAContainer2
+      container:
+        space: my_space
+        externalId: DisconnectedGroupAContainer2
+        type: container
+      containerPropertyIdentifier: groupAField2
+
+# Disconnected component test - View for Group B (never appears with Group A)
+- space: my_space
+  externalId: DisconnectedGroupBView
+  version: "1"
+  properties:
+    groupBField1:
+      name: groupBField1
+      description: Field from DisconnectedGroupBContainer1
+      container:
+        space: my_space
+        externalId: DisconnectedGroupBContainer1
+        type: container
+      containerPropertyIdentifier: groupBField1
+    groupBField2:
+      name: groupBField2
+      description: Field from DisconnectedGroupBContainer2
+      container:
+        space: my_space
+        externalId: DisconnectedGroupBContainer2
+        type: container
+      containerPropertyIdentifier: groupBField2

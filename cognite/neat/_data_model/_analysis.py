@@ -428,24 +428,23 @@ class ValidationResources:
 
         return view_to_containers
 
-    def find_views_with_both_containers(
-        self, container_a: ContainerReference, container_b: ContainerReference
-    ) -> set[ViewReference]:
-        """Find views that contain both containers.
+    def find_views_mapping_to_containers(self, containers: list[ContainerReference]) -> set[ViewReference]:
+        """Find views that map to all specified containers.
 
         Args:
-            container_a: First container
-            container_b: Second container
+            containers: List of containers to check
 
         Returns:
-            Set of views containing both containers
+            Set of views that contain all the specified containers
         """
-        views_a = self.container_to_views.get(container_a, set())
-        views_b = self.container_to_views.get(container_b, set())
-        return views_a & views_b
+        if not containers:
+            return set()
+
+        view_sets = [self.container_to_views.get(c, set()) for c in containers]
+        return set.intersection(*view_sets)
 
     # =========================================================================
-    # Container Requires Constraint Methods (using networkx for graph operations)
+    # Methods used for requires constraint validation
     # =========================================================================
 
     @cached_property
@@ -467,10 +466,11 @@ class ValidationResources:
             if not container or not container.constraints:
                 continue
             for constraint in container.constraints.values():
-                if isinstance(constraint, RequiresConstraintDefinition):
-                    # Only add edge if the required container actually exists
-                    if self.select_container(constraint.require):
-                        graph.add_edge(container_ref, constraint.require)
+                if not isinstance(constraint, RequiresConstraintDefinition):
+                    continue
+                if not self.select_container(constraint.require):
+                    continue
+                graph.add_edge(container_ref, constraint.require)
 
         return graph
 
@@ -479,8 +479,6 @@ class ValidationResources:
 
         For query performance optimization, we only need ONE container to require all others.
         This allows the hasData filter to use only that outermost container.
-
-        Uses nx.descendants() to check reachability.
 
         Args:
             containers: Set of containers to check
@@ -514,18 +512,14 @@ class ValidationResources:
 
     @cached_property
     def optimal_requires_tree(self) -> set[tuple[ContainerReference, ContainerReference]]:
-        """Compute the globally optimal set of requires constraints for the entire data model.
+        """Compute and cache the globally optimal set of requires constraints for all containers that appear in any view.
 
         This considers ALL containers that appear together in ANY view and finds the
         minimum set of NEW requires constraints that would complete all hierarchies
-        optimally across the entire data model.
+        optimally across these containers.
 
-        Uses Minimum Spanning Arborescence (Edmonds' algorithm) on a graph where:
-        - Nodes are all containers that appear in local views
-        - Edges connect containers that appear together in any view
-        - Edge weights favor: existing requires (free), shared views, user containers
-
-        The result is cached and used for all per-view validation.
+        Uses Minimum Spanning Arborescence (Edmonds' algorithm) with edge weights
+        computed by _compute_requires_edge_weight.
 
         Returns:
             Set of (source, target) tuples representing requires constraints to add.
@@ -536,9 +530,6 @@ class ValidationResources:
         for view_ref in self.merged.views:
             containers = self.view_to_containers.get(view_ref, set())
             all_containers.update(containers)
-
-        if len(all_containers) < 2:
-            return set()
 
         # Step 2: Find which container pairs need to be connected
         # (containers that appear together in at least one view)
@@ -555,49 +546,40 @@ class ValidationResources:
 
         # Step 3: Build directed graph with edge weights
         G = nx.DiGraph()
-        for container in all_containers:
-            G.add_node(container)
-
-        # Add edges only between containers that must be connected
         for pair in must_connect:
-            # Sort for deterministic ordering (frozenset iteration order is not guaranteed)
-            c1, c2 = sorted(pair, key=str)
+            c1, c2 = tuple(pair)
             # Add both directions, let MST pick the best
             G.add_edge(c1, c2, weight=self._compute_requires_edge_weight(c1, c2))
             G.add_edge(c2, c1, weight=self._compute_requires_edge_weight(c2, c1))
 
-        # Existing requires get weight 0 (free to keep)
-        for src in all_containers:
-            for dst in self.requires_graph.successors(src):
-                if dst in all_containers and G.has_edge(src, dst):
-                    G[src][dst]["weight"] = 0.0
+        # Add any isolated containers (single-container views)
+        for container in all_containers:
+            if container not in G:
+                G.add_node(container)
 
-        # Step 4: Find minimum spanning arborescence
+        # Existing requires get weight 0
+        for src, dst in self.requires_graph.edges():
+            if G.has_edge(src, dst):
+                G[src][dst]["weight"] = 0.0
+
+        # Step 4: Find minimum spanning arborescence (forest if disconnected)
         # Arborescence: edges point AWAY from the root (root is the source).
         # We want outermost containers as roots, which the algorithm naturally selects
         # based on edge weights (outermost containers have more descendants coverage).
-        try:
-            arborescence = nx.minimum_spanning_arborescence(G, attr="weight")
-        except nx.NetworkXException:
-            # Graph may be disconnected - try to find forest of arborescences
-            arborescence = nx.DiGraph()
-            for component in nx.weakly_connected_components(G):
-                if len(component) < 2:
-                    continue
-                subgraph = G.subgraph(component).copy()
-                try:
-                    sub_arb = nx.minimum_spanning_arborescence(subgraph, attr="weight")
-                    arborescence = nx.compose(arborescence, sub_arb)
-                except nx.NetworkXException:
-                    continue
+        arborescence = nx.DiGraph()
+        for component in nx.weakly_connected_components(G):
+            if len(component) < 2:
+                continue
+            subgraph = G.subgraph(component).copy()
+            sub_arb = nx.minimum_spanning_arborescence(subgraph, attr="weight")
+            arborescence = nx.compose(arborescence, sub_arb)
 
-        # Step 5: Return only NEW edges where source is a user container
-        # (users cannot modify CDF built-in containers, so those sources are not actionable)
-        return {
-            (src, dst)
-            for src, dst in arborescence.edges()
-            if dst not in set(self.requires_graph.successors(src)) and src.space not in CDF_BUILTIN_SPACES
-        }
+        # Step 5: Filter to only NEW edges (no existing path in requires_graph)
+        new_edges = {(src, dst) for src, dst in arborescence.edges() if not nx.has_path(self.requires_graph, src, dst)}
+
+        # Step 6: Filter to only actionable edges (user containers as sources)
+        # Users cannot modify CDF built-in containers
+        return {(src, dst) for src, dst in new_edges if src.space not in CDF_BUILTIN_SPACES}
 
     def get_missing_requires_for_view(
         self, containers_in_view: set[ContainerReference]
@@ -614,9 +596,6 @@ class ValidationResources:
         Returns:
             List of (source, target) tuples representing requires constraints to add.
         """
-        if len(containers_in_view) < 2:
-            return []
-
         if self.has_full_requires_hierarchy(containers_in_view):
             return []
 
@@ -653,23 +632,9 @@ class ValidationResources:
             if src not in user_containers:
                 continue
 
-            # Skip if this would create a cycle (dst already requires src)
-            if nx.has_path(self.requires_graph, dst, src):
-                continue
-
-            # Skip if edge already exists in original graph
-            if nx.has_path(self.requires_graph, src, dst):
-                continue
-
-            # Include if dst is in view
-            if dst in containers_in_view:
-                work_graph.add_edge(src, dst)
-                all_recs.append((src, dst))
-                continue
-
-            # Include if dst's transitive chain covers uncovered containers
+            # Include if dst is in view OR dst's chain covers uncovered containers
             dst_coverage = nx.descendants(self.requires_graph, dst)
-            if dst_coverage & uncovered:
+            if dst in containers_in_view or (dst_coverage & uncovered):
                 work_graph.add_edge(src, dst)
                 all_recs.append((src, dst))
                 covered = nx.descendants(work_graph, outermost) | {outermost}
@@ -694,11 +659,6 @@ class ValidationResources:
                 uncovered.remove(best_target)
                 continue
 
-            # Skip if adding this edge would create a cycle (best_target already requires outermost)
-            if nx.has_path(self.requires_graph, best_target, outermost):
-                uncovered.remove(best_target)
-                continue
-
             # Only add if edge doesn't already exist (we only recommend NEW edges)
             if not nx.has_path(self.requires_graph, outermost, best_target):
                 work_graph.add_edge(outermost, best_target)
@@ -718,78 +678,82 @@ class ValidationResources:
             if not is_redundant:
                 needed_recs.append((src, dst))
 
-        return sorted(needed_recs, key=lambda x: (str(x[0]), str(x[1])))
+        # Step 4: Sort topologically
+        # In order to return requires constraints in logical order: outermost container first
+        rec_graph = nx.DiGraph()
+        rec_graph.add_nodes_from(needed_recs)
+        for r1 in needed_recs:
+            for r2 in needed_recs:
+                if r1[1] == r2[0]:  # r1's target is r2's source
+                    rec_graph.add_edge(r1, r2)
+
+        return list(nx.lexicographical_topological_sort(rec_graph, key=lambda x: (str(x[0]), str(x[1]))))
+
+    @cached_property
+    def _merged_view_refs(self) -> set[ViewReference]:
+        """Cached set of view references from merged schema."""
+        return set(self.merged.views.keys())
 
     def _compute_requires_edge_weight(self, src: ContainerReference, dst: ContainerReference) -> float:
         """Compute the weight/cost of adding a requires constraint from src to dst.
 
-        Lower weight = more preferred edge. Weights are based on:
-        1. Shared views: containers that appear together often are preferred
-        2. User vs CDF: user containers are preferred over CDF built-in containers as sources
-        3. Existing transitivity: if src already transitively requires dst, very cheap
+        Lower weight = more preferred edge. Factors (in order of precedence):
+        1. Forbidden edges: CDF sources or cycle-forming edges get weight 1e9
+        2. Already satisfied: If path already exists, weight is 0.01 (skip other factors)
+        3. Coverage bonus: Targets with more descendants (intermediate nodes) are preferred
+        4. Shared views bonus: Containers appearing together often are preferred
 
         Args:
             src: Source container (the one that would "require")
             dst: Target container (the one being required)
 
         Returns:
-            Edge weight (lower = better). Always positive.
+            Edge weight (lower = better). Minimum 0.01.
         """
-        base_weight = 1.0
+        # Factor 1: Forbidden edges - return immediately with huge weight
+        if src.space in CDF_BUILTIN_SPACES:
+            # CDF built-in containers cannot be modified
+            return 1e9
 
-        # Factor 1: Shared views - prefer containers that appear together more often
+        if nx.has_path(self.requires_graph, dst, src):
+            # dst already requires src - adding src→dst would create a cycle
+            return 1e9
+
+        # Factor 2: Already satisfied - return immediately with minimal weight
+        if nx.has_path(self.requires_graph, src, dst):
+            # src already transitively requires dst - edge is redundant but cheap
+            return 0.01
+
+        # Start with base weight and apply bonuses/penalties
+        weight = 1.0
+
+        # Factor 3: Coverage - prefer intermediate nodes over leaves
+        # A "leaf" in requires_graph has no descendants (nothing requires it further)
+        # An "intermediate" node has descendants (provides transitive coverage)
+        dst_descendants = len(nx.descendants(self.requires_graph, dst))
+        src_descendants = len(nx.descendants(self.requires_graph, src))
+
+        # Bonus for targets with more descendants (max 0.6 bonus)
+        weight -= min(dst_descendants * 0.25, 0.6)
+
+        # Penalty for "backwards" edges (leaf requiring something with more coverage)
+        if src_descendants == 0 and dst_descendants > 1:
+            # e.g., Describable → Compressor is backwards
+            weight += dst_descendants * 0.1
+        elif dst_descendants > src_descendants:
+            # Normal: specific → intermediate (e.g., Tag → Asset)
+            weight -= 0.15
+        elif dst_descendants < src_descendants:
+            # Backwards: intermediate → leaf
+            weight += 0.2
+
+        # Factor 4: Shared views - prefer containers that appear together
         src_views = self.container_to_views.get(src, set())
         dst_views = self.container_to_views.get(dst, set())
-        # Only count views from merged schema (current model scope)
-        merged_views = set(self.merged.views.keys())
-        shared_views = len(src_views & dst_views & merged_views)
-        # More shared views = lower weight (bonus of 0.05 per shared view, max 0.5)
-        view_bonus = min(shared_views * 0.05, 0.5)
-        base_weight -= view_bonus
+        shared_views = len(src_views & dst_views & self._merged_view_refs)
+        weight -= min(shared_views * 0.05, 0.5)
 
-        # Factor 2: User vs CDF built-in - user containers should require CDF containers, not vice versa
-        src_is_user = src.space not in CDF_BUILTIN_SPACES
-        if not src_is_user:
-            # CDF built-in container as source - users cannot modify these, so effectively forbidden
-            base_weight += 1e9
-        else:
-            # User container as source - this is the actionable case
-            base_weight -= 0.1
-
-        # Factor 3: Existing transitivity - leverage existing chains
-        if nx.has_path(self.requires_graph, dst, src):
-            # dst already requires src, so src->dst would create a cycle - effectively forbidden
-            base_weight += 1e9
-        elif nx.has_path(self.requires_graph, src, dst):
-            # src already transitively requires dst, this edge is redundant but cheap
-            base_weight = 0.01
-
-        # Factor 4: Strongly prefer targets that already have requires (leverage existing chains)
-        # This is the key factor for choosing intermediate nodes over leaf nodes
-        # (e.g., Tag → Asset over Tag → Describable when Asset requires Describable)
-        dst_coverage = len(nx.descendants(self.requires_graph, dst))
-        src_coverage = len(nx.descendants(self.requires_graph, src))
-
-        # Prefer edges TO containers with more transitive coverage
-        coverage_bonus = min(dst_coverage * 0.25, 0.6)
-        base_weight -= coverage_bonus
-
-        # Prefer edges TO containers with more coverage (intermediate nodes provide more value)
-        # But penalize "leaf → root" edges where a leaf container requires a root container
-        if dst_coverage > src_coverage:
-            # Pointing TO a container with more coverage - generally good
-            # But if src is a TRUE leaf (0 coverage), it's backwards to have it require a root
-            if src_coverage == 0 and dst_coverage > 1:
-                # Leaf → Root is backwards (e.g., Describable → Compressor)
-                base_weight += dst_coverage * 0.1
-            else:
-                # Normal case: specific → intermediate (e.g., Parent → Middle, Tag → Asset)
-                base_weight -= 0.15
-        elif dst_coverage < src_coverage:
-            # Pointing TO a container with less coverage - backwards
-            base_weight += 0.2
-
-        return max(base_weight, 0.01)
+        return max(weight, 0.01)
 
     def find_views_affected_by_requires(
         self,
@@ -797,12 +761,15 @@ class ValidationResources:
         dst: ContainerReference,
         exclude_view: ViewReference | None = None,
     ) -> set[ViewReference]:
-        """Find views where adding src → dst would affect ingestion.
+        """Find views where adding src → dst would require dst to be populated first.
 
         A view is affected if:
         - It contains src (so the new constraint applies)
-        - It does NOT already have dst covered (either directly or via another container
-          that already requires dst)
+        - It does NOT already have dst covered (either directly in the view,
+          or via another container in the view that already requires dst)
+
+        If a view is affected, ingestion through that view would fail unless dst
+        is populated separately first.
 
         Args:
             src: Source container that would get the new requires constraint
@@ -810,7 +777,7 @@ class ValidationResources:
             exclude_view: Optional view to exclude from results (typically the current view)
 
         Returns:
-            Set of views that would be affected by this constraint
+            Set of views where ingestion would be affected by this constraint
         """
         src_views = self.container_to_views.get(src, set())
 
@@ -830,6 +797,49 @@ class ValidationResources:
                 affected.add(view_ref)
 
         return affected
+
+    def _get_candidate_siblings(
+        self,
+        container_ref: ContainerReference,
+        view_ref: ViewReference,
+        container_requires: set[ContainerReference],
+        requires_container: set[ContainerReference],
+    ) -> set[ContainerReference]:
+        """Get sibling containers in a view that are candidates for being required.
+
+        Filters out siblings that are already transitively connected to the container.
+        """
+        view_containers = self.view_to_containers.get(view_ref, set())
+        siblings = view_containers - {container_ref}
+
+        # Exclude siblings already required by this container or that require this container
+        return {
+            sibling for sibling in siblings if sibling not in container_requires and sibling not in requires_container
+        }
+
+    def _has_common_sibling(self, sibling_sets: list[set[ContainerReference]]) -> bool:
+        """Check if there's a common sibling that could serve as a valid requires target.
+
+        Returns True if:
+        - At least one sibling appears in ALL views, OR
+        - At least one sibling transitively covers all views' needs
+        """
+        if len(sibling_sets) < 2:
+            return True  # Not enough views to have a conflict
+
+        # Direct intersection: siblings appearing in ALL views
+        common = set.intersection(*sibling_sets)
+        if common:
+            return True
+
+        # Transitive coverage: check if any sibling covers all views via its requires chain
+        all_siblings = set().union(*sibling_sets)
+        for target in all_siblings:
+            covers = nx.descendants(self.requires_graph, target) | {target}
+            if all(sibling_set & covers for sibling_set in sibling_sets):
+                return True
+
+        return False
 
     @cached_property
     def conflicting_containers(self) -> set[ContainerReference]:
@@ -862,49 +872,19 @@ class ValidationResources:
             if len(views) < 2:
                 continue
 
-            # Pre-compute graph relationships for this container (once, not per-sibling)
+            # Pre-compute graph relationships for this container
             container_requires = nx.descendants(self.requires_graph, container_ref)
             requires_container = nx.ancestors(self.requires_graph, container_ref)
 
-            # For each view, find sibling containers that are candidates for being required by this container
+            # Collect candidate siblings from each view
             sibling_sets: list[set[ContainerReference]] = []
             for view_ref in views:
-                view_containers = self.view_to_containers.get(view_ref, set())
-                siblings = view_containers - {container_ref}
+                siblings = self._get_candidate_siblings(container_ref, view_ref, container_requires, requires_container)
+                if siblings:
+                    sibling_sets.append(siblings)
 
-                # Filter to siblings that:
-                # 1. Are not already transitively required by this container
-                # 2. Do not already require this container (they're "outer" containers, not candidates)
-                candidate_siblings = {
-                    sibling
-                    for sibling in siblings
-                    if sibling not in container_requires and sibling not in requires_container
-                }
-
-                if candidate_siblings:
-                    sibling_sets.append(candidate_siblings)
-
-            # Check if there's a common sibling that could serve as a valid requires target.
-            # If there's at least one sibling that appears in ALL views, we can recommend
-            # that target (or something that transitively covers it), and it won't break any view.
-            # A conflict only exists if there's NO common sibling across all views.
-            if len(sibling_sets) >= 2:
-                # Find siblings that appear in ALL views (set intersection)
-                common_siblings = set.intersection(*sibling_sets)
-
-                # Also check if any sibling transitively covers all other siblings' needs
-                # (e.g., Asset covers Describable, so even if Describable isn't in all sets,
-                # Asset can be the target and transitively satisfy Describable)
-                all_siblings = set().union(*sibling_sets)
-                for potential_target in all_siblings:
-                    # Get what this target transitively covers
-                    covers = nx.descendants(self.requires_graph, potential_target) | {potential_target}
-                    # Check if this target (or what it covers) appears in all sibling sets
-                    if all(sibling_set & covers for sibling_set in sibling_sets):
-                        common_siblings.add(potential_target)
-
-                # If no common sibling exists (directly or transitively), it's a conflict
-                if not common_siblings:
-                    conflicting.add(container_ref)
+            # If no common sibling exists across views, it's a conflict
+            if not self._has_common_sibling(sibling_sets):
+                conflicting.add(container_ref)
 
         return conflicting
