@@ -1,26 +1,3 @@
-# Containers for MappedContainersMissingRequiresConstraint - always together (no requires constraint)
-- space: my_space
-  externalId: AssetContainer
-  usedFor: node
-  properties:
-    name:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
-- space: my_space
-  externalId: DescribableContainer
-  usedFor: node
-  properties:
-    description:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
 # Containers for transitive requires test - Middle requires Leaf
 - space: my_space
   externalId: TransitiveParent
@@ -94,59 +71,6 @@
 
 - space: my_space
   externalId: TagDescribableContainer
-  usedFor: node
-  properties:
-    description:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
-# Containers for FunctionalLocation/Tag/CogniteAsset scenario (isolated test)
-# Key: FuncLocTagContainer ONLY appears with FuncLocAssetContainer (no reduced view)
-- space: my_space
-  externalId: FuncLocContainer
-  usedFor: node
-  properties:
-    funcLocId:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
-- space: my_space
-  externalId: FuncLocTagContainer
-  usedFor: node
-  properties:
-    tagName:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
-- space: my_space
-  externalId: FuncLocAssetContainer
-  usedFor: node
-  properties:
-    assetId:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-  constraints:
-    req_describable:
-      constraintType: requires
-      require:
-        space: my_space
-        externalId: FuncLocDescribableContainer
-        type: container
-
-- space: my_space
-  externalId: FuncLocDescribableContainer
   usedFor: node
   properties:
     description:
@@ -279,36 +203,6 @@
         externalId: BridgeTagContainer
         type: container
 
-# Containers for UnnecessaryRequiresConstraint - requires constraint but never used together
-- space: my_space
-  externalId: OrderContainer
-  usedFor: node
-  properties:
-    orderId:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-  constraints:
-    req_customer:
-      constraintType: requires
-      require:
-        space: my_space
-        externalId: CustomerContainer
-        type: container
-
-- space: my_space
-  externalId: CustomerContainer
-  usedFor: node
-  properties:
-    customerId:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
 # Containers for RequiresConstraintCycle test - A requires B, B requires A
 - space: my_space
   externalId: CycleContainerA
@@ -428,8 +322,8 @@
         type: text
         list: false
 
-# CDF container to test Step 2 fallback - when MST picks CDF as source
-# CDF containers cannot be modified, so edges from them are filtered out
+# CDF bridge container - tests that MST avoids CDF containers as sources
+# User containers connected via this CDF bridge should still get proper recommendations
 - space: cdf_cdm
   externalId: CdfBridgeContainer
   usedFor: node
@@ -443,7 +337,7 @@
 
 # User containers that will be connected via CDF bridge
 - space: my_space
-  externalId: Step2UserAContainer
+  externalId: CdfBridgeUserAContainer
   usedFor: node
   properties:
     userAField:
@@ -454,7 +348,7 @@
         list: false
 
 - space: my_space
-  externalId: Step2UserBContainer
+  externalId: CdfBridgeUserBContainer
   usedFor: node
   properties:
     userBField:

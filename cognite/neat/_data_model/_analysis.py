@@ -604,7 +604,7 @@ class ValidationResources:
         work_graph = self.requires_graph.copy()
         all_recs: list[tuple[ContainerReference, ContainerReference]] = []
 
-        # Outermost = most specific container (appears in fewest views).
+        # Outermost = most specific container for this view (appears in fewest views).
         # Tiebreaker 1: fewer ancestors (containers that require this one) = at top of hierarchy.
         # Tiebreaker 2: fewer descendants = less existing coverage = better root candidate.
         outermost = min(

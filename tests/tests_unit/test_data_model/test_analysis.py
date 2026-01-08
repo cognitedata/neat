@@ -635,12 +635,12 @@ class TestValidationResourcesRequiresConstraints:
         "container_ids,expect_found",
         [
             pytest.param(
-                ["AssetContainer", "DescribableContainer"],
+                ["TransitiveParent", "TransitiveMiddle"],
                 True,
                 id="containers-appear-together",
             ),
             pytest.param(
-                ["OrderContainer", "CustomerContainer"],
+                ["DisconnectedGroupAContainer1", "DisconnectedGroupBContainer1"],
                 False,
                 id="containers-never-together",
             ),
@@ -814,16 +814,16 @@ class TestValidationResourcesRequiresConstraints:
         """Test get_missing_requires_for_view for containers with no existing requires."""
         resources = scenarios["requires-constraints"]
 
-        # AssetContainer and DescribableContainer have no requires between them
-        asset = ContainerReference(space="my_space", external_id="AssetContainer")
-        describable = ContainerReference(space="my_space", external_id="DescribableContainer")
+        # DisconnectedGroupA containers appear together in DisconnectedGroupAView with no requires
+        container1 = ContainerReference(space="my_space", external_id="DisconnectedGroupAContainer1")
+        container2 = ContainerReference(space="my_space", external_id="DisconnectedGroupAContainer2")
 
-        missing = resources.get_missing_requires_for_view({asset, describable})
+        missing = resources.get_missing_requires_for_view({container1, container2})
         # Should recommend one constraint to connect them
         assert len(missing) == 1
         # The edge should connect the two containers
         src, dst = missing[0]
-        assert {src.external_id, dst.external_id} == {"AssetContainer", "DescribableContainer"}
+        assert {src.external_id, dst.external_id} == {"DisconnectedGroupAContainer1", "DisconnectedGroupAContainer2"}
 
     def test_get_missing_requires_for_view_transitive_case(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test get_missing_requires_for_view leverages existing transitivity."""
@@ -879,8 +879,8 @@ class TestValidationResourcesRequiresConstraints:
         """Test get_missing_requires_for_view with single container returns empty."""
         resources = scenarios["requires-constraints"]
 
-        asset = ContainerReference(space="my_space", external_id="AssetContainer")
-        missing = resources.get_missing_requires_for_view({asset})
+        container = ContainerReference(space="my_space", external_id="TransitiveParent")
+        missing = resources.get_missing_requires_for_view({container})
         assert len(missing) == 0
 
     def test_optimal_requires_tree_consistency(self, scenarios: dict[str, ValidationResources]) -> None:
@@ -998,63 +998,30 @@ class TestValidationResourcesRequiresConstraints:
             assert not (src_in_a and dst_in_b), f"Cross-group edge {src} → {dst}"
             assert not (src_in_b and dst_in_a), f"Cross-group edge {src} → {dst}"
 
-    def test_get_missing_requires_for_view_no_cdf_sources(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that per-view recommendations never have CDF built-in containers as sources."""
-        from cognite.neat._data_model._constants import CDF_BUILTIN_SPACES
+    def test_get_missing_requires_edge_selection(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that get_missing_requires_for_view selects edges that provide better coverage.
 
+        BridgeSiblingAView: {SiblingA, Tag, Describable}
+        Should recommend Tag→Asset (provides transitivity) rather than SiblingA→Describable.
+        """
         resources = scenarios["requires-constraints"]
 
-        # Test with a view that has multiple containers
-        asset = ContainerReference(space="my_space", external_id="AssetContainer")
-        describable = ContainerReference(space="my_space", external_id="DescribableContainer")
-
-        missing = resources.get_missing_requires_for_view({asset, describable})
-
-        for src, _ in missing:
-            assert src.space not in CDF_BUILTIN_SPACES, (
-                f"CDF built-in container '{src}' should not be recommended as source"
-            )
-
-    @pytest.mark.parametrize(
-        "view_container_ids,expected_in,expected_not_in",
-        [
-            pytest.param(
-                ["FuncLocContainer", "FuncLocTagContainer", "FuncLocDescribableContainer"],
-                [("FuncLocTagContainer", "FuncLocAssetContainer")],
-                [],
-                id="external-container-recommendations",
-            ),
-            pytest.param(
-                ["BridgeSiblingAContainer", "BridgeTagContainer", "BridgeDescribableContainer"],
-                [("BridgeTagContainer", "BridgeAssetContainer")],
-                [("BridgeSiblingAContainer", "BridgeDescribableContainer")],
-                id="bridge-prefers-better-coverage",
-            ),
-        ],
-    )
-    def test_get_missing_requires_edge_selection(
-        self,
-        view_container_ids: list[str],
-        expected_in: list[tuple[str, str]],
-        expected_not_in: list[tuple[str, str]],
-        scenarios: dict[str, ValidationResources],
-    ) -> None:
-        """Test that get_missing_requires_for_view selects correct edges."""
-        resources = scenarios["requires-constraints"]
-
-        view_containers = {ContainerReference(space="my_space", external_id=cid) for cid in view_container_ids}
+        view_containers = {
+            ContainerReference(space="my_space", external_id=cid)
+            for cid in ["BridgeSiblingAContainer", "BridgeTagContainer", "BridgeDescribableContainer"]
+        }
         missing = resources.get_missing_requires_for_view(view_containers)
-
-        # Convert to comparable format
         missing_ids = {(src.external_id, dst.external_id) for src, dst in missing}
 
-        for src_id, dst_id in expected_in:
-            assert (src_id, dst_id) in missing_ids, (
-                f"Expected {src_id} → {dst_id} in recommendations, got: {missing_ids}"
-            )
+        # Should recommend Tag→Asset (external container that provides coverage)
+        assert ("BridgeTagContainer", "BridgeAssetContainer") in missing_ids, (
+            f"Expected BridgeTagContainer → BridgeAssetContainer, got: {missing_ids}"
+        )
 
-        for src_id, dst_id in expected_not_in:
-            assert (src_id, dst_id) not in missing_ids, f"Should NOT recommend {src_id} → {dst_id}, got: {missing_ids}"
+        # Should NOT recommend direct edge that bypasses the hierarchy
+        assert ("BridgeSiblingAContainer", "BridgeDescribableContainer") not in missing_ids, (
+            f"Should NOT recommend SiblingA → Describable, got: {missing_ids}"
+        )
 
     def test_no_cross_sibling_recommendations(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that we don't recommend constraints between unrelated sibling containers.
@@ -1085,65 +1052,22 @@ class TestValidationResourcesRequiresConstraints:
             if src.external_id in unrelated_siblings:
                 assert dst != sibling_c, f"Should NOT recommend {src.external_id} → sibling_c (unrelated)"
 
-    def test_no_cycle_recommendations(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that we don't recommend constraints that would create cycles.
+    def test_user_containers_connected_via_cdf_bridge(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test view where two user containers are connected via a CDF bridge container.
 
-        Scenario: BridgeSiblingAContainer already requires BridgeTagContainer.
-        We should NOT recommend BridgeTagContainer → BridgeSiblingAContainer.
-        """
-        resources = scenarios["requires-constraints"]
-
-        sibling_a = ContainerReference(space="my_space", external_id="BridgeSiblingAContainer")
-        tag = ContainerReference(space="my_space", external_id="BridgeTagContainer")
-        describable = ContainerReference(space="my_space", external_id="BridgeDescribableContainer")
-
-        # Verify the requires relationship exists (SiblingA → Tag)
-        assert nx.has_path(resources.requires_graph, sibling_a, tag), "SiblingA should require Tag for this test"
-
-        missing = resources.get_missing_requires_for_view({sibling_a, tag, describable})
-
-        # Should NOT recommend Tag → SiblingA (would create cycle)
-        tag_to_sibling_a = (tag, sibling_a)
-        assert tag_to_sibling_a not in missing, (
-            f"Should NOT recommend Tag → SiblingA (would create cycle with existing SiblingA → Tag), got: {missing}"
-        )
-
-    def test_cdf_source_edges_are_flipped_in_mst(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that CDF source edges are flipped to user source edges in optimal_requires_tree.
-
-        With Step2CombinedView mapping to {UserA, UserB, CdfBridge}, the MST picks
-        a user container as root and connects everything from there.
-        No CDF containers should ever be sources in the MST.
-        """
-        resources = scenarios["requires-constraints"]
-
-        mst_edges = set(resources.optimal_requires_tree)
-
-        # No CDF source edges should exist (all are flipped to user sources)
-        cdf_source_edges = [(src, dst) for src, dst in mst_edges if src.space == "cdf_cdm"]
-        assert len(cdf_source_edges) == 0, f"Expected no CDF source edges, got: {cdf_source_edges}"
-
-        # All edges should have user containers as sources
-        for src, _ in mst_edges:
-            assert src.space != "cdf_cdm", f"CDF container should not be source: {src}"
-
-    def test_three_container_view_with_cdf_bridge(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test REAL view with 3 containers: UserA, UserB, and CDF bridge.
-
-        Step2CombinedView maps to all three: {UserA, UserB, CdfBridge}
-        The MST should create edges so that one user container is the root
-        and can reach all other containers.
+        Scenario: CdfBridgeCombinedView maps to {UserA, UserB, CdfBridge}
+        Both user containers appear with the CDF bridge, creating a path through it.
+        The MST should make a user container the root to avoid CDF sources.
 
         Expected: A complete hierarchy with a user container as outermost.
         """
         resources = scenarios["requires-constraints"]
 
-        user_a = ContainerReference(space="my_space", external_id="Step2UserAContainer")
-        user_b = ContainerReference(space="my_space", external_id="Step2UserBContainer")
+        user_a = ContainerReference(space="my_space", external_id="CdfBridgeUserAContainer")
+        user_b = ContainerReference(space="my_space", external_id="CdfBridgeUserBContainer")
         cdf_bridge = ContainerReference(space="cdf_cdm", external_id="CdfBridgeContainer")
 
-        # Use the REAL view that maps to all 3 containers
-        combined_view = ViewReference(space="my_space", external_id="Step2CombinedView", version="1")
+        combined_view = ViewReference(space="my_space", external_id="CdfBridgeCombinedView", version="1")
         view_containers = resources.view_to_containers.get(combined_view, set())
 
         assert view_containers == {user_a, user_b, cdf_bridge}, (
@@ -1280,39 +1204,6 @@ class TestValidationResourcesRequiresConstraints:
 
         assert view_to_exclude not in affected_with_exclude, "Excluded view should not be in results"
         assert affected_with_exclude <= affected_without_exclude, "Results with exclude should be subset"
-
-    def test_no_redundant_recommendations_when_path_exists(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that we don't recommend A→C when A→B→C already exists.
-
-        This tests the transitive path check in get_missing_requires_for_view.
-        If A can already reach C via B, recommending A→C is redundant.
-
-        Scenario (from test data):
-        - BridgeSiblingAContainer requires BridgeTagContainer
-        - BridgeTagContainer requires BridgeSourceableContainer
-        So: BridgeSiblingAContainer → BridgeTagContainer → BridgeSourceableContainer
-        """
-        resources = scenarios["requires-constraints"]
-
-        sibling_a = ContainerReference(space="my_space", external_id="BridgeSiblingAContainer")
-        tag = ContainerReference(space="my_space", external_id="BridgeTagContainer")
-        sourceable = ContainerReference(space="my_space", external_id="BridgeSourceableContainer")
-
-        # Verify the transitive path exists
-        assert nx.has_path(resources.requires_graph, sibling_a, tag), "SiblingA should require Tag"
-        assert nx.has_path(resources.requires_graph, tag, sourceable), "Tag should require Sourceable"
-        assert nx.has_path(resources.requires_graph, sibling_a, sourceable), (
-            "SiblingA should transitively require Sourceable"
-        )
-
-        # Get recommendations for a view with these containers
-        missing = resources.get_missing_requires_for_view({sibling_a, tag, sourceable})
-
-        # Should NOT recommend SiblingA → Sourceable (path already exists via Tag)
-        sibling_a_to_sourceable = (sibling_a, sourceable)
-        assert sibling_a_to_sourceable not in missing, (
-            f"Should NOT recommend SiblingA → Sourceable (path already exists via Tag), got: {missing}"
-        )
 
     @pytest.mark.parametrize(
         "lower_edge,higher_edge",

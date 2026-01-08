@@ -1,27 +1,3 @@
-# Views for MappedContainersMissingRequiresConstraint - containers always appear together
-- space: my_space
-  externalId: AlwaysTogetherView
-  version: v1
-  name: Always Together View
-  description: View mapping to containers that always appear together
-  properties:
-    name:
-      name: name
-      description: Name property
-      container:
-        space: my_space
-        externalId: AssetContainer
-        type: container
-      containerPropertyIdentifier: name
-    description:
-      name: description
-      description: Description property
-      container:
-        space: my_space
-        externalId: DescribableContainer
-        type: container
-      containerPropertyIdentifier: description
-
 # View for transitive requires test - Parent, Middle, Leaf together where Middle requires Leaf
 - space: my_space
   externalId: TransitiveView
@@ -108,101 +84,6 @@
         externalId: TagDescribableContainer
         type: container
       containerPropertyIdentifier: description
-
-# Views for FunctionalLocation/Tag/CogniteAsset scenario (isolated test)
-# Key: FuncLocTagContainer ONLY appears with FuncLocAssetContainer - no reduced view
-- space: my_space
-  externalId: FuncLocView
-  version: v1
-  name: FuncLoc View
-  description: Maps to FuncLoc, Tag, Describable (NOT Asset)
-  properties:
-    funcLocId:
-      name: funcLocId
-      description: FuncLoc ID
-      container:
-        space: my_space
-        externalId: FuncLocContainer
-        type: container
-      containerPropertyIdentifier: funcLocId
-    tagName:
-      name: tagName
-      description: Tag name
-      container:
-        space: my_space
-        externalId: FuncLocTagContainer
-        type: container
-      containerPropertyIdentifier: tagName
-    description:
-      name: description
-      description: Description
-      container:
-        space: my_space
-        externalId: FuncLocDescribableContainer
-        type: container
-      containerPropertyIdentifier: description
-
-- space: my_space
-  externalId: FuncLocTagView
-  version: v1
-  name: FuncLoc Tag View
-  description: Maps to Tag, Asset, Describable
-  properties:
-    tagName:
-      name: tagName
-      description: Tag name
-      container:
-        space: my_space
-        externalId: FuncLocTagContainer
-        type: container
-      containerPropertyIdentifier: tagName
-    assetId:
-      name: assetId
-      description: Asset ID
-      container:
-        space: my_space
-        externalId: FuncLocAssetContainer
-        type: container
-      containerPropertyIdentifier: assetId
-    description:
-      name: description
-      description: Description
-      container:
-        space: my_space
-        externalId: FuncLocDescribableContainer
-        type: container
-      containerPropertyIdentifier: description
-
-# Views for UnnecessaryRequiresConstraint - containers never appear together
-- space: my_space
-  externalId: OrderOnlyView
-  version: v1
-  name: Order Only View
-  description: View with only order container
-  properties:
-    orderId:
-      name: orderId
-      description: Order ID
-      container:
-        space: my_space
-        externalId: OrderContainer
-        type: container
-      containerPropertyIdentifier: orderId
-
-- space: my_space
-  externalId: CustomerOnlyView
-  version: v1
-  name: Customer Only View
-  description: View with only customer container
-  properties:
-    customerId:
-      name: customerId
-      description: Customer ID
-      container:
-        space: my_space
-        externalId: CustomerContainer
-        type: container
-      containerPropertyIdentifier: customerId
 
 # Views for "Tag requires Sourceable instead of Asset" bridge test
 # BridgeSiblingAView: maps to SiblingA, Tag, Describable (NOT Asset)
@@ -449,10 +330,10 @@
         type: container
       containerPropertyIdentifier: groupBField2
 
-# Step 2 fallback test - UserA and UserB ONLY connect via CDF bridge
-# View A: CdfBridge + UserA (UserB NOT here)
+# CDF bridge scenario - user containers connected via CDF container
+# Tests that MST avoids CDF sources and creates proper user-sourced hierarchy
 - space: my_space
-  externalId: Step2ViewA
+  externalId: CdfBridgeViewA
   version: '1'
   properties:
     bridgeField:
@@ -468,13 +349,13 @@
       description: Field from UserA
       container:
         space: my_space
-        externalId: Step2UserAContainer
+        externalId: CdfBridgeUserAContainer
         type: container
       containerPropertyIdentifier: userAField
 
 # View B: CdfBridge + UserB (UserA NOT here)
 - space: my_space
-  externalId: Step2ViewB
+  externalId: CdfBridgeViewB
   version: '1'
   properties:
     bridgeField:
@@ -490,13 +371,13 @@
       description: Field from UserB
       container:
         space: my_space
-        externalId: Step2UserBContainer
+        externalId: CdfBridgeUserBContainer
         type: container
       containerPropertyIdentifier: userBField
 
 # View with ALL THREE: UserA, UserB, CdfBridge
 - space: my_space
-  externalId: Step2CombinedView
+  externalId: CdfBridgeCombinedView
   version: '1'
   properties:
     bridgeField:
@@ -512,7 +393,7 @@
       description: Field from UserA
       container:
         space: my_space
-        externalId: Step2UserAContainer
+        externalId: CdfBridgeUserAContainer
         type: container
       containerPropertyIdentifier: userAField
     userBField:
@@ -520,6 +401,6 @@
       description: Field from UserB
       container:
         space: my_space
-        externalId: Step2UserBContainer
+        externalId: CdfBridgeUserBContainer
         type: container
       containerPropertyIdentifier: userBField
