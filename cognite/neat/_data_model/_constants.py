@@ -65,7 +65,6 @@ COGNITE_SPACES = (
     "cdf_3d_schema",
     "cdf_apm",
     "cdf_apps_shared",
-    "cdf_cdm",
     "cdf_cdm_3d",
 )
 
