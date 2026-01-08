@@ -642,6 +642,10 @@ class ValidationResources:
             if src not in user_containers:
                 continue
 
+            # Skip if adding this edge would create a cycle
+            if nx.has_path(work_graph, dst, src):
+                continue
+
             # Include if dst is in view OR dst's chain covers uncovered containers
             dst_coverage = nx.descendants(self.requires_graph, dst)
             if dst in containers_in_view or (dst_coverage & uncovered):
@@ -650,19 +654,20 @@ class ValidationResources:
                 covered = nx.descendants(work_graph, outermost) | {outermost}
                 uncovered = containers_in_view - covered
 
-        # Step 2: Prune redundant recommendations
-        # Check each: is dst reachable without this edge (via other recommendations)?
-        needed_recs: list[tuple[ContainerReference, ContainerReference]] = []
-        for src, dst in all_recs:
-            # Temporarily remove this edge and check reachability via other recs
-            work_graph.remove_edge(src, dst)
-            is_redundant = nx.has_path(work_graph, src, dst)
-            work_graph.add_edge(src, dst)  # Restore for next iteration
+        # Step 2: Prune redundant recommendations using transitive reduction
+        needed_recs = []
+        if all_recs:
+            # Build subgraph excluding cycle containers
+            cycle_containers = {c for cycle in self.requires_constraint_cycles for c in cycle}
+            temp_graph = nx.DiGraph()
+            for src, dst in self.requires_graph.edges():
+                if src not in cycle_containers and dst not in cycle_containers:
+                    temp_graph.add_edge(src, dst)
+            temp_graph.add_edges_from(all_recs)
+            reduced_graph = nx.transitive_reduction(temp_graph)
+            needed_recs = [rec for rec in all_recs if reduced_graph.has_edge(*rec)]
 
-            if not is_redundant:
-                needed_recs.append((src, dst))
-
-        # Step 4: Sort topologically
+        # Step 3: Sort topologically
         # In order to return requires constraints in logical order: outermost container first
         rec_graph = nx.DiGraph()
         rec_graph.add_nodes_from(needed_recs)
