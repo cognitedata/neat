@@ -39,47 +39,6 @@
         type: text
         list: false
 
-# Containers for partial overlap / better coverage test
-- space: my_space
-  externalId: TagContainer
-  usedFor: node
-  properties:
-    tagId:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
-- space: my_space
-  externalId: TagAssetContainer
-  usedFor: node
-  properties:
-    assetName:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-  constraints:
-    req_describable:
-      constraintType: requires
-      require:
-        space: my_space
-        externalId: TagDescribableContainer
-        type: container
-
-- space: my_space
-  externalId: TagDescribableContainer
-  usedFor: node
-  properties:
-    description:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
 # Containers for "Tag requires Sourceable instead of Asset" bridge test
 # Key: BridgeTagContainer requires SourceableContainer (suboptimal choice)
 #      BridgeAssetContainer requires SourceableContainer AND BridgeDescribableContainer
@@ -316,6 +275,75 @@
   usedFor: node
   properties:
     userBField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+# FunctionalLocation-like scenario: view-specific container should require shared container
+# FuncLocContainer appears only in FuncLocView
+# SharedTagContainer appears in both FuncLocView and SharedTagView
+# SharedAssetContainer appears in SharedTagView and has existing requires
+- space: my_space
+  externalId: FuncLocContainer
+  usedFor: node
+  properties:
+    funcLocField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: SharedTagContainer
+  usedFor: node
+  properties:
+    sharedTagField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: SharedAssetContainer
+  usedFor: node
+  properties:
+    sharedAssetField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_describable:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: SharedDescribableContainer
+        type: container
+
+- space: my_space
+  externalId: SharedDescribableContainer
+  usedFor: node
+  properties:
+    sharedDescField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+# Second view-specific container (like Pump) to test multiple equipment scenario
+# PumpContainer appears only in PumpView, but shares Tag with FuncLocContainer
+# This tests that BOTH FuncLoc and Pump are outermost for their respective views
+- space: my_space
+  externalId: PumpContainer
+  usedFor: node
+  properties:
+    pumpField:
       immutable: false
       nullable: true
       type:

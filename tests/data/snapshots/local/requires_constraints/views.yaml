@@ -30,37 +30,6 @@
         type: container
       containerPropertyIdentifier: fieldC
 
-- space: my_space
-  externalId: TagView
-  version: v1
-  name: Tag View
-  description: View with Tag, Asset, and Describable
-  properties:
-    tagId:
-      name: tagId
-      description: Tag ID
-      container:
-        space: my_space
-        externalId: TagContainer
-        type: container
-      containerPropertyIdentifier: tagId
-    assetName:
-      name: assetName
-      description: Asset name
-      container:
-        space: my_space
-        externalId: TagAssetContainer
-        type: container
-      containerPropertyIdentifier: assetName
-    tagDescription:
-      name: tagDescription
-      description: Tag description
-      container:
-        space: my_space
-        externalId: TagDescribableContainer
-        type: container
-      containerPropertyIdentifier: description
-
 # Views for "Tag requires Sourceable instead of Asset" bridge test
 # BridgeSiblingAView: maps to SiblingA, Tag, Describable (NOT Asset)
 # BridgeTagView: maps to Tag, Asset, Describable
@@ -332,3 +301,98 @@
         externalId: CdfBridgeUserBContainer
         type: container
       containerPropertyIdentifier: userBField
+
+# FunctionalLocation-like scenario
+# FuncLocView: FuncLocContainer (view-specific), SharedTagContainer (shared), SharedDescribableContainer
+# SharedTagView: SharedTagContainer, SharedAssetContainer, SharedDescribableContainer
+# SharedAssetContainer already requires SharedDescribableContainer
+# Expected: FuncLocContainer → SharedTagContainer (not Tag → FuncLoc!)
+#           SharedTagContainer → SharedAssetContainer (to leverage Asset's requires)
+- space: my_space
+  externalId: FuncLocView
+  version: '1'
+  properties:
+    funcLocField:
+      name: funcLocField
+      description: Field from FuncLoc
+      container:
+        space: my_space
+        externalId: FuncLocContainer
+        type: container
+      containerPropertyIdentifier: funcLocField
+    sharedTagField:
+      name: sharedTagField
+      description: Field from SharedTag
+      container:
+        space: my_space
+        externalId: SharedTagContainer
+        type: container
+      containerPropertyIdentifier: sharedTagField
+    sharedDescField:
+      name: sharedDescField
+      description: Field from SharedDescribable
+      container:
+        space: my_space
+        externalId: SharedDescribableContainer
+        type: container
+      containerPropertyIdentifier: sharedDescField
+
+- space: my_space
+  externalId: SharedTagView
+  version: '1'
+  properties:
+    sharedTagField:
+      name: sharedTagField
+      description: Field from SharedTag
+      container:
+        space: my_space
+        externalId: SharedTagContainer
+        type: container
+      containerPropertyIdentifier: sharedTagField
+    sharedAssetField:
+      name: sharedAssetField
+      description: Field from SharedAsset
+      container:
+        space: my_space
+        externalId: SharedAssetContainer
+        type: container
+      containerPropertyIdentifier: sharedAssetField
+    sharedDescField:
+      name: sharedDescField
+      description: Field from SharedDescribable
+      container:
+        space: my_space
+        externalId: SharedDescribableContainer
+        type: container
+      containerPropertyIdentifier: sharedDescField
+
+# Second equipment view (like Pump) - shares Tag with FuncLocView
+# PumpContainer should be outermost for THIS view, not FuncLocContainer or Tag
+- space: my_space
+  externalId: PumpView
+  version: '1'
+  properties:
+    pumpField:
+      name: pumpField
+      description: Field from Pump
+      container:
+        space: my_space
+        externalId: PumpContainer
+        type: container
+      containerPropertyIdentifier: pumpField
+    sharedTagField:
+      name: sharedTagField
+      description: Field from SharedTag
+      container:
+        space: my_space
+        externalId: SharedTagContainer
+        type: container
+      containerPropertyIdentifier: sharedTagField
+    sharedDescField:
+      name: sharedDescField
+      description: Field from SharedDescribable
+      container:
+        space: my_space
+        externalId: SharedDescribableContainer
+        type: container
+      containerPropertyIdentifier: sharedDescField

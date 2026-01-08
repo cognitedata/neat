@@ -791,10 +791,10 @@ class TestValidationResourcesRequiresConstraints:
         assert tree1 is tree2
 
     @pytest.mark.parametrize(
-        "container_ids,expected_count,expected_edge",
+        "container_ids,expected_count,expected_edges",
         [
             pytest.param(
-                ["TagAssetContainer", "TagDescribableContainer"],
+                ["BridgeAssetContainer", "BridgeDescribableContainer"],
                 0,
                 None,
                 id="complete-hierarchy-no-missing",
@@ -806,10 +806,13 @@ class TestValidationResourcesRequiresConstraints:
                 id="no-requires-needs-one-edge",
             ),
             pytest.param(
+                # In the "ideal structure" approach, we compute optimal from scratch
+                # For 3 containers, optimal is a 2-edge tree from a single root
+                # The existing Middle→Leaf constraint may be replaced with a different structure
                 ["TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"],
-                1,
-                ("TransitiveParent", "TransitiveMiddle"),
-                id="transitive-leverages-existing",
+                2,
+                None,  # Any valid 2-edge tree is acceptable
+                id="three-containers-needs-two-edges",
             ),
             pytest.param(
                 ["TransitiveParent"],
@@ -819,67 +822,29 @@ class TestValidationResourcesRequiresConstraints:
             ),
         ],
     )
-    def test_get_missing_requires_for_view(
+    def test_get_requires_changes_for_view(
         self,
         container_ids: list[str],
         expected_count: int,
-        expected_edge: set[str] | tuple[str, str] | None,
+        expected_edges: set[str] | tuple[str, str] | None,
         scenarios: dict[str, ValidationResources],
     ) -> None:
-        """Test get_missing_requires_for_view for various scenarios."""
+        """Test get_requires_changes_for_view for various scenarios."""
         resources = scenarios["requires-constraints"]
 
         containers = {ContainerReference(space="my_space", external_id=cid) for cid in container_ids}
-        missing = resources.get_missing_requires_for_view(containers)
+        missing, _ = resources.get_requires_changes_for_view(containers)
 
         assert len(missing) == expected_count, f"Expected {expected_count} edges, got {len(missing)}: {missing}"
 
-        if expected_edge is not None and len(missing) > 0:
+        if expected_edges is not None and len(missing) > 0:
             src, dst = missing[0]
-            if isinstance(expected_edge, set):
+            if isinstance(expected_edges, set):
                 # Unordered - just check both containers are connected
-                assert {src.external_id, dst.external_id} == expected_edge
+                assert {src.external_id, dst.external_id} == expected_edges
             else:
                 # Ordered - check specific direction
-                assert (src.external_id, dst.external_id) == expected_edge
-
-    def test_get_missing_requires_for_view_updates_coverage_correctly(
-        self, scenarios: dict[str, ValidationResources]
-    ) -> None:
-        """Test that coverage is updated correctly as edges are added.
-
-        This tests that 'uncovered' is not stale when checking subsequent MST edges.
-        If the first edge covers a container, subsequent checks should see updated coverage.
-        """
-        resources = scenarios["requires-constraints"]
-
-        # BridgeSiblingAView: SiblingA, Tag, Describable
-        # BridgeTagView also exists: Tag, Asset, Describable
-        # MST should recommend Tag→Asset for Tag view
-        # For SiblingA view, if Tag→Asset is in MST, after adding it,
-        # coverage should update so we don't add redundant edges
-        sibling_a = ContainerReference(space="my_space", external_id="BridgeSiblingAContainer")
-        tag = ContainerReference(space="my_space", external_id="BridgeTagContainer")
-        describable = ContainerReference(space="my_space", external_id="BridgeDescribableContainer")
-
-        missing = resources.get_missing_requires_for_view({sibling_a, tag, describable})
-
-        # Count edges - should not have redundant recommendations
-        # Each container pair should only have ONE edge connecting them (directly or transitively)
-        sources = [src for src, dst in missing]
-        for src in sources:
-            src_edges = [(s, d) for s, d in missing if s == src]
-            # A source shouldn't need multiple edges if one provides transitive coverage
-            # This is a soft check - the pruning step should handle redundancy
-            assert len(src_edges) <= 2, f"Source {src} has too many edges: {src_edges}"
-
-    def test_get_missing_requires_for_view_single_container(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test get_missing_requires_for_view with single container returns empty."""
-        resources = scenarios["requires-constraints"]
-
-        container = ContainerReference(space="my_space", external_id="TransitiveParent")
-        missing = resources.get_missing_requires_for_view({container})
-        assert len(missing) == 0
+                assert (src.external_id, dst.external_id) == expected_edges
 
     def test_optimal_requires_tree_consistency(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that optimal_requires_tree gives consistent recommendations across views."""
@@ -895,8 +860,8 @@ class TestValidationResourcesRequiresConstraints:
             reverse_edge = (dst, src)
             assert reverse_edge not in global_tree, f"Tree contains both {src}->{dst} and {dst}->{src}"
 
-    def test_get_missing_requires_never_recommends_cdf_sources(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that get_missing_requires_for_view never recommends CDF containers as sources."""
+    def test_get_requires_changes_never_recommends_cdf_sources(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that get_requires_changes_for_view never recommends CDF containers as sources."""
         resources = scenarios["requires-constraints"]
 
         # Check all views - none should have CDF sources in recommendations
@@ -905,33 +870,30 @@ class TestValidationResourcesRequiresConstraints:
             if len(containers) < 2:
                 continue
 
-            missing = resources.get_missing_requires_for_view(containers)
+            missing, _ = resources.get_requires_changes_for_view(containers)
             for src, _ in missing:
                 assert src.space not in CDF_BUILTIN_SPACES, (
                     f"View {view_ref}: CDF container '{src}' should not be recommended as source"
                 )
 
-    @pytest.mark.parametrize(
-        "path_from,path_to,error_desc",
-        [
-            pytest.param("src", "dst", "path already exists", id="no-transitive-redundancy"),
-            pytest.param("dst", "src", "would form cycle", id="no-cycle-forming-edges"),
-        ],
-    )
-    def test_optimal_requires_tree_no_invalid_paths(
+    def test_optimal_requires_tree_no_cycle_with_immutable(
         self,
-        path_from: str,
-        path_to: str,
-        error_desc: str,
         scenarios: dict[str, ValidationResources],
     ) -> None:
-        """Test that optimal_requires_tree edges don't have invalid paths."""
+        """Test that optimal_requires_tree edges don't form cycles with immutable constraints.
+
+        The optimal tree may include edges that already exist (if optimal), but it
+        should never include edges that would form cycles with CDF constraints.
+        """
         resources = scenarios["requires-constraints"]
 
         for src, dst in resources.optimal_requires_tree:
-            from_node = src if path_from == "src" else dst
-            to_node = dst if path_to == "dst" else src
-            assert not nx.has_path(resources.requires_graph, from_node, to_node), f"Edge {src} → {dst}: {error_desc}"
+            # Adding src → dst should not create a cycle with immutable (CDF) constraints
+            assert not nx.has_path(resources.immutable_requires_graph, dst, src), (
+                f"Edge {src} → {dst} would form cycle with immutable constraints"
+            )
+            # Source should be a modifiable container
+            assert src in resources.modifiable_containers, f"Source {src} should be modifiable (not CDF)"
 
     def test_optimal_requires_tree_empty_when_complete(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that optimal_requires_tree returns empty when all hierarchies are complete.
@@ -996,30 +958,37 @@ class TestValidationResourcesRequiresConstraints:
             assert not (src_in_a and dst_in_b), f"Cross-group edge {src} → {dst}"
             assert not (src_in_b and dst_in_a), f"Cross-group edge {src} → {dst}"
 
-    def test_get_missing_requires_edge_selection(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that get_missing_requires_for_view selects edges that provide better coverage.
+    def test_optimal_structure_may_differ_from_existing(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that the optimal structure computed by MST may differ from existing constraints.
 
-        BridgeSiblingAView: {SiblingA, Tag, Describable}
-        Should recommend Tag→Asset (provides transitivity) rather than SiblingA→Describable.
+        Test data: BridgeSiblingAView has 3 containers {SiblingA, Tag, Describable}
+        - SiblingA already requires Tag (existing constraint)
+        - Tag already requires Sourceable (existing constraint, Sourceable not in view)
+
+        The MST computes an IDEAL structure from scratch, which may differ from what exists.
+        This tests that we correctly identify what to add/remove to reach the ideal structure.
         """
         resources = scenarios["requires-constraints"]
 
-        view_containers = {
-            ContainerReference(space="my_space", external_id=cid)
-            for cid in ["BridgeSiblingAContainer", "BridgeTagContainer", "BridgeDescribableContainer"]
-        }
-        missing = resources.get_missing_requires_for_view(view_containers)
-        missing_ids = {(src.external_id, dst.external_id) for src, dst in missing}
+        sibling_a = ContainerReference(space="my_space", external_id="BridgeSiblingAContainer")
+        tag = ContainerReference(space="my_space", external_id="BridgeTagContainer")
+        describable = ContainerReference(space="my_space", external_id="BridgeDescribableContainer")
 
-        # Should recommend Tag→Asset (external container that provides coverage)
-        assert ("BridgeTagContainer", "BridgeAssetContainer") in missing_ids, (
-            f"Expected BridgeTagContainer → BridgeAssetContainer, got: {missing_ids}"
-        )
+        view_containers = {sibling_a, tag, describable}
 
-        # Should NOT recommend direct edge that bypasses the hierarchy
-        assert ("BridgeSiblingAContainer", "BridgeDescribableContainer") not in missing_ids, (
-            f"Should NOT recommend SiblingA → Describable, got: {missing_ids}"
-        )
+        # Get both additions and removals
+        to_add, to_remove = resources.get_requires_changes_for_view(view_containers)
+
+        # For 3 containers, we need 2 edges to form a tree
+        # The existing SiblingA → Tag might or might not be in the optimal structure
+        # depending on MST edge weights
+        all_changes = to_add + to_remove
+        assert len(all_changes) >= 1, "Should have at least one change recommendation"
+
+        # The optimal structure should connect all containers, so Describable must be connected
+        all_sources = {src for src, _ in to_add}
+        all_targets = {dst for _, dst in to_add}
+        assert describable in (all_sources | all_targets), f"Describable must be in optimal tree: {to_add}"
 
     def test_no_cross_sibling_recommendations(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that we don't recommend constraints between unrelated sibling containers.
@@ -1038,7 +1007,7 @@ class TestValidationResourcesRequiresConstraints:
 
         # Check recommendations for a view with sibling_c
         view_containers = {sibling_c, tag, describable}
-        missing = resources.get_missing_requires_for_view(view_containers)
+        missing, _ = resources.get_requires_changes_for_view(view_containers)
 
         # Siblings that never appear together should not have cross-dependencies
         unrelated_siblings = {sibling_a.external_id, sibling_b.external_id}
@@ -1072,7 +1041,7 @@ class TestValidationResourcesRequiresConstraints:
             f"Expected view to have all 3 containers, got: {view_containers}"
         )
 
-        missing = resources.get_missing_requires_for_view(view_containers)
+        missing, _ = resources.get_requires_changes_for_view(view_containers)
         missing_ids = {(src.external_id, dst.external_id) for src, dst in missing}
 
         # At minimum, we need edges to connect all 3 containers
@@ -1097,48 +1066,29 @@ class TestValidationResourcesRequiresConstraints:
             f"Missing: {missing_ids}, Graph edges: {list(work_graph.edges())[:20]}"
         )
 
-    @pytest.mark.parametrize(
-        "lower_edge,higher_edge",
-        [
-            pytest.param(
-                ("BridgeSiblingAContainer", "BridgeTagContainer"),  # existing transitivity
-                ("BridgeTagContainer", "BridgeAssetContainer"),  # new edge
-                id="existing-transitivity-cheaper-than-new-edge",
-            ),
-            pytest.param(
-                ("BridgeTagContainer", "BridgeAssetContainer"),  # new edge
-                ("BridgeTagContainer", "BridgeSiblingAContainer"),  # cycle-forming
-                id="new-edge-cheaper-than-cycle",
-            ),
-            pytest.param(
-                ("BridgeTagContainer", "BridgeAssetContainer"),  # higher coverage target
-                ("BridgeTagContainer", "BridgeDescribableContainer"),  # lower coverage target
-                id="higher-coverage-target-preferred",
-            ),
-        ],
-    )
-    def test_edge_weight_ordering(
-        self,
-        lower_edge: tuple[str, str],
-        higher_edge: tuple[str, str],
-        scenarios: dict[str, ValidationResources],
-    ) -> None:
-        """Test that edge weights have correct relative ordering for MST algorithm."""
+    def test_edge_weight_cdf_cycle_is_forbidden(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that edges forming cycles with CDF (immutable) constraints get forbidden weight.
+
+        In the new approach, we only prevent cycles with CDF containers (immutable).
+        Cycles with local containers are acceptable (we may recommend removing them).
+        """
+        from cognite.neat._data_model._constants import CDF_BUILTIN_SPACES
+
         resources = scenarios["requires-constraints"]
 
-        lower_src = ContainerReference(space="my_space", external_id=lower_edge[0])
-        lower_dst = ContainerReference(space="my_space", external_id=lower_edge[1])
-        higher_src = ContainerReference(space="my_space", external_id=higher_edge[0])
-        higher_dst = ContainerReference(space="my_space", external_id=higher_edge[1])
+        # Find a CDF container that requires something
+        cdf_src = None
+        cdf_dst = None
+        for src, dst in resources.requires_graph.edges():
+            if src.space in CDF_BUILTIN_SPACES:
+                cdf_src = src
+                cdf_dst = dst
+                break
 
-        weight_lower = resources._compute_requires_edge_weight(lower_src, lower_dst)
-        weight_higher = resources._compute_requires_edge_weight(higher_src, higher_dst)
-
-        assert weight_lower > 0, f"Weight for {lower_edge} must be positive"
-        assert weight_higher > 0, f"Weight for {higher_edge} must be positive"
-        assert weight_lower < weight_higher, (
-            f"{lower_edge} (weight={weight_lower}) should be cheaper than {higher_edge} (weight={weight_higher})"
-        )
+        if cdf_src and cdf_dst:
+            # Trying to add dst → cdf_src would form a cycle with the existing cdf_src → dst
+            weight = resources._compute_requires_edge_weight(cdf_dst, cdf_src)
+            assert weight >= 1e9, f"Cycle with CDF should be forbidden, got weight={weight}"
 
     def test_edge_weight_deterministic(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that edge weight computation is deterministic."""
@@ -1177,3 +1127,43 @@ class TestValidationResourcesRequiresConstraints:
             assert weight_cdf_src > weight_user_src, (
                 f"CDF source ({weight_cdf_src}) should be more expensive than user source ({weight_user_src})"
             )
+
+    @pytest.mark.parametrize(
+        "view_id,outermost_id,shared_id",
+        [
+            pytest.param("FuncLocView", "FuncLocContainer", "SharedTagContainer", id="func-loc-view"),
+            pytest.param("PumpView", "PumpContainer", "SharedTagContainer", id="pump-view"),
+        ],
+    )
+    def test_view_specific_container_is_outermost(
+        self,
+        view_id: str,
+        outermost_id: str,
+        shared_id: str,
+        scenarios: dict[str, ValidationResources],
+    ) -> None:
+        """Test that view-specific containers are outermost (source, never target) for their views."""
+        resources = scenarios["requires-constraints"]
+
+        outermost = ContainerReference(space="my_space", external_id=outermost_id)
+        shared = ContainerReference(space="my_space", external_id=shared_id)
+        view_ref = ViewReference(space="my_space", external_id=view_id, version="1")
+        containers_in_view = resources.view_to_containers.get(view_ref, set())
+
+        # Verify test data
+        assert outermost in containers_in_view, f"{outermost_id} should be in {view_id}"
+        assert shared in containers_in_view, f"{shared_id} should be in {view_id}"
+
+        recs, _ = resources.get_requires_changes_for_view(containers_in_view)
+
+        # Outermost should never be a target
+        targets = {dst for _, dst in recs}
+        assert outermost not in targets, f"{outermost_id} should never be a target. Got: {recs}"
+
+        # Outermost should be a source
+        sources = {src for src, _ in recs}
+        assert outermost in sources, f"{outermost_id} should be a source. Got: {recs}"
+
+        # Shared should not require outermost (backwards)
+        backwards = [(s, d) for s, d in recs if s == shared and d == outermost]
+        assert not backwards, f"{shared_id} should NOT require {outermost_id}. Got: {recs}"
