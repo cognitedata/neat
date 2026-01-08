@@ -525,43 +525,33 @@ class ValidationResources:
             Set of (source, target) tuples representing requires constraints to add.
             Each tuple means "source should require target".
         """
-        # Step 1: Find all containers that appear in merged views
+        # Find all container pairs that need to be connected
+        # (containers that appear together in at least one view)
         all_containers: set[ContainerReference] = set()
+        must_connect: set[frozenset[ContainerReference]] = set()
+
         for view_ref in self.merged.views:
             containers = self.view_to_containers.get(view_ref, set())
             all_containers.update(containers)
-
-        # Step 2: Find which container pairs need to be connected
-        # (containers that appear together in at least one view)
-        must_connect: set[frozenset[ContainerReference]] = set()
-        for view_ref in self.merged.views:
-            containers = self.view_to_containers.get(view_ref, set())
             if len(containers) >= 2:
-                # All pairs in this view must be connected (directly or transitively)
                 for c1, c2 in combinations(containers, 2):
                     must_connect.add(frozenset({c1, c2}))
 
         if not must_connect:
             return set()
 
-        # Step 3: Build directed graph with edge weights
+        # Build directed graph with edge weights
+        # Add all containers as nodes first (handles single-container views)
         G = nx.DiGraph()
+        G.add_nodes_from(all_containers)
+
         for pair in must_connect:
-            # Sort for deterministic ordering (frozenset iteration order is undefined)
-            c1, c2 = sorted(pair, key=str)
-            # Add both directions, let MST pick the best
-            G.add_edge(c1, c2, weight=self._compute_requires_edge_weight(c1, c2))
-            G.add_edge(c2, c1, weight=self._compute_requires_edge_weight(c2, c1))
-
-        # Add any isolated containers (single-container views)
-        for container in all_containers:
-            if container not in G:
-                G.add_node(container)
-
-        # Existing requires get weight 0
-        for src, dst in self.requires_graph.edges():
-            if G.has_edge(src, dst):
-                G[src][dst]["weight"] = 0.0
+            c1, c2 = sorted(pair, key=str)  # Deterministic ordering
+            # Existing requires edges get weight 0, new edges get computed weight
+            w1 = 0.0 if self.requires_graph.has_edge(c1, c2) else self._compute_requires_edge_weight(c1, c2)
+            w2 = 0.0 if self.requires_graph.has_edge(c2, c1) else self._compute_requires_edge_weight(c2, c1)
+            G.add_edge(c1, c2, weight=w1)
+            G.add_edge(c2, c1, weight=w2)
 
         # Step 4: Find minimum spanning arborescence (forest if disconnected)
         arborescence = nx.DiGraph()
@@ -832,9 +822,7 @@ class ValidationResources:
         """
         conflicting: set[ContainerReference] = set()
 
-        for container in self.merged.containers:
-            container_ref = ContainerReference(space=container.space, external_id=container.external_id)
-
+        for container_ref in self.merged.containers:
             if container_ref.space in CDF_BUILTIN_SPACES:
                 continue
 

@@ -797,53 +797,58 @@ class TestValidationResourcesRequiresConstraints:
         tree2 = resources.optimal_requires_tree
         assert tree1 is tree2
 
-    def test_get_missing_requires_for_view_no_missing(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test get_missing_requires_for_view when hierarchy is already complete."""
+    @pytest.mark.parametrize(
+        "container_ids,expected_count,expected_edge",
+        [
+            pytest.param(
+                ["TagAssetContainer", "TagDescribableContainer"],
+                0,
+                None,
+                id="complete-hierarchy-no-missing",
+            ),
+            pytest.param(
+                ["DisconnectedGroupAContainer1", "DisconnectedGroupAContainer2"],
+                1,
+                {"DisconnectedGroupAContainer1", "DisconnectedGroupAContainer2"},
+                id="no-requires-needs-one-edge",
+            ),
+            pytest.param(
+                ["TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"],
+                1,
+                ("TransitiveParent", "TransitiveMiddle"),
+                id="transitive-leverages-existing",
+            ),
+            pytest.param(
+                ["TransitiveParent"],
+                0,
+                None,
+                id="single-container-no-missing",
+            ),
+        ],
+    )
+    def test_get_missing_requires_for_view(
+        self,
+        container_ids: list[str],
+        expected_count: int,
+        expected_edge: set[str] | tuple[str, str] | None,
+        scenarios: dict[str, ValidationResources],
+    ) -> None:
+        """Test get_missing_requires_for_view for various scenarios."""
         resources = scenarios["requires-constraints"]
 
-        # TagView has TagAssetContainer requiring TagDescribableContainer
-        # If we only include those two, hierarchy is complete
-        tag_asset = ContainerReference(space="my_space", external_id="TagAssetContainer")
-        tag_describable = ContainerReference(space="my_space", external_id="TagDescribableContainer")
+        containers = {ContainerReference(space="my_space", external_id=cid) for cid in container_ids}
+        missing = resources.get_missing_requires_for_view(containers)
 
-        missing = resources.get_missing_requires_for_view({tag_asset, tag_describable})
-        # TagAssetContainer already requires TagDescribableContainer, so no missing
-        assert len(missing) == 0
+        assert len(missing) == expected_count, f"Expected {expected_count} edges, got {len(missing)}: {missing}"
 
-    def test_get_missing_requires_for_view_simple_case(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test get_missing_requires_for_view for containers with no existing requires."""
-        resources = scenarios["requires-constraints"]
-
-        # DisconnectedGroupA containers appear together in DisconnectedGroupAView with no requires
-        container1 = ContainerReference(space="my_space", external_id="DisconnectedGroupAContainer1")
-        container2 = ContainerReference(space="my_space", external_id="DisconnectedGroupAContainer2")
-
-        missing = resources.get_missing_requires_for_view({container1, container2})
-        # Should recommend one constraint to connect them
-        assert len(missing) == 1
-        # The edge should connect the two containers
-        src, dst = missing[0]
-        assert {src.external_id, dst.external_id} == {"DisconnectedGroupAContainer1", "DisconnectedGroupAContainer2"}
-
-    def test_get_missing_requires_for_view_transitive_case(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test get_missing_requires_for_view leverages existing transitivity."""
-        resources = scenarios["requires-constraints"]
-
-        # TransitiveView: Parent, Middle, Leaf
-        # Middle already requires Leaf
-        # Should recommend Parent→Middle (not Parent→Leaf, as that would be redundant)
-        parent = ContainerReference(space="my_space", external_id="TransitiveParent")
-        middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
-        leaf = ContainerReference(space="my_space", external_id="TransitiveLeaf")
-
-        missing = resources.get_missing_requires_for_view({parent, middle, leaf})
-
-        # Should have 1 missing edge: Parent→Middle (Leaf is covered transitively)
-        assert len(missing) == 1
-        src, dst = missing[0]
-        # Parent should require Middle (which already requires Leaf)
-        assert src.external_id == "TransitiveParent"
-        assert dst.external_id == "TransitiveMiddle"
+        if expected_edge is not None and len(missing) > 0:
+            src, dst = missing[0]
+            if isinstance(expected_edge, set):
+                # Unordered - just check both containers are connected
+                assert {src.external_id, dst.external_id} == expected_edge
+            else:
+                # Ordered - check specific direction
+                assert (src.external_id, dst.external_id) == expected_edge
 
     def test_get_missing_requires_for_view_updates_coverage_correctly(
         self, scenarios: dict[str, ValidationResources]
