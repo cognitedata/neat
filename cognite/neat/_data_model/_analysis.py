@@ -649,11 +649,6 @@ class ValidationResources:
 
         return list(nx.lexicographical_topological_sort(rec_graph, key=lambda x: (str(x[0]), str(x[1]))))
 
-    @cached_property
-    def _merged_view_refs(self) -> set[ViewReference]:
-        """Cached set of view references from merged schema."""
-        return set(self.merged.views.keys())
-
     def _compute_requires_edge_weight(self, src: ContainerReference, dst: ContainerReference) -> float:
         """Compute the weight/cost of adding a requires constraint from src to dst.
 
@@ -710,7 +705,7 @@ class ValidationResources:
         # Factor 4: Shared views - prefer containers that appear together
         src_views = self.container_to_views.get(src, set())
         dst_views = self.container_to_views.get(dst, set())
-        shared_views = len(src_views & dst_views & self._merged_view_refs)
+        shared_views = len(src_views & dst_views & self.merged.views.keys())
         weight -= min(shared_views * 0.05, 0.5)
 
         return max(weight, 0.01)
