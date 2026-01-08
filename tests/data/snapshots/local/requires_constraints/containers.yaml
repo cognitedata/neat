@@ -159,7 +159,7 @@
 # Containers for "Tag requires Sourceable instead of Asset" bridge test
 # Key: BridgeTagContainer requires SourceableContainer (suboptimal choice)
 #      BridgeAssetContainer requires SourceableContainer AND BridgeDescribableContainer
-#      BridgeCompressorContainer should recommend BridgeTagContainer → BridgeAssetContainer
+#      BridgeSiblingAContainer should recommend BridgeTagContainer → BridgeAssetContainer
 - space: my_space
   externalId: BridgeSourceableContainer
   usedFor: node
@@ -225,10 +225,10 @@
         type: container
 
 - space: my_space
-  externalId: BridgeCompressorContainer
+  externalId: BridgeSiblingAContainer
   usedFor: node
   properties:
-    compressorId:
+    siblingAId:
       immutable: false
       nullable: true
       type:
@@ -242,9 +242,9 @@
         externalId: BridgeTagContainer
         type: container
 
-# Additional equipment containers - independent of each other but share Tag and Describable
+# Additional sibling containers - independent of each other but share Tag and Describable
 - space: my_space
-  externalId: BridgeEquipmentBContainer
+  externalId: BridgeSiblingBContainer
   usedFor: node
   properties:
     equipmentBId:
@@ -262,7 +262,7 @@
         type: container
 
 - space: my_space
-  externalId: BridgeEquipmentCContainer
+  externalId: BridgeSiblingCContainer
   usedFor: node
   properties:
     equipmentCId:
@@ -422,6 +422,42 @@
   usedFor: node
   properties:
     groupBField2:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+# CDF container to test Step 2 fallback - when MST picks CDF as source
+# CDF containers cannot be modified, so edges from them are filtered out
+- space: cdf_cdm
+  externalId: CdfBridgeContainer
+  usedFor: node
+  properties:
+    bridgeField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+# User containers that will be connected via CDF bridge
+- space: my_space
+  externalId: Step2UserAContainer
+  usedFor: node
+  properties:
+    userAField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: Step2UserBContainer
+  usedFor: node
+  properties:
+    userBField:
       immutable: false
       nullable: true
       type:

@@ -205,23 +205,23 @@
       containerPropertyIdentifier: customerId
 
 # Views for "Tag requires Sourceable instead of Asset" bridge test
-# BridgeCompressorView: maps to Compressor, Tag, Describable (NOT Asset)
+# BridgeSiblingAView: maps to SiblingA, Tag, Describable (NOT Asset)
 # BridgeTagView: maps to Tag, Asset, Describable
-# Expected: BridgeTagContainer → BridgeAssetContainer should be recommended for BridgeCompressorView
+# Expected: BridgeTagContainer → BridgeAssetContainer should be recommended for BridgeSiblingAView
 - space: my_space
-  externalId: BridgeCompressorView
+  externalId: BridgeSiblingAView
   version: v1
-  name: Bridge Compressor View
-  description: View mapping to Compressor, Tag, Describable (NOT Asset)
+  name: Bridge Sibling A View
+  description: View mapping to SiblingA, Tag, Describable (NOT Asset)
   properties:
-    compressorId:
-      name: compressorId
-      description: Compressor ID
+    siblingAId:
+      name: siblingAId
+      description: Sibling A ID
       container:
         space: my_space
-        externalId: BridgeCompressorContainer
+        externalId: BridgeSiblingAContainer
         type: container
-      containerPropertyIdentifier: compressorId
+      containerPropertyIdentifier: siblingAId
     tagName:
       name: tagName
       description: Tag Name
@@ -241,17 +241,17 @@
 
 # Additional equipment views - independent of each other but share Tag and Describable
 - space: my_space
-  externalId: BridgeEquipmentBView
+  externalId: BridgeSiblingBView
   version: v1
-  name: Bridge Equipment B View
-  description: View mapping to EquipmentB, Tag, Describable
+  name: Bridge Sibling B View
+  description: View mapping to SiblingB, Tag, Describable
   properties:
     equipmentBId:
       name: equipmentBId
-      description: Equipment B ID
+      description: Sibling B ID
       container:
         space: my_space
-        externalId: BridgeEquipmentBContainer
+        externalId: BridgeSiblingBContainer
         type: container
       containerPropertyIdentifier: equipmentBId
     tagName:
@@ -272,17 +272,17 @@
       containerPropertyIdentifier: description
 
 - space: my_space
-  externalId: BridgeEquipmentCView
+  externalId: BridgeSiblingCView
   version: v1
-  name: Bridge Equipment C View
-  description: View mapping to EquipmentC, Tag, Describable
+  name: Bridge Sibling C View
+  description: View mapping to SiblingC, Tag, Describable
   properties:
     equipmentCId:
       name: equipmentCId
-      description: Equipment C ID
+      description: Sibling C ID
       container:
         space: my_space
-        externalId: BridgeEquipmentCContainer
+        externalId: BridgeSiblingCContainer
         type: container
       containerPropertyIdentifier: equipmentCId
     tagName:
@@ -448,3 +448,48 @@
         externalId: DisconnectedGroupBContainer2
         type: container
       containerPropertyIdentifier: groupBField2
+
+# Step 2 fallback test - UserA and UserB ONLY connect via CDF bridge
+# View A: CdfBridge + UserA (UserB NOT here)
+- space: my_space
+  externalId: Step2ViewA
+  version: "1"
+  properties:
+    bridgeField:
+      name: bridgeField
+      description: Field from CDF bridge
+      container:
+        space: cdf_cdm
+        externalId: CdfBridgeContainer
+        type: container
+      containerPropertyIdentifier: bridgeField
+    userAField:
+      name: userAField
+      description: Field from UserA
+      container:
+        space: my_space
+        externalId: Step2UserAContainer
+        type: container
+      containerPropertyIdentifier: userAField
+
+# View B: CdfBridge + UserB (UserA NOT here)
+- space: my_space
+  externalId: Step2ViewB
+  version: "1"
+  properties:
+    bridgeField:
+      name: bridgeField
+      description: Field from CDF bridge
+      container:
+        space: cdf_cdm
+        externalId: CdfBridgeContainer
+        type: container
+      containerPropertyIdentifier: bridgeField
+    userBField:
+      name: userBField
+      description: Field from UserB
+      container:
+        space: my_space
+        externalId: Step2UserBContainer
+        type: container
+      containerPropertyIdentifier: userBField

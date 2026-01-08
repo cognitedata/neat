@@ -547,7 +547,8 @@ class ValidationResources:
         # Step 3: Build directed graph with edge weights
         G = nx.DiGraph()
         for pair in must_connect:
-            c1, c2 = tuple(pair)
+            # Sort for deterministic ordering (frozenset iteration order is undefined)
+            c1, c2 = sorted(pair, key=str)
             # Add both directions, let MST pick the best
             G.add_edge(c1, c2, weight=self._compute_requires_edge_weight(c1, c2))
             G.add_edge(c2, c1, weight=self._compute_requires_edge_weight(c2, c1))
