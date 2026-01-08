@@ -572,21 +572,11 @@ class ValidationResources:
             sub_arb = nx.minimum_spanning_arborescence(subgraph, attr="weight")
             arborescence = nx.compose(arborescence, sub_arb)
 
-        # Step 5: Transform CDF source edges to user source edges
-        # The MST may have picked CDF → User edges, which are unactionable.
-        # We flip these to User → CDF, preserving the connectivity.
-        actionable_edges: set[tuple[ContainerReference, ContainerReference]] = set()
-        for src, dst in arborescence.edges():
-            if src.space in CDF_BUILTIN_SPACES and dst.space not in CDF_BUILTIN_SPACES:
-                # Flip CDF → User to User → CDF
-                # Only flip if it won't create a cycle
-                if not nx.has_path(self.requires_graph, dst, src):
-                    actionable_edges.add((dst, src))
-            else:
-                actionable_edges.add((src, dst))
-
-        # Step 6: Filter to only NEW edges (no existing path in requires_graph)
-        return {(src, dst) for src, dst in actionable_edges if not nx.has_path(self.requires_graph, src, dst)}
+        # Step 5: Filter to only NEW edges (no existing path in requires_graph)
+        # Note: CDF source edges should never appear due to the 1e9 penalty in edge weights.
+        # If they do appear, it indicates malformed view data where user containers are only
+        # connected via CDF containers (which shouldn't happen in well-structured models).
+        return {(src, dst) for src, dst in arborescence.edges() if not nx.has_path(self.requires_graph, src, dst)}
 
     def get_missing_requires_for_view(
         self, containers_in_view: set[ContainerReference]
