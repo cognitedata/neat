@@ -345,3 +345,39 @@
         space: my_space
         externalId: CycleContainerA
         type: container
+
+# Containers for conflicting siblings test
+# SharedConflictContainer appears in two views with disjoint siblings (FileContainer, TimeSeriesContainer)
+# This creates an unsolvable design conflict
+- space: my_space
+  externalId: SharedConflictContainer
+  usedFor: node
+  properties:
+    sharedField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: ConflictFileContainer
+  usedFor: node
+  properties:
+    fileField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: ConflictTimeSeriesContainer
+  usedFor: node
+  properties:
+    tsField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false

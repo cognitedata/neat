@@ -989,3 +989,52 @@ class TestValidationResourcesRequiresConstraints:
         assert tag_to_compressor not in missing, (
             f"Should NOT recommend Tag → Compressor (would create cycle with existing Compressor → Tag), got: {missing}"
         )
+
+    def test_conflicting_containers_with_disjoint_siblings(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test detection of containers that appear with different siblings in different views.
+
+        Scenario: SharedConflictContainer appears in:
+        - ConflictFileView: SharedConflictContainer + ConflictFileContainer
+        - ConflictTimeSeriesView: SharedConflictContainer + ConflictTimeSeriesContainer
+
+        If SharedConflictContainer requires ConflictFileContainer, ConflictTimeSeriesView ingestion breaks.
+        If SharedConflictContainer requires ConflictTimeSeriesContainer, ConflictFileView ingestion breaks.
+        This is an unsolvable conflict and should be detected.
+        """
+        resources = scenarios["requires-constraints"]
+
+        # Find conflicting containers
+        conflicting = resources.conflicting_containers
+
+        # SharedConflictContainer should be detected as conflicting
+        shared_ref = ContainerReference(space="my_space", external_id="SharedConflictContainer")
+        assert shared_ref in conflicting, (
+            f"Expected SharedConflictContainer to be detected as conflicting "
+            f"(disjoint siblings ConflictFileContainer and ConflictTimeSeriesContainer), "
+            f"got: {conflicting}"
+        )
+
+    def test_outer_containers_not_marked_as_conflicting(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that containers are NOT marked as conflicting when siblings are 'outer' containers.
+
+        Scenario: BridgeTagContainer appears in multiple views:
+        - BridgeTagView: BridgeTagContainer + BridgeAssetContainer + BridgeDescribableContainer
+        - BridgeCompressorView: BridgeCompressorContainer + BridgeTagContainer + BridgeDescribableContainer
+        - EquipmentBView: EquipmentBContainer + BridgeTagContainer + BridgeDescribableContainer
+
+        BridgeCompressorContainer and EquipmentBContainer are unique across views, but they are
+        'outer' containers that REQUIRE BridgeTagContainer (not candidates for Tag to require).
+        This should NOT be marked as a conflict - Tag → Asset is a valid recommendation.
+        """
+        resources = scenarios["requires-constraints"]
+
+        # Find conflicting containers
+        conflicting = resources.conflicting_containers
+
+        # BridgeTagContainer should NOT be marked as conflicting
+        tag_ref = ContainerReference(space="my_space", external_id="BridgeTagContainer")
+        assert tag_ref not in conflicting, (
+            f"BridgeTagContainer should NOT be marked as conflicting - "
+            f"outer containers (Compressor, EquipmentB) require Tag, not vice versa. "
+            f"Tag → Asset is a valid recommendation. Got conflicting: {conflicting}"
+        )

@@ -356,3 +356,51 @@
         externalId: CycleContainerB
         type: container
       containerPropertyIdentifier: propB
+
+# Views for conflicting siblings test
+# SharedConflictContainer appears in both views with different siblings
+- space: my_space
+  externalId: ConflictFileView
+  version: v1
+  name: Conflict File View
+  description: View with SharedConflictContainer and ConflictFileContainer
+  properties:
+    sharedField:
+      name: sharedField
+      description: Field from SharedConflictContainer
+      container:
+        space: my_space
+        externalId: SharedConflictContainer
+        type: container
+      containerPropertyIdentifier: sharedField
+    fileField:
+      name: fileField
+      description: Field from ConflictFileContainer
+      container:
+        space: my_space
+        externalId: ConflictFileContainer
+        type: container
+      containerPropertyIdentifier: fileField
+
+- space: my_space
+  externalId: ConflictTimeSeriesView
+  version: v1
+  name: Conflict TimeSeries View
+  description: View with SharedConflictContainer and ConflictTimeSeriesContainer
+  properties:
+    sharedField:
+      name: sharedField
+      description: Field from SharedConflictContainer
+      container:
+        space: my_space
+        externalId: SharedConflictContainer
+        type: container
+      containerPropertyIdentifier: sharedField
+    tsField:
+      name: tsField
+      description: Field from ConflictTimeSeriesContainer
+      container:
+        space: my_space
+        externalId: ConflictTimeSeriesContainer
+        type: container
+      containerPropertyIdentifier: tsField

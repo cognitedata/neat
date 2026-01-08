@@ -1,4 +1,4 @@
-from itertools import chain
+from itertools import chain, combinations
 from typing import Literal, TypeAlias
 
 import networkx as nx
@@ -547,10 +547,8 @@ class ValidationResources:
             containers = self.view_to_containers.get(view_ref, set())
             if len(containers) >= 2:
                 # All pairs in this view must be connected (directly or transitively)
-                for c1 in containers:
-                    for c2 in containers:
-                        if c1 != c2:
-                            must_connect.add(frozenset({c1, c2}))
+                for c1, c2 in combinations(containers, 2):
+                    must_connect.add(frozenset({c1, c2}))
 
         if not must_connect:
             return set()
@@ -638,8 +636,8 @@ class ValidationResources:
             user_containers,
             key=lambda c: (
                 len(self.container_to_views.get(c, set())),
-                len(nx.ancestors(self.requires_graph, c)) if self.requires_graph.has_node(c) else 0,
-                len(nx.descendants(self.requires_graph, c)) if self.requires_graph.has_node(c) else 0,
+                len(nx.ancestors(self.requires_graph, c)),
+                len(nx.descendants(self.requires_graph, c)),
                 str(c),  # Final tiebreaker for determinism
             ),
         )
@@ -648,15 +646,19 @@ class ValidationResources:
         # Include recs where src is a user container in this view, and either:
         # - dst is also in the view, OR
         # - dst's transitive chain covers uncovered containers in the view
-        covered = (nx.descendants(work_graph, outermost) if work_graph.has_node(outermost) else set()) | {outermost}
+        covered = nx.descendants(work_graph, outermost) | {outermost}
         uncovered = containers_in_view - covered
 
         for src, dst in self.optimal_requires_tree:
             if src not in user_containers:
                 continue
 
-            # Skip if this would create a cycle
-            if self.requires_graph.has_node(dst) and src in nx.descendants(self.requires_graph, dst):
+            # Skip if this would create a cycle (dst already requires src)
+            if nx.has_path(self.requires_graph, dst, src):
+                continue
+
+            # Skip if edge already exists in original graph
+            if nx.has_path(self.requires_graph, src, dst):
                 continue
 
             # Include if dst is in view
@@ -666,7 +668,7 @@ class ValidationResources:
                 continue
 
             # Include if dst's transitive chain covers uncovered containers
-            dst_coverage = nx.descendants(self.requires_graph, dst) if self.requires_graph.has_node(dst) else set()
+            dst_coverage = nx.descendants(self.requires_graph, dst)
             if dst_coverage & uncovered:
                 work_graph.add_edge(src, dst)
                 all_recs.append((src, dst))
@@ -681,7 +683,7 @@ class ValidationResources:
 
             best_target = max(
                 candidates,
-                key=lambda c: len((nx.descendants(work_graph, c) if work_graph.has_node(c) else set()) & uncovered),
+                key=lambda c: len(nx.descendants(work_graph, c) & uncovered),
                 default=None,
             )
             if best_target is None:
@@ -693,30 +695,24 @@ class ValidationResources:
                 continue
 
             # Skip if adding this edge would create a cycle (best_target already requires outermost)
-            if self.requires_graph.has_node(best_target) and outermost in nx.descendants(
-                self.requires_graph, best_target
-            ):
+            if nx.has_path(self.requires_graph, best_target, outermost):
                 uncovered.remove(best_target)
                 continue
 
-            work_graph.add_edge(outermost, best_target)
-            all_recs.append((outermost, best_target))
+            # Only add if edge doesn't already exist (we only recommend NEW edges)
+            if not nx.has_path(self.requires_graph, outermost, best_target):
+                work_graph.add_edge(outermost, best_target)
+                all_recs.append((outermost, best_target))
             covered = nx.descendants(work_graph, outermost) | {outermost}
             uncovered = containers_in_view - covered
 
         # Step 3: Prune redundant recommendations
-        # Build graph with all recs, then check each: is dst reachable without this edge?
+        # Check each: is dst reachable without this edge (via other recommendations)?
         needed_recs: list[tuple[ContainerReference, ContainerReference]] = []
         for src, dst in all_recs:
-            # Already exists in original graph?
-            if dst in nx.descendants(self.requires_graph, src):
-                continue
-
             # Temporarily remove this edge and check reachability via other recs
             work_graph.remove_edge(src, dst)
-            is_redundant = (
-                work_graph.has_node(src) and work_graph.has_node(dst) and dst in nx.descendants(work_graph, src)
-            )
+            is_redundant = nx.has_path(work_graph, src, dst)
             work_graph.add_edge(src, dst)  # Restore for next iteration
 
             if not is_redundant:
@@ -761,10 +757,10 @@ class ValidationResources:
             base_weight -= 0.1
 
         # Factor 3: Existing transitivity - leverage existing chains
-        if src in nx.descendants(self.requires_graph, dst):
+        if nx.has_path(self.requires_graph, dst, src):
             # dst already requires src, so src->dst would create a cycle - effectively forbidden
             base_weight += 1e9
-        elif dst in nx.descendants(self.requires_graph, src):
+        elif nx.has_path(self.requires_graph, src, dst):
             # src already transitively requires dst, this edge is redundant but cheap
             base_weight = 0.01
 
@@ -819,9 +815,7 @@ class ValidationResources:
         src_views = self.container_to_views.get(src, set())
 
         # Containers that transitively require dst
-        containers_requiring_dst = (
-            nx.ancestors(self.requires_graph, dst) if self.requires_graph.has_node(dst) else set()
-        )
+        containers_requiring_dst = nx.ancestors(self.requires_graph, dst)
 
         affected: set[ViewReference] = set()
         for view_ref in src_views:
@@ -836,3 +830,81 @@ class ValidationResources:
                 affected.add(view_ref)
 
         return affected
+
+    @cached_property
+    def conflicting_containers(self) -> set[ContainerReference]:
+        """Find user containers that appear in views with mutually exclusive siblings.
+
+        A container is "conflicting" if:
+        1. It appears in multiple views
+        2. Different views have different "sibling" containers (containers not transitively connected)
+        3. Adding a requires constraint to any sibling would break another view
+
+        Example: ExtractorData appears in:
+        - CogniteExtractorFile view (with CogniteFile)
+        - CogniteExtractorTimeSeries view (with CogniteTimeSeries)
+        If ExtractorData requires CogniteFile, CogniteExtractorTimeSeries ingestion breaks.
+        If ExtractorData requires CogniteTimeSeries, CogniteExtractorFile ingestion breaks.
+        This is an unsolvable design conflict.
+
+        Returns:
+            Set of containers that have conflicting requirements across views.
+        """
+        conflicting: set[ContainerReference] = set()
+
+        for container in self.merged.containers:
+            container_ref = ContainerReference(space=container.space, external_id=container.external_id)
+
+            if container_ref.space in CDF_BUILTIN_SPACES:
+                continue
+
+            views = self.container_to_views.get(container_ref, set())
+            if len(views) < 2:
+                continue
+
+            # Pre-compute graph relationships for this container (once, not per-sibling)
+            container_requires = nx.descendants(self.requires_graph, container_ref)
+            requires_container = nx.ancestors(self.requires_graph, container_ref)
+
+            # For each view, find sibling containers that are candidates for being required by this container
+            sibling_sets: list[set[ContainerReference]] = []
+            for view_ref in views:
+                view_containers = self.view_to_containers.get(view_ref, set())
+                siblings = view_containers - {container_ref}
+
+                # Filter to siblings that:
+                # 1. Are not already transitively required by this container
+                # 2. Do not already require this container (they're "outer" containers, not candidates)
+                candidate_siblings = {
+                    sibling
+                    for sibling in siblings
+                    if sibling not in container_requires and sibling not in requires_container
+                }
+
+                if candidate_siblings:
+                    sibling_sets.append(candidate_siblings)
+
+            # Check if there's a common sibling that could serve as a valid requires target.
+            # If there's at least one sibling that appears in ALL views, we can recommend
+            # that target (or something that transitively covers it), and it won't break any view.
+            # A conflict only exists if there's NO common sibling across all views.
+            if len(sibling_sets) >= 2:
+                # Find siblings that appear in ALL views (set intersection)
+                common_siblings = set.intersection(*sibling_sets)
+
+                # Also check if any sibling transitively covers all other siblings' needs
+                # (e.g., Asset covers Describable, so even if Describable isn't in all sets,
+                # Asset can be the target and transitively satisfy Describable)
+                all_siblings = set().union(*sibling_sets)
+                for potential_target in all_siblings:
+                    # Get what this target transitively covers
+                    covers = nx.descendants(self.requires_graph, potential_target) | {potential_target}
+                    # Check if this target (or what it covers) appears in all sibling sets
+                    if all(sibling_set & covers for sibling_set in sibling_sets):
+                        common_siblings.add(potential_target)
+
+                # If no common sibling exists (directly or transitively), it's a conflict
+                if not common_siblings:
+                    conflicting.add(container_ref)
+
+        return conflicting

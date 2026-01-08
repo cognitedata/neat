@@ -39,6 +39,9 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
+        # Pre-compute conflicting containers to avoid contradictory recommendations
+        conflicting_containers = self.validation_resources.conflicting_containers
+
         for view_ref in self.validation_resources.merged.views:
             containers_in_view = self.validation_resources.view_to_containers.get(view_ref, set())
 
@@ -49,83 +52,138 @@ class MappedContainersMissingRequiresConstraint(DataModelValidator):
             if self.validation_resources.has_full_requires_hierarchy(containers_in_view):
                 continue
 
+            # Skip views handled by UnresolvableQueryPerformanceIssue
+            user_containers = [c for c in containers_in_view if c.space not in CDF_BUILTIN_SPACES]
+            if not user_containers:
+                continue  # All CDF built-in containers - handled by other validator
+
+            conflicting_in_view = containers_in_view & conflicting_containers
+            if conflicting_in_view:
+                continue  # Has conflicting containers - handled by other validator
+
             # Get missing requires from the globally optimal tree (computed once, cached)
             missing_requires = self.validation_resources.get_missing_requires_for_view(containers_in_view)
 
-            if missing_requires:
-                # Generate targeted recommendations for each missing constraint
-                for src, dst in sorted(missing_requires, key=lambda x: (str(x[0]), str(x[1]))):
-                    # Check if this recommendation might affect other views
-                    affected_views = self.validation_resources.find_views_affected_by_requires(
-                        src, dst, exclude_view=view_ref
-                    )
+            # Generate targeted recommendations for each missing constraint
+            for src, dst in sorted(missing_requires, key=lambda x: (str(x[0]), str(x[1]))):
+                # Check if this recommendation might affect other views
+                affected_views = self.validation_resources.find_views_affected_by_requires(
+                    src, dst, exclude_view=view_ref
+                )
 
-                    if affected_views:
-                        # Check if there are "superset" views that contain both src and dst
-                        # These can serve as ingestion points for the affected views
-                        superset_views = self.validation_resources.find_views_with_both_containers(src, dst)
-                        # Exclude the current view from superset consideration
-                        superset_views = superset_views - {view_ref}
-
-                        if superset_views:
-                            # Dependency case: affected views will depend on superset views
-                            superset_example = min(superset_views, key=str)
-                            recommendations.append(
-                                Recommendation(
-                                    message=(
-                                        f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
-                                        f"Add a 'requires' constraint from '{src!s}' to '{dst!s}' to mitigate this. "
-                                        f"Note that this will make populating instances through this view dependent on '{src!s}' being populated "
-                                        f"separately first, or through a view that maps to both (e.g., '{superset_example!s}')."
-                                    ),
-                                    fix="Add requires constraints between the containers",
-                                    code=self.code,
-                                )
-                            )
-                        else:
-                            # No superset view exists - truly problematic case
-                            affected_names = ", ".join(str(v) for v in sorted(affected_views, key=str)[:3])
-                            if len(affected_views) > 3:
-                                affected_names += f" and {len(affected_views) - 3} more"
-                            recommendations.append(
-                                Recommendation(
-                                    message=(
-                                        f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
-                                        f"Add a 'requires' constraint from '{src!s}' to '{dst!s}' to mitigate this. "
-                                        f"Note that this will make populating instances through {affected_names} "
-                                        f"dependent on '{dst!s}' being populated first."
-                                    ),
-                                    fix="Add requires constraints between the containers",
-                                    code=self.code,
-                                )
-                            )
-                    else:
-                        recommendations.append(
-                            Recommendation(
-                                message=(
-                                    f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
-                                    f"Add a 'requires' constraint from '{src!s}' to '{dst!s}' to mitigate this."
-                                ),
-                                fix="Add requires constraints between the containers",
-                                code=self.code,
-                            )
-                        )
-            elif view_ref.space not in CDF_BUILTIN_SPACES:
-                # No recommendations but hierarchy is incomplete - unsolvable case
-                # This happens when all mapped containers are CDF built-in (not modifiable)
-                user_containers = [c for c in containers_in_view if c.space not in CDF_BUILTIN_SPACES]
-                if not user_containers:
+                if affected_views:
+                    # Find "superset" views that contain both src and dst
+                    # These can serve as ingestion points for the affected views
+                    # Note: At least one superset view always exists because recommendations
+                    # only come from container pairs that appear together in some view
+                    superset_views = self.validation_resources.find_views_with_both_containers(src, dst)
+                    superset_example = min(superset_views, key=str)
                     recommendations.append(
                         Recommendation(
                             message=(
                                 f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
-                                f"The view maps to multiple CDF built-in containers {', '.join(str(c) for c in containers_in_view)} "
-                                " without a complete requires hierarchy between them, but because these containers are not modifiable, "
-                                " this cannot be fixed by adding requires constraints."
+                                f"Add a 'requires' constraint from '{src!s}' to '{dst!s}' to mitigate this. "
+                                f"Note that this will make populating instances through this view dependent on '{src!s}' being populated "
+                                f"separately first, or through a view that maps to both (e.g., '{superset_example!s}')."
                             ),
-                            fix="Consider restructuring the view",
+                            fix="Add requires constraints between the containers",
                             code=self.code,
                         )
                     )
+                else:
+                    recommendations.append(
+                        Recommendation(
+                            message=(
+                                f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
+                                f"Add a 'requires' constraint from '{src!s}' to '{dst!s}' to mitigate this."
+                            ),
+                            fix="Add requires constraints between the containers",
+                            code=self.code,
+                        )
+                    )
+
+        return recommendations
+
+
+class UnresolvableQueryPerformanceIssue(DataModelValidator):
+    """
+    Identifies views with query performance issues that cannot be resolved with requires constraints.
+
+    ## What it does
+    Detects two types of unsolvable query performance issues:
+
+    1. **CDF-only containers**: Views that map only to CDF built-in containers without a complete
+       requires hierarchy. Since users cannot modify CDF containers, no requires can be added.
+
+    2. **Conflicting containers**: Views containing a container that appears in multiple views
+       with different sibling containers. Adding a requires to any sibling would break ingestion
+       for other views using the same container.
+
+    ## Why is this bad?
+    These views will have suboptimal query performance that cannot be fixed by adding requires
+    constraints. The only solutions are to restructure the views or add a new container specific
+    to the view that requires the others.
+
+    ## Example
+    - CogniteExtractorData appears in CogniteExtractorFile (with CogniteFile) and
+      CogniteExtractorTimeSeries (with CogniteTimeSeries).
+    - If CogniteExtractorData requires CogniteFile, CogniteExtractorTimeSeries breaks.
+    - If CogniteExtractorData requires CogniteTimeSeries, CogniteExtractorFile breaks.
+    """
+
+    code = f"{BASE_CODE}-002"
+    issue_type = Recommendation
+
+    def run(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
+
+        conflicting_containers = self.validation_resources.conflicting_containers
+
+        for view_ref in self.validation_resources.merged.views:
+            # Skip CDF built-in views
+            if view_ref.space in CDF_BUILTIN_SPACES:
+                continue
+
+            containers_in_view = self.validation_resources.view_to_containers.get(view_ref, set())
+
+            if len(containers_in_view) < 2:
+                continue
+
+            # Skip if hierarchy is already complete
+            if self.validation_resources.has_full_requires_hierarchy(containers_in_view):
+                continue
+
+            user_containers = [c for c in containers_in_view if c.space not in CDF_BUILTIN_SPACES]
+            conflicting_in_view = containers_in_view & conflicting_containers
+
+            # Case 1: All containers are CDF built-in (not modifiable)
+            if not user_containers:
+                recommendations.append(
+                    Recommendation(
+                        message=(
+                            f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
+                            f"The view maps only to CDF built-in containers which cannot be modified to add requires constraints. "
+                            f"Consider restructuring the view or adding another container with at least one property to this view that requires the others."
+                        ),
+                        fix="Add a container with at least one property that requires the others, or restructure the view",
+                        code=self.code,
+                    )
+                )
+
+            # Case 2: Has conflicting containers
+            elif conflicting_in_view:
+                conflicting_names = ", ".join(f"'{c!s}'" for c in sorted(conflicting_in_view, key=str))
+                recommendations.append(
+                    Recommendation(
+                        message=(
+                            f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
+                            f"Container {conflicting_names} appears in multiple views with different sibling containers, "
+                            f"making it impossible to optimize performance without breaking ingestion for other views. "
+                            f"Consider adding a view-specific container with at least one property that requires the others."
+                        ),
+                        fix="Add a container with at least one property that requires the others, or restructure the view",
+                        code=self.code,
+                    )
+                )
 
         return recommendations
