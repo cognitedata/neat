@@ -42,6 +42,13 @@ def scenarios() -> dict[str, ValidationResources]:
             include_cdm=True,
             format="validation-resource",
         ),
+        "requires-constraints": catalog.load_scenario(
+            "requires_constraints",
+            cdf_scenario_name="for_validators",
+            modus_operandi="additive",
+            include_cdm=False,
+            format="validation-resource",
+        ),
     }
     return scenarios
 
@@ -594,3 +601,125 @@ class TestValidationResources:
             for (view_ref, prop), target_view_ref in end_node_types.items()
         }
         data_regression.check(serializable)
+
+
+class TestValidationResourcesRequiresConstraints:
+    """Tests for requires constraint related methods in ValidationResources."""
+
+    def test_container_to_views_basic(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test container_to_views returns correct view mappings."""
+        resources = scenarios["requires-constraints"]
+        container_to_views = resources.container_to_views
+
+        # TransitiveMiddle appears in TransitiveView
+        transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
+        assert transitive_middle in container_to_views
+        transitive_views = container_to_views[transitive_middle]
+        assert any(v.external_id == "TransitiveView" for v in transitive_views)
+
+    def test_view_to_containers_basic(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test view_to_containers returns correct container mappings."""
+        resources = scenarios["requires-constraints"]
+        view_to_containers = resources.view_to_containers
+
+        # TransitiveView maps to TransitiveParent, TransitiveMiddle, TransitiveLeaf
+        transitive_view = ViewReference(space="my_space", external_id="TransitiveView", version="v1")
+        assert transitive_view in view_to_containers
+        containers = view_to_containers[transitive_view]
+        container_ids = {c.external_id for c in containers}
+        assert container_ids == {"TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"}
+
+    @pytest.mark.parametrize(
+        "container_ids,expect_found",
+        [
+            pytest.param(
+                ["TransitiveParent", "TransitiveMiddle"],
+                True,
+                id="containers-appear-together",
+            ),
+            pytest.param(
+                ["DisconnectedGroupAContainer1", "DisconnectedGroupBContainer1"],
+                False,
+                id="containers-never-together",
+            ),
+        ],
+    )
+    def test_find_views_mapping_to_containers(
+        self,
+        container_ids: list[str],
+        expect_found: bool,
+        scenarios: dict[str, ValidationResources],
+    ) -> None:
+        """Test find_views_mapping_to_containers for various container combinations."""
+        resources = scenarios["requires-constraints"]
+        containers = [ContainerReference(space="my_space", external_id=cid) for cid in container_ids]
+        shared_views = resources.find_views_mapping_to_containers(containers)
+
+        if expect_found:
+            assert len(shared_views) > 0, f"Expected shared views for {container_ids}"
+        else:
+            assert len(shared_views) == 0, f"Expected no shared views for {container_ids}"
+
+    def test_requires_graph_structure(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that requires_graph is built correctly."""
+        resources = scenarios["requires-constraints"]
+        graph = resources.requires_graph
+
+        # Check edges exist
+        transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
+        transitive_leaf = ContainerReference(space="my_space", external_id="TransitiveLeaf")
+        assert graph.has_edge(transitive_middle, transitive_leaf)
+
+        # Check cycle edges
+        cycle_a = ContainerReference(space="my_space", external_id="CycleContainerA")
+        cycle_b = ContainerReference(space="my_space", external_id="CycleContainerB")
+        assert graph.has_edge(cycle_a, cycle_b)
+        assert graph.has_edge(cycle_b, cycle_a)
+
+    def test_requires_constraint_cycles(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test cycle detection in requires constraints."""
+        resources = scenarios["requires-constraints"]
+        cycles = resources.requires_constraint_cycles
+
+        # Should detect the CycleContainerA <-> CycleContainerB cycle
+        assert len(cycles) > 0
+        cycle_ids = {c.external_id for cycle in cycles for c in cycle}
+        assert "CycleContainerA" in cycle_ids
+        assert "CycleContainerB" in cycle_ids
+
+        # Linear chain should not be detected as a cycle
+        assert "TransitiveMiddle" not in cycle_ids
+        assert "TransitiveLeaf" not in cycle_ids
+
+    @pytest.mark.parametrize(
+        "containers,expected_complete",
+        [
+            pytest.param(
+                ["TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"],
+                False,
+                id="incomplete-hierarchy",
+            ),
+            pytest.param(
+                ["TransitiveParent"],
+                True,
+                id="single-container-always-complete",
+            ),
+            pytest.param(
+                ["TagAssetContainer", "TagDescribableContainer"],
+                True,
+                id="complete-with-requires",
+            ),
+        ],
+    )
+    def test_has_full_requires_hierarchy(
+        self,
+        containers: list[str],
+        expected_complete: bool,
+        scenarios: dict[str, ValidationResources],
+    ) -> None:
+        """Test has_full_requires_hierarchy for various scenarios."""
+        resources = scenarios["requires-constraints"]
+        container_refs = {ContainerReference(space="my_space", external_id=c) for c in containers}
+
+        result = resources.has_full_requires_hierarchy(container_refs)
+        assert result == expected_complete, f"Containers {containers}: expected {expected_complete}, got {result}"
