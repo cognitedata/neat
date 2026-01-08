@@ -35,6 +35,47 @@ def neat_client(neat_config: NeatClientConfig) -> NeatClient:
     return NeatClient(neat_config)
 
 
+@pytest.fixture()
+def empty_cdf(
+    neat_config: NeatClientConfig, example_statistics_response: dict, respx_mock: respx.MockRouter
+) -> respx.MockRouter:
+    config = neat_config
+    empty_response: dict[str, Any] = {
+        "items": [],
+        "nextCursor": None,
+    }
+    for endpoint in [
+        "/models/spaces/byids",
+        "/models/containers/byids",
+        "/models/views/byids?includeInheritedProperties=true",
+        "/models/datamodels/byids",
+    ]:
+        respx_mock.post(
+            config.create_api_url(endpoint),
+        ).respond(
+            status_code=200,
+            json=empty_response,
+        )
+
+    for endpoint, response in [
+        ("/models/containers?includeGlobal=true&limit=1000", empty_response),
+        (
+            "/models/views?allVersions=true&includeInheritedProperties=false&includeGlobal=true&limit=1000",
+            empty_response,
+        ),
+        ("/models/datamodels?allVersions=true&includeGlobal=true&limit=1000", empty_response),
+        ("/models/spaces?includeGlobal=true&limit=1000", empty_response),
+        ("/models/statistics", example_statistics_response),
+    ]:
+        respx_mock.get(
+            config.create_api_url(endpoint),
+        ).respond(
+            status_code=200,
+            json=response,
+        )
+    return respx_mock
+
+
 @pytest.fixture
 def example_dms_data_model_response() -> dict[str, Any]:
     return dict(
