@@ -3,6 +3,7 @@ from ._identifiers import NameSpace
 XML_SCHEMA_NAMESPACE = NameSpace("http://www.w3.org/2001/XMLSchema#")
 
 CDF_CDM_SPACE = "cdf_cdm"
+CDF_CDM_3D_SPACE = "cdf_cdm_3d"
 CDF_CDM_VERSION = "v1"
 
 COGNITE_CONCEPTS_MAIN = (
@@ -59,7 +60,7 @@ COGNITE_CONCEPTS: tuple[str, ...] = (
     *COGNITE_CONCEPTS_3D,
 )
 
-COGNITE_SPACES = (CDF_CDM_SPACE,)
+COGNITE_SPACES = (CDF_CDM_SPACE, CDF_CDM_3D_SPACE)
 
 # Defaults from https://docs.cognite.com/cdf/dm/dm_reference/dm_limits_and_restrictions#list-size-limits
 

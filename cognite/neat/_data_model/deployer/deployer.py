@@ -4,16 +4,15 @@ from functools import partial
 from typing import cast
 
 from cognite.neat._client import NeatClient
+from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model._shared import OnSuccessResultProducer
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms import (
-    ContainerReference,
     ContainerRequest,
     DataModelBody,
     RequestSchema,
     T_DataModelResource,
     T_ResourceId,
-    ViewReference,
 )
 from cognite.neat._utils.collection import chunker_sequence
 from cognite.neat._utils.http_client import (
@@ -130,7 +129,13 @@ class SchemaDeployer(OnSuccessResultProducer):
     def create_deployment_plan(self, snapshot: SchemaSnapshot, data_model: RequestSchema) -> ResourceDeploymentPlanList:
         return ResourceDeploymentPlanList(
             [
-                self._create_resource_plan(snapshot.spaces, data_model.spaces, "spaces", SpaceDiffer()),
+                self._create_resource_plan(
+                    snapshot.spaces,
+                    data_model.spaces,
+                    "spaces",
+                    SpaceDiffer(),
+                    skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),
+                ),
                 self._create_resource_plan(
                     snapshot.containers,
                     data_model.containers,
@@ -150,7 +155,11 @@ class SchemaDeployer(OnSuccessResultProducer):
                     skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),
                 ),
                 self._create_resource_plan(
-                    snapshot.data_model, [data_model.data_model], "datamodels", DataModelDiffer()
+                    snapshot.data_model,
+                    [data_model.data_model],
+                    "datamodels",
+                    DataModelDiffer(),
+                    skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),
                 ),
             ]
         )
@@ -234,7 +243,7 @@ class SchemaDeployer(OnSuccessResultProducer):
         return modified_diffs
 
     @classmethod
-    def _skip_resource(cls, resource_id: ContainerReference | ViewReference, model_space: str) -> str | None:
+    def _skip_resource(cls, resource_id: T_ResourceId, model_space: str) -> str | None:
         """Checks if a resource should be skipped based on its space.
 
         Args:
@@ -244,8 +253,13 @@ class SchemaDeployer(OnSuccessResultProducer):
         Returns:
             A reason for skipping if the resource space does not match the model space, otherwise None.
         """
-        if resource_id.space != model_space:
-            return f"Skipping resource in space '{resource_id.space}' not matching data model space '{model_space}'."
+        if resource_id.space in COGNITE_SPACES:
+            return f"Skipping resource as it is in the reserved Cognite space '{resource_id.space}'."
+        elif resource_id.space != model_space:
+            return (
+                f"Skipping resource at it is in the space '{resource_id.space}'"
+                f" not matching data model space '{model_space}'."
+            )
         return None
 
     def should_proceed_to_deploy(self, plan: Sequence[ResourceDeploymentPlan]) -> bool:
