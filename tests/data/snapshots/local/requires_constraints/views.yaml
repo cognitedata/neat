@@ -61,6 +61,135 @@
         type: container
       containerPropertyIdentifier: description
 
+# Views for "Tag requires Sourceable instead of Asset" bridge test
+# BridgeSiblingAView: maps to SiblingA, Tag, Describable (NOT Asset)
+# BridgeTagView: maps to Tag, Asset, Describable
+# Expected: BridgeTagContainer → BridgeAssetContainer should be recommended for BridgeSiblingAView
+- space: my_space
+  externalId: BridgeSiblingAView
+  version: v1
+  name: Bridge Sibling A View
+  description: View mapping to SiblingA, Tag, Describable (NOT Asset)
+  properties:
+    siblingAId:
+      name: siblingAId
+      description: Sibling A ID
+      container:
+        space: my_space
+        externalId: BridgeSiblingAContainer
+        type: container
+      containerPropertyIdentifier: siblingAId
+    tagName:
+      name: tagName
+      description: Tag Name
+      container:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    description:
+      name: description
+      description: Description
+      container:
+        space: my_space
+        externalId: BridgeDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+# Additional equipment views - independent of each other but share Tag and Describable
+- space: my_space
+  externalId: BridgeSiblingBView
+  version: v1
+  name: Bridge Sibling B View
+  description: View mapping to SiblingB, Tag, Describable
+  properties:
+    equipmentBId:
+      name: equipmentBId
+      description: Sibling B ID
+      container:
+        space: my_space
+        externalId: BridgeSiblingBContainer
+        type: container
+      containerPropertyIdentifier: equipmentBId
+    tagName:
+      name: tagName
+      description: Tag Name
+      container:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    description:
+      name: description
+      description: Description
+      container:
+        space: my_space
+        externalId: BridgeDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+- space: my_space
+  externalId: BridgeSiblingCView
+  version: v1
+  name: Bridge Sibling C View
+  description: View mapping to SiblingC, Tag, Describable
+  properties:
+    equipmentCId:
+      name: equipmentCId
+      description: Sibling C ID
+      container:
+        space: my_space
+        externalId: BridgeSiblingCContainer
+        type: container
+      containerPropertyIdentifier: equipmentCId
+    tagName:
+      name: tagName
+      description: Tag Name
+      container:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    description:
+      name: description
+      description: Description
+      container:
+        space: my_space
+        externalId: BridgeDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+- space: my_space
+  externalId: BridgeTagView
+  version: v1
+  name: Bridge Tag View
+  description: View mapping to Tag, Asset, Describable
+  properties:
+    tagName:
+      name: tagName
+      description: Tag Name
+      container:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    assetName:
+      name: assetName
+      description: Asset Name
+      container:
+        space: my_space
+        externalId: BridgeAssetContainer
+        type: container
+      containerPropertyIdentifier: assetName
+    description:
+      name: description
+      description: Description
+      container:
+        space: my_space
+        externalId: BridgeDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
 # View for RequiresConstraintCycle test
 - space: my_space
   externalId: CycleTestView
@@ -128,3 +257,78 @@
         externalId: DisconnectedGroupBContainer2
         type: container
       containerPropertyIdentifier: groupBField2
+
+# CDF bridge scenario - user containers connected via CDF container
+# Tests that MST avoids CDF sources and creates proper user-sourced hierarchy
+- space: my_space
+  externalId: CdfBridgeViewA
+  version: '1'
+  properties:
+    bridgeField:
+      name: bridgeField
+      description: Field from CDF bridge
+      container:
+        space: cdf_cdm
+        externalId: CdfBridgeContainer
+        type: container
+      containerPropertyIdentifier: bridgeField
+    userAField:
+      name: userAField
+      description: Field from UserA
+      container:
+        space: my_space
+        externalId: CdfBridgeUserAContainer
+        type: container
+      containerPropertyIdentifier: userAField
+
+# View B: CdfBridge + UserB (UserA NOT here)
+- space: my_space
+  externalId: CdfBridgeViewB
+  version: '1'
+  properties:
+    bridgeField:
+      name: bridgeField
+      description: Field from CDF bridge
+      container:
+        space: cdf_cdm
+        externalId: CdfBridgeContainer
+        type: container
+      containerPropertyIdentifier: bridgeField
+    userBField:
+      name: userBField
+      description: Field from UserB
+      container:
+        space: my_space
+        externalId: CdfBridgeUserBContainer
+        type: container
+      containerPropertyIdentifier: userBField
+
+# View with ALL THREE: UserA, UserB, CdfBridge
+- space: my_space
+  externalId: CdfBridgeCombinedView
+  version: '1'
+  properties:
+    bridgeField:
+      name: bridgeField
+      description: Field from CDF bridge
+      container:
+        space: cdf_cdm
+        externalId: CdfBridgeContainer
+        type: container
+      containerPropertyIdentifier: bridgeField
+    userAField:
+      name: userAField
+      description: Field from UserA
+      container:
+        space: my_space
+        externalId: CdfBridgeUserAContainer
+        type: container
+      containerPropertyIdentifier: userAField
+    userBField:
+      name: userBField
+      description: Field from UserB
+      container:
+        space: my_space
+        externalId: CdfBridgeUserBContainer
+        type: container
+      containerPropertyIdentifier: userBField

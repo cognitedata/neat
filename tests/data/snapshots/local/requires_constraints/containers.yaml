@@ -80,6 +80,129 @@
         type: text
         list: false
 
+# Containers for "Tag requires Sourceable instead of Asset" bridge test
+# Key: BridgeTagContainer requires SourceableContainer (suboptimal choice)
+#      BridgeAssetContainer requires SourceableContainer AND BridgeDescribableContainer
+#      BridgeSiblingAContainer should recommend BridgeTagContainer → BridgeAssetContainer
+- space: my_space
+  externalId: BridgeSourceableContainer
+  usedFor: node
+  properties:
+    sourceId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: BridgeDescribableContainer
+  usedFor: node
+  properties:
+    description:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: BridgeAssetContainer
+  usedFor: node
+  properties:
+    assetName:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_sourceable:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: BridgeSourceableContainer
+        type: container
+    req_describable:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: BridgeDescribableContainer
+        type: container
+
+- space: my_space
+  externalId: BridgeTagContainer
+  usedFor: node
+  properties:
+    tagName:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_sourceable:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: BridgeSourceableContainer
+        type: container
+
+- space: my_space
+  externalId: BridgeSiblingAContainer
+  usedFor: node
+  properties:
+    siblingAId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_tag:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+
+# Additional sibling containers - independent of each other but share Tag and Describable
+- space: my_space
+  externalId: BridgeSiblingBContainer
+  usedFor: node
+  properties:
+    equipmentBId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_tag:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+
+- space: my_space
+  externalId: BridgeSiblingCContainer
+  usedFor: node
+  properties:
+    equipmentCId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_tag:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: BridgeTagContainer
+        type: container
+
 # Containers for RequiresConstraintCycle test - A requires B, B requires A
 - space: my_space
   externalId: CycleContainerA
@@ -157,6 +280,42 @@
   usedFor: node
   properties:
     groupBField2:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+# CDF bridge container - tests that MST avoids CDF containers as sources
+# User containers connected via this CDF bridge should still get proper recommendations
+- space: cdf_cdm
+  externalId: CdfBridgeContainer
+  usedFor: node
+  properties:
+    bridgeField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+# User containers that will be connected via CDF bridge
+- space: my_space
+  externalId: CdfBridgeUserAContainer
+  usedFor: node
+  properties:
+    userAField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: CdfBridgeUserBContainer
+  usedFor: node
+  properties:
+    userBField:
       immutable: false
       nullable: true
       type:
