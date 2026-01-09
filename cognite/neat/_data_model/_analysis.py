@@ -491,7 +491,7 @@ class ValidationResources:
         Nodes are ContainerReferences, edges represent requires constraints.
         An edge A → B means container A requires container B.
 
-        Includes containers from both merged schema and CDF.
+        Includes containers from both merged schema and CDF
         """
         graph: nx.DiGraph = nx.DiGraph()
 
@@ -565,21 +565,19 @@ class ValidationResources:
         Returns: (view_count, cdf_descendants, external_id)
         """
         views = len(self.container_to_views.get(container, set()))
-        descendants = len(nx.descendants(self.immutable_requires_graph, container))
+        descendants = len(self._immutable_descendants.get(container, set()))
         return (views, descendants, str(container))
 
     @cached_property
-    def optimal_requires_tree(self) -> set[tuple[ContainerReference, ContainerReference]]:
-        """Compute the globally IDEAL requires structure for all containers in views.
+    def optimal_requires_mst(self) -> set[frozenset[ContainerReference]]:
+        """Compute the globally optimal MST structure for container requires constraints.
 
-        Uses a three-step approach:
-        1. Compute UNDIRECTED MST to find which containers should be connected
-        2. Find root of each component (most view-specific container)
-        3. Orient tree edges AWAY from root (root requires everything transitively)
+        Returns undirected edges (as frozensets) representing which containers should
+        be connected. Orientation is determined per-view based on the view's outermost
+        container.
 
         Returns:
-            Set of (source, target) tuples representing the IDEAL requires structure.
-            Compare with existing constraints to find add/remove recommendations.
+            Set of frozensets, each containing exactly 2 ContainerReferences.
         """
         # Find all container pairs that need to be connected
         must_connect: set[frozenset[ContainerReference]] = set()
@@ -603,39 +601,17 @@ class ValidationResources:
                 continue
             G.add_edge(c1, c2, weight=min(w1, w2))
 
-        # Step 2: Compute undirected MST and orient as directed tree from root
-        oriented_edges: set[tuple[ContainerReference, ContainerReference]] = set()
-
+        # Compute MST for each connected component
+        mst_edges: set[frozenset[ContainerReference]] = set()
         for component in nx.connected_components(G):
             if len(component) < 2:
                 continue
-
-            # Find MST for this component
             subgraph = G.subgraph(component)
             mst = nx.minimum_spanning_tree(subgraph, weight="weight")
-
-            # Orient each edge: modifiable container should be source
-            # Note: CDF-CDF edges are forbidden, so at least one is modifiable
             for c1, c2 in mst.edges():
-                c1_mod = c1 in self.modifiable_containers
-                c2_mod = c2 in self.modifiable_containers
+                mst_edges.add(frozenset({c1, c2}))
 
-                if c1_mod and not c2_mod:
-                    src, dst = c1, c2  # modifiable → CDF
-                elif c2_mod and not c1_mod:
-                    src, dst = c2, c1  # modifiable → CDF
-                else:
-                    # Both modifiable - use root score (lower = more view-specific = source)
-                    score1 = self._container_root_score(c1)
-                    score2 = self._container_root_score(c2)
-                    if score1 < score2 or (score1 == score2 and str(c1) < str(c2)):
-                        src, dst = c1, c2
-                    else:
-                        src, dst = c2, c1
-
-                oriented_edges.add((src, dst))
-
-        return oriented_edges
+        return mst_edges
 
     def get_requires_changes_for_view(
         self, containers_in_view: set[ContainerReference]
@@ -644,10 +620,8 @@ class ValidationResources:
     ]:
         """Get requires constraint changes needed for a view to have optimal structure.
 
-        Computes the IDEAL requires structure and diffs with existing constraints.
-        Returns both additions (missing edges) and removals (suboptimal edges).
-
-        The view-specific container (appearing in fewest views) is always the outermost.
+        Uses the global MST structure and orients edges based on this view's outermost
+        container. The outermost is the modifiable container appearing in fewest views.
 
         Args:
             containers_in_view: Set of containers in the view being validated.
@@ -661,65 +635,71 @@ class ValidationResources:
         if not modifiable_in_view:
             return ([], [])
 
-        # Outermost = modifiable container appearing in fewest views (most view-specific)
+        # Get MST edges relevant to this view
+        # An edge is relevant if BOTH endpoints are in the view (directly or via CDF coverage)
+        relevant_mst_edges: set[frozenset[ContainerReference]] = set()
+        for edge in self.optimal_requires_mst:
+            c1, c2 = tuple(edge)
+            # Check if each endpoint is "in" the view (directly or transitively covers view containers)
+            c1_coverage = self._immutable_descendants.get(c1, set()) | {c1}
+            c2_coverage = self._immutable_descendants.get(c2, set()) | {c2}
+            c1_relevant = bool(c1_coverage & containers_in_view)
+            c2_relevant = bool(c2_coverage & containers_in_view)
+
+            # Both endpoints must be relevant to the view
+            if c1_relevant and c2_relevant:
+                relevant_mst_edges.add(edge)
+
+        # Orient edges from view's outermost container (modifiable must be source)
         view_outermost = min(modifiable_in_view, key=self._container_root_score)
-
-        # Get optimal edges relevant to this view
-        # An edge is relevant if src is modifiable AND (dst in view OR dst covers view containers)
-        optimal_edges_for_view: set[tuple[ContainerReference, ContainerReference]] = set()
-        for src, dst in self.optimal_requires_tree:
-            if src not in modifiable_in_view:
-                continue
-            # Check if dst is in view or transitively covers view containers via CDF
-            dst_coverage = nx.descendants(self.immutable_requires_graph, dst) | {dst}
-            if dst_coverage & containers_in_view:
-                optimal_edges_for_view.add((src, dst))
-
-        # Build a graph with optimal edges + immutable (CDF) constraints
-        # Used for reachability checks and transitive reduction
-        work_graph = nx.DiGraph()
-        work_graph.add_nodes_from(containers_in_view)  # Ensure all view containers are nodes
-        work_graph.add_edges_from(optimal_edges_for_view)
-        work_graph.add_edges_from(self.immutable_requires_graph.edges())
-
-        # Add edges for containers not reachable from outermost via global tree + CDF
-        for container in containers_in_view:
-            if container == view_outermost:
-                continue
-            if not nx.has_path(work_graph, view_outermost, container):
-                optimal_edges_for_view.add((view_outermost, container))
-                work_graph.add_edge(view_outermost, container)
-
-        # Transitive reduction gives us the minimal edge set with same reachability
-        # Note: transitive_reduction requires a DAG; if there are cycles, fall back to keeping all
-        try:
-            reduced_graph = nx.transitive_reduction(work_graph)
-            # Keep only the optimal edges that survived the reduction
-            pruned_optimal = {(src, dst) for src, dst in optimal_edges_for_view if reduced_graph.has_edge(src, dst)}
-        except nx.NetworkXError:
-            # Graph has cycles - can't reduce, keep all optimal edges
-            pruned_optimal = optimal_edges_for_view
+        oriented_edges = self._orient_mst_edges_for_view(relevant_mst_edges, view_outermost, containers_in_view)
 
         # Get existing edges from modifiable containers in this view
-        existing_edges_for_view: set[tuple[ContainerReference, ContainerReference]] = set()
+        existing_edges: set[tuple[ContainerReference, ContainerReference]] = set()
         for src in modifiable_in_view:
             for dst in self.requires_graph.successors(src):
-                existing_edges_for_view.add((src, dst))
+                existing_edges.add((src, dst))
 
         # Compute diff
-        to_add = pruned_optimal - existing_edges_for_view
-        to_remove = existing_edges_for_view - pruned_optimal
-
-        # to_remove includes both:
-        # 1. Edges not part of optimal structure (wrong target)
-        # 2. Redundant edges (transitively covered by optimal structure)
-        # Both should be removed for a clean, minimal structure.
+        to_add = oriented_edges - existing_edges
+        to_remove = existing_edges - oriented_edges
 
         # Sort for deterministic output
         sorted_add = sorted(to_add, key=lambda x: (str(x[0]), str(x[1])))
         sorted_remove = sorted(to_remove, key=lambda x: (str(x[0]), str(x[1])))
 
         return (sorted_add, sorted_remove)
+
+    def _orient_mst_edges_for_view(
+        self,
+        mst_edges: set[frozenset[ContainerReference]],
+        outermost: ContainerReference,
+        containers_in_view: set[ContainerReference],
+    ) -> set[tuple[ContainerReference, ContainerReference]]:
+        """Orient MST edges for a view, ensuring outermost can reach all containers."""
+        if not mst_edges:
+            return set()
+
+        # Build undirected graph and use nx.bfs_edges for traversal
+        undirected = nx.Graph(tuple(edge) for edge in mst_edges)
+        oriented: set[tuple[ContainerReference, ContainerReference]] = set()
+
+        for parent, child in nx.bfs_edges(undirected, outermost):
+            # Orient: modifiable container must be source
+            if parent in self.modifiable_containers:
+                oriented.add((parent, child))
+            elif child in self.modifiable_containers:
+                oriented.add((child, parent))  # Flip when parent is CDF
+
+        # Add direct edges for any containers unreachable due to CDF flips
+        reach_graph = nx.DiGraph(oriented)
+        reach_graph.add_edges_from(self.immutable_requires_graph.edges())
+        reachable = nx.descendants(reach_graph, outermost) | {outermost}
+
+        for container in containers_in_view - reachable:
+            oriented.add((outermost, container))
+
+        return oriented
 
     @cached_property
     def immutable_requires_graph(self) -> nx.DiGraph:
@@ -750,17 +730,13 @@ class ValidationResources:
 
         return graph
 
-    def _would_create_cycle_with_immutable(self, src: ContainerReference, dst: ContainerReference) -> bool:
-        """Check if adding src → dst would create a cycle with immutable constraints.
+    @cached_property
+    def _immutable_descendants(self) -> dict[ContainerReference, set[ContainerReference]]:
+        """Pre-compute descendants in immutable_requires_graph for all containers.
 
-        We only check against immutable (CDF) constraints because modifiable
-        constraints can be changed to avoid cycles.
+        This avoids repeated nx.descendants() calls which are O(V+E) each.
         """
-        # If dst can reach src via immutable constraints, adding src→dst creates a cycle
-        # Guard: only check if both containers are in the graph
-        if dst not in self.immutable_requires_graph or src not in self.immutable_requires_graph:
-            return False
-        return nx.has_path(self.immutable_requires_graph, dst, src)
+        return {c: nx.descendants(self.immutable_requires_graph, c) for c in self.immutable_requires_graph.nodes()}
 
     def _compute_requires_edge_weight(self, src: ContainerReference, dst: ContainerReference) -> float:
         """Compute the weight/cost of connecting src and dst in the requires graph.
@@ -786,30 +762,25 @@ class ValidationResources:
             return _WEIGHT_FORBIDDEN
 
         # Forbidden: would create a cycle with immutable CDF constraints
-        if self._would_create_cycle_with_immutable(src, dst):
+        # (dst can reach src via immutable constraints → adding src→dst creates cycle)
+        if src in self._immutable_descendants.get(dst, set()):
             return _WEIGHT_FORBIDDEN
 
-        # Already satisfied: CDF container has existing path to dst (this is free)
-        # Guard: only check if both containers are in the graph
-        if src in self.immutable_requires_graph and dst in self.immutable_requires_graph:
-            if nx.has_path(self.immutable_requires_graph, src, dst):
-                return _WEIGHT_MIN
+        # Already satisfied: src can reach dst via immutable constraints (free)
+        src_descendants = self._immutable_descendants.get(src, set())
+        if dst in src_descendants:
+            return _WEIGHT_MIN
 
         # Base weight starts at 1.0, we apply bonuses (reductions)
         weight = _WEIGHT_BASE
 
-        # Bonus for containers that appear in the same views (max 0.5)
+        # Bonus for containers that appear in the same views
         src_views = self.container_to_views.get(src, set())
         dst_views = self.container_to_views.get(dst, set())
-        shared_views = len(src_views & dst_views)
-        weight -= min(shared_views * _SHARED_VIEWS_BONUS, _SHARED_VIEWS_BONUS_MAX)
+        weight -= min(len(src_views & dst_views) * _SHARED_VIEWS_BONUS, _SHARED_VIEWS_BONUS_MAX)
 
         # Bonus for targets with more CDF descendants (provides transitive coverage)
-        # Guard: only check if dst is in the graph
-        if dst in self.immutable_requires_graph:
-            dst_cdf_descendants = len(nx.descendants(self.immutable_requires_graph, dst))
-        else:
-            dst_cdf_descendants = 0
-        weight -= min(dst_cdf_descendants * _COVERAGE_BONUS_PER_DESC, _COVERAGE_BONUS_MAX)
+        dst_descendants = len(self._immutable_descendants.get(dst, set()))
+        weight -= min(dst_descendants * _COVERAGE_BONUS_PER_DESC, _COVERAGE_BONUS_MAX)
 
         return max(weight, _WEIGHT_MIN)

@@ -785,14 +785,14 @@ class TestValidationResourcesRequiresConstraints:
         result = resources.has_full_requires_hierarchy(container_refs)
         assert result == expected_complete, f"Containers {containers}: expected {expected_complete}, got {result}"
 
-    def test_optimal_requires_tree_cached(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that optimal_requires_tree is computed and cached."""
+    def test_optimal_requires_mst_cached(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that optimal_requires_mst is computed and cached."""
         resources = scenarios["requires-constraints"]
 
         # Access the property twice - should be the same object (cached)
-        tree1 = resources.optimal_requires_tree
-        tree2 = resources.optimal_requires_tree
-        assert tree1 is tree2
+        mst1 = resources.optimal_requires_mst
+        mst2 = resources.optimal_requires_mst
+        assert mst1 is mst2
 
     @pytest.mark.parametrize(
         "container_ids,expected_count,expected_edges",
@@ -850,19 +850,17 @@ class TestValidationResourcesRequiresConstraints:
                 # Ordered - check specific direction
                 assert (src.external_id, dst.external_id) == expected_edges
 
-    def test_optimal_requires_tree_consistency(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that optimal_requires_tree gives consistent recommendations across views."""
+    def test_optimal_requires_mst_no_duplicates(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that optimal_requires_mst contains unique undirected edges."""
         resources = scenarios["requires-constraints"]
+        mst = resources.optimal_requires_mst
 
-        # Get the global tree
-        global_tree = resources.optimal_requires_tree
+        # Each edge should be a frozenset with exactly 2 containers
+        for edge in mst:
+            assert len(edge) == 2, f"Edge should have exactly 2 endpoints: {edge}"
 
-        # For any container pair in the tree, the recommendation should be consistent
-        # regardless of which view we're looking at
-        for src, dst in global_tree:
-            # The edge direction should always be the same
-            reverse_edge = (dst, src)
-            assert reverse_edge not in global_tree, f"Tree contains both {src}->{dst} and {dst}->{src}"
+        # No duplicate edges (frozensets are inherently unique in a set)
+        assert len(mst) == len(set(mst))
 
     def test_get_requires_changes_never_recommends_cdf_sources(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that get_requires_changes_for_view never recommends CDF containers as sources."""
@@ -880,38 +878,40 @@ class TestValidationResourcesRequiresConstraints:
                     f"View {view_ref}: CDF container '{src}' should not be recommended as source"
                 )
 
-    def test_optimal_requires_tree_no_cycle_with_immutable(
+    def test_get_requires_changes_no_cycle_with_immutable(
         self,
         scenarios: dict[str, ValidationResources],
     ) -> None:
-        """Test that optimal_requires_tree edges don't form cycles with immutable constraints.
-
-        The optimal tree may include edges that already exist (if optimal), but it
-        should never include edges that would form cycles with CDF constraints.
-        """
+        """Test that per-view recommendations don't form cycles with immutable constraints."""
         resources = scenarios["requires-constraints"]
 
-        for src, dst in resources.optimal_requires_tree:
-            # Adding src → dst should not create a cycle with immutable (CDF) constraints
-            assert not nx.has_path(resources.immutable_requires_graph, dst, src), (
-                f"Edge {src} → {dst} would form cycle with immutable constraints"
-            )
-            # Source should be a modifiable container
-            assert src in resources.modifiable_containers, f"Source {src} should be modifiable (not CDF)"
+        for view_ref in resources.merged.views:
+            containers = resources.view_to_containers.get(view_ref, set())
+            if len(containers) < 2:
+                continue
 
-    def test_optimal_requires_tree_empty_when_complete(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that optimal_requires_tree returns empty when all hierarchies are complete.
+            to_add, _ = resources.get_requires_changes_for_view(containers)
+            for src, dst in to_add:
+                # Adding src → dst should not create a cycle with immutable (CDF) constraints
+                assert not nx.has_path(resources.immutable_requires_graph, dst, src), (
+                    f"Edge {src} → {dst} would form cycle with immutable constraints"
+                )
+                # Source should be a modifiable container
+                assert src in resources.modifiable_containers, f"Source {src} should be modifiable (not CDF)"
+
+    def test_optimal_requires_mst_empty_when_complete(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that optimal_requires_mst returns empty when all hierarchies are complete.
 
         If every pair of containers that appear together in a view is already connected
         (directly or transitively), there's nothing to recommend.
         """
         resources = scenarios["requires-constraints"]
-        global_tree = resources.optimal_requires_tree
+        mst = resources.optimal_requires_mst
 
-        # For the tree to be non-empty, there must be container pairs in views
+        # For the MST to be non-empty, there must be container pairs in views
         # that are NOT connected in the requires_graph
-        # This test verifies the property: if tree is empty, all pairs are connected
-        if not global_tree:
+        # This test verifies the property: if MST is empty, all pairs are connected
+        if not mst:
             # Verify all pairs in views are connected
             for view_ref in resources.merged.views:
                 containers = resources.view_to_containers.get(view_ref, set())
@@ -921,12 +921,12 @@ class TestValidationResourcesRequiresConstraints:
                             connected = nx.has_path(resources.requires_graph, c1, c2) or nx.has_path(
                                 resources.requires_graph, c2, c1
                             )
-                            assert connected, f"Tree is empty but {c1} and {c2} are not connected"
+                            assert connected, f"MST is empty but {c1} and {c2} are not connected"
 
-    def test_optimal_requires_tree_handles_disconnected_components(
+    def test_optimal_requires_mst_handles_disconnected_components(
         self, scenarios: dict[str, ValidationResources]
     ) -> None:
-        """Test that optimal_requires_tree handles disconnected container groups.
+        """Test that optimal_requires_mst handles disconnected container groups.
 
         Scenario: Two groups of containers that never appear together in any view.
         - Group A: DisconnectedGroupAContainer1, DisconnectedGroupAContainer2 (in DisconnectedGroupAView)
@@ -935,7 +935,7 @@ class TestValidationResourcesRequiresConstraints:
         The MST should produce recommendations for both groups independently.
         """
         resources = scenarios["requires-constraints"]
-        global_tree = resources.optimal_requires_tree
+        mst = resources.optimal_requires_mst
 
         # Define the containers
         group_a1 = ContainerReference(space="my_space", external_id="DisconnectedGroupAContainer1")
@@ -943,24 +943,22 @@ class TestValidationResourcesRequiresConstraints:
         group_b1 = ContainerReference(space="my_space", external_id="DisconnectedGroupBContainer1")
         group_b2 = ContainerReference(space="my_space", external_id="DisconnectedGroupBContainer2")
 
-        # Get edges involving each group
-        group_a_edges = [(src, dst) for src, dst in global_tree if {src, dst} & {group_a1, group_a2}]
-        group_b_edges = [(src, dst) for src, dst in global_tree if {src, dst} & {group_b1, group_b2}]
+        group_a_containers = {group_a1, group_a2}
+        group_b_containers = {group_b1, group_b2}
+
+        # Get edges involving each group (MST has frozensets)
+        group_a_edges = [edge for edge in mst if edge & group_a_containers]
+        group_b_edges = [edge for edge in mst if edge & group_b_containers]
 
         # Both groups should have at least one edge (to connect their containers)
         assert len(group_a_edges) >= 1, f"Expected edge for Group A, got: {group_a_edges}"
         assert len(group_b_edges) >= 1, f"Expected edge for Group B, got: {group_b_edges}"
 
         # No edge should cross between groups (they never appear together)
-        for src, dst in global_tree:
-            group_a_containers = {group_a1, group_a2}
-            group_b_containers = {group_b1, group_b2}
-            src_in_a = src in group_a_containers
-            dst_in_b = dst in group_b_containers
-            src_in_b = src in group_b_containers
-            dst_in_a = dst in group_a_containers
-            assert not (src_in_a and dst_in_b), f"Cross-group edge {src} → {dst}"
-            assert not (src_in_b and dst_in_a), f"Cross-group edge {src} → {dst}"
+        for edge in mst:
+            in_a = bool(edge & group_a_containers)
+            in_b = bool(edge & group_b_containers)
+            assert not (in_a and in_b), f"Cross-group edge {edge}"
 
     def test_optimal_structure_may_differ_from_existing(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that the optimal structure computed by MST may differ from existing constraints.
