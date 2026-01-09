@@ -1,3 +1,4 @@
+from collections import defaultdict
 from itertools import chain
 from typing import Literal, TypeAlias
 
@@ -390,7 +391,6 @@ class ValidationResources:
         container-view relationships across the entire CDF environment.
         Uses expanded views to include inherited properties.
         """
-        container_to_views: dict[ContainerReference, set[ViewReference]] = {}
 
         # Include all unique views from merged and CDF
         container_to_views: dict[ContainerReference, set[ViewReference]] = defaultdict(set)
@@ -424,7 +424,7 @@ class ValidationResources:
         for view_ref in all_view_refs:
             # Use expanded view to include inherited properties
             view = self.expand_view_properties(view_ref)
-            if view and view.used_containers:
+            if view is not None:
                 view_to_containers[view_ref] = view.used_containers
 
         return view_to_containers
