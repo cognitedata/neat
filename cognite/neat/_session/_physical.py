@@ -108,6 +108,7 @@ class ReadPhysicalDataModel:
             cdf_snapshot=self._store.cdf_snapshot,
             limits=self._store.limits,
             can_run_validator=self._config.validation.can_run_validator,
+            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
         )
         return self._store.read_physical(reader, on_success)
 
@@ -136,6 +137,7 @@ class ReadPhysicalDataModel:
             cdf_snapshot=self._store.cdf_snapshot,
             limits=self._store.limits,
             can_run_validator=self._config.validation.can_run_validator,
+            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
         )
         return self._store.read_physical(reader, on_success)
 
@@ -155,6 +157,7 @@ class ReadPhysicalDataModel:
             cdf_snapshot=self._store.cdf_snapshot,
             limits=self._store.limits,
             can_run_validator=self._config.validation.can_run_validator,
+            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
         )
 
         return self._store.read_physical(reader, on_success)
@@ -177,6 +180,7 @@ class ReadPhysicalDataModel:
             cdf_snapshot=self._store.cdf_snapshot,
             limits=self._store.limits,
             can_run_validator=self._config.validation.can_run_validator,
+            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
         )
 
         return self._store.read_physical(reader, on_success)
