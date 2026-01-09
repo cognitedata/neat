@@ -101,6 +101,10 @@ class AlphaFlagConfig(ConfigModel):
         default=False,
         description="If enabled, Neat will attempt to automatically fix certain validation issues in the data model.",
     )
+    enable_experimental_validators: bool = Field(
+        default=False,
+        description="If enabled, Neat will run experimental validators that are still in alpha stage.",
+    )
 
     def __setattr__(self, key: str, value: Any) -> None:
         """Set attribute value or raise AttributeError."""

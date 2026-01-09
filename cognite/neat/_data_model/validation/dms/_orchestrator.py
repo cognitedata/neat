@@ -21,6 +21,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         limits: SchemaLimits,
         modus_operandi: ModusOperandi = "additive",
         can_run_validator: Callable[[str, type], bool] | None = None,
+        enable_alpha_validators: bool = False,
     ) -> None:
         super().__init__()
         self._cdf_snapshot = cdf_snapshot
@@ -28,6 +29,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         self._modus_operandi = modus_operandi
         self._can_run_validator = can_run_validator or (lambda code, issue_type: True)  # type: ignore
         self._has_run = False
+        self._enable_alpha_validators = enable_alpha_validators
 
     def run(self, request_schema: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
@@ -41,6 +43,8 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
         # Run validators
         for validator in validators:
+            if validator.alpha and not self._enable_alpha_validators:
+                continue
             if self._can_run_validator(validator.code, validator.issue_type):
                 self._issues.extend(validator.run())
 
