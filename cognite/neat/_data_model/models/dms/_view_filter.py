@@ -203,7 +203,10 @@ FilterTypes: TypeAlias = Literal[
     "not",
 ]
 
+LegacyFilterTypes: TypeAlias = Literal["invalid"]
+
 AVAILABLE_FILTERS: frozenset[str] = frozenset(get_args(FilterTypes))
+LEGACY_FILTERS: frozenset[str] = frozenset(get_args(LegacyFilterTypes))
 
 
 def _move_filter_key(value: Any) -> Any:
@@ -246,13 +249,13 @@ def _move_filter_key(value: Any) -> Any:
         }
     }
     """
+    # legacy filter which we want to ignore
+    if _is_legacy_filter(value):
+        return None
     if not isinstance(value, dict):
         return value
     if len(value) != 1:
         raise ValueError("Filter data must have exactly one key.")
-    # legacy filter which we want to ignore
-    if "invalid" in value:
-        return None
     if "filterType" in value:
         # Already in the correct format
         return value
@@ -281,6 +284,25 @@ def _move_filter_key(value: Any) -> Any:
     else:
         # Let the regular validation handle it (possible not an issue)
         return value
+
+
+def _is_legacy_filter(filter: Any) -> bool:
+    """Check if it is a legacy filter by checking if key (nested or not) has legacy values"""
+
+    def traverse(obj: Any) -> bool:
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if key in LEGACY_FILTERS:
+                    return True
+                if isinstance(value, dict | list) and traverse(value):
+                    return True
+        elif isinstance(obj, list):
+            for item in obj:
+                if isinstance(item, dict | list) and traverse(item):
+                    return True
+        return False
+
+    return traverse(filter)
 
 
 Filter = Annotated[dict[FilterTypes, FilterData] | None, BeforeValidator(_move_filter_key)]
