@@ -30,30 +30,6 @@
         type: container
       containerPropertyIdentifier: fieldC
 
-# Views for partial overlap / better coverage test
-- space: my_space
-  externalId: TagReducedView
-  version: v1
-  name: TagReduced View
-  description: View with Tag and Describable only
-  properties:
-    tagId:
-      name: tagId
-      description: Tag ID
-      container:
-        space: my_space
-        externalId: TagContainer
-        type: container
-      containerPropertyIdentifier: tagId
-    tagDescription:
-      name: tagDescription
-      description: Tag description
-      container:
-        space: my_space
-        externalId: TagDescribableContainer
-        type: container
-      containerPropertyIdentifier: description
-
 - space: my_space
   externalId: TagView
   version: v1
