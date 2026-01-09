@@ -59,7 +59,14 @@ COGNITE_CONCEPTS: tuple[str, ...] = (
     *COGNITE_CONCEPTS_3D,
 )
 
-COGNITE_SPACES = (CDF_CDM_SPACE,)
+COGNITE_SPACES = (
+    CDF_CDM_SPACE,
+    "cdf_360_image_schema",
+    "cdf_3d_schema",
+    "cdf_apm",
+    "cdf_apps_shared",
+    "cdf_cdm_3d",
+)
 
 # Defaults from https://docs.cognite.com/cdf/dm/dm_reference/dm_limits_and_restrictions#list-size-limits
 
