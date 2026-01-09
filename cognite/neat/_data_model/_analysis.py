@@ -558,10 +558,10 @@ class ValidationResources:
         # Only SCCs with more than one node represent cycles
         return [scc for scc in sccs if len(scc) > 1]
 
-    def _container_root_score(self, container: ContainerReference) -> tuple[int, int, str]:
-        """Compute score for determining if a container should be the root.
+    def _view_specificity_score(self, container: ContainerReference) -> tuple[int, int, str]:
+        """Compute how view-specific a container is (lower = more specific = better outermost).
 
-        Lower score = better root candidate.
+        Used to find the "outermost" container in a view - the one that should require all others.
         Returns: (view_count, cdf_descendants, external_id)
         """
         views = len(self.container_to_views.get(container, set()))
@@ -651,7 +651,7 @@ class ValidationResources:
                 relevant_mst_edges.add(edge)
 
         # Orient edges from view's outermost container (modifiable must be source)
-        view_outermost = min(modifiable_in_view, key=self._container_root_score)
+        view_outermost = min(modifiable_in_view, key=self._view_specificity_score)
         oriented_edges = self._orient_mst_edges_for_view(relevant_mst_edges, view_outermost, containers_in_view)
 
         # Get existing edges from modifiable containers in this view
