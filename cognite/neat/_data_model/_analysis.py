@@ -488,34 +488,35 @@ class ValidationResources:
 
         return graph
 
-    def has_full_requires_hierarchy(self, containers: set[ContainerReference]) -> bool:
-        """Check if there's a container that transitively requires all other containers in the set.
+    @staticmethod
+    def forms_directed_path(nodes: set[ContainerReference] | set[ViewReference], graph: nx.DiGraph) -> bool:
+        """Check if nodes form an uninterrupted directed path in the graph.
 
-        For query performance optimization, we only need ONE container to require all others.
-        This allows the hasData filter to use only that outermost container.
+        Returns True if there exists a node that can reach all other nodes via
+        directed edges in the graph.
 
         Args:
-            containers: Set of containers to check
+            nodes: Set of nodes to check
+            graph: Directed graph containing the nodes
 
         Returns:
-            True if at least one container requires all others (directly or transitively)
+            True if nodes form a directed path (one node reaches all others)
 
         Example:
-            Given containers C1, C2, C3 with requires constraints:
-            - C1 requires C2
-            - C2 requires C3
+            Given nodes N1, N2, N3 with edges:
+            - N1 -> N2
+            - N2 -> N3
 
-            has_full_requires_hierarchy({C1, C2, C3}) returns True (C1 requires all others)
-            has_full_requires_hierarchy({C2, C3}) returns True (C2 requires C3)
-            has_full_requires_hierarchy({C1, C3}) returns False (C1 doesn't require C3 directly,
-                only through C2 which is not in the set)
+            forms_directed_path({N1, N2, N3}) returns True (N1 reaches all others)
+            forms_directed_path({N2, N3}) returns True (N2 reaches N3)
+            forms_directed_path({N1, N3}) returns False (N1 can't reach N3 without N2)
         """
-        if len(containers) <= 1:
+        if len(nodes) <= 1:
             return True
 
-        for candidate in containers:
-            others = containers - {candidate}
-            if others.issubset(nx.descendants(self.requires_constraint_graph, candidate)):
+        for candidate in nodes:
+            others = nodes - {candidate}
+            if others.issubset(nx.descendants(graph, candidate)):
                 return True
 
         return False

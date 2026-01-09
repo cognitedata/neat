@@ -704,15 +704,15 @@ class TestValidationResourcesRequiresConstraints:
             ),
         ],
     )
-    def test_has_full_requires_hierarchy(
+    def test_forms_directed_path(
         self,
         containers: list[str],
         expected_complete: bool,
         scenarios: dict[str, ValidationResources],
     ) -> None:
-        """Test has_full_requires_hierarchy for various scenarios."""
+        """Test forms_directed_path for various scenarios."""
         resources = scenarios["requires-constraints"]
         container_refs = {ContainerReference(space="my_space", external_id=c) for c in containers}
 
-        result = resources.has_full_requires_hierarchy(container_refs)
+        result = ValidationResources.forms_directed_path(container_refs, resources.requires_constraint_graph)
         assert result == expected_complete, f"Containers {containers}: expected {expected_complete}, got {result}"
