@@ -384,7 +384,7 @@ class ValidationResources:
         return connection_end_node_types
 
     @cached_property
-    def container_to_views(self) -> dict[ContainerReference, set[ViewReference]]:
+    def views_by_container(self) -> dict[ContainerReference, set[ViewReference]]:
         """Get a mapping from containers to the views that use them.
 
         Includes views from both the merged schema and all CDF views to capture
@@ -393,7 +393,7 @@ class ValidationResources:
         """
 
         # Include all unique views from merged and CDF
-        container_to_views: dict[ContainerReference, set[ViewReference]] = defaultdict(set)
+        views_by_container: dict[ContainerReference, set[ViewReference]] = defaultdict(set)
 
         # Include all unique views from merged and CDF
         all_view_refs = set(self.merged.views.keys()) | set(self.cdf.views.keys())
@@ -405,9 +405,9 @@ class ValidationResources:
                 continue
 
             for container in view.used_containers:
-                container_to_views[container].add(view_ref)
+                views_by_container[container].add(view_ref)
 
-        return dict(container_to_views)
+        return dict(views_by_container)
 
     @cached_property
     def view_to_containers(self) -> dict[ViewReference, set[ContainerReference]]:
@@ -453,7 +453,7 @@ class ValidationResources:
         if not containers:
             return set()
 
-        view_sets = [self.container_to_views.get(c, set()) for c in containers]
+        view_sets = [self.views_by_container.get(c, set()) for c in containers]
         return set.intersection(*view_sets)
 
     # =========================================================================
@@ -461,7 +461,7 @@ class ValidationResources:
     # =========================================================================
 
     @cached_property
-    def requires_graph(self) -> nx.DiGraph:
+    def requires_constraint_graph(self) -> nx.DiGraph:
         """Build a directed graph of container requires constraints.
 
         Nodes are ContainerReferences, edges represent requires constraints.
@@ -471,9 +471,9 @@ class ValidationResources:
         """
         graph: nx.DiGraph = nx.DiGraph()
 
-        for container_ref in self.merged.containers:
-            graph.add_node(container_ref)
         for container_ref in self.cdf.containers:
+            graph.add_node(container_ref)
+        for container_ref in self.merged.containers:
             graph.add_node(container_ref)
 
         # Add edges for requires constraints from all known containers
@@ -515,7 +515,7 @@ class ValidationResources:
 
         for candidate in containers:
             others = containers - {candidate}
-            if others.issubset(nx.descendants(self.requires_graph, candidate)):
+            if others.issubset(nx.descendants(self.requires_constraint_graph, candidate)):
                 return True
 
         return False
@@ -530,6 +530,6 @@ class ValidationResources:
         Returns:
             List of sets, where each set contains the containers involved in a cycle.
         """
-        sccs = nx.strongly_connected_components(self.requires_graph)
+        sccs = nx.strongly_connected_components(self.requires_constraint_graph)
         # Only SCCs with more than one node represent cycles
         return [scc for scc in sccs if len(scc) > 1]

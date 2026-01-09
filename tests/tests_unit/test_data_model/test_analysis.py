@@ -606,15 +606,15 @@ class TestValidationResources:
 class TestValidationResourcesRequiresConstraints:
     """Tests for requires constraint related methods in ValidationResources."""
 
-    def test_container_to_views(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test container_to_views returns correct view mappings."""
+    def test_views_by_container(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test views_by_container returns correct view mappings."""
         resources = scenarios["requires-constraints"]
-        container_to_views = resources.container_to_views
+        views_by_container = resources.views_by_container
 
         # Check a sample container mapping
         transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
-        assert transitive_middle in container_to_views
-        transitive_views = container_to_views[transitive_middle]
+        assert transitive_middle in views_by_container
+        transitive_views = views_by_container[transitive_middle]
         assert any(v.external_id == "TransitiveView" for v in transitive_views)
 
     def test_view_to_containers(self, scenarios: dict[str, ValidationResources]) -> None:
@@ -656,10 +656,10 @@ class TestValidationResourcesRequiresConstraints:
         shared_views = resources.find_views_mapping_to_containers(containers)
         assert shared_views == expect_found, f"Containers {container_ids}: expected {expect_found}, got {shared_views}"
 
-    def test_requires_graph_structure(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that requires_graph is built correctly."""
+    def test_requires_constraint_graph_structure(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that requires_constraint_graph is built correctly."""
         resources = scenarios["requires-constraints"]
-        graph = resources.requires_graph
+        graph = resources.requires_constraint_graph
 
         # Check edges exist
         transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
