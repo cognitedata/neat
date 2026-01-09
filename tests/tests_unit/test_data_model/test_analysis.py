@@ -753,33 +753,37 @@ class TestValidationResourcesRequiresConstraints:
         ]
 
     @pytest.mark.parametrize(
-        "view_id,expected_complete",
+        "containers,expected_complete",
         [
             pytest.param(
-                "TransitiveView",
+                ["TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"],
                 False,
                 id="incomplete-hierarchy",
             ),
             pytest.param(
-                "OrderOnlyView",
+                ["TransitiveParent"],
                 True,
                 id="single-container-always-complete",
+            ),
+            pytest.param(
+                ["BridgeAssetContainer", "BridgeDescribableContainer"],
+                True,
+                id="complete-with-requires",
             ),
         ],
     )
     def test_has_full_requires_hierarchy(
         self,
-        view_id: str,
+        containers: list[str],
         expected_complete: bool,
         scenarios: dict[str, ValidationResources],
     ) -> None:
-        """Test has_full_requires_hierarchy for various view scenarios."""
+        """Test has_full_requires_hierarchy for various scenarios."""
         resources = scenarios["requires-constraints"]
-        view_ref = ViewReference(space="my_space", external_id=view_id, version="v1")
-        containers = resources.view_to_containers.get(view_ref, set())
+        container_refs = {ContainerReference(space="my_space", external_id=c) for c in containers}
 
-        result = resources.has_full_requires_hierarchy(containers)
-        assert result == expected_complete, f"View {view_id}: expected {expected_complete}, got {result}"
+        result = resources.has_full_requires_hierarchy(container_refs)
+        assert result == expected_complete, f"Containers {containers}: expected {expected_complete}, got {result}"
 
     def test_optimal_requires_tree_cached(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that optimal_requires_tree is computed and cached."""
@@ -1072,8 +1076,6 @@ class TestValidationResourcesRequiresConstraints:
         In the new approach, we only prevent cycles with CDF containers (immutable).
         Cycles with local containers are acceptable (we may recommend removing them).
         """
-        from cognite.neat._data_model._constants import CDF_BUILTIN_SPACES
-
         resources = scenarios["requires-constraints"]
 
         # Find a CDF container that requires something
@@ -1102,8 +1104,6 @@ class TestValidationResourcesRequiresConstraints:
 
     def test_edge_weight_cdf_source_forbidden(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that CDF built-in containers as sources get higher weight than user sources."""
-        from cognite.neat._data_model._constants import CDF_BUILTIN_SPACES
-
         resources = scenarios["requires-constraints"]
 
         cdf_container = None

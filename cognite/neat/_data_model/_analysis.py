@@ -637,17 +637,6 @@ class ValidationResources:
 
         return oriented_edges
 
-    def _find_view_outermost(self, containers_in_view: set[ContainerReference]) -> ContainerReference | None:
-        """Find the outermost container for a specific view.
-
-        The outermost is the container that should be the root (require all others).
-        It's the modifiable container appearing in the FEWEST views.
-        """
-        modifiable_in_view = [c for c in containers_in_view if c in self.modifiable_containers]
-        if not modifiable_in_view:
-            return None
-        return min(modifiable_in_view, key=self._container_root_score)
-
     def get_requires_changes_for_view(
         self, containers_in_view: set[ContainerReference]
     ) -> tuple[
