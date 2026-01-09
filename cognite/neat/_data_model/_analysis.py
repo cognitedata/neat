@@ -614,24 +614,22 @@ class ValidationResources:
         return mst_edges
 
     def get_requires_changes_for_view(
-        self, containers_in_view: set[ContainerReference]
+        self, view: ViewReference
     ) -> tuple[
         list[tuple[ContainerReference, ContainerReference]], list[tuple[ContainerReference, ContainerReference]]
     ]:
-        """Get requires constraint changes needed for a view to have optimal structure.
-
-        Uses the global MST structure and orients edges based on this view's outermost
-        container. The outermost is the modifiable container appearing in fewest views.
+        """Get requires constraint changes for a view.
 
         Args:
-            containers_in_view: Set of containers in the view being validated.
+            view: The view to get recommendations for.
 
         Returns:
             Tuple of (to_add, to_remove):
             - to_add: Edges to add for optimal structure
             - to_remove: Existing edges that should be removed (suboptimal)
         """
-        modifiable_in_view = [c for c in containers_in_view if c in self.modifiable_containers]
+        containers = self.view_to_containers.get(view, set())
+        modifiable_in_view = [c for c in containers if c in self.modifiable_containers]
         if not modifiable_in_view:
             return ([], [])
 
@@ -643,8 +641,8 @@ class ValidationResources:
             # Check if each endpoint is "in" the view (directly or transitively covers view containers)
             c1_coverage = self._immutable_descendants.get(c1, set()) | {c1}
             c2_coverage = self._immutable_descendants.get(c2, set()) | {c2}
-            c1_relevant = bool(c1_coverage & containers_in_view)
-            c2_relevant = bool(c2_coverage & containers_in_view)
+            c1_relevant = bool(c1_coverage & containers)
+            c2_relevant = bool(c2_coverage & containers)
 
             # Both endpoints must be relevant to the view
             if c1_relevant and c2_relevant:
@@ -652,7 +650,7 @@ class ValidationResources:
 
         # Orient edges from view's outermost container (modifiable must be source)
         view_outermost = min(modifiable_in_view, key=self._view_specificity_score)
-        oriented_edges = self._orient_mst_edges_for_view(relevant_mst_edges, view_outermost, containers_in_view)
+        oriented_edges = self._orient_mst_edges_for_view(relevant_mst_edges, view_outermost, containers)
 
         # Get existing edges from modifiable containers in this view
         existing_edges: set[tuple[ContainerReference, ContainerReference]] = set()
@@ -674,9 +672,15 @@ class ValidationResources:
         self,
         mst_edges: set[frozenset[ContainerReference]],
         outermost: ContainerReference,
-        containers_in_view: set[ContainerReference],
+        containers: set[ContainerReference],
     ) -> set[tuple[ContainerReference, ContainerReference]]:
-        """Orient MST edges for a view, ensuring outermost can reach all containers."""
+        """Orient MST edges for a view, ensuring the view-specific container can reach all others.
+
+        Args:
+            mst_edges: Undirected MST edges to orient
+            outermost: The view-specific container (lowest _view_specificity_score)
+            containers: All containers in this view
+        """
         if not mst_edges:
             return set()
 
@@ -696,37 +700,24 @@ class ValidationResources:
         reach_graph.add_edges_from(self.immutable_requires_graph.edges())
         reachable = nx.descendants(reach_graph, outermost) | {outermost}
 
-        for container in containers_in_view - reachable:
+        for container in containers - reachable:
             oriented.add((outermost, container))
 
         return oriented
 
     @cached_property
     def immutable_requires_graph(self) -> nx.DiGraph:
-        """Build a graph of requires constraints from immutable (CDF) containers only.
+        """Build a graph of requires constraints from non-modifiable containers.
 
-        This graph represents the "given" structure that we cannot change.
-        Used for cycle detection and coverage calculation when computing optimal structure.
+        A container is non-modifiable if it's in a CDF built-in space (managed by Cognite)
+        or not in the local/merged model. This graph represents constraints we cannot change.
+
+        Containers without edges here get empty descendants via _immutable_descendants.get().
         """
         graph: nx.DiGraph = nx.DiGraph()
-
-        # Add all containers as nodes (needed for nx.descendants to work correctly)
-        all_containers = set(self.requires_graph.nodes())
-        for containers in self.view_to_containers.values():
-            all_containers.update(containers)
-        graph.add_nodes_from(all_containers)
-
-        # Add edges from immutable (non-modifiable) containers in merged
         for src, dst in self.requires_graph.edges():
             if src not in self.modifiable_containers:
                 graph.add_edge(src, dst)
-
-        # Also include CDF container constraints (they might not be in merged)
-        for container_ref, container in self.cdf.containers.items():
-            if container_ref.space in CDF_BUILTIN_SPACES and container.constraints:
-                for constraint in container.constraints.values():
-                    if isinstance(constraint, RequiresConstraintDefinition):
-                        graph.add_edge(container_ref, constraint.require)
 
         return graph
 

@@ -1,3 +1,27 @@
+# Simple view with complete hierarchy (Asset requires Describable)
+- space: my_space
+  externalId: CompleteHierarchyView
+  version: v1
+  name: Complete Hierarchy View
+  description: View where containers already have complete requires hierarchy
+  properties:
+    assetField:
+      name: assetField
+      description: Field from Asset
+      container:
+        space: my_space
+        externalId: BridgeAssetContainer
+        type: container
+      containerPropertyIdentifier: assetField
+    descField:
+      name: descField
+      description: Field from Describable
+      container:
+        space: my_space
+        externalId: BridgeDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
 # View for transitive requires test - Parent, Middle, Leaf together where Middle requires Leaf
 - space: my_space
   externalId: TransitiveView
@@ -186,7 +210,7 @@
 # Disconnected component test - View for Group A (never appears with Group B)
 - space: my_space
   externalId: DisconnectedGroupAView
-  version: '1'
+  version: v1
   properties:
     groupAField1:
       name: groupAField1
@@ -208,7 +232,7 @@
 # Disconnected component test - View for Group B (never appears with Group A)
 - space: my_space
   externalId: DisconnectedGroupBView
-  version: '1'
+  version: v1
   properties:
     groupBField1:
       name: groupBField1
@@ -231,7 +255,7 @@
 # Tests that MST avoids CDF sources and creates proper user-sourced hierarchy
 - space: my_space
   externalId: CdfBridgeViewA
-  version: '1'
+  version: v1
   properties:
     bridgeField:
       name: bridgeField
@@ -253,7 +277,7 @@
 # View B: CdfBridge + UserB (UserA NOT here)
 - space: my_space
   externalId: CdfBridgeViewB
-  version: '1'
+  version: v1
   properties:
     bridgeField:
       name: bridgeField
@@ -275,7 +299,7 @@
 # View with ALL THREE: UserA, UserB, CdfBridge
 - space: my_space
   externalId: CdfBridgeCombinedView
-  version: '1'
+  version: v1
   properties:
     bridgeField:
       name: bridgeField
@@ -310,7 +334,7 @@
 #           SharedTagContainer → SharedAssetContainer (to leverage Asset's requires)
 - space: my_space
   externalId: FuncLocView
-  version: '1'
+  version: v1
   properties:
     funcLocField:
       name: funcLocField
@@ -339,7 +363,7 @@
 
 - space: my_space
   externalId: SharedTagView
-  version: '1'
+  version: v1
   properties:
     sharedTagField:
       name: sharedTagField
@@ -370,7 +394,7 @@
 # PumpContainer should be outermost for THIS view, not FuncLocContainer or Tag
 - space: my_space
   externalId: PumpView
-  version: '1'
+  version: v1
   properties:
     pumpField:
       name: pumpField
