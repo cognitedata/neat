@@ -1,0 +1,130 @@
+# View for transitive requires test - Parent, Middle, Leaf together where Middle requires Leaf
+- space: my_space
+  externalId: TransitiveView
+  version: v1
+  name: Transitive View
+  description: View for testing transitive requires recommendations
+  properties:
+    fieldA:
+      name: fieldA
+      description: Field A
+      container:
+        space: my_space
+        externalId: TransitiveParent
+        type: container
+      containerPropertyIdentifier: fieldA
+    fieldB:
+      name: fieldB
+      description: Field B
+      container:
+        space: my_space
+        externalId: TransitiveMiddle
+        type: container
+      containerPropertyIdentifier: fieldB
+    fieldC:
+      name: fieldC
+      description: Field C
+      container:
+        space: my_space
+        externalId: TransitiveLeaf
+        type: container
+      containerPropertyIdentifier: fieldC
+
+- space: my_space
+  externalId: TagView
+  version: v1
+  name: Tag View
+  description: View with Tag, Asset, and Describable
+  properties:
+    tagId:
+      name: tagId
+      description: Tag ID
+      container:
+        space: my_space
+        externalId: TagContainer
+        type: container
+      containerPropertyIdentifier: tagId
+    assetName:
+      name: assetName
+      description: Asset name
+      container:
+        space: my_space
+        externalId: TagAssetContainer
+        type: container
+      containerPropertyIdentifier: assetName
+    tagDescription:
+      name: tagDescription
+      description: Tag description
+      container:
+        space: my_space
+        externalId: TagDescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+# View for RequiresConstraintCycle test
+- space: my_space
+  externalId: CycleTestView
+  version: v1
+  name: Cycle Test View
+  description: View for testing cycle detection
+  properties:
+    propCycleA:
+      name: propCycleA
+      description: Property from CycleContainerA
+      container:
+        space: my_space
+        externalId: CycleContainerA
+        type: container
+      containerPropertyIdentifier: propA
+    propCycleB:
+      name: propCycleB
+      description: Property from CycleContainerB
+      container:
+        space: my_space
+        externalId: CycleContainerB
+        type: container
+      containerPropertyIdentifier: propB
+
+# Disconnected component test - View for Group A (never appears with Group B)
+- space: my_space
+  externalId: DisconnectedGroupAView
+  version: '1'
+  properties:
+    groupAField1:
+      name: groupAField1
+      description: Field from DisconnectedGroupAContainer1
+      container:
+        space: my_space
+        externalId: DisconnectedGroupAContainer1
+        type: container
+      containerPropertyIdentifier: groupAField1
+    groupAField2:
+      name: groupAField2
+      description: Field from DisconnectedGroupAContainer2
+      container:
+        space: my_space
+        externalId: DisconnectedGroupAContainer2
+        type: container
+      containerPropertyIdentifier: groupAField2
+
+# Disconnected component test - View for Group B (never appears with Group A)
+- space: my_space
+  externalId: DisconnectedGroupBView
+  version: '1'
+  properties:
+    groupBField1:
+      name: groupBField1
+      description: Field from DisconnectedGroupBContainer1
+      container:
+        space: my_space
+        externalId: DisconnectedGroupBContainer1
+        type: container
+      containerPropertyIdentifier: groupBField1
+    groupBField2:
+      name: groupBField2
+      description: Field from DisconnectedGroupBContainer2
+      container:
+        space: my_space
+        externalId: DisconnectedGroupBContainer2
+        type: container
+      containerPropertyIdentifier: groupBField2

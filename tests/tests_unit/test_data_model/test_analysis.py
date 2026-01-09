@@ -42,6 +42,13 @@ def scenarios() -> dict[str, ValidationResources]:
             include_cdm=True,
             format="validation-resource",
         ),
+        "requires-constraints": catalog.load_scenario(
+            "requires_constraints",
+            cdf_scenario_name="for_validators",
+            modus_operandi="additive",
+            include_cdm=False,
+            format="validation-resource",
+        ),
     }
     return scenarios
 
@@ -594,3 +601,118 @@ class TestValidationResources:
             for (view_ref, prop), target_view_ref in end_node_types.items()
         }
         data_regression.check(serializable)
+
+
+class TestValidationResourcesRequiresConstraints:
+    """Tests for requires constraint related methods in ValidationResources."""
+
+    def test_views_by_container(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test views_by_container returns correct view mappings."""
+        resources = scenarios["requires-constraints"]
+        views_by_container = resources.views_by_container
+
+        # Check a sample container mapping
+        transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
+        assert transitive_middle in views_by_container
+        transitive_views = views_by_container[transitive_middle]
+        assert any(v.external_id == "TransitiveView" for v in transitive_views)
+
+    def test_containers_by_view(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test containers_by_view returns correct container mappings."""
+        resources = scenarios["requires-constraints"]
+        containers_by_view = resources.containers_by_view
+
+        # Check a sample view mapping
+        transitive_view = ViewReference(space="my_space", external_id="TransitiveView", version="v1")
+        assert transitive_view in containers_by_view
+        containers = containers_by_view[transitive_view]
+        container_ids = {c.external_id for c in containers}
+        assert container_ids == {"TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"}
+
+    @pytest.mark.parametrize(
+        "container_ids,expect_found",
+        [
+            pytest.param(
+                ["TransitiveParent", "TransitiveMiddle"],
+                {ViewReference(space="my_space", external_id="TransitiveView", version="v1")},
+                id="containers-appear-together",
+            ),
+            pytest.param(
+                ["DisconnectedGroupAContainer1", "DisconnectedGroupBContainer1"],
+                set(),
+                id="containers-never-together",
+            ),
+        ],
+    )
+    def test_find_views_mapping_to_containers(
+        self,
+        container_ids: list[str],
+        expect_found: set[ViewReference],
+        scenarios: dict[str, ValidationResources],
+    ) -> None:
+        """Test find_views_mapping_to_containers for various container combinations."""
+        resources = scenarios["requires-constraints"]
+        containers = [ContainerReference(space="my_space", external_id=cid) for cid in container_ids]
+        shared_views = resources.find_views_mapping_to_containers(containers)
+        assert shared_views == expect_found, f"Containers {container_ids}: expected {expect_found}, got {shared_views}"
+
+    def test_requires_constraint_graph_structure(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that requires_constraint_graph is built correctly."""
+        resources = scenarios["requires-constraints"]
+        graph = resources.requires_constraint_graph
+
+        # Check edges exist
+        transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
+        transitive_leaf = ContainerReference(space="my_space", external_id="TransitiveLeaf")
+        assert graph.has_edge(transitive_middle, transitive_leaf)
+
+        # Check cycle edges
+        cycle_a = ContainerReference(space="my_space", external_id="CycleContainerA")
+        cycle_b = ContainerReference(space="my_space", external_id="CycleContainerB")
+        assert graph.has_edge(cycle_a, cycle_b)
+        assert graph.has_edge(cycle_b, cycle_a)
+
+    def test_requires_constraint_cycles(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test cycle detection in requires constraints."""
+        resources = scenarios["requires-constraints"]
+        cycles = resources.requires_constraint_cycles
+
+        assert cycles == [
+            {
+                ContainerReference(space="my_space", external_id="CycleContainerA"),
+                ContainerReference(space="my_space", external_id="CycleContainerB"),
+            }
+        ]
+
+    @pytest.mark.parametrize(
+        "containers,expected_complete",
+        [
+            pytest.param(
+                ["TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"],
+                False,
+                id="incomplete-hierarchy",
+            ),
+            pytest.param(
+                ["TransitiveParent"],
+                True,
+                id="single-container-always-complete",
+            ),
+            pytest.param(
+                ["TagAssetContainer", "TagDescribableContainer"],
+                True,
+                id="complete-with-requires",
+            ),
+        ],
+    )
+    def test_forms_directed_path(
+        self,
+        containers: list[str],
+        expected_complete: bool,
+        scenarios: dict[str, ValidationResources],
+    ) -> None:
+        """Test forms_directed_path for various scenarios."""
+        resources = scenarios["requires-constraints"]
+        container_refs = {ContainerReference(space="my_space", external_id=c) for c in containers}
+
+        result = ValidationResources.forms_directed_path(container_refs, resources.requires_constraint_graph)
+        assert result == expected_complete, f"Containers {containers}: expected {expected_complete}, got {result}"

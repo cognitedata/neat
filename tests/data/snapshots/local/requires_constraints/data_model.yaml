@@ -1,0 +1,26 @@
+space: my_space
+externalId: RequiresConstraintsTestModel
+version: v1
+name: Requires Constraints Test Model
+description: A test data model for validating requires constraint validators
+views:
+  - space: my_space
+    externalId: TransitiveView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: TagView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: CycleTestView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: DisconnectedGroupAView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: DisconnectedGroupBView
+    version: v1
+    type: view

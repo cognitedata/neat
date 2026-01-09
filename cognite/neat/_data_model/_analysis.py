@@ -1,9 +1,12 @@
+from collections import defaultdict
 from itertools import chain
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, TypeVar
 
+import networkx as nx
 from pyparsing import cached_property
 
 from cognite.neat._data_model._snapshot import SchemaSnapshot
+from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
@@ -26,6 +29,7 @@ from cognite.neat._utils.useful_types import ModusOperandi
 ViewsByReference: TypeAlias = dict[ViewReference, ViewRequest]
 ContainersByReference: TypeAlias = dict[ContainerReference, ContainerRequest]
 AncestorsByReference: TypeAlias = dict[ViewReference, set[ViewReference]]
+
 ReverseToDirectMapping: TypeAlias = dict[
     tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]
 ]
@@ -33,6 +37,8 @@ ConnectionEndNodeTypes: TypeAlias = dict[tuple[ViewReference, str], ViewReferenc
 
 
 ResourceSource = Literal["auto", "merged", "cdf", "both"]
+
+_NodeT = TypeVar("_NodeT", ContainerReference, ViewReference)
 
 
 class ValidationResources:
@@ -378,3 +384,155 @@ class ValidationResources:
                         connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
         return connection_end_node_types
+
+    @cached_property
+    def views_by_container(self) -> dict[ContainerReference, set[ViewReference]]:
+        """Get a mapping from containers to the views that use them.
+
+        Includes views from both the merged schema and all CDF views to capture
+        container-view relationships across the entire CDF environment.
+        Uses expanded views to include inherited properties.
+        """
+
+        # Include all unique views from merged and CDF
+        views_by_container: dict[ContainerReference, set[ViewReference]] = defaultdict(set)
+
+        # Include all unique views from merged and CDF
+        all_view_refs = set(self.merged.views.keys()) | set(self.cdf.views.keys())
+
+        for view_ref in all_view_refs:
+            # Use expanded view to include inherited properties
+            view = self.expand_view_properties(view_ref)
+            if not view:
+                continue
+
+            for container in view.used_containers:
+                views_by_container[container].add(view_ref)
+
+        return dict(views_by_container)
+
+    @cached_property
+    def containers_by_view(self) -> dict[ViewReference, set[ContainerReference]]:
+        """Get a mapping from views to the containers they use.
+
+        Includes views from both the merged schema and all CDF views.
+        Uses expanded views to include inherited properties.
+        """
+        containers_by_view: dict[ViewReference, set[ContainerReference]] = {}
+
+        # Include all unique views from merged and CDF
+        all_view_refs = set(self.merged.views.keys()) | set(self.cdf.views.keys())
+
+        for view_ref in all_view_refs:
+            # Use expanded view to include inherited properties
+            view = self.expand_view_properties(view_ref)
+            if view is not None:
+                containers_by_view[view_ref] = view.used_containers
+
+        return containers_by_view
+
+    def find_views_mapping_to_containers(self, containers: list[ContainerReference]) -> set[ViewReference]:
+        """Find views that map to all specified containers.
+
+        That is, the intersection of views that use each of the specified containers.
+
+        Args:
+            containers: List of containers to check
+
+        Returns:
+            Set of views that contain all the specified containers
+
+        Example:
+            Given views V1, V2, V3 and containers C1, C2:
+            - V1 uses containers {C1, C2}
+            - V2 uses containers {C1}
+            - V3 uses containers {C2}
+
+            find_views_mapping_to_containers([C1, C2]) returns {V1}
+            find_views_mapping_to_containers([C1]) returns {V1, V2}
+            find_views_mapping_to_containers([C2]) returns {V1, V3}
+        """
+        if not containers:
+            return set()
+
+        view_sets = [self.views_by_container.get(c, set()) for c in containers]
+        return set.intersection(*view_sets)
+
+    # =========================================================================
+    # Methods used for requires constraint validation
+    # =========================================================================
+
+    @cached_property
+    def requires_constraint_graph(self) -> nx.DiGraph:
+        """Build a directed graph of container requires constraints.
+
+        Nodes are ContainerReferences, edges represent requires constraints.
+        An edge A → B means container A requires container B.
+
+        Includes containers from both merged schema and CDF
+        """
+        graph: nx.DiGraph = nx.DiGraph()
+
+        for container_ref in self.cdf.containers:
+            graph.add_node(container_ref)
+        for container_ref in self.merged.containers:
+            graph.add_node(container_ref)
+
+        # Add edges for requires constraints from all known containers
+        for container_ref in graph.nodes():
+            container = self.select_container(container_ref)
+            if not container or not container.constraints:
+                continue
+            for constraint in container.constraints.values():
+                if not isinstance(constraint, RequiresConstraintDefinition):
+                    continue
+                graph.add_edge(container_ref, constraint.require)
+
+        return graph
+
+    @staticmethod
+    def forms_directed_path(nodes: set[_NodeT], graph: nx.DiGraph) -> bool:
+        """Check if nodes form an uninterrupted directed path in the graph.
+
+        Returns True if there exists a node that can reach all other nodes via
+        directed edges in the graph.
+
+        Args:
+            nodes: Set of nodes to check
+            graph: Directed graph containing the nodes
+
+        Returns:
+            True if nodes form a directed path (one node reaches all others)
+
+        Example:
+            Given nodes N1, N2, N3 with edges:
+            - N1 -> N2
+            - N2 -> N3
+
+            forms_directed_path({N1, N2, N3}) returns True (N1 reaches all others)
+            forms_directed_path({N2, N3}) returns True (N2 reaches N3)
+            forms_directed_path({N1, N3}) returns False (N1 can't reach N3 without N2)
+        """
+        if len(nodes) <= 1:
+            return True
+
+        for candidate in nodes:
+            others = nodes - {candidate}
+            if others.issubset(nx.descendants(graph, candidate)):
+                return True
+
+        return False
+
+    @cached_property
+    def requires_constraint_cycles(self) -> list[set[ContainerReference]]:
+        """Find all cycles in the requires constraint graph using Tarjan's algorithm.
+
+        Uses strongly connected components (SCC) to identify cycles efficiently.
+        An SCC with more than one node indicates a cycle.
+
+        Returns:
+            List of sets, where each set contains the containers involved in a cycle.
+        """
+        sccs = nx.strongly_connected_components(self.requires_constraint_graph)
+        # Only SCCs with more than one node represent cycles
+        return [scc for scc in sccs if len(scc) > 1]
