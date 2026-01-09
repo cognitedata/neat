@@ -403,7 +403,7 @@ class ValidationResources:
             view = self.expand_view_properties(view_ref)
             if not view:
                 continue
-                
+
             for container in view.used_containers:
                 container_to_views[container].add(view_ref)
 
@@ -439,13 +439,13 @@ class ValidationResources:
 
         Returns:
             Set of views that contain all the specified containers
-    
+
         Example:
             Given views V1, V2, V3 and containers C1, C2:
             - V1 uses containers {C1, C2}
             - V2 uses containers {C1}
             - V3 uses containers {C2}
-        
+
             find_views_mapping_to_containers([C1, C2]) returns {V1}
             find_views_mapping_to_containers([C1]) returns {V1, V2}
             find_views_mapping_to_containers([C2]) returns {V1, V3}
@@ -499,12 +499,12 @@ class ValidationResources:
 
         Returns:
             True if at least one container requires all others (directly or transitively)
-        
-        Example: 
+
+        Example:
             Given containers C1, C2, C3 with requires constraints:
             - C1 requires C2
             - C2 requires C3
-    
+
             has_full_requires_hierarchy({C1, C2, C3}) returns True (C1 requires all others)
             has_full_requires_hierarchy({C2, C3}) returns True (C2 requires C3)
             has_full_requires_hierarchy({C1, C3}) returns False (C1 doesn't require C3 directly,
