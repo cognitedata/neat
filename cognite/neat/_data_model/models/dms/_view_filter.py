@@ -286,7 +286,7 @@ def _move_filter_key(value: Any) -> Any:
         return value
 
 
-def _is_legacy_filter(filter: Any) -> bool:
+def _is_legacy_filter(filter_obj: Any) -> bool:
     """Check if filter is a legacy filter no longer supported by DMS API"""
 
     def traverse(obj: Any) -> bool:
@@ -294,15 +294,15 @@ def _is_legacy_filter(filter: Any) -> bool:
             for key, value in obj.items():
                 if key in LEGACY_FILTERS:
                     return True
-                if isinstance(value, dict | list) and traverse(value):
+                if traverse(value):
                     return True
         elif isinstance(obj, list):
             for item in obj:
-                if isinstance(item, dict | list) and traverse(item):
+                if traverse(item):
                     return True
         return False
 
-    return traverse(filter)
+    return traverse(filter_obj)
 
 
 Filter = Annotated[dict[FilterTypes, FilterData] | None, BeforeValidator(_move_filter_key)]
