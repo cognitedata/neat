@@ -1,6 +1,6 @@
 from collections import defaultdict
 from itertools import chain
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, TypeVar
 
 import networkx as nx
 from pyparsing import cached_property
@@ -37,6 +37,8 @@ ConnectionEndNodeTypes: TypeAlias = dict[tuple[ViewReference, str], ViewReferenc
 
 
 ResourceSource = Literal["auto", "merged", "cdf", "both"]
+
+_NodeT = TypeVar("_NodeT", ContainerReference, ViewReference)
 
 
 class ValidationResources:
@@ -489,7 +491,7 @@ class ValidationResources:
         return graph
 
     @staticmethod
-    def forms_directed_path(nodes: set[ContainerReference] | set[ViewReference], graph: nx.DiGraph) -> bool:
+    def forms_directed_path(nodes: set[_NodeT], graph: nx.DiGraph) -> bool:
         """Check if nodes form an uninterrupted directed path in the graph.
 
         Returns True if there exists a node that can reach all other nodes via
