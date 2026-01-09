@@ -183,10 +183,29 @@ class TestViewFilters:
 
     def test_nulling_legacy_filter(self) -> None:
         raw_data = {
-            "invalid": {
-                "previouslyReferencedProperties": [["fa-governed-space", "Property", "type"]],
-                "filterType": "equals",
-            }
+            "and": [
+                {
+                    "invalid": {
+                        "previously_referenced_properties": [["domain_model", "entity_1", "property_1"]],
+                        "filter_type": "equals",
+                    }
+                },
+                {"exists": {"property": ["domain_model", "entity_1", "property_2"]}},
+                {
+                    "not": {
+                        "invalid": {
+                            "previously_referenced_properties": [["domain_model", "entity_2", "property_3"]],
+                            "filter_type": "in",
+                        }
+                    }
+                },
+                {
+                    "invalid": {
+                        "previously_referenced_properties": [["domain_model", "entity_3", "property_4"]],
+                        "filter_type": "in",
+                    }
+                },
+            ]
         }
         loaded = FilterAdapter.validate_python(raw_data)
         assert loaded is None
