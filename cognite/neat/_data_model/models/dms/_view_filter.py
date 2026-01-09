@@ -287,7 +287,7 @@ def _move_filter_key(value: Any) -> Any:
 
 
 def _is_legacy_filter(filter: Any) -> bool:
-    """Check if it is a legacy filter by checking if key (nested or not) has legacy values"""
+    """Check if filter is a legacy filter no longer supported by DMS API"""
 
     def traverse(obj: Any) -> bool:
         if isinstance(obj, dict):
