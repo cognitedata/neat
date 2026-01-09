@@ -634,12 +634,12 @@ class TestValidationResourcesRequiresConstraints:
         [
             pytest.param(
                 ["TransitiveParent", "TransitiveMiddle"],
-                True,
+                {ViewReference(space= "my_space",external_id= "TransitiveView", version="v1")},
                 id="containers-appear-together",
             ),
             pytest.param(
                 ["DisconnectedGroupAContainer1", "DisconnectedGroupBContainer1"],
-                False,
+                set(),
                 id="containers-never-together",
             ),
         ],
@@ -647,18 +647,14 @@ class TestValidationResourcesRequiresConstraints:
     def test_find_views_mapping_to_containers(
         self,
         container_ids: list[str],
-        expect_found: bool,
+        expect_found: set[ViewReference],
         scenarios: dict[str, ValidationResources],
     ) -> None:
         """Test find_views_mapping_to_containers for various container combinations."""
         resources = scenarios["requires-constraints"]
         containers = [ContainerReference(space="my_space", external_id=cid) for cid in container_ids]
         shared_views = resources.find_views_mapping_to_containers(containers)
-
-        if expect_found:
-            assert len(shared_views) > 0, f"Expected shared views for {container_ids}"
-        else:
-            assert len(shared_views) == 0, f"Expected no shared views for {container_ids}"
+        assert shared_views == expect_found, f"Containers {container_ids}: expected {expect_found}, got {shared_views}"
 
     def test_requires_graph_structure(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that requires_graph is built correctly."""
@@ -681,15 +677,12 @@ class TestValidationResourcesRequiresConstraints:
         resources = scenarios["requires-constraints"]
         cycles = resources.requires_constraint_cycles
 
-        # Should detect the CycleContainerA <-> CycleContainerB cycle
-        assert len(cycles) > 0
-        cycle_ids = {c.external_id for cycle in cycles for c in cycle}
-        assert "CycleContainerA" in cycle_ids
-        assert "CycleContainerB" in cycle_ids
-
-        # Linear chain should not be detected as a cycle
-        assert "TransitiveMiddle" not in cycle_ids
-        assert "TransitiveLeaf" not in cycle_ids
+        assert cycles == [
+            {
+                ContainerReference(space="my_space", external_id="CycleContainerA"),
+                ContainerReference(space="my_space", external_id="CycleContainerB"),
+            }
+        ]
 
     @pytest.mark.parametrize(
         "containers,expected_complete",
