@@ -359,41 +359,43 @@ class TestSchemaDeployer:
         assert len(result.unchanged) == 0
         assert len(result.skipped) == 1
 
-    @pytest.mark.parametrize("dry_run", [True, False])
-    def test_skipping_resources_in_system(
-        self, dry_run: bool, neat_client: NeatClient, empty_cdf: respx.MockRouter
-    ) -> None:
+    def test_skipping_resources_in_system_dry_run(self, neat_client: NeatClient, empty_cdf: respx.MockRouter) -> None:
         # Modify model to have a container in system space
         model = SNAPSHOT_CATALOG.snapshot_to_request_schema(SNAPSHOT_CATALOG.cdm_snapshot)
-        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=dry_run, auto_rollback=False))
+        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=True, auto_rollback=False))
 
         results = deployer.deploy(model)
 
-        if dry_run:
-            for resource_plan in results.plan:
-                endpoint = resource_plan.endpoint
-                if endpoint != "datamodels":
-                    resources = getattr(model, endpoint)
-                else:
-                    resources = [model.data_model]
+        for resource_plan in results.plan:
+            endpoint = resource_plan.endpoint
+            if endpoint != "datamodels":
+                resources = getattr(model, endpoint)
+            else:
+                resources = [model.data_model]
 
-                assert len(resource_plan.skip) == len(resources)
-                assert len(resource_plan.unchanged) == 0
-                assert len(resource_plan.to_upsert) == 0
-                assert len(resource_plan.to_create) == 0
-                assert len(resource_plan.to_update) == 0
-                assert len(resource_plan.to_delete) == 0
-                assert all(
-                    ["in the reserved Cognite space" in cast(str, skipped.message) for skipped in resource_plan.skip]
-                )
+            assert len(resource_plan.skip) == len(resources)
+            assert len(resource_plan.unchanged) == 0
+            assert len(resource_plan.to_upsert) == 0
+            assert len(resource_plan.to_create) == 0
+            assert len(resource_plan.to_update) == 0
+            assert len(resource_plan.to_delete) == 0
+            assert all(
+                ["in the reserved Cognite space" in cast(str, skipped.message) for skipped in resource_plan.skip]
+            )
 
-        else:
-            changes = results.responses
-            assert changes is not None
-            assert changes.is_success
-            assert len(changes.created) == 0
-            assert len(changes.updated) == 0
-            assert len(changes.deletions) == 0
-            assert len(changes.unchanged) == 0
-            assert len(changes.skipped) == len(model.spaces) + len(model.containers) + len(model.views) + 1
-            assert all(["in the reserved Cognite space" in cast(str, skipped.message) for skipped in changes.skipped])
+    def test_skipping_resources_in_system_deploy(self, neat_client: NeatClient, empty_cdf: respx.MockRouter) -> None:
+        # Modify model to have a container in system space
+        model = SNAPSHOT_CATALOG.snapshot_to_request_schema(SNAPSHOT_CATALOG.cdm_snapshot)
+        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=False, auto_rollback=False))
+
+        results = deployer.deploy(model)
+
+        changes = results.responses
+        assert changes is not None
+        assert changes.is_success
+        assert len(changes.created) == 0
+        assert len(changes.updated) == 0
+        assert len(changes.deletions) == 0
+        assert len(changes.unchanged) == 0
+        assert len(changes.skipped) == len(model.spaces) + len(model.containers) + len(model.views) + 1
+        assert all(["in the reserved Cognite space" in cast(str, skipped.message) for skipped in changes.skipped])
