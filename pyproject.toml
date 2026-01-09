@@ -135,8 +135,8 @@ target-version = "py310"
 exclude = ["scripts"]
 fix = true
 
-[tool.coverage.report]
-show_missing = true
+[tool.coverage.run]
+source = ["cognite.neat"]
 omit = [
     # This contains the legacy code. We want to exclude it from coverage reports
     # such that we can increase the coverage threshold for the new code.
@@ -144,6 +144,19 @@ omit = [
     # The Storage is for running in pyodide and cannot be tested in the normal test suite.
     # We alro exclude the calling of mixpanel in testing.
     "cognite/neat/_session/_usage_analytics/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+    "from typing_extensions import Self",
 ]
 
 [tool.mypy]
