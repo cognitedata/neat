@@ -101,6 +101,7 @@ class SerializedResourceChange(BaseModel):
             severity=resource.severity.name,
             resource_id=str(resource.resource_id),
             changes=changes,
+            message=resource.message,
         )
 
     @classmethod
