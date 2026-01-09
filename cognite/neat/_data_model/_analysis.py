@@ -412,13 +412,13 @@ class ValidationResources:
         return dict(views_by_container)
 
     @cached_property
-    def view_to_containers(self) -> dict[ViewReference, set[ContainerReference]]:
+    def containers_by_view(self) -> dict[ViewReference, set[ContainerReference]]:
         """Get a mapping from views to the containers they use.
 
         Includes views from both the merged schema and all CDF views.
         Uses expanded views to include inherited properties.
         """
-        view_to_containers: dict[ViewReference, set[ContainerReference]] = {}
+        containers_by_view: dict[ViewReference, set[ContainerReference]] = {}
 
         # Include all unique views from merged and CDF
         all_view_refs = set(self.merged.views.keys()) | set(self.cdf.views.keys())
@@ -427,9 +427,9 @@ class ValidationResources:
             # Use expanded view to include inherited properties
             view = self.expand_view_properties(view_ref)
             if view is not None:
-                view_to_containers[view_ref] = view.used_containers
+                containers_by_view[view_ref] = view.used_containers
 
-        return view_to_containers
+        return containers_by_view
 
     def find_views_mapping_to_containers(self, containers: list[ContainerReference]) -> set[ViewReference]:
         """Find views that map to all specified containers.

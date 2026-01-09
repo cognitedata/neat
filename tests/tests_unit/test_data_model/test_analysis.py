@@ -617,15 +617,15 @@ class TestValidationResourcesRequiresConstraints:
         transitive_views = views_by_container[transitive_middle]
         assert any(v.external_id == "TransitiveView" for v in transitive_views)
 
-    def test_view_to_containers(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test view_to_containers returns correct container mappings."""
+    def test_containers_by_view(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test containers_by_view returns correct container mappings."""
         resources = scenarios["requires-constraints"]
-        view_to_containers = resources.view_to_containers
+        containers_by_view = resources.containers_by_view
 
         # Check a sample view mapping
         transitive_view = ViewReference(space="my_space", external_id="TransitiveView", version="v1")
-        assert transitive_view in view_to_containers
-        containers = view_to_containers[transitive_view]
+        assert transitive_view in containers_by_view
+        containers = containers_by_view[transitive_view]
         container_ids = {c.external_id for c in containers}
         assert container_ids == {"TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"}
 
