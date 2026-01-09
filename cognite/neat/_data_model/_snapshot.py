@@ -76,6 +76,7 @@ class SchemaSnapshot(BaseModel, extra="ignore"):
         for container_ref, container in merged.containers.items():
             if cdf_container := cdf.containers.get(container_ref):
                 container.properties = {**cdf_container.properties, **container.properties}
+                container.constraints = {**(cdf_container.constraints or {}), **(container.constraints or {})} or None
 
         return merged
 

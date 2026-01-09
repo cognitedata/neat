@@ -6,8 +6,10 @@ import pytest
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms import (
     ContainerPropertyDefinition,
+    ContainerReference,
     ContainerRequest,
     DataModelRequest,
+    RequiresConstraintDefinition,
     TextProperty,
     ViewCorePropertyRequest,
     ViewReference,
@@ -87,6 +89,22 @@ def merge_schema_test_cases() -> Iterator[tuple]:
             ]
         }
     )
+    container_no_constraints = ContainerRequest(
+        space="test_space",
+        externalId="MyContainer",
+        properties={"name": ContainerPropertyDefinition(type=TextProperty())},
+    )
+    container_with_constraints = ContainerRequest(
+        space="test_space",
+        externalId="MyContainer",
+        properties={"name": ContainerPropertyDefinition(type=TextProperty())},
+        constraints={
+            "requires_other": RequiresConstraintDefinition(
+                require=ContainerReference(space="test_space", external_id="RequiredContainer")
+            )
+        },
+    )
+
     yield pytest.param(
         SchemaSnapshot(timestamp=now),
         SchemaSnapshot(timestamp=now),
@@ -192,6 +210,22 @@ def merge_schema_test_cases() -> Iterator[tuple]:
             },
         ),
         id="CDF data model has additional view",
+    )
+
+    yield pytest.param(
+        SchemaSnapshot(
+            timestamp=now,
+            containers={container_no_constraints.as_reference(): container_no_constraints},
+        ),
+        SchemaSnapshot(
+            timestamp=now,
+            containers={container_with_constraints.as_reference(): container_with_constraints},
+        ),
+        SchemaSnapshot(
+            timestamp=now,
+            containers={container_with_constraints.as_reference(): container_with_constraints},
+        ),
+        id="CDF container constraints are preserved when local omits them",
     )
 
 
