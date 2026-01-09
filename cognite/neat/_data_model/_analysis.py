@@ -1,10 +1,11 @@
 from collections import defaultdict
-from itertools import chain
+from itertools import chain, combinations
 from typing import Literal, TypeAlias, TypeVar
 
 import networkx as nx
 from pyparsing import cached_property
 
+from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._container import ContainerRequest
@@ -39,6 +40,13 @@ ConnectionEndNodeTypes: TypeAlias = dict[tuple[ViewReference, str], ViewReferenc
 ResourceSource = Literal["auto", "merged", "cdf", "both"]
 
 _NodeT = TypeVar("_NodeT", ContainerReference, ViewReference)
+
+# Edge weight priority levels for _compute_requires_edge_weight.
+# Uses lexicographic ordering via tuples: (priority, is_new_edge, neg_shared_views, neg_coverage, tie_breaker)
+# Lower tuples are preferred. Python's tuple comparison handles priority naturally.
+_PRIORITY_FORBIDDEN = 2  # Invalid edges (CDF sources, cycle-forming)
+_PRIORITY_NEW_EDGE = 1  # Valid new edges that need to be added
+_PRIORITY_FREE = 0  # Edges already satisfied by CDF constraints (no cost)
 
 
 class ValidationResources:
@@ -562,10 +570,251 @@ class ValidationResources:
         Returns:
             List of lists, where each list contains the ordered containers involved in forming the requires cycle.
         """
-
         return self.graph_cycles(self.requires_constraint_graph)
 
     @staticmethod
     def graph_cycles(graph: nx.DiGraph) -> list[list[T_Reference]]:
         """Returns cycles in the graph otherwise empty list"""
         return [candidate for candidate in nx.simple_cycles(graph) if len(candidate) > 1]
+
+    @cached_property
+    def modifiable_containers(self) -> set[ContainerReference]:
+        """Containers whose requires constraints can be modified.
+
+        A container is modifiable if:
+        - It's in the local/merged model (merged.containers)
+        - It's NOT in a CDF built-in space (CDM, IDM, etc.)
+
+        CDF built-in containers can't be modified because they're managed by Cognite.
+        """
+        return {container_ref for container_ref in self.merged.containers if container_ref.space not in COGNITE_SPACES}
+
+    def _view_specificity_score(self, container: ContainerReference) -> tuple[int, int, str]:
+        """Compute how view-specific a container is (lower = more specific = better outermost).
+
+        Used to find the "outermost" container in a view - the one that should require all others.
+        Returns: (view_count, cdf_descendants, external_id)
+        """
+        views = len(self.views_by_container.get(container, set()))
+        descendants = len(self._immutable_descendants.get(container, set()))
+        return (views, descendants, str(container))
+
+    @cached_property
+    def requires_mst(self) -> set[frozenset[ContainerReference]]:
+        """Compute MST structure for container requires constraints.
+
+        Builds a minimum spanning tree connecting containers that appear together
+        in views. Returns undirected edges; orientation is determined per-view
+        based on the view's outermost container.
+
+        Returns:
+            Set of frozensets, each containing exactly 2 ContainerReferences.
+        """
+        # Find all container pairs that need to be connected
+        must_connect: set[frozenset[ContainerReference]] = set()
+        for view_ref in self.merged.views:
+            containers = self.containers_by_view.get(view_ref, set())
+            if len(containers) >= 2:
+                for c1, c2 in combinations(containers, 2):
+                    must_connect.add(frozenset({c1, c2}))
+
+        if not must_connect:
+            return set()
+
+        # Build undirected graph with edge weights
+        G = nx.Graph()
+
+        # Sort pairs for deterministic edge addition order (affects MST tie-breaking)
+        forbidden_threshold = _PRIORITY_FORBIDDEN * 1e9
+        for c1, c2 in sorted(must_connect, key=lambda p: tuple(sorted(str(c) for c in p))):
+            w1 = self._compute_requires_edge_weight(c1, c2)
+            w2 = self._compute_requires_edge_weight(c2, c1)
+            # Skip if both directions are forbidden
+            if w1 >= forbidden_threshold and w2 >= forbidden_threshold:
+                continue
+            G.add_edge(c1, c2, weight=min(w1, w2))
+
+        # Compute MST for each connected component
+        mst_edges: set[frozenset[ContainerReference]] = set()
+        for component in nx.connected_components(G):
+            if len(component) < 2:
+                continue
+            subgraph = G.subgraph(component)
+            mst = nx.minimum_spanning_tree(subgraph, weight="weight")
+            for c1, c2 in mst.edges():
+                mst_edges.add(frozenset({c1, c2}))
+
+        return mst_edges
+
+    def get_requires_changes_for_view(
+        self, view: ViewReference
+    ) -> tuple[
+        list[tuple[ContainerReference, ContainerReference]], list[tuple[ContainerReference, ContainerReference]]
+    ]:
+        """Get requires constraint changes for a view.
+
+        Args:
+            view: The view to get recommendations for.
+
+        Returns:
+            Tuple of (to_add, to_remove):
+            - to_add: Edges to add for optimal structure
+            - to_remove: Existing edges that should be removed (suboptimal)
+        """
+        containers = self.containers_by_view.get(view, set())
+        modifiable_in_view = [c for c in containers if c in self.modifiable_containers]
+        if not modifiable_in_view:
+            return ([], [])
+
+        # Get MST edges relevant to this view
+        # An edge is relevant if BOTH endpoints are in the view (directly or via CDF coverage)
+        relevant_mst_edges: set[frozenset[ContainerReference]] = set()
+        for edge in self.requires_mst:
+            c1, c2 = sorted(edge, key=str)  # Deterministic unpacking
+            # Check if each endpoint is "in" the view (directly or transitively covers view containers)
+            c1_coverage = self._immutable_descendants.get(c1, set()) | {c1}
+            c2_coverage = self._immutable_descendants.get(c2, set()) | {c2}
+            c1_relevant = bool(c1_coverage & containers)
+            c2_relevant = bool(c2_coverage & containers)
+
+            # Both endpoints must be relevant to the view
+            if c1_relevant and c2_relevant:
+                relevant_mst_edges.add(edge)
+
+        # Orient edges from view's outermost container (modifiable must be source)
+        view_outermost = min(modifiable_in_view, key=self._view_specificity_score)
+        oriented_edges = self._orient_mst_edges_for_view(relevant_mst_edges, view_outermost, containers)
+
+        # Get existing edges from modifiable containers in this view
+        existing_edges: set[tuple[ContainerReference, ContainerReference]] = set()
+        for src in modifiable_in_view:
+            for dst in self.requires_constraint_graph.successors(src):
+                existing_edges.add((src, dst))
+
+        # Compute diff
+        to_add = oriented_edges - existing_edges
+        to_remove = existing_edges - oriented_edges
+
+        # Sort for deterministic output
+        sorted_add = sorted(to_add, key=lambda x: (str(x[0]), str(x[1])))
+        sorted_remove = sorted(to_remove, key=lambda x: (str(x[0]), str(x[1])))
+
+        return (sorted_add, sorted_remove)
+
+    def _orient_mst_edges_for_view(
+        self,
+        mst_edges: set[frozenset[ContainerReference]],
+        outermost: ContainerReference,
+        containers: set[ContainerReference],
+    ) -> set[tuple[ContainerReference, ContainerReference]]:
+        """Orient MST edges for a view, ensuring the view-specific container can reach all others.
+
+        Args:
+            mst_edges: Undirected MST edges to orient
+            outermost: The view-specific container (lowest _view_specificity_score)
+            containers: All containers in this view
+        """
+        if not mst_edges:
+            return set()
+
+        # Build undirected graph and use nx.bfs_edges for traversal
+        undirected = nx.Graph(tuple(edge) for edge in mst_edges)
+
+        # Guard: if outermost has no MST edges (all were forbidden), skip BFS
+        if outermost not in undirected:
+            return set()
+
+        oriented: set[tuple[ContainerReference, ContainerReference]] = set()
+
+        for parent, child in nx.bfs_edges(undirected, outermost):
+            # Orient: modifiable container must be source
+            if parent in self.modifiable_containers:
+                oriented.add((parent, child))
+            elif child in self.modifiable_containers:
+                oriented.add((child, parent))  # Flip when parent is CDF
+
+        # Add direct edges for any containers unreachable due to CDF flips
+        reach_graph = nx.DiGraph(oriented)
+        reach_graph.add_edges_from(self.immutable_requires_constraint_graph.edges())
+        reachable = nx.descendants(reach_graph, outermost) | {outermost}
+
+        for container in containers - reachable:
+            # Only add if it won't create a cycle with immutable constraints
+            if outermost not in self._immutable_descendants.get(container, set()):
+                oriented.add((outermost, container))
+
+        return oriented
+
+    @cached_property
+    def immutable_requires_constraint_graph(self) -> nx.DiGraph:
+        """Build a graph of requires constraints from non-modifiable containers.
+
+        A container is non-modifiable if it's in a CDF built-in space (managed by Cognite)
+        or not in the local/merged model. This graph represents constraints we cannot change.
+
+        Containers without edges here get empty descendants via _immutable_descendants.get().
+        """
+        graph: nx.DiGraph = nx.DiGraph()
+        for src, dst in self.requires_constraint_graph.edges():
+            if src not in self.modifiable_containers:
+                graph.add_edge(src, dst)
+
+        return graph
+
+    @cached_property
+    def _immutable_descendants(self) -> dict[ContainerReference, set[ContainerReference]]:
+        """Pre-compute descendants in immutable_requires_constraint_graph for all containers.
+
+        This avoids repeated nx.descendants() calls which are O(V+E) each.
+
+        Note: Only containers with edges in immutable_requires_constraint_graph are keys.
+        Use .get(container, set()) to handle containers without immutable edges.
+        """
+        return {
+            c: nx.descendants(self.immutable_requires_constraint_graph, c)
+            for c in self.immutable_requires_constraint_graph.nodes()
+        }
+
+    def _compute_requires_edge_weight(self, src: ContainerReference, dst: ContainerReference) -> float:
+        """Compute the weight/cost of connecting src and dst in the requires graph.
+
+        Uses lexicographic priority encoded as a float:
+        - Priority 0 (free): 0.0 - edges already satisfied by CDF
+        - Priority 1 (new): 1.0 to 1.99 - new edges, with tie-breakers
+        - Priority 2 (forbidden): 1e9 - invalid edges
+
+        Tie-breakers for new edges (lower = better):
+        - More shared views between src and dst
+        - More CDF descendants on dst (transitive coverage)
+
+        Args:
+            src: Source container (the one that would "require")
+            dst: Target container (the one being required)
+
+        Returns:
+            Float weight (lower = better).
+        """
+        # Priority 2: Forbidden - CDF built-in containers cannot be modified
+        if src.space in COGNITE_SPACES:
+            return float(_PRIORITY_FORBIDDEN) * 1e9
+
+        # Priority 2: Forbidden - would create a cycle with immutable CDF constraints
+        if src in self._immutable_descendants.get(dst, set()):
+            return float(_PRIORITY_FORBIDDEN) * 1e9
+
+        # Priority 0: Free - src can reach dst via immutable constraints
+        if dst in self._immutable_descendants.get(src, set()):
+            return float(_PRIORITY_FREE)
+
+        # Priority 1: New edge needed - compute tie-breakers
+        shared_views = len(self.views_by_container.get(src, set()) & self.views_by_container.get(dst, set()))
+        coverage = len(self._immutable_descendants.get(dst, set()))
+
+        # Encode tie-breakers: base 1.0, subtract small amounts for better edges
+        # More shared views = lower weight (better)
+        # More coverage = lower weight (better)
+        # Cap contributions to stay in [1.0, 2.0) range
+        shared_bonus = min(shared_views * 0.01, 0.1)  # Max 0.1 from 10+ shared views
+        coverage_bonus = min(coverage * 0.01, 0.1)  # Max 0.1 from 10+ descendants
+
+        return 1.0 + 0.5 - shared_bonus - coverage_bonus  # Range: [1.3, 1.5]
