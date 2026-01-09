@@ -606,23 +606,23 @@ class TestValidationResources:
 class TestValidationResourcesRequiresConstraints:
     """Tests for requires constraint related methods in ValidationResources."""
 
-    def test_container_to_views_basic(self, scenarios: dict[str, ValidationResources]) -> None:
+    def test_container_to_views(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test container_to_views returns correct view mappings."""
         resources = scenarios["requires-constraints"]
         container_to_views = resources.container_to_views
 
-        # TransitiveMiddle appears in TransitiveView
+        # Check a sample container mapping
         transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
         assert transitive_middle in container_to_views
         transitive_views = container_to_views[transitive_middle]
         assert any(v.external_id == "TransitiveView" for v in transitive_views)
 
-    def test_view_to_containers_basic(self, scenarios: dict[str, ValidationResources]) -> None:
+    def test_view_to_containers(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test view_to_containers returns correct container mappings."""
         resources = scenarios["requires-constraints"]
         view_to_containers = resources.view_to_containers
 
-        # TransitiveView maps to TransitiveParent, TransitiveMiddle, TransitiveLeaf
+        # Check a sample view mapping
         transitive_view = ViewReference(space="my_space", external_id="TransitiveView", version="v1")
         assert transitive_view in view_to_containers
         containers = view_to_containers[transitive_view]

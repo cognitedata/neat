@@ -393,6 +393,9 @@ class ValidationResources:
         container_to_views: dict[ContainerReference, set[ViewReference]] = {}
 
         # Include all unique views from merged and CDF
+        container_to_views: dict[ContainerReference, set[ViewReference]] = defaultdict(set)
+
+        # Include all unique views from merged and CDF
         all_view_refs = set(self.merged.views.keys()) | set(self.cdf.views.keys())
 
         for view_ref in all_view_refs:
@@ -400,12 +403,11 @@ class ValidationResources:
             view = self.expand_view_properties(view_ref)
             if not view:
                 continue
+                
             for container in view.used_containers:
-                if container not in container_to_views:
-                    container_to_views[container] = set()
                 container_to_views[container].add(view_ref)
 
-        return container_to_views
+        return dict(container_to_views)
 
     @cached_property
     def view_to_containers(self) -> dict[ViewReference, set[ContainerReference]]:
@@ -430,11 +432,23 @@ class ValidationResources:
     def find_views_mapping_to_containers(self, containers: list[ContainerReference]) -> set[ViewReference]:
         """Find views that map to all specified containers.
 
+        That is, the intersection of views that use each of the specified containers.
+
         Args:
             containers: List of containers to check
 
         Returns:
             Set of views that contain all the specified containers
+    
+        Example:
+            Given views V1, V2, V3 and containers C1, C2:
+            - V1 uses containers {C1, C2}
+            - V2 uses containers {C1}
+            - V3 uses containers {C2}
+        
+            find_views_mapping_to_containers([C1, C2]) returns {V1}
+            find_views_mapping_to_containers([C1]) returns {V1, V2}
+            find_views_mapping_to_containers([C2]) returns {V1, V3}
         """
         if not containers:
             return set()
@@ -485,6 +499,16 @@ class ValidationResources:
 
         Returns:
             True if at least one container requires all others (directly or transitively)
+        
+        Example: 
+            Given containers C1, C2, C3 with requires constraints:
+            - C1 requires C2
+            - C2 requires C3
+    
+            has_full_requires_hierarchy({C1, C2, C3}) returns True (C1 requires all others)
+            has_full_requires_hierarchy({C2, C3}) returns True (C2 requires C3)
+            has_full_requires_hierarchy({C1, C3}) returns False (C1 doesn't require C3 directly,
+                only through C2 which is not in the set)
         """
         if len(containers) <= 1:
             return True
