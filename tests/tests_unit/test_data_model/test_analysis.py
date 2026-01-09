@@ -634,7 +634,7 @@ class TestValidationResourcesRequiresConstraints:
         [
             pytest.param(
                 ["TransitiveParent", "TransitiveMiddle"],
-                {ViewReference(space= "my_space",external_id= "TransitiveView", version="v1")},
+                {ViewReference(space="my_space", external_id="TransitiveView", version="v1")},
                 id="containers-appear-together",
             ),
             pytest.param(
