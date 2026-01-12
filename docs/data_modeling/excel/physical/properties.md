@@ -83,11 +83,15 @@ When setting any of these constraints in `NEAT`, similar to the indexes, the fol
 
 In Properties sheet you are able to set `uniqueness` constraint on a property. See the example below:
 
-| View        | View Property | Value Type | Container      | Container Property | Constraint                          |
-|-------------|---------------|------------|----------------|--------------------|-------------------------------------|
-| WindTurbine | serialNumber  | text       | GeneratingUnit | serialNumber       | uniqueness:serialNoUnq(bySpace=True)|
+| View           | View Property | Value Type | Container      | Container Property | Constraint                                   |
+|----------------|---------------|------------|----------------|--------------------|----------------------------------------------|
+| GeneratingUnit | serialNumber  | text       | GeneratingUnit | serialNumber       | uniqueness:serialUnq(bySpace=True)           |
+| WindTurbine    | serialNumber  | text       | GeneratingUnit | serialNumber       | uniqueness:idUnique(bySpace=True, order=1)   |
+| WindTurbine    | internalId    | text       | GeneratingUnit | internalId         | uniqueness:serialNoUnq(bySpace=True, order=2)|
 
-`bySpace` parameter indicates that the uniqueness will apply per space, and it is the only supported parameter for `uniqueness` constraint.
+`bySpace` parameter indicates that the uniqueness will apply per space. If you intended to configure the `uniqueness` constraint to
+check uniqueness of multiple properties, similar like in the case of `index`, use the `order` to provide significance of the properties.
+
 
 In Containers sheet you are able to set `requires` constraints on a container. See the example below:
 
@@ -97,7 +101,12 @@ In Containers sheet you are able to set `requires` constraints on a container. S
 | GeneratingUnit | GeneratingUnit | Container for generating units.  | requires:power(container=PowerPlant)      |
 
 For the `requires` constraint, the `container` parameter is used to specify the container that is required to have data in
-order to populate this container.
+order to populate this container. If a container has constraint on multiple container user needs to list those constraints in the
+Constraint column such as:
+
+| Container      | Name           | Description                     | Constraint                                 |
+|----------------|----------------|---------------------------------|--------------------------------------------|
+| GeneratingUnit | GeneratingUnit | Container for generating units.  | requires:power(container=PowerPlant), requires:describe(container=cdf_cdm:CogniteDescribable) |
 
 
 ## Connection Property
