@@ -34,7 +34,7 @@ class NeatStore:
         self._client = client
         self._config = config
 
-        # Caching CDF Schema limits and snapshot
+        # Placeholder for CDF schema and limit snapshot
         self._cdf_snapshot: SchemaSnapshot | None = None
         self._cdf_limits: SchemaLimits | None = None
 
