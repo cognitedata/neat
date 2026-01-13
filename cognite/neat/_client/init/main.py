@@ -3,7 +3,7 @@ from cognite.client.config import ClientConfig, global_config
 
 from cognite.neat import _version
 
-from .credentialcreator import get_credentials
+from .credentials import get_credentials
 from .env_vars import ClientEnvironmentVariables, get_environment_variables
 
 CLIENT_NAME = f"CogniteNeat:{_version.__version__}"
@@ -34,6 +34,9 @@ def get_cognite_client_internal(env_file_name: str) -> CogniteClient:
     global_config.silence_feature_preview_warnings = True
     env_vars = get_environment_variables(env_file_name)
     client_config = create_client_config_from_env_vars(env_vars)
+    # Todo validate credentials by making a simple call to CDF
+    #   Offer to store credentials securely if valid
+    #
     return CogniteClient(client_config)
 
 
