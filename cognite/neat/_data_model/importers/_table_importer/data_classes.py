@@ -152,6 +152,7 @@ class DMSView(TableObj):
     description: str | None = None
     implements: EntityList | None = None
     filter: str | None = None
+    in_model: bool | None = Field(None, exclude=True, description="Legacy column")
 
     @field_validator("filter", mode="after")
     def _legacy_filter(cls, value: str | None) -> str | None:
@@ -230,6 +231,31 @@ class TableDMS(TableObj):
             # We are case-insensitive on the table names.
             return {title_case(k): v for k, v in data.items()}
         return data
+
+    @model_validator(mode="after")
+    def _drop_in_model_false_views_definitions(self) -> "TableDMS":
+        """These method is used to drop definition of legacy views which have In Model column set to False
+        We need to drop these views from Views sheet and also drop their properties from Properties sheet.
+        """
+
+        views_to_drop: set[Entity] = set()
+        for view in self.views:
+            if isinstance(view.in_model, bool) and not view.in_model:
+                views_to_drop.add(view.view)
+
+        if not views_to_drop:
+            return self
+
+        print(
+            "You are using legacy `In Model` column which is no longer in use!"
+            f"\nTotal of {len(views_to_drop)} views has `In Model` set to False."
+            f"\nThese views and their property definitions will be dropped from the session!"
+        )
+
+        self.views = [view for view in self.views if view.view not in views_to_drop]
+        self.properties = [prop for prop in self.properties if prop.view not in views_to_drop]
+
+        return self
 
     @classmethod
     def get_sheet_columns(

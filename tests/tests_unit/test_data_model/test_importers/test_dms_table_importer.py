@@ -169,6 +169,28 @@ def valid_legacy_dms_table_format() -> Iterable[tuple]:
                     "Container": "FileAnnotation",
                     "Container Property": "confidence",
                 },
+                {
+                    "View": "NotPartOfDataModel",
+                    "View Property": "confidence",
+                    "Connection": None,
+                    "Value Type": "float32",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": True,
+                    "Container": "FileAnnotation",
+                    "Container Property": "confidence",
+                },
+                {
+                    "View": "cdf_cdm:NotPartOfDataModel1(version='v1')",
+                    "View Property": "confidence2",
+                    "Connection": None,
+                    "Value Type": "float32",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": True,
+                    "Container": "FileAnnotation",
+                    "Container Property": "confidence",
+                },
             ],
             "Views": [
                 {
@@ -195,6 +217,8 @@ def valid_legacy_dms_table_format() -> Iterable[tuple]:
                     "Name": "File Annotation",
                     "Implements": "CogniteDescribable",
                 },
+                {"View": "NotPartOfDataModel", "In Model": "False"},
+                {"View": "cdf_cdm:NotPartOfDataModel1(version='v1')", "In Model": "False"},
             ],
             "Containers": [
                 {
