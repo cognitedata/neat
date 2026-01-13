@@ -2,7 +2,7 @@ import subprocess
 from pathlib import Path
 
 
-def repo_root() -> Path:
+def get_repo_root() -> Path:
     """Get the root path of the git repository.
 
     Raises:
