@@ -60,6 +60,9 @@ LOGIN_FLOW=client_credentials
 IDP_CLIENT_ID=client-id-123
 IDP_CLIENT_SECRET=secret-xyz
 IDP_TOKEN_URL=https://custom.idp.com/oauth2/token
+IDP_SCOPES=USERS_READ,DATA_READ
+IDP_AUDIENCE=https://custom.audience.com/resource
+IDP_AUTHORITY_URL=https://custom.idp.com/authorize
 """,
         ClientConfig(
             client_name=CLIENT_NAME,
@@ -69,7 +72,7 @@ IDP_TOKEN_URL=https://custom.idp.com/oauth2/token
                 token_url="https://custom.idp.com/oauth2/token",
                 client_id="client-id-123",
                 client_secret="secret-xyz",
-                scopes=["https://my_cluster.cognitedata.com/.default"],
+                scopes=["USERS_READ", "DATA_READ"],
             ),
         ),
         id="Client Credentials - explicit token URL",
@@ -184,12 +187,86 @@ IDP_TENANT_ID=tenant-789
 
 def get_cognite_client_invalid_cases() -> Iterable[tuple]:
     yield pytest.param(
+        """CDF_PROJECT=my_project
+LOGIN_FLOW=client_credentials
+""",
+        "CDF_CLUSTER",
+        id="Missing cluster",
+    )
+    yield pytest.param(
         """CDF_CLUSTER=my_cluster
 CDF_PROJECT=my_project
 LOGIN_FLOW=client_credentials
 """,
         "IDP_CLIENT_ID and IDP_CLIENT_SECRET",
+        id="Client Credentials - missing client ID and secret",
+    )
+    yield pytest.param(
+        """CDF_CLUSTER=my_cluster
+CDF_PROJECT=my_project
+LOGIN_FLOW=client_credentials
+IDP_CLIENT_ID=client-id-123
+""",
+        "IDP_CLIENT_SECRET",
+        id="Client Credentials - missing client secret",
+    )
+    yield pytest.param(
+        """CDF_CLUSTER=my_cluster
+CDF_PROJECT=my_project
+LOGIN_FLOW=client_credentials
+IDP_CLIENT_SECRET=secret-xyz
+""",
+        "IDP_CLIENT_ID",
         id="Client Credentials - missing client ID",
+    )
+    yield pytest.param(
+        """CDF_CLUSTER=my_cluster
+CDF_PROJECT=my_project
+PROVIDER=entra_id
+LOGIN_FLOW=client_credentials
+IDP_CLIENT_ID=client-id-123
+IDP_CLIENT_SECRET=secret-xyz
+""",
+        "IDP_TENANT_ID",
+        id="Client Credentials - missing tenant ID for Entra ID provider",
+    )
+
+    yield pytest.param(
+        """CDF_CLUSTER=my_cluster
+CDF_PROJECT=my_project
+LOGIN_FLOW=client_credentials
+PROVIDER=other
+IDP_CLIENT_ID=client-id-123
+IDP_CLIENT_SECRET=secret-xyz
+""",
+        "IDP_TOKEN_URL is missing",
+        id="Client Credentials - other provider missing token URL",
+    )
+    yield pytest.param(
+        """CDF_CLUSTER=my_cluster
+CDF_PROJECT=my_project
+LOGIN_FLOW=interactive
+""",
+        "IDP_CLIENT_ID",
+        id="Interactive credentials - missing client ID",
+    )
+    yield pytest.param(
+        """CDF_CLUSTER=my_cluster
+CDF_PROJECT=my_project
+LOGIN_FLOW=interactive
+PROVIDER=other
+IDP_CLIENT_ID=client-id-123
+""",
+        "IDP_AUTHORITY_URL is missing",
+        id="Interactive credentials - other provider missing authority URL",
+    )
+    yield pytest.param(
+        """CDF_CLUSTER=my_cluster
+CDF_PROJECT=my_project
+LOGIN_FLOW=token
+""",
+        "CDF_TOKEN",
+        id="Token credentials - missing token",
     )
 
 

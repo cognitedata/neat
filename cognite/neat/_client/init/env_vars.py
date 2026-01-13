@@ -54,11 +54,8 @@ class ClientEnvironmentVariables(BaseModel):
     def idp_tenant_id(self) -> str:
         if self.IDP_TENANT_ID:
             return self.IDP_TENANT_ID
-        if self.PROVIDER == "entra_id" and self.IDP_TOKEN_URL:
-            return self.IDP_TOKEN_URL.removeprefix("https://login.microsoftonline.com/").removesuffix(
-                "/oauth2/v2.0/token"
-            )
-        raise ValueError("IDP_TENANT_ID is missing")
+        # This line is technically unreachable due to the checks in idp_token_url and idp_authority_url
+        raise RuntimeError("IDP_TENANT_ID is missing")
 
     @property
     def idp_token_url(self) -> str:
@@ -68,9 +65,7 @@ class ClientEnvironmentVariables(BaseModel):
             return self.IDP_TOKEN_URL
         if self.PROVIDER == "entra_id" and self.IDP_TENANT_ID:
             return f"https://login.microsoftonline.com/{self.IDP_TENANT_ID}/oauth2/v2.0/token"
-        alternative = ""
-        if self.PROVIDER == "entra_id":
-            alternative = " or provide IDP_TENANT_ID"
+        alternative = " or provide IDP_TENANT_ID" if self.PROVIDER == "entra_id" else ""
         raise ValueError(
             f"IDP_TOKEN_URL is missing. Please provide it{alternative} in the environment variables.",
         )
@@ -102,9 +97,7 @@ class ClientEnvironmentVariables(BaseModel):
             return self.IDP_AUTHORITY_URL
         if self.PROVIDER == "entra_id" and self.idp_tenant_id:
             return f"https://login.microsoftonline.com/{self.idp_tenant_id}"
-        alternative = ""
-        if self.PROVIDER == "entra_id":
-            alternative = " or provide IDP_TENANT_ID"
+        alternative = " or provide IDP_TENANT_ID" if self.PROVIDER == "entra_id" else ""
         raise ValueError(
             f"IDP_AUTHORITY_URL is missing. Please provide it{alternative} in the environment variables.",
         )
