@@ -1,8 +1,11 @@
+import importlib
 import inspect
 from abc import ABC
+from types import ModuleType
 from typing import TypeVar
 
 from cognite.neat import _version
+from cognite.neat._exceptions import NeatImportError
 
 
 def get_current_neat_version() -> str:
@@ -37,3 +40,10 @@ def get_concrete_subclasses(base_cls: type[T_Cls], exclude_direct_abc_inheritanc
             seen.add(subclass)
             to_check.append(subclass)
     return subclasses
+
+
+def local_import(module: str, extra: str) -> ModuleType:
+    try:
+        return importlib.import_module(module)
+    except ImportError as e:
+        raise NeatImportError(module.split(".")[0], extra) from e

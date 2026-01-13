@@ -3,7 +3,7 @@ from abc import ABC
 from pydantic import Field, field_validator
 
 from cognite.neat._data_model.models.dms._references import SpaceReference
-from cognite.neat._v0.core._utils.text import humanize_collection
+from cognite.neat._utils.text import humanize_collection
 
 from ._base import APIResource, Resource, WriteableResource
 from ._constants import FORBIDDEN_SPACES, SPACE_FORMAT_PATTERN
