@@ -62,3 +62,6 @@ class NeatImportError(NeatException, ImportError):
  in your neat installation with `pip install "cognite-neat[{neat_extra}]"`.
 """
         super().__init__(message)
+
+    def __str__(self) -> str:
+        return self.args[0]
