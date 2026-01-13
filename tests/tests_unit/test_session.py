@@ -88,6 +88,17 @@ def session_with_toolkit_schema(new_session: NeatSession, valid_dms_toolkit_yaml
     return new_session
 
 
+@pytest.fixture
+def session_with_neat_partial_schema(new_session: NeatSession, valid_dms_tabular_yaml_partial: str) -> NeatSession:
+    read_yaml = MagicMock(spec=Path)
+    read_yaml.read_text.return_value = valid_dms_tabular_yaml_partial
+    read_yaml.name = "neat.yaml"
+    read_yaml.suffix = ".yaml"
+
+    new_session.physical_data_model.read.yaml(read_yaml, format="neat")
+    return new_session
+
+
 @pytest.mark.usefixtures("empty_cdf")
 class TestNeatSession:
     def test_error_reading_writing(self, new_session: NeatSession) -> None:
@@ -305,3 +316,10 @@ class TestDMSSerialization:
 
         # missing container from toolkit schema should be added in neat schema
         assert "- Container: cdf_cdm:CogniteDescribable" in write_yaml.write_text.call_args[0][0]
+
+    def test_neat_partial_to_neat_full_tabular(self, session_with_neat_partial_schema: NeatSession) -> None:
+        write_yaml = MagicMock(spec=Path)
+        session_with_neat_partial_schema.physical_data_model.write.yaml(write_yaml, format="neat")
+
+        # missing container from toolkit schema should be added in neat schema
+        assert "- Container: CogniteDescribable" in write_yaml.write_text.call_args[0][0]
