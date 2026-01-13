@@ -1,6 +1,6 @@
 from pydantic import HttpUrl, RootModel, ValidationError
 
-from cognite.neat._v0.core._utils.auxiliary import local_import
+from cognite.neat._utils.auxiliary import local_import
 
 
 class URI(RootModel[str]):
