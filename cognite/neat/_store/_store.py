@@ -13,7 +13,6 @@ from cognite.neat._data_model.exporters import DMSExporter, DMSFileExporter
 from cognite.neat._data_model.exporters._api_exporter import DMSAPIExporter
 from cognite.neat._data_model.exporters._table_exporter.exporter import DMSTableExporter
 from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
-from cognite.neat._data_model.importers._api_importer import DMSAPIImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._exceptions import DataModelImportException
@@ -108,7 +107,7 @@ class NeatStore:
             raise RuntimeError("No successful physical data model read found in provenance.")
 
         # We do not want to modify the data model for API representations
-        if not (change.agent == DMSAPIImporter.__name__ and isinstance(writer, DMSTableExporter)):
+        if not isinstance(writer, DMSTableExporter):
             return self.physical_data_model[-1]
 
         # This will handle data model that are partially and require to be converted to
