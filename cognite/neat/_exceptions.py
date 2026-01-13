@@ -54,3 +54,15 @@ class UserInputError(NeatException):
 
     def __str__(self) -> str:
         return f"User input error: {self.message}"
+
+
+class NeatImportError(NeatException, ImportError):
+    def __init__(self, module: str, neat_extra: str, functionality: str = "functionality") -> None:
+        message = (
+            f"The {functionality} requires {module}. You can include it in your neat "
+            f'installation with `pip install "cognite-neat[{neat_extra}]"`.'
+        )
+        super().__init__(message)
+
+    def __str__(self) -> str:
+        return self.args[0]
