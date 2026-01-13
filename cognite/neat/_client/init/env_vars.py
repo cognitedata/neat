@@ -133,6 +133,6 @@ def _parse_env_file(env_file_path: Path) -> ClientEnvironmentVariables:
     for line in content.splitlines():
         if line.startswith("#") or "=" not in line:
             continue
-        key, value = line.split("=", 1)
+        key, value = line.strip().split("=", 1)
         variables[key] = value
     return ClientEnvironmentVariables.create_humanize(variables)
