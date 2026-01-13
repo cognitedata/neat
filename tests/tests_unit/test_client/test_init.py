@@ -32,6 +32,27 @@ IDP_TENANT_ID=tenant-789
         ),
         id="Client Credentials - minimum",
     )
+    yield pytest.param(
+        """CDF_CLUSTER=my_cluster
+CDF_PROJECT=my_project
+LOGIN_FLOW=client_credentials
+PROVIDER=cdf
+IDP_CLIENT_ID=client-id-123
+IDP_CLIENT_SECRET=secret-xyz
+""",
+        ClientConfig(
+            client_name=CLIENT_NAME,
+            project="my_project",
+            base_url="https://my_cluster.cognitedata.com",
+            credentials=OAuthClientCredentials(
+                token_url="https://auth.cognite.com/oauth2/token",
+                client_id="client-id-123",
+                client_secret="secret-xyz",
+                scopes=None,  # type: ignore[arg-type]
+            ),
+        ),
+        id="Client Credentials - CDF provider",
+    )
 
 
 class TestGetCogniteClient:
