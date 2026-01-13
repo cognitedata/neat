@@ -95,8 +95,8 @@ class ClientEnvironmentVariables(BaseModel):
     def idp_authority_url(self) -> str:
         if self.IDP_AUTHORITY_URL:
             return self.IDP_AUTHORITY_URL
-        if self.PROVIDER == "entra_id" and self.idp_tenant_id:
-            return f"https://login.microsoftonline.com/{self.idp_tenant_id}"
+        if self.PROVIDER == "entra_id" and self.IDP_TENANT_ID:
+            return f"https://login.microsoftonline.com/{self.IDP_TENANT_ID}"
         alternative = " or provide IDP_TENANT_ID" if self.PROVIDER == "entra_id" else ""
         raise ValueError(
             f"IDP_AUTHORITY_URL is missing. Please provide it{alternative} in the environment variables.",
