@@ -4,7 +4,7 @@ from cognite.client.credentials import CredentialProvider, OAuthClientCredential
 
 from cognite.neat._utils.text import humanize_collection
 
-from .env_vars import VALID_LOGIN_FLOWS, ClientEnvironmentVariables, LoginFlow
+from .env_vars import ClientEnvironmentVariables, LoginFlow
 
 
 def get_credentials(env_vars: ClientEnvironmentVariables) -> CredentialProvider:
@@ -14,13 +14,7 @@ def get_credentials(env_vars: ClientEnvironmentVariables) -> CredentialProvider:
         "token": create_token_credentials,
         "infer": create_infer_credentials,
     }
-    try:
-        return options[env_vars.LOGIN_FLOW](env_vars)
-    except KeyError:
-        raise ValueError(
-            f"Invalid LOGIN_FLOW '{env_vars.LOGIN_FLOW}'. Supported methods"
-            f" are: {humanize_collection(VALID_LOGIN_FLOWS)}"
-        ) from None
+    return options[env_vars.LOGIN_FLOW](env_vars)
 
 
 def create_client_credentials(env_vars: ClientEnvironmentVariables) -> CredentialProvider:
@@ -37,14 +31,14 @@ def create_client_credentials(env_vars: ClientEnvironmentVariables) -> Credentia
 
     if env_vars.PROVIDER == "cdf":
         return OAuthClientCredentials(
-            client_id=env_vars.IDP_CLIENT_ID,  # type: ignore[arg-type]
-            client_secret=env_vars.IDP_CLIENT_SECRET,  # type: ignore[arg-type]
+            client_id=env_vars.IDP_CLIENT_ID,
+            client_secret=env_vars.IDP_CLIENT_SECRET,
             token_url=env_vars.idp_token_url,
             scopes=None,  # type: ignore[arg-type]
         )
     return OAuthClientCredentials(
-        client_id=env_vars.IDP_CLIENT_ID,  # type: ignore[arg-type]
-        client_secret=env_vars.IDP_CLIENT_SECRET,  # type: ignore[arg-type]
+        client_id=env_vars.IDP_CLIENT_ID,
+        client_secret=env_vars.IDP_CLIENT_SECRET,
         token_url=env_vars.idp_token_url,
         audience=env_vars.idp_audience,
         scopes=env_vars.idp_scopes,
@@ -55,7 +49,7 @@ def create_interactive_credentials(env_vars: ClientEnvironmentVariables) -> Cred
     if not env_vars.IDP_CLIENT_ID:
         raise ValueError("IDP_CLIENT_ID environment variable must be set for interactive authentication.")
     return OAuthInteractive(
-        client_id=env_vars.IDP_CLIENT_ID,  # type: ignore[arg-type]
+        client_id=env_vars.IDP_CLIENT_ID,
         authority_url=env_vars.idp_authority_url,
         scopes=env_vars.idp_scopes,
     )
