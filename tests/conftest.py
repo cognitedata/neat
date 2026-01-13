@@ -145,6 +145,39 @@ Containers:
 
 
 @pytest.fixture(scope="session")
+def valid_dms_tabular_yaml_partial() -> str:
+    return """Metadata:
+- Key: space
+  Value: cdf_cdm
+- Key: externalId
+  Value: CogniteDataModel
+- Key: version
+  Value: v1
+- Key: description
+  Value: Sample Cognite Data Model
+- Key: name
+  Value: Cognite Data Model
+Properties:
+- View: CogniteDescribable
+  View Property: name
+  Name: Name Property
+  Description: The name of the describable entity
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: CogniteDescribable
+  Container Property: name
+  Index: btree:name(cursorable=True)
+  Connection: null
+Views:
+- View: CogniteDescribable
+  Name: Describable View
+  Description: View for describable entities
+"""
+
+
+@pytest.fixture(scope="session")
 def model_syntax_error_dms_yaml_format() -> str:
     return """Metadata:
 - Key: space
