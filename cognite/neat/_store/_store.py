@@ -35,8 +35,24 @@ class NeatStore:
         self._config = config
 
         # Caching CDF Schema limits and snapshot
-        self.limits = SchemaLimits.from_api_response(self._client.statistics.project())
-        self.cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
+        self._cdf_snapshot: SchemaSnapshot | None = None
+        self._cdf_limits: SchemaLimits | None = None
+
+    @property
+    def cdf_limits(self) -> SchemaLimits:
+        if self._cdf_limits:
+            return self._cdf_limits
+        else:
+            self._cdf_limits = SchemaLimits.from_api_response(self._client.statistics.project())
+        return self._cdf_limits
+
+    @property
+    def cdf_snapshot(self) -> SchemaSnapshot:
+        if self._cdf_snapshot:
+            return self._cdf_snapshot
+        else:
+            self._cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
+        return self._cdf_snapshot
 
     def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None) -> None:
         """Read object from the store"""
@@ -81,7 +97,7 @@ class NeatStore:
             and not on_success.options.dry_run
         ):
             # Update CDF snapshot after successful deployment
-            self.cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
+            self._cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
 
     def _gather_data_model(self, writer: DMSExporter) -> PhysicalDataModel:
         """Gather the current physical data model from the store
