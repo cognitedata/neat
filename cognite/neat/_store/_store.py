@@ -40,17 +40,13 @@ class NeatStore:
 
     @property
     def cdf_limits(self) -> SchemaLimits:
-        if self._cdf_limits:
-            return self._cdf_limits
-        else:
+        if not self._cdf_limits:
             self._cdf_limits = SchemaLimits.from_api_response(self._client.statistics.project())
         return self._cdf_limits
 
     @property
     def cdf_snapshot(self) -> SchemaSnapshot:
-        if self._cdf_snapshot:
-            return self._cdf_snapshot
-        else:
+        if not self._cdf_snapshot:
             self._cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
         return self._cdf_snapshot
 
