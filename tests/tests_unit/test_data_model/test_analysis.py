@@ -677,12 +677,11 @@ class TestValidationResourcesRequiresConstraints:
         resources = scenarios["requires-constraints"]
         cycles = resources.requires_constraint_cycles
 
-        assert cycles == [
-            {
-                ContainerReference(space="my_space", external_id="CycleContainerA"),
-                ContainerReference(space="my_space", external_id="CycleContainerB"),
-            }
-        ]
+        assert len(cycles) == 1
+        assert set(cycles[0]) == {
+            ContainerReference(space="my_space", external_id="CycleContainerB"),
+            ContainerReference(space="my_space", external_id="CycleContainerA"),
+        }
 
     @pytest.mark.parametrize(
         "containers,expected_complete",

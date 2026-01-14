@@ -23,7 +23,7 @@ from cognite.neat._data_model.models.dms._view_property import (
     ViewRequestProperty,
 )
 from cognite.neat._data_model.models.dms._views import ViewRequest
-from cognite.neat._utils.useful_types import ModusOperandi
+from cognite.neat._utils.useful_types import ModusOperandi, T_Reference
 
 # Type aliases for better readability
 ViewsByReference: TypeAlias = dict[ViewReference, ViewRequest]
@@ -458,9 +458,33 @@ class ValidationResources:
         view_sets = [self.views_by_container.get(c, set()) for c in containers]
         return set.intersection(*view_sets)
 
-    # =========================================================================
-    # Methods used for requires constraint validation
-    # =========================================================================
+    @cached_property
+    def implements_graph(self) -> nx.DiGraph:
+        """Build a weighted directed graph of view implements.
+
+        Nodes are ViewReferences, edges represent implements.
+        An edge A → B means view A implements view B. Order of views in implements is used to set weight of an edge.
+
+        Includes views from both merged schema and CDF
+        """
+        graph: nx.DiGraph = nx.DiGraph()
+
+        for view_ref in self.cdf.views:
+            graph.add_node(view_ref)
+        for view_ref in self.merged.views:
+            graph.add_node(view_ref)
+
+        # Add edges for implements
+        for view_ref in graph.nodes():
+            view = self.select_view(view_ref)
+            if not view or not view.implements:
+                continue
+
+            # Adding weight to preserve order of implements
+            for i, implement in enumerate(view.implements):
+                graph.add_edge(view_ref, implement, weight=i + 1)
+
+        return graph
 
     @cached_property
     def requires_constraint_graph(self) -> nx.DiGraph:
@@ -524,7 +548,7 @@ class ValidationResources:
         return False
 
     @cached_property
-    def requires_constraint_cycles(self) -> list[set[ContainerReference]]:
+    def requires_constraint_cycles(self) -> list[list[ContainerReference]]:
         """Find all cycles in the requires constraint graph using Tarjan's algorithm.
 
         Uses strongly connected components (SCC) to identify cycles efficiently.
@@ -533,6 +557,10 @@ class ValidationResources:
         Returns:
             List of sets, where each set contains the containers involved in a cycle.
         """
-        sccs = nx.strongly_connected_components(self.requires_constraint_graph)
-        # Only SCCs with more than one node represent cycles
-        return [scc for scc in sccs if len(scc) > 1]
+
+        return self.graph_cycles(self.requires_constraint_graph)
+
+    @staticmethod
+    def graph_cycles(graph: nx.DiGraph) -> list[list[T_Reference]]:
+        """Returns cycles in the graph otherwise empty list"""
+        return [candidate for candidate in nx.simple_cycles(graph) if len(candidate) > 1]
