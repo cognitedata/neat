@@ -138,7 +138,7 @@ class TestDMSTableWriter:
                 ),
                 id="HasData filter with default space",
             ),
-            pytest.param(None, "", id="No filter"),
+            pytest.param(None, None, id="No filter"),
             pytest.param(
                 {
                     "hasData": HasDataFilter(
@@ -149,7 +149,7 @@ class TestDMSTableWriter:
                     )
                 },
                 RAWFilterTableFilter(
-                    filter='{"hasData":[{"space":"default_space","external_id":"container1","type":"container"},{"space":"other_space","external_id":"view1","version":"v1","type":"view"}]'
+                    filter='{"hasData":[{"space":"default_space","externalId":"container1","type":"container"},{"space":"other_space","externalId":"view1","version":"v1","type":"view"}]}'
                 ),
                 id="Raw filter",
             ),
