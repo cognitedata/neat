@@ -146,12 +146,19 @@ class EntityTableFilter(BaseModel):
     type: Literal["hasData", "nodeType"]
     entities: EntityList
 
+    def __str__(self) -> str:
+        entities_str = ",".join(str(entity) for entity in self.entities)
+        return f"{self.type}({entities_str})"
+
 
 class RAWFilterTableFilter(BaseModel):
     """This is a generic filter that holds raw JSON filter."""
 
     type: Literal["rawFilter"] = "rawFilter"
     filter: str
+
+    def __str__(self) -> str:
+        return f"rawFilter({self.filter})"
 
 
 def _parse_table_filter(v: str) -> dict[str, str] | EntityTableFilter | RAWFilterTableFilter:

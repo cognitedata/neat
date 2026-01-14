@@ -1484,11 +1484,12 @@ def max_count_infinity_table() -> dict:
 
 class TestTableViewFilter:
     @pytest.mark.parametrize(
-        "cell_text, expected",
+        "cell_text, expected, expected_dump_str",
         [
             pytest.param(
                 "hasData(my_space:container1)",
                 EntityTableFilter(type="hasData", entities=[ParsedEntity("my_space", "container1", {})]),
+                "hasData(my_space:container1)",
                 id="hasData, single container",
             ),
             pytest.param(
@@ -1497,26 +1498,30 @@ class TestTableViewFilter:
                     type="hasData",
                     entities=[ParsedEntity("my_space", "container1", {}), ParsedEntity("my_space2e", "container2", {})],
                 ),
+                "hasData(my_space:container1,my_space2e:container2)",
                 id="hasData, multiple containers",
             ),
             pytest.param(
-                "hasData(container1,container2)",
+                "hasData(container1,  container2)",
                 EntityTableFilter(
                     type="hasData", entities=[ParsedEntity("", "container1", {}), ParsedEntity("", "container2", {})]
                 ),
+                "hasData(container1,container2)",
                 id="hasData, no spaces",
             ),
             pytest.param(
                 "nodeType(my_space:node1)",
                 EntityTableFilter(type="nodeType", entities=[ParsedEntity("my_space", "node1", {})]),
+                "nodeType(my_space:node1)",
                 id="nodeType, single node",
             ),
             pytest.param(
-                "nodeType(my_space:node1, my_space2e:node2)",
+                "nodeType(my_space:node1,my_space2e:node2)",
                 EntityTableFilter(
                     type="nodeType",
                     entities=[ParsedEntity("my_space", "node1", {}), ParsedEntity("my_space2e", "node2", {})],
                 ),
+                "nodeType(my_space:node1,my_space2e:node2)",
                 id="nodeType, multiple nodes",
             ),
             pytest.param(
@@ -1524,24 +1529,38 @@ class TestTableViewFilter:
                 EntityTableFilter(
                     type="nodeType", entities=[ParsedEntity("", "node1", {}), ParsedEntity("", "node2", {})]
                 ),
+                "nodeType(node1,node2)",
                 id="nodeType, no spaces",
             ),
             pytest.param(
                 RAW_FILTER_CELL_EXAMPLE,
                 RAWFilterTableFilter(filter=RAW_FILTER_EXAMPLE),
+                RAW_FILTER_CELL_EXAMPLE,
                 id="raw filter, simple",
             ),
             pytest.param(
                 RAW_FILTER_EXAMPLE,
                 RAWFilterTableFilter(filter=RAW_FILTER_EXAMPLE),
+                RAW_FILTER_CELL_EXAMPLE,
                 id="raw filter, without cell syntax",
             ),
         ],
     )
-    def test_parse(self, cell_text: str, expected: TableViewFilter) -> None:
+    def test_parse(self, cell_text: str, expected: TableViewFilter, expected_dump_str: str | None) -> None:
+        """Test parsing of TableViewFilter from cell text
+
+        Args:
+            cell_text (str): The input cell text to parse.
+            expected (TableViewFilter): The expected TableViewFilter object.
+            expected_dump_str (str | None): The expected writing format back to cell text. This is the
+                canonical format, so may differ from input format.
+
+        """
         result: TableViewFilter = TypeAdapter(TableViewFilter).validate_python(cell_text)
 
         assert result.model_dump() == expected.model_dump()
+
+        assert str(result) == expected_dump_str
 
 
 class TestDMSTableImporter:
