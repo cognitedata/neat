@@ -76,4 +76,4 @@ Validators for checking containers in the data model.
 |------|------|---------|
 | NEAT-DMS-VIEW-001 | [ViewToContainerMappingNotPossible](neat-dms-view-001.md) | Validates that container and container property referenced by view property exist. |
 | NEAT-DMS-VIEW-002 | [ImplementedViewNotExisting](neat-dms-view-002.md) | Validates that implemented (inherited) view exists. |
-| NEAT-DMS-VIEW-003 | [CyclicImplements](neat-dms-view-003.md) | Validates that view implements are not forming cycle (i.e. cycling graph of implements) |
+| NEAT-DMS-VIEW-003 | [CyclicImplements](neat-dms-view-003.md) | Validates that view implements are not forming a cycle (i.e. cyclic graph of implements) |

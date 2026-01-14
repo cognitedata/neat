@@ -127,11 +127,10 @@ class ImplementedViewNotExisting(DataModelValidator):
 
 
 class CyclicImplements(DataModelValidator):
-    """Validates that view implements are not forming cycle (i.e. cycling graph of implements)
+    """Validates that view implements are not forming a cycle (i.e. cyclic graph of implements)
 
     ## What it does
-    Runs graph analysis of the implements graph finding every cycle
-
+    Runs graph analysis of the implements graph finding every cycle within the graph
 
     ## Why is this bad?
     You will not be able to deploy the data model to CDF, since cyclic implements are impossible to resolve
