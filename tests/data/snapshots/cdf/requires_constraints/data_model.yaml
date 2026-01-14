@@ -1,0 +1,8 @@
+# Empty data model - external containers only
+space: external_space
+externalId: ExternalDataModel
+version: v1
+name: External Data Model
+description: Data model from another team
+views: []
+

@@ -1,4 +1,3 @@
-
 - space: my_space
   externalId: DomainDescribable
   version: v1
@@ -47,7 +46,6 @@
         version: v1
         type: view
 
-
 - space: my_space
   externalId: SourceForReverseConnectionExistRemote
   version: v1
@@ -88,7 +86,6 @@
         version: v1
         type: view
 
-
 - space: my_space
   externalId: ImplementationChain1
   version: v1
@@ -112,10 +109,10 @@
         type: container
       containerPropertyIdentifier: name
   implements:
-  - space: another_space
-    externalId: ImplementationChain2
-    version: v1
-    type: view
+    - space: another_space
+      externalId: ImplementationChain2
+      version: v1
+      type: view
 
 - space: another_space
   externalId: ImplementationChain2
@@ -140,10 +137,10 @@
         type: container
       containerPropertyIdentifier: name
   implements:
-  - space: my_space
-    externalId: ImplementationChain3
-    version: v1
-    type: view
+    - space: my_space
+      externalId: ImplementationChain3
+      version: v1
+      type: view
 
 - space: my_space
   externalId: ImplementationChain3
@@ -168,10 +165,10 @@
         type: container
       containerPropertyIdentifier: name
   implements:
-  - space: my_space
-    externalId: ImplementationChain4
-    version: v1
-    type: view
+    - space: my_space
+      externalId: ImplementationChain4
+      version: v1
+      type: view
 
 - space: my_space
   externalId: ImplementationChain4

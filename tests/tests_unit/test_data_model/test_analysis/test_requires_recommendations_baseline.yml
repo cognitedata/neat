@@ -1,0 +1,189 @@
+my_space:CogniteAssetExtensionSolutionModelScenarioView(v1):
+  containers:
+  - CogniteAssetExtensionContainer
+  - CogniteAssetExtensionSolutionModelScenarioContainer
+  - CogniteDescribable
+  final_constraints:
+  - CogniteAssetExtensionContainer -> CogniteAsset
+  - CogniteAssetExtensionSolutionModelScenarioContainer -> CogniteAssetExtensionContainer
+  to_add:
+  - CogniteAssetExtensionContainer -> CogniteAsset
+  - CogniteAssetExtensionSolutionModelScenarioContainer -> CogniteAssetExtensionContainer
+  to_remove: []
+my_space:CogniteAssetExtensionView(v1):
+  containers:
+  - CogniteAsset
+  - CogniteAssetExtensionContainer
+  - CogniteDescribable
+  final_constraints:
+  - CogniteAsset -> CogniteDescribable
+  - CogniteAssetExtensionContainer -> CogniteAsset
+  to_add:
+  - CogniteAssetExtensionContainer -> CogniteAsset
+  to_remove: []
+my_space:ConflictingEquipmentView(v1):
+  containers:
+  - Level01_MotorContainer
+  - Level01_PumpContainer
+  final_constraints: []
+  to_add: []
+  to_remove: []
+my_space:CycleTestView(v1):
+  containers:
+  - CycleContainerA
+  - CycleContainerB
+  final_constraints:
+  - CycleContainerA -> CycleContainerB
+  to_add: []
+  to_remove:
+  - CycleContainerB -> CycleContainerA
+my_space:DisconnectedGroupAView(v1):
+  containers:
+  - DisconnectedGroupAContainer1
+  - DisconnectedGroupAContainer2
+  final_constraints:
+  - DisconnectedGroupAContainer1 -> DisconnectedGroupAContainer2
+  to_add:
+  - DisconnectedGroupAContainer1 -> DisconnectedGroupAContainer2
+  to_remove: []
+my_space:DisconnectedGroupBView(v1):
+  containers:
+  - DisconnectedGroupBContainer1
+  - DisconnectedGroupBContainer2
+  final_constraints:
+  - DisconnectedGroupBContainer1 -> DisconnectedGroupBContainer2
+  to_add:
+  - DisconnectedGroupBContainer1 -> DisconnectedGroupBContainer2
+  to_remove: []
+my_space:FunctionalLocationView(v1):
+  containers:
+  - Level01_FunctionalLocationContainer
+  - Level02_SharedTagContainer
+  - Level03_SharedDescribableContainer
+  final_constraints:
+  - Level01_FunctionalLocationContainer -> Level02_SharedTagContainer
+  - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
+  to_add:
+  - Level01_FunctionalLocationContainer -> Level02_SharedTagContainer
+  - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
+  to_remove: []
+my_space:ImmutableBridgeCombinedView(v1):
+  containers:
+  - CogniteDescribable
+  - ImmutableBridgeUserAContainer
+  - ImmutableBridgeUserBContainer
+  final_constraints:
+  - ImmutableBridgeUserAContainer -> CogniteDescribable
+  - ImmutableBridgeUserBContainer -> ImmutableBridgeUserAContainer
+  to_add:
+  - ImmutableBridgeUserAContainer -> CogniteDescribable
+  - ImmutableBridgeUserBContainer -> ImmutableBridgeUserAContainer
+  to_remove: []
+my_space:ImmutableBridgeViewA(v1):
+  containers:
+  - CogniteDescribable
+  - ImmutableBridgeUserAContainer
+  final_constraints:
+  - ImmutableBridgeUserAContainer -> CogniteDescribable
+  to_add:
+  - ImmutableBridgeUserAContainer -> CogniteDescribable
+  to_remove: []
+my_space:ImmutableBridgeViewB(v1):
+  containers:
+  - CogniteDescribable
+  - ImmutableBridgeUserBContainer
+  final_constraints:
+  - ImmutableBridgeUserAContainer -> CogniteDescribable
+  - ImmutableBridgeUserBContainer -> ImmutableBridgeUserAContainer
+  to_add:
+  - ImmutableBridgeUserAContainer -> CogniteDescribable
+  - ImmutableBridgeUserBContainer -> ImmutableBridgeUserAContainer
+  to_remove: []
+my_space:LocalViewWithExternalContainer(v1):
+  containers:
+  - ExternalOnlyContainer
+  - LocalContainerRequiringExternalContainer
+  final_constraints:
+  - LocalContainerRequiringExternalContainer -> ExternalOnlyContainer
+  to_add: []
+  to_remove: []
+my_space:MotorView(v1):
+  containers:
+  - Level01_MotorContainer
+  - Level02_TagWithWrongRequiresContainer
+  - Level03_DescribableContainer
+  final_constraints:
+  - Level01_MotorContainer -> Level02_TagWithWrongRequiresContainer
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_add:
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_remove:
+  - Level02_TagWithWrongRequiresContainer -> Level03_SourceableContainer
+my_space:PreConfiguredView(v1):
+  containers:
+  - PreConfiguredLeafContainer
+  - PreConfiguredRootContainer
+  final_constraints:
+  - PreConfiguredRootContainer -> PreConfiguredLeafContainer
+  to_add: []
+  to_remove: []
+my_space:PumpEquipmentView(v1):
+  containers:
+  - Level01_PumpEquipmentContainer
+  - Level02_SharedTagContainer
+  - Level03_SharedDescribableContainer
+  final_constraints:
+  - Level01_PumpEquipmentContainer -> Level02_SharedTagContainer
+  - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
+  to_add:
+  - Level01_PumpEquipmentContainer -> Level02_SharedTagContainer
+  - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
+  to_remove: []
+my_space:PumpView(v1):
+  containers:
+  - Level01_PumpContainer
+  - Level02_TagWithWrongRequiresContainer
+  - Level03_DescribableContainer
+  final_constraints:
+  - Level01_PumpContainer -> Level02_TagWithWrongRequiresContainer
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_add:
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_remove:
+  - Level02_TagWithWrongRequiresContainer -> Level03_SourceableContainer
+my_space:SharedTagView(v1):
+  containers:
+  - Level02_SharedAssetContainer
+  - Level02_SharedTagContainer
+  - Level03_SharedDescribableContainer
+  final_constraints:
+  - Level02_SharedAssetContainer -> Level03_SharedDescribableContainer
+  - Level03_SharedDescribableContainer -> Level02_SharedTagContainer
+  to_add:
+  - Level03_SharedDescribableContainer -> Level02_SharedTagContainer
+  to_remove: []
+my_space:TagWithAssetView(v1):
+  containers:
+  - Level02_AssetContainer
+  - Level02_TagWithWrongRequiresContainer
+  - Level03_DescribableContainer
+  final_constraints:
+  - Level02_AssetContainer -> Level03_DescribableContainer
+  - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
+  to_add:
+  - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
+  to_remove:
+  - Level02_AssetContainer -> Level03_SourceableContainer
+  - Level02_TagWithWrongRequiresContainer -> Level03_SourceableContainer
+my_space:ValveView(v1):
+  containers:
+  - Level01_ValveContainer
+  - Level02_TagWithWrongRequiresContainer
+  - Level03_DescribableContainer
+  final_constraints:
+  - Level01_ValveContainer -> Level02_TagWithWrongRequiresContainer
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_add:
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_remove:
+  - Level02_TagWithWrongRequiresContainer -> Level03_SourceableContainer

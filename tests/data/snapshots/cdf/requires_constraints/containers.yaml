@@ -1,0 +1,19 @@
+# Non-CDM container from CDF (not in local schema) - treated as immutable
+- space: external_space
+  externalId: ExternalOnlyContainer
+  name: ExternalOnlyContainer
+  usedFor: node
+  properties:
+    externalField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_describable:
+      constraintType: requires
+      require:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container

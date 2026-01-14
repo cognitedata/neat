@@ -1,198 +1,169 @@
-# Simple view with complete hierarchy (Asset requires Describable)
+# Test views for requires constraint recommendations
+# Naming: Level01=equipment(root), Level02=tag/asset, Level03=describable(leaf)
+
+# Already correctly configured
 - space: my_space
-  externalId: CompleteHierarchyView
+  externalId: PreConfiguredView
   version: v1
-  name: Complete Hierarchy View
-  description: View where containers already have complete requires hierarchy
+  name: Pre-Configured View
   properties:
-    assetField:
-      name: assetField
-      description: Field from Asset
+    rootField:
+      name: rootField
       container:
         space: my_space
-        externalId: BridgeAssetContainer
+        externalId: PreConfiguredRootContainer
         type: container
       containerPropertyIdentifier: assetField
-    descField:
-      name: descField
-      description: Field from Describable
+    leafField:
+      name: leafField
       container:
         space: my_space
-        externalId: BridgeDescribableContainer
+        externalId: PreConfiguredLeafContainer
         type: container
       containerPropertyIdentifier: description
 
-# View for transitive requires test - Parent, Middle, Leaf together where Middle requires Leaf
+# Equipment views: Pump/Valve/Motor → Tag → Describable
+# Tag has wrong requires to Sourceable (should be Describable)
 - space: my_space
-  externalId: TransitiveView
+  externalId: PumpView
   version: v1
-  name: Transitive View
-  description: View for testing transitive requires recommendations
+  name: Pump View
   properties:
-    fieldA:
-      name: fieldA
-      description: Field A
+    pumpId:
+      name: pumpId
       container:
         space: my_space
-        externalId: TransitiveParent
+        externalId: Level01_PumpContainer
         type: container
-      containerPropertyIdentifier: fieldA
-    fieldB:
-      name: fieldB
-      description: Field B
-      container:
-        space: my_space
-        externalId: TransitiveMiddle
-        type: container
-      containerPropertyIdentifier: fieldB
-    fieldC:
-      name: fieldC
-      description: Field C
-      container:
-        space: my_space
-        externalId: TransitiveLeaf
-        type: container
-      containerPropertyIdentifier: fieldC
-
-# Views for "Tag requires Sourceable instead of Asset" bridge test
-# BridgeSiblingAView: maps to SiblingA, Tag, Describable (NOT Asset)
-# BridgeTagView: maps to Tag, Asset, Describable
-# Expected: BridgeTagContainer → BridgeAssetContainer should be recommended for BridgeSiblingAView
-- space: my_space
-  externalId: BridgeSiblingAView
-  version: v1
-  name: Bridge Sibling A View
-  description: View mapping to SiblingA, Tag, Describable (NOT Asset)
-  properties:
-    siblingAId:
-      name: siblingAId
-      description: Sibling A ID
-      container:
-        space: my_space
-        externalId: BridgeSiblingAContainer
-        type: container
-      containerPropertyIdentifier: siblingAId
+      containerPropertyIdentifier: pumpId
     tagName:
       name: tagName
-      description: Tag Name
       container:
         space: my_space
-        externalId: BridgeTagContainer
+        externalId: Level02_TagWithWrongRequiresContainer
         type: container
       containerPropertyIdentifier: tagName
     description:
       name: description
-      description: Description
       container:
         space: my_space
-        externalId: BridgeDescribableContainer
+        externalId: Level03_DescribableContainer
         type: container
       containerPropertyIdentifier: description
 
-# Additional equipment views - independent of each other but share Tag and Describable
 - space: my_space
-  externalId: BridgeSiblingBView
+  externalId: ValveView
   version: v1
-  name: Bridge Sibling B View
-  description: View mapping to SiblingB, Tag, Describable
+  name: Valve View
   properties:
-    equipmentBId:
-      name: equipmentBId
-      description: Sibling B ID
+    valveId:
+      name: valveId
       container:
         space: my_space
-        externalId: BridgeSiblingBContainer
+        externalId: Level01_ValveContainer
         type: container
-      containerPropertyIdentifier: equipmentBId
+      containerPropertyIdentifier: valveId
     tagName:
       name: tagName
-      description: Tag Name
       container:
         space: my_space
-        externalId: BridgeTagContainer
+        externalId: Level02_TagWithWrongRequiresContainer
         type: container
       containerPropertyIdentifier: tagName
     description:
       name: description
-      description: Description
       container:
         space: my_space
-        externalId: BridgeDescribableContainer
+        externalId: Level03_DescribableContainer
         type: container
       containerPropertyIdentifier: description
 
 - space: my_space
-  externalId: BridgeSiblingCView
+  externalId: MotorView
   version: v1
-  name: Bridge Sibling C View
-  description: View mapping to SiblingC, Tag, Describable
+  name: Motor View
   properties:
-    equipmentCId:
-      name: equipmentCId
-      description: Sibling C ID
+    motorId:
+      name: motorId
       container:
         space: my_space
-        externalId: BridgeSiblingCContainer
+        externalId: Level01_MotorContainer
         type: container
-      containerPropertyIdentifier: equipmentCId
+      containerPropertyIdentifier: motorId
     tagName:
       name: tagName
-      description: Tag Name
       container:
         space: my_space
-        externalId: BridgeTagContainer
+        externalId: Level02_TagWithWrongRequiresContainer
         type: container
       containerPropertyIdentifier: tagName
     description:
       name: description
-      description: Description
       container:
         space: my_space
-        externalId: BridgeDescribableContainer
+        externalId: Level03_DescribableContainer
         type: container
       containerPropertyIdentifier: description
 
+# Two equipment containers with no shared intermediate
+# Path through Tag would create conflicting orientations (Motor→Tag vs Tag→Pump)
+# This view should be flagged as unsolvable
 - space: my_space
-  externalId: BridgeTagView
+  externalId: ConflictingEquipmentView
   version: v1
-  name: Bridge Tag View
-  description: View mapping to Tag, Asset, Describable
+  name: Conflicting Equipment View
+  properties:
+    motorField:
+      name: motorField
+      container:
+        space: my_space
+        externalId: Level01_MotorContainer
+        type: container
+      containerPropertyIdentifier: motorId
+    pumpField:
+      name: pumpField
+      container:
+        space: my_space
+        externalId: Level01_PumpContainer
+        type: container
+      containerPropertyIdentifier: pumpId
+
+# Tag with Asset: Tag, Asset, Describable (no equipment)
+- space: my_space
+  externalId: TagWithAssetView
+  version: v1
+  name: Tag With Asset View
   properties:
     tagName:
       name: tagName
-      description: Tag Name
       container:
         space: my_space
-        externalId: BridgeTagContainer
+        externalId: Level02_TagWithWrongRequiresContainer
         type: container
       containerPropertyIdentifier: tagName
     assetName:
       name: assetName
-      description: Asset Name
       container:
         space: my_space
-        externalId: BridgeAssetContainer
+        externalId: Level02_AssetContainer
         type: container
       containerPropertyIdentifier: assetName
     description:
       name: description
-      description: Description
       container:
         space: my_space
-        externalId: BridgeDescribableContainer
+        externalId: Level03_DescribableContainer
         type: container
       containerPropertyIdentifier: description
 
-# View for RequiresConstraintCycle test
+# Cycle test
 - space: my_space
   externalId: CycleTestView
   version: v1
   name: Cycle Test View
-  description: View for testing cycle detection
   properties:
     propCycleA:
       name: propCycleA
-      description: Property from CycleContainerA
       container:
         space: my_space
         externalId: CycleContainerA
@@ -200,21 +171,19 @@
       containerPropertyIdentifier: propA
     propCycleB:
       name: propCycleB
-      description: Property from CycleContainerB
       container:
         space: my_space
         externalId: CycleContainerB
         type: container
       containerPropertyIdentifier: propB
 
-# Disconnected component test - View for Group A (never appears with Group B)
+# Disconnected groups (never appear together)
 - space: my_space
   externalId: DisconnectedGroupAView
   version: v1
   properties:
     groupAField1:
       name: groupAField1
-      description: Field from DisconnectedGroupAContainer1
       container:
         space: my_space
         externalId: DisconnectedGroupAContainer1
@@ -222,21 +191,18 @@
       containerPropertyIdentifier: groupAField1
     groupAField2:
       name: groupAField2
-      description: Field from DisconnectedGroupAContainer2
       container:
         space: my_space
         externalId: DisconnectedGroupAContainer2
         type: container
       containerPropertyIdentifier: groupAField2
 
-# Disconnected component test - View for Group B (never appears with Group A)
 - space: my_space
   externalId: DisconnectedGroupBView
   version: v1
   properties:
     groupBField1:
       name: groupBField1
-      description: Field from DisconnectedGroupBContainer1
       container:
         space: my_space
         externalId: DisconnectedGroupBContainer1
@@ -244,120 +210,101 @@
       containerPropertyIdentifier: groupBField1
     groupBField2:
       name: groupBField2
-      description: Field from DisconnectedGroupBContainer2
       container:
         space: my_space
         externalId: DisconnectedGroupBContainer2
         type: container
       containerPropertyIdentifier: groupBField2
 
-# CDF bridge scenario - user containers connected via CDF container
-# Tests that MST avoids CDF sources and creates proper user-sourced hierarchy
+# User containers connected via immutable CDM container
 - space: my_space
-  externalId: CdfBridgeViewA
+  externalId: ImmutableBridgeViewA
   version: v1
   properties:
-    bridgeField:
-      name: bridgeField
-      description: Field from CDF bridge
+    name:
+      name: name
       container:
         space: cdf_cdm
-        externalId: CdfBridgeContainer
+        externalId: CogniteDescribable
         type: container
-      containerPropertyIdentifier: bridgeField
+      containerPropertyIdentifier: name
     userAField:
       name: userAField
-      description: Field from UserA
       container:
         space: my_space
-        externalId: CdfBridgeUserAContainer
+        externalId: ImmutableBridgeUserAContainer
         type: container
       containerPropertyIdentifier: userAField
 
-# View B: CdfBridge + UserB (UserA NOT here)
 - space: my_space
-  externalId: CdfBridgeViewB
+  externalId: ImmutableBridgeViewB
   version: v1
   properties:
-    bridgeField:
-      name: bridgeField
-      description: Field from CDF bridge
+    name:
+      name: name
       container:
         space: cdf_cdm
-        externalId: CdfBridgeContainer
+        externalId: CogniteDescribable
         type: container
-      containerPropertyIdentifier: bridgeField
+      containerPropertyIdentifier: name
     userBField:
       name: userBField
-      description: Field from UserB
       container:
         space: my_space
-        externalId: CdfBridgeUserBContainer
+        externalId: ImmutableBridgeUserBContainer
         type: container
       containerPropertyIdentifier: userBField
 
-# View with ALL THREE: UserA, UserB, CdfBridge
 - space: my_space
-  externalId: CdfBridgeCombinedView
+  externalId: ImmutableBridgeCombinedView
   version: v1
   properties:
-    bridgeField:
-      name: bridgeField
-      description: Field from CDF bridge
+    name:
+      name: name
       container:
         space: cdf_cdm
-        externalId: CdfBridgeContainer
+        externalId: CogniteDescribable
         type: container
-      containerPropertyIdentifier: bridgeField
+      containerPropertyIdentifier: name
     userAField:
       name: userAField
-      description: Field from UserA
       container:
         space: my_space
-        externalId: CdfBridgeUserAContainer
+        externalId: ImmutableBridgeUserAContainer
         type: container
       containerPropertyIdentifier: userAField
     userBField:
       name: userBField
-      description: Field from UserB
       container:
         space: my_space
-        externalId: CdfBridgeUserBContainer
+        externalId: ImmutableBridgeUserBContainer
         type: container
       containerPropertyIdentifier: userBField
 
-# FunctionalLocation-like scenario
-# FuncLocView: FuncLocContainer (view-specific), SharedTagContainer (shared), SharedDescribableContainer
-# SharedTagView: SharedTagContainer, SharedAssetContainer, SharedDescribableContainer
-# SharedAssetContainer already requires SharedDescribableContainer
-# Expected: FuncLocContainer → SharedTagContainer (not Tag → FuncLoc!)
-#           SharedTagContainer → SharedAssetContainer (to leverage Asset's requires)
+# View-specific vs shared: FuncLoc(1 view), Pump(1 view), Tag(3 views), Describable(3 views)
 - space: my_space
-  externalId: FuncLocView
+  externalId: FunctionalLocationView
   version: v1
   properties:
     funcLocField:
       name: funcLocField
-      description: Field from FuncLoc
       container:
         space: my_space
-        externalId: FuncLocContainer
+        externalId: Level01_FunctionalLocationContainer
         type: container
       containerPropertyIdentifier: funcLocField
     sharedTagField:
       name: sharedTagField
-      description: Field from SharedTag
       container:
         space: my_space
-        externalId: SharedTagContainer
+        externalId: Level02_SharedTagContainer
         type: container
       containerPropertyIdentifier: sharedTagField
     sharedDescField:
       name: sharedDescField
-      description: Field from SharedDescribable
       container:
         space: my_space
-        externalId: SharedDescribableContainer
+        externalId: Level03_SharedDescribableContainer
         type: container
       containerPropertyIdentifier: sharedDescField
 
@@ -367,56 +314,115 @@
   properties:
     sharedTagField:
       name: sharedTagField
-      description: Field from SharedTag
       container:
         space: my_space
-        externalId: SharedTagContainer
+        externalId: Level02_SharedTagContainer
         type: container
       containerPropertyIdentifier: sharedTagField
     sharedAssetField:
       name: sharedAssetField
-      description: Field from SharedAsset
       container:
         space: my_space
-        externalId: SharedAssetContainer
+        externalId: Level02_SharedAssetContainer
         type: container
       containerPropertyIdentifier: sharedAssetField
     sharedDescField:
       name: sharedDescField
-      description: Field from SharedDescribable
       container:
         space: my_space
-        externalId: SharedDescribableContainer
+        externalId: Level03_SharedDescribableContainer
         type: container
       containerPropertyIdentifier: sharedDescField
 
-# Second equipment view (like Pump) - shares Tag with FuncLocView
-# PumpContainer should be outermost for THIS view, not FuncLocContainer or Tag
 - space: my_space
-  externalId: PumpView
+  externalId: PumpEquipmentView
   version: v1
   properties:
     pumpField:
       name: pumpField
-      description: Field from Pump
       container:
         space: my_space
-        externalId: PumpContainer
+        externalId: Level01_PumpEquipmentContainer
         type: container
       containerPropertyIdentifier: pumpField
     sharedTagField:
       name: sharedTagField
-      description: Field from SharedTag
       container:
         space: my_space
-        externalId: SharedTagContainer
+        externalId: Level02_SharedTagContainer
         type: container
       containerPropertyIdentifier: sharedTagField
     sharedDescField:
       name: sharedDescField
-      description: Field from SharedDescribable
       container:
         space: my_space
-        externalId: SharedDescribableContainer
+        externalId: Level03_SharedDescribableContainer
         type: container
       containerPropertyIdentifier: sharedDescField
+
+# User containers extending CDM (leverages existing CogniteAsset → CogniteDescribable)
+- space: my_space
+  externalId: CogniteAssetExtensionView
+  version: v1
+  properties:
+    tagField:
+      name: tagField
+      container:
+        space: my_space
+        externalId: CogniteAssetExtensionContainer
+        type: container
+      containerPropertyIdentifier: tagField
+    assetPath:
+      name: assetPath
+      container:
+        space: cdf_cdm
+        externalId: CogniteAsset
+        type: container
+      containerPropertyIdentifier: assetHierarchy_path
+    descriptionFromCdm:
+      name: descriptionFromCdm
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: description
+
+- space: my_space
+  externalId: CogniteAssetExtensionSolutionModelScenarioView
+  version: v1
+  properties:
+    equipmentField:
+      name: equipmentField
+      container:
+        space: my_space
+        externalId: CogniteAssetExtensionSolutionModelScenarioContainer
+        type: container
+      containerPropertyIdentifier: equipmentField
+    tagFieldShared:
+      name: tagFieldShared
+      container:
+        space: my_space
+        externalId: CogniteAssetExtensionContainer
+        type: container
+      containerPropertyIdentifier: tagField
+    descriptionFromCdmEquip:
+      name: descriptionFromCdmEquip
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: description
+
+# Local view with external non-CDM container
+- space: my_space
+  externalId: LocalViewWithExternalContainer
+  version: v1
+  name: Local View With External Container
+  properties:
+    localRequiresField:
+      name: localRequiresField
+      container:
+        space: my_space
+        externalId: LocalContainerRequiringExternalContainer
+        type: container
+      containerPropertyIdentifier: localRequiresField

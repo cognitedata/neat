@@ -1,50 +1,40 @@
-# Containers for transitive requires test - Middle requires Leaf
-- space: my_space
-  externalId: TransitiveParent
-  usedFor: node
-  properties:
-    fieldA:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
+# Test data for requires constraint recommendations
+# Naming convention: Level01=equipment(root), Level02=tag, Level03=describable(leaf)
+# Alphabetically Level01 < Level02 < Level03, but hierarchy should be Level01 → Level02 → Level03
 
+# Already correctly configured - should need no changes
 - space: my_space
-  externalId: TransitiveMiddle
+  externalId: PreConfiguredRootContainer
   usedFor: node
   properties:
-    fieldB:
+    assetField:
       immutable: false
       nullable: true
       type:
         type: text
         list: false
   constraints:
-    req_leaf:
+    req_describable:
       constraintType: requires
       require:
         space: my_space
-        externalId: TransitiveLeaf
+        externalId: PreConfiguredLeafContainer
         type: container
 
 - space: my_space
-  externalId: TransitiveLeaf
+  externalId: PreConfiguredLeafContainer
   usedFor: node
   properties:
-    fieldC:
+    description:
       immutable: false
       nullable: true
       type:
         type: text
         list: false
 
-# Containers for "Tag requires Sourceable instead of Asset" bridge test
-# Key: BridgeTagContainer requires SourceableContainer (suboptimal choice)
-#      BridgeAssetContainer requires SourceableContainer AND BridgeDescribableContainer
-#      BridgeSiblingAContainer should recommend BridgeTagContainer → BridgeAssetContainer
+# Tag points to wrong target (Sourceable) instead of correct target (Describable)
 - space: my_space
-  externalId: BridgeSourceableContainer
+  externalId: Level03_SourceableContainer
   usedFor: node
   properties:
     sourceId:
@@ -55,7 +45,7 @@
         list: false
 
 - space: my_space
-  externalId: BridgeDescribableContainer
+  externalId: Level03_DescribableContainer
   usedFor: node
   properties:
     description:
@@ -66,7 +56,7 @@
         list: false
 
 - space: my_space
-  externalId: BridgeAssetContainer
+  externalId: Level02_AssetContainer
   usedFor: node
   properties:
     assetName:
@@ -80,17 +70,17 @@
       constraintType: requires
       require:
         space: my_space
-        externalId: BridgeSourceableContainer
+        externalId: Level03_SourceableContainer
         type: container
     req_describable:
       constraintType: requires
       require:
         space: my_space
-        externalId: BridgeDescribableContainer
+        externalId: Level03_DescribableContainer
         type: container
 
 - space: my_space
-  externalId: BridgeTagContainer
+  externalId: Level02_TagWithWrongRequiresContainer
   usedFor: node
   properties:
     tagName:
@@ -104,14 +94,14 @@
       constraintType: requires
       require:
         space: my_space
-        externalId: BridgeSourceableContainer
+        externalId: Level03_SourceableContainer
         type: container
 
 - space: my_space
-  externalId: BridgeSiblingAContainer
+  externalId: Level01_PumpContainer
   usedFor: node
   properties:
-    siblingAId:
+    pumpId:
       immutable: false
       nullable: true
       type:
@@ -122,15 +112,14 @@
       constraintType: requires
       require:
         space: my_space
-        externalId: BridgeTagContainer
+        externalId: Level02_TagWithWrongRequiresContainer
         type: container
 
-# Additional sibling containers - independent of each other but share Tag and Describable
 - space: my_space
-  externalId: BridgeSiblingBContainer
+  externalId: Level01_ValveContainer
   usedFor: node
   properties:
-    equipmentBId:
+    valveId:
       immutable: false
       nullable: true
       type:
@@ -141,14 +130,14 @@
       constraintType: requires
       require:
         space: my_space
-        externalId: BridgeTagContainer
+        externalId: Level02_TagWithWrongRequiresContainer
         type: container
 
 - space: my_space
-  externalId: BridgeSiblingCContainer
+  externalId: Level01_MotorContainer
   usedFor: node
   properties:
-    equipmentCId:
+    motorId:
       immutable: false
       nullable: true
       type:
@@ -159,10 +148,10 @@
       constraintType: requires
       require:
         space: my_space
-        externalId: BridgeTagContainer
+        externalId: Level02_TagWithWrongRequiresContainer
         type: container
 
-# Containers for RequiresConstraintCycle test - A requires B, B requires A
+# Bidirectional requires (cycle) - one direction must be removed
 - space: my_space
   externalId: CycleContainerA
   usedFor: node
@@ -199,7 +188,7 @@
         externalId: CycleContainerA
         type: container
 
-# Disconnected component test - Group A (never appears with Group B)
+# Containers that never appear together (no shared views)
 - space: my_space
   externalId: DisconnectedGroupAContainer1
   usedFor: node
@@ -222,7 +211,6 @@
         type: text
         list: false
 
-# Disconnected component test - Group B (never appears with Group A)
 - space: my_space
   externalId: DisconnectedGroupBContainer1
   usedFor: node
@@ -245,22 +233,9 @@
         type: text
         list: false
 
-# CDF bridge container - tests that MST avoids CDF containers as sources
-# User containers connected via this CDF bridge should still get proper recommendations
-- space: cdf_cdm
-  externalId: CdfBridgeContainer
-  usedFor: node
-  properties:
-    bridgeField:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
-# User containers that will be connected via CDF bridge
+# User containers connected via immutable CDM container (CogniteDescribable)
 - space: my_space
-  externalId: CdfBridgeUserAContainer
+  externalId: ImmutableBridgeUserAContainer
   usedFor: node
   properties:
     userAField:
@@ -271,7 +246,7 @@
         list: false
 
 - space: my_space
-  externalId: CdfBridgeUserBContainer
+  externalId: ImmutableBridgeUserBContainer
   usedFor: node
   properties:
     userBField:
@@ -281,12 +256,10 @@
         type: text
         list: false
 
-# FunctionalLocation-like scenario: view-specific container should require shared container
-# FuncLocContainer appears only in FuncLocView
-# SharedTagContainer appears in both FuncLocView and SharedTagView
-# SharedAssetContainer appears in SharedTagView and has existing requires
+# View-specific containers (Level01) vs shared containers (Level02/03)
+# FuncLoc is view-specific, Tag/Describable are shared across views
 - space: my_space
-  externalId: FuncLocContainer
+  externalId: Level01_FunctionalLocationContainer
   usedFor: node
   properties:
     funcLocField:
@@ -297,7 +270,7 @@
         list: false
 
 - space: my_space
-  externalId: SharedTagContainer
+  externalId: Level02_SharedTagContainer
   usedFor: node
   properties:
     sharedTagField:
@@ -308,7 +281,7 @@
         list: false
 
 - space: my_space
-  externalId: SharedAssetContainer
+  externalId: Level02_SharedAssetContainer
   usedFor: node
   properties:
     sharedAssetField:
@@ -322,11 +295,11 @@
       constraintType: requires
       require:
         space: my_space
-        externalId: SharedDescribableContainer
+        externalId: Level03_SharedDescribableContainer
         type: container
 
 - space: my_space
-  externalId: SharedDescribableContainer
+  externalId: Level03_SharedDescribableContainer
   usedFor: node
   properties:
     sharedDescField:
@@ -336,11 +309,8 @@
         type: text
         list: false
 
-# Second view-specific container (like Pump) to test multiple equipment scenario
-# PumpContainer appears only in PumpView, but shares Tag with FuncLocContainer
-# This tests that BOTH FuncLoc and Pump are outermost for their respective views
 - space: my_space
-  externalId: PumpContainer
+  externalId: Level01_PumpEquipmentContainer
   usedFor: node
   properties:
     pumpField:
@@ -349,3 +319,45 @@
       type:
         type: text
         list: false
+
+# User container extending CDM (CogniteAsset already requires CogniteDescribable)
+- space: my_space
+  externalId: CogniteAssetExtensionContainer
+  usedFor: node
+  properties:
+    tagField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: CogniteAssetExtensionSolutionModelScenarioContainer
+  usedFor: node
+  properties:
+    equipmentField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+# Local container requiring external non-CDM container (treated as immutable)
+- space: my_space
+  externalId: LocalContainerRequiringExternalContainer
+  usedFor: node
+  properties:
+    localRequiresField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_external:
+      constraintType: requires
+      require:
+        space: external_space
+        externalId: ExternalOnlyContainer
+        type: container
