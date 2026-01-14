@@ -1,4 +1,3 @@
-import json
 from collections.abc import Mapping
 from typing import Annotated, Literal, cast, get_args
 
@@ -7,7 +6,6 @@ from pydantic import (
     BaseModel,
     BeforeValidator,
     Field,
-    JsonValue,
     PlainSerializer,
     field_validator,
     model_validator,
@@ -19,11 +17,6 @@ from traitlets import Any
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._utils.text import title_case
 from cognite.neat._utils.useful_types import CellValueType
-from cognite.neat._v0.core._data_model.models.entities import (
-    HasDataFilter,
-    NodeTypeFilter,
-    RawFilter,
-)
 
 # This marker is used to identify creator in the description field.
 CREATOR_MARKER = "Creator: "
@@ -158,17 +151,7 @@ class RAWFilterTableFilter(BaseModel):
     """This is a generic filter that holds raw JSON filter."""
 
     type: Literal["rawFilter"] = "rawFilter"
-    filter: dict[str, JsonValue]
-
-    @field_validator("filter", mode="before")
-    @classmethod
-    def _parse_raw_filter(cls, value: Any) -> Any:
-        if isinstance(value, str):
-            try:
-                return json.loads(value)
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON for raw filter: {e}") from e
-        return value
+    filter: str
 
 
 def _parse_table_filter(v: str) -> dict[str, str] | EntityTableFilter | RAWFilterTableFilter:
@@ -199,24 +182,8 @@ class DMSView(TableObj):
     name: str | None = None
     description: str | None = None
     implements: EntityList | None = None
-    filter: str | None = None
+    filter: TableViewFilter | None = None
     in_model: bool | None = Field(None, exclude=True, description="Legacy column")
-
-    @field_validator("filter", mode="after")
-    def _legacy_filter(cls, value: str | None) -> str | None:
-        if value is None:
-            return value
-
-        value_lower = value.lower()
-
-        if value_lower.startswith("hasdata("):
-            return json.dumps(HasDataFilter.load(value).as_dms_filter().dump())
-        elif value_lower.startswith("nodetype("):
-            return json.dumps(NodeTypeFilter.load(value).as_dms_filter().dump())
-        elif value_lower.startswith("rawfilter("):
-            return json.dumps(RawFilter.load(value).as_dms_filter().dump())
-
-        return value
 
 
 class DMSContainer(TableObj):

@@ -1528,12 +1528,12 @@ class TestTableViewFilter:
             ),
             pytest.param(
                 RAW_FILTER_CELL_EXAMPLE,
-                RAWFilterTableFilter.model_validate(dict(filter=RAW_FILTER_EXAMPLE)),
+                RAWFilterTableFilter(filter=RAW_FILTER_EXAMPLE),
                 id="raw filter, simple",
             ),
             pytest.param(
                 RAW_FILTER_EXAMPLE,
-                RAWFilterTableFilter.model_validate(dict(filter=RAW_FILTER_EXAMPLE)),
+                RAWFilterTableFilter(filter=RAW_FILTER_EXAMPLE),
                 id="raw filter, without cell syntax",
             ),
         ],
