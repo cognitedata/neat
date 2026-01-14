@@ -487,6 +487,15 @@ class ValidationResources:
         return graph
 
     @cached_property
+    def implements_cycles(self) -> list[list[ViewReference]]:
+        """Find all cycles in the implements graph.
+        Returns:
+            List of lists, where each list contains the ordered Views involved in forming the implements cycle.
+        """
+
+        return self.graph_cycles(self.implements_graph)
+
+    @cached_property
     def requires_constraint_graph(self) -> nx.DiGraph:
         """Build a directed graph of container requires constraints.
 
@@ -549,13 +558,9 @@ class ValidationResources:
 
     @cached_property
     def requires_constraint_cycles(self) -> list[list[ContainerReference]]:
-        """Find all cycles in the requires constraint graph using Tarjan's algorithm.
-
-        Uses strongly connected components (SCC) to identify cycles efficiently.
-        An SCC with more than one node indicates a cycle.
-
+        """Find all cycles in the requires constraint graph.
         Returns:
-            List of sets, where each set contains the containers involved in a cycle.
+            List of lists, where each list contains the ordered containers involved in forming the requires cycle.
         """
 
         return self.graph_cycles(self.requires_constraint_graph)

@@ -7,6 +7,7 @@ from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.validation.dms._base import DataModelValidator  # for identity check
 from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
+from cognite.neat._data_model.validation.dms._views import CyclicImplements
 from cognite.neat._issues import ConsistencyError
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from tests.data import SNAPSHOT_CATALOG
@@ -45,7 +46,7 @@ def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> Non
     )
 
     local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
-        "ai_readiness", "for_validators", modus_operandi=mode, include_cdm=False, format="snapshots"
+        "cyclic_implements", "for_validators", modus_operandi=mode, include_cdm=False, format="snapshots"
     )
     data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
 
@@ -60,3 +61,4 @@ def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> Non
     by_code = on_success.issues.by_code()
 
     assert (AlphaValidatorLocal.code in by_code) == enable
+    assert (CyclicImplements.code in by_code) == enable

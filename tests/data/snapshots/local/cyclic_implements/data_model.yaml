@@ -1,0 +1,19 @@
+space: my_space
+externalId: CyclicImplementsTest
+version: v1
+name: Cyclic Implements Test
+description: A test data model for validating cyclic implements
+views:
+  - space: my_space
+    externalId: ViewA
+    version: v1
+    type: view
+  - space: my_space
+    externalId: ViewB
+    version: v1
+    type: view
+  - space: my_space
+    externalId: ViewC
+    version: v1
+    type: view
+

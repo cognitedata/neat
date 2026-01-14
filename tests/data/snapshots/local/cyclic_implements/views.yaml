@@ -1,0 +1,59 @@
+- space: my_space
+  externalId: ViewA
+  version: v1
+  name: View A
+  description: View A description
+  properties:
+    fieldA:
+      name: fieldA
+      description: Field A
+      container:
+        space: my_space
+        externalId: ContainerA
+        type: container
+      containerPropertyIdentifier: propertyA
+  implements:
+  - space: my_space
+    externalId: ViewB
+    version: v1
+    type: view
+
+- space: my_space
+  externalId: ViewB
+  version: v1
+  name: View B
+  description: View B description
+  properties:
+    fieldB:
+      name: fieldB
+      description: Field B
+      container:
+        space: my_space
+        externalId: ContainerB
+        type: container
+      containerPropertyIdentifier: propertyB
+  implements:
+  - space: my_space
+    externalId: ViewC
+    version: v1
+    type: view
+
+- space: my_space
+  externalId: ViewC
+  version: v1
+  name: View C
+  description: View C description
+  properties:
+    fieldC:
+      name: fieldC
+      description: Field C
+      container:
+        space: my_space
+        externalId: ContainerC
+        type: container
+      containerPropertyIdentifier: propertyC
+  implements:
+  - space: my_space
+    externalId: ViewA
+    version: v1
+    type: view

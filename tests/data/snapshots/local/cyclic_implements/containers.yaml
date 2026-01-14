@@ -1,0 +1,33 @@
+- space: my_space
+  externalId: ContainerA
+  usedFor: node
+  properties:
+    propertyA:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+
+- space: my_space
+  externalId: ContainerB
+  usedFor: node
+  properties:
+    propertyB:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: ContainerC
+  usedFor: node
+  properties:
+    propertyC:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
