@@ -30,7 +30,19 @@ from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.validation import ValidationContext, humanize_validation_error
 
-from .data_classes import CREATOR_KEY, CREATOR_MARKER, DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView, TableDMS
+from .data_classes import (
+    CREATOR_KEY,
+    CREATOR_MARKER,
+    DMSContainer,
+    DMSEnum,
+    DMSNode,
+    DMSProperty,
+    DMSView,
+    EntityTableFilter,
+    RAWFilterTableFilter,
+    TableDMS,
+    TableViewFilter,
+)
 from .source import TableSource
 
 T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
@@ -845,19 +857,6 @@ class DMSTableReader:
         views_requests: list[ViewRequest] = []
         rows_by_seen: dict[ParsedEntity, list[int]] = defaultdict(list)
         for row_no, view in enumerate(views):
-            filter_dict: dict[str, Any] | None = None
-            if view.filter is not None:
-                try:
-                    filter_dict = json.loads(view.filter)
-                except ValueError as e:
-                    self.errors.append(
-                        ModelSyntaxError(
-                            message=(
-                                f"In {self.source.location((self.Sheets.views, row_no, self.ViewColumns.filter))} "
-                                f"must be valid json. Got error {e!s}"
-                            )
-                        )
-                    )
             view_request = self._validate_obj(
                 ViewRequest,
                 dict(
@@ -865,7 +864,7 @@ class DMSTableReader:
                     name=view.name,
                     description=view.description,
                     implements=[self._create_view_ref(impl) for impl in view.implements] if view.implements else None,
-                    filter=filter_dict,
+                    filter=self._create_filter_dict(view.filter, row_no) if view.filter else None,
                     properties=properties.get(view.view, {}),
                 ),
                 (self.Sheets.views, row_no),
@@ -890,6 +889,46 @@ class DMSTableReader:
                     )
                 )
         return views_requests, set(rows_by_seen.keys())
+
+    def _create_filter_dict(self, filter: TableViewFilter, row_no: int) -> dict[str, Any] | None:
+        if isinstance(filter, RAWFilterTableFilter):
+            try:
+                return json.loads(filter.filter)
+            except ValueError as e:
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"In {self.source.location((self.Sheets.views, row_no, self.ViewColumns.filter))} "
+                            f"must be valid json. Got error {e!s}"
+                        )
+                    )
+                )
+            return None
+        elif isinstance(filter, EntityTableFilter):
+            return self._create_entity_filter_dict(filter)
+        else:
+            # This is unreachable due to validation of the TableViewFilter model.
+            raise RuntimeError(f"Unknown filter type {filter.__class__.__name__}")
+
+    def _create_entity_filter_dict(self, filter: EntityTableFilter) -> dict[str, Any]:
+        """Creates the filter dictionary from an EntityTableFilter."""
+        if filter.type == "hasData":
+            return {
+                "hasData": [{**self._create_container_ref(entity), "type": "container"} for entity in filter.entities]
+            }
+        elif filter.type == "nodeType":
+            if len(filter.entities) == 1:
+                return {"equals": {"property": ["node", "type"], "value": self._create_node_ref(filter.entities[0])}}
+            else:
+                return {
+                    "in": {
+                        "property": ["node", "type"],
+                        "values": [self._create_node_ref(entity) for entity in filter.entities],
+                    }
+                }
+        else:
+            # This is unreachable due to validation of the EntityTableFilter model.
+            raise RuntimeError(f"Unknown filter type {filter.__class__.__name__}")
 
     def read_data_model(self, tables: TableDMS, valid_view_entities: set[ParsedEntity]) -> DataModelRequest:
         data: dict[str, Any] = {
