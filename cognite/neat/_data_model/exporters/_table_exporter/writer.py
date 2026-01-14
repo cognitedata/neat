@@ -3,6 +3,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from pydantic import ValidationError
+
 from cognite.neat._data_model._constants import DEFAULT_MAX_LIST_SIZE, DEFAULT_MAX_LIST_SIZE_DIRECT_RELATIONS
 from cognite.neat._data_model.importers._table_importer.data_classes import (
     CREATOR_KEY,
@@ -330,7 +332,7 @@ class DMSTableWriter:
             isinstance(body, EqualsFilterData)
             and body.property == ["node", "type"]
             and isinstance(body.value, dict)
-            and (node_reference := self._get_node_reference(body.value))
+            and (node_reference := self._try_get_node_reference(body.value))
         ):
             return "nodeType", [self._create_node_entity(node_reference)]
         elif (
@@ -338,7 +340,7 @@ class DMSTableWriter:
             and body.property == ["node", "type"]
             and isinstance(body.values, list)
             # All values must be node references
-            and len(node_references := [ref for value in body.values if (ref := self._get_node_reference(value))])
+            and len(node_references := [ref for value in body.values if (ref := self._try_get_node_reference(value))])
             == len(body.values)
         ):
             return "nodeType", [self._create_node_entity(node) for node in node_references]
@@ -353,10 +355,12 @@ class DMSTableWriter:
         else:
             return None, []
 
-    def _get_node_reference(self, value: Any) -> NodeReference | None:
-        if isinstance(value, dict) and "space" in value and "externalId" in value:
-            return NodeReference(space=value["space"], external_id=value["externalId"])
-        return None
+    @staticmethod
+    def _try_get_node_reference(value: Any) -> NodeReference | None:
+        try:
+            return NodeReference.model_validate(value)
+        except ValidationError:
+            return None
 
     def write_view_properties(self, views: list[ViewRequest], container: ContainerProperties) -> ViewProperties:
         output = ViewProperties()
