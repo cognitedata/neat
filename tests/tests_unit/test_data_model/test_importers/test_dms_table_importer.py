@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
+from pydantic import TypeAdapter
 
 from cognite.neat._data_model.exporters._table_exporter.exporter import (
     DMSExcelExporter,
@@ -12,6 +13,11 @@ from cognite.neat._data_model.exporters._table_exporter.exporter import (
 )
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookCreator
 from cognite.neat._data_model.importers import DMSTableImporter
+from cognite.neat._data_model.importers._table_importer.data_classes import (
+    EntityTableFilter,
+    RAWFilterTableFilter,
+    TableViewFilter,
+)
 from cognite.neat._data_model.importers._table_importer.source import SpreadsheetReadContext, TableSource
 from cognite.neat._data_model.models.dms import (
     BtreeIndex,
@@ -37,6 +43,7 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
+from cognite.neat._data_model.models.entities import ParsedEntity
 from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
 from cognite.neat._v0.core._data_model.models.entities._wrapped import HasDataFilter, NodeTypeFilter, RawFilter
@@ -1473,6 +1480,68 @@ def max_count_infinity_table() -> dict:
             {"Container": "TestContainer", "Used For": "node"},
         ],
     }
+
+
+class TestTableViewFilter:
+    @pytest.mark.parametrize(
+        "cell_text, expected",
+        [
+            pytest.param(
+                "hasData(my_space:container1)",
+                EntityTableFilter(type="hasData", entities=[ParsedEntity("my_space", "container1", {})]),
+                id="hasData, single container",
+            ),
+            pytest.param(
+                "hasData(my_space:container1, my_space2e:container2)",
+                EntityTableFilter(
+                    type="hasData",
+                    entities=[ParsedEntity("my_space", "container1", {}), ParsedEntity("my_space2e", "container2", {})],
+                ),
+                id="hasData, multiple containers",
+            ),
+            pytest.param(
+                "hasData(container1,container2)",
+                EntityTableFilter(
+                    type="hasData", entities=[ParsedEntity("", "container1", {}), ParsedEntity("", "container2", {})]
+                ),
+                id="hasData, no spaces",
+            ),
+            pytest.param(
+                "nodeType(my_space:node1)",
+                EntityTableFilter(type="nodeType", entities=[ParsedEntity("my_space", "node1", {})]),
+                id="nodeType, single node",
+            ),
+            pytest.param(
+                "nodeType(my_space:node1, my_space2e:node2)",
+                EntityTableFilter(
+                    type="nodeType",
+                    entities=[ParsedEntity("my_space", "node1", {}), ParsedEntity("my_space2e", "node2", {})],
+                ),
+                id="nodeType, multiple nodes",
+            ),
+            pytest.param(
+                "nodeType(node1,node2)",
+                EntityTableFilter(
+                    type="nodeType", entities=[ParsedEntity("", "node1", {}), ParsedEntity("", "node2", {})]
+                ),
+                id="nodeType, no spaces",
+            ),
+            pytest.param(
+                RAW_FILTER_CELL_EXAMPLE,
+                RAWFilterTableFilter.model_validate(dict(filter=RAW_FILTER_EXAMPLE)),
+                id="raw filter, simple",
+            ),
+            pytest.param(
+                RAW_FILTER_EXAMPLE,
+                RAWFilterTableFilter.model_validate(dict(filter=RAW_FILTER_EXAMPLE)),
+                id="raw filter, without cell syntax",
+            ),
+        ],
+    )
+    def test_parse(self, cell_text: str, expected: TableViewFilter) -> None:
+        result: TableViewFilter = TypeAdapter(TableViewFilter).validate_python(cell_text)
+
+        assert result.model_dump() == expected.model_dump()
 
 
 class TestDMSTableImporter:

@@ -157,8 +157,18 @@ class EntityTableFilter(BaseModel):
 class RAWFilterTableFilter(BaseModel):
     """This is a generic filter that holds raw JSON filter."""
 
-    type: Literal["rawFilter"]
+    type: Literal["rawFilter"] = "rawFilter"
     filter: dict[str, JsonValue]
+
+    @field_validator("filter", mode="before")
+    @classmethod
+    def _parse_raw_filter(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON for raw filter: {e}") from e
+        return value
 
 
 def _parse_table_filter(v: str) -> dict[str, str] | EntityTableFilter | RAWFilterTableFilter:
