@@ -7,6 +7,7 @@ from pydantic import (
     BaseModel,
     BeforeValidator,
     Field,
+    JsonValue,
     PlainSerializer,
     field_validator,
     model_validator,
@@ -144,6 +145,43 @@ class DMSProperty(TableObj):
                 constraint.prefix = "uniqueness"
 
         return self
+
+
+class EntityTableFilter(BaseModel):
+    """These are special formats that Neat Table format supports for filters."""
+
+    type: Literal["hasData", "nodeType"]
+    entities: EntityList
+
+
+class RAWFilterTableFilter(BaseModel):
+    """This is a generic filter that holds raw JSON filter."""
+
+    type: Literal["rawFilter"]
+    filter: dict[str, JsonValue]
+
+
+def _parse_table_filter(v: str) -> dict[str, str] | EntityTableFilter | RAWFilterTableFilter:
+    if isinstance(v, EntityTableFilter | RAWFilterTableFilter):
+        return v
+    filter_configs = {
+        "hasData(": ("hasData", "entities"),
+        "nodeType(": ("nodeType", "entities"),
+        "rawFilter(": ("rawFilter", "filter"),
+    }
+    for prefix, (filter_type, field_name) in filter_configs.items():
+        if v.startswith(prefix) and v.endswith(")"):
+            return {"type": filter_type, field_name: v.removeprefix(prefix).removesuffix(")")}
+    # Fallback to raw filter with the whole string
+    return {"type": "rawFilter", "filter": v}
+
+
+TableViewFilter = Annotated[
+    EntityTableFilter | RAWFilterTableFilter,
+    Field(discriminator="type"),
+    BeforeValidator(_parse_table_filter, str),
+    PlainSerializer(func=str),
+]
 
 
 class DMSView(TableObj):
