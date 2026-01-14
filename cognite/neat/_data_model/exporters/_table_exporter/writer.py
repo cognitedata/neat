@@ -14,6 +14,7 @@ from cognite.neat._data_model.importers._table_importer.data_classes import (
     DMSView,
     MetadataValue,
     TableDMS,
+    TableViewFilter,
 )
 from cognite.neat._data_model.models.dms import (
     ContainerPropertyDefinition,
@@ -23,7 +24,7 @@ from cognite.neat._data_model.models.dms import (
     DataType,
     DirectNodeRelation,
     EnumProperty,
-    FilterAdapter,
+    Filter,
     ListablePropertyTypeDefinition,
     NodeReference,
     RequestSchema,
@@ -299,12 +300,13 @@ class DMSTableWriter:
                 implements=[self._create_view_entity(parent) for parent in view.implements]
                 if view.implements
                 else None,
-                filter=FilterAdapter.dump_json(view.filter, by_alias=True).decode(encoding="utf-8")
-                if view.filter
-                else None,
+                filter=self.write_view_filter(view.filter),
             )
             for view in views
         ]
+
+    def write_view_filter(self, filter: Filter | None) -> TableViewFilter | None:
+        raise NotImplementedError()
 
     def write_view_properties(self, views: list[ViewRequest], container: ContainerProperties) -> ViewProperties:
         output = ViewProperties()
