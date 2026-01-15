@@ -3,6 +3,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from pydantic import ValidationError
+
 from cognite.neat._data_model._constants import DEFAULT_MAX_LIST_SIZE, DEFAULT_MAX_LIST_SIZE_DIRECT_RELATIONS
 from cognite.neat._data_model.importers._table_importer.data_classes import (
     CREATOR_KEY,
@@ -12,8 +14,11 @@ from cognite.neat._data_model.importers._table_importer.data_classes import (
     DMSNode,
     DMSProperty,
     DMSView,
+    EntityTableFilter,
     MetadataValue,
+    RAWFilterTableFilter,
     TableDMS,
+    TableViewFilter,
 )
 from cognite.neat._data_model.models.dms import (
     ContainerPropertyDefinition,
@@ -23,7 +28,11 @@ from cognite.neat._data_model.models.dms import (
     DataType,
     DirectNodeRelation,
     EnumProperty,
+    EqualsFilterData,
+    Filter,
     FilterAdapter,
+    HasDataFilter,
+    InFilterData,
     ListablePropertyTypeDefinition,
     NodeReference,
     RequestSchema,
@@ -299,12 +308,59 @@ class DMSTableWriter:
                 implements=[self._create_view_entity(parent) for parent in view.implements]
                 if view.implements
                 else None,
-                filter=FilterAdapter.dump_json(view.filter, by_alias=True).decode(encoding="utf-8")
-                if view.filter
-                else None,
+                filter=self.write_view_filter(view.filter),
             )
             for view in views
         ]
+
+    def write_view_filter(self, filter: Filter | None) -> TableViewFilter | None:
+        if filter is None:
+            return None
+        filter_type, entities = self._get_entity_filter(filter)
+        if filter_type is not None and entities:
+            return EntityTableFilter(type=filter_type, entities=entities)
+        else:
+            return RAWFilterTableFilter(filter=FilterAdapter.dump_json(filter, by_alias=True).decode(encoding="utf-8"))
+
+    def _get_entity_filter(self, filter: Filter) -> tuple[Literal["nodeType", "hasData"] | None, list[ParsedEntity]]:
+        """If the filter is an entity-based filter (Equals or In on nodes), return the type and entities.
+        Otherwise, return (None, [])."""
+        if filter is None or len(filter) != 1:
+            return None, []
+        filter_name, body = next(iter(filter.items()))
+        if (
+            isinstance(body, EqualsFilterData)
+            and body.property == ["node", "type"]
+            and isinstance(body.value, dict)
+            and (node_reference := self._try_get_node_reference(body.value))
+        ):
+            return "nodeType", [self._create_node_entity(node_reference)]
+        elif (
+            isinstance(body, InFilterData)
+            and body.property == ["node", "type"]
+            and isinstance(body.values, list)
+            # All values must be node references
+            and len(node_references := [ref for value in body.values if (ref := self._try_get_node_reference(value))])
+            == len(body.values)
+        ):
+            return "nodeType", [self._create_node_entity(node) for node in node_references]
+        elif (
+            isinstance(body, HasDataFilter)
+            and
+            # All data must be container references, a single view reference makes it a raw filter
+            len(container_refs := [item for item in body.data if isinstance(item, ContainerReference)])
+            == len(body.data)
+        ):
+            return "hasData", [self._create_container_entity(item) for item in container_refs]
+        else:
+            return None, []
+
+    @staticmethod
+    def _try_get_node_reference(value: Any) -> NodeReference | None:
+        try:
+            return NodeReference.model_validate(value)
+        except ValidationError:
+            return None
 
     def write_view_properties(self, views: list[ViewRequest], container: ContainerProperties) -> ViewProperties:
         output = ViewProperties()

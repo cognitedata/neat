@@ -1,8 +1,27 @@
 from typing import Any
 
+import pytest
+
 from cognite.neat._data_model._constants import DEFAULT_MAX_LIST_SIZE, DEFAULT_MAX_LIST_SIZE_DIRECT_RELATIONS
 from cognite.neat._data_model.exporters import DMSTableExporter
-from cognite.neat._data_model.models.dms import DirectNodeRelation, ListablePropertyTypeDefinition, RequestSchema
+from cognite.neat._data_model.exporters._table_exporter.writer import DMSTableWriter
+from cognite.neat._data_model.importers._table_importer.data_classes import (
+    EntityTableFilter,
+    RAWFilterTableFilter,
+    TableViewFilter,
+)
+from cognite.neat._data_model.models.dms import (
+    ContainerReference,
+    DirectNodeRelation,
+    EqualsFilterData,
+    Filter,
+    HasDataFilter,
+    InFilterData,
+    ListablePropertyTypeDefinition,
+    RequestSchema,
+    ViewReference,
+)
+from cognite.neat._data_model.models.entities import ParsedEntity
 
 
 class TestDMSTableExporter:
@@ -69,3 +88,73 @@ class TestDMSTableExporter:
             else DEFAULT_MAX_LIST_SIZE
         )
         assert exported_prop["Max Count"] == max_list_size
+
+
+class TestDMSTableWriter:
+    DEFAULT_SPACE = "default_space"
+    DEFAULT_VERSION = "default_version"
+
+    @pytest.mark.parametrize(
+        "filter, expected",
+        [
+            pytest.param(
+                {"hasData": HasDataFilter(data=[ContainerReference(space="my_space", external_id="container1")])},
+                EntityTableFilter(type="hasData", entities=[ParsedEntity("my_space", "container1", {})]),
+                id="HasData filter with one container",
+            ),
+            pytest.param(
+                {
+                    "equals": EqualsFilterData(
+                        property=["node", "type"], value={"space": "my_space", "externalId": "node1"}
+                    )
+                },
+                EntityTableFilter(type="nodeType", entities=[ParsedEntity("my_space", "node1", {})]),
+                id="Equals filter",
+            ),
+            pytest.param(
+                {
+                    "in": InFilterData(
+                        property=["node", "type"],
+                        values=[
+                            {"space": "my_space", "externalId": "node1"},
+                            {"space": "my_space", "externalId": "node2"},
+                        ],
+                    )
+                },
+                EntityTableFilter(
+                    type="nodeType",
+                    entities=[
+                        ParsedEntity("my_space", "node1", {}),
+                        ParsedEntity("my_space", "node2", {}),
+                    ],
+                ),
+                id="In filter with multiple nodes",
+            ),
+            pytest.param(
+                {"hasData": HasDataFilter(data=[ContainerReference(space=DEFAULT_SPACE, external_id="container37")])},
+                EntityTableFilter(
+                    type="hasData",
+                    entities=[ParsedEntity("", "container37", {})],
+                ),
+                id="HasData filter with default space",
+            ),
+            pytest.param(None, None, id="No filter"),
+            pytest.param(
+                {
+                    "hasData": HasDataFilter(
+                        data=[
+                            ContainerReference(space=DEFAULT_SPACE, external_id="container1"),
+                            ViewReference(space="other_space", external_id="view1", version="v1"),
+                        ]
+                    )
+                },
+                RAWFilterTableFilter(
+                    filter='{"hasData":[{"space":"default_space","externalId":"container1","type":"container"},{"space":"other_space","externalId":"view1","version":"v1","type":"view"}]}'
+                ),
+                id="Raw filter",
+            ),
+        ],
+    )
+    def test_write_view_filter(self, filter: Filter | None, expected: TableViewFilter) -> None:
+        writer = DMSTableWriter(self.DEFAULT_SPACE, self.DEFAULT_VERSION, skip_properties_in_other_spaces=True)
+        assert writer.write_view_filter(filter) == expected

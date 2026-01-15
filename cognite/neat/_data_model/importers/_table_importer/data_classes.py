@@ -1,4 +1,3 @@
-import json
 from collections.abc import Mapping
 from typing import Annotated, Literal, cast, get_args
 
@@ -18,11 +17,6 @@ from traitlets import Any
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._utils.text import title_case
 from cognite.neat._utils.useful_types import CellValueType
-from cognite.neat._v0.core._data_model.models.entities import (
-    HasDataFilter,
-    NodeTypeFilter,
-    RawFilter,
-)
 
 # This marker is used to identify creator in the description field.
 CREATOR_MARKER = "Creator: "
@@ -146,29 +140,58 @@ class DMSProperty(TableObj):
         return self
 
 
+class EntityTableFilter(BaseModel):
+    """These are special formats that Neat Table format supports for filters."""
+
+    type: Literal["hasData", "nodeType"]
+    entities: EntityList
+
+    def __str__(self) -> str:
+        entities_str = ",".join(str(entity) for entity in self.entities)
+        return f"{self.type}({entities_str})"
+
+
+class RAWFilterTableFilter(BaseModel):
+    """This is a generic filter that holds raw JSON filter."""
+
+    type: Literal["rawFilter"] = "rawFilter"
+    filter: str
+
+    def __str__(self) -> str:
+        return f"rawFilter({self.filter})"
+
+
+def _parse_table_filter(v: str) -> dict[str, str] | EntityTableFilter | RAWFilterTableFilter:
+    if isinstance(v, EntityTableFilter | RAWFilterTableFilter):
+        return v
+    filter_configs = {
+        "hasdata(": ("hasData", "entities"),
+        "nodetype(": ("nodeType", "entities"),
+        "rawfilter(": ("rawFilter", "filter"),
+    }
+    v_lowered = v.casefold()
+    for prefix, (filter_type, field_name) in filter_configs.items():
+        if v_lowered.startswith(prefix) and v_lowered.endswith(")"):
+            return {"type": filter_type, field_name: v[len(prefix) : -1]}
+    # Fallback to raw filter with the whole string
+    return {"type": "rawFilter", "filter": v}
+
+
+TableViewFilter = Annotated[
+    EntityTableFilter | RAWFilterTableFilter,
+    Field(discriminator="type"),
+    BeforeValidator(_parse_table_filter, str),
+    PlainSerializer(func=str),
+]
+
+
 class DMSView(TableObj):
     view: Entity
     name: str | None = None
     description: str | None = None
     implements: EntityList | None = None
-    filter: str | None = None
+    filter: TableViewFilter | None = None
     in_model: bool | None = Field(None, exclude=True, description="Legacy column")
-
-    @field_validator("filter", mode="after")
-    def _legacy_filter(cls, value: str | None) -> str | None:
-        if value is None:
-            return value
-
-        value_lower = value.lower()
-
-        if value_lower.startswith("hasdata("):
-            return json.dumps(HasDataFilter.load(value).as_dms_filter().dump())
-        elif value_lower.startswith("nodetype("):
-            return json.dumps(NodeTypeFilter.load(value).as_dms_filter().dump())
-        elif value_lower.startswith("rawfilter("):
-            return json.dumps(RawFilter.load(value).as_dms_filter().dump())
-
-        return value
 
 
 class DMSContainer(TableObj):
