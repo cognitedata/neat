@@ -49,6 +49,13 @@ def scenarios() -> dict[str, ValidationResources]:
             include_cdm=False,
             format="validation-resource",
         ),
+        "cyclic_implements": catalog.load_scenario(
+            "cyclic_implements",
+            cdf_scenario_name="for_validators",
+            modus_operandi="additive",
+            include_cdm=False,
+            format="validation-resource",
+        ),
     }
     return scenarios
 
@@ -672,17 +679,28 @@ class TestValidationResourcesRequiresConstraints:
         assert graph.has_edge(cycle_a, cycle_b)
         assert graph.has_edge(cycle_b, cycle_a)
 
+    def test_implements_cycles(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test cycle detection in requires constraints."""
+        resources = scenarios["cyclic_implements"]
+        cycles = resources.implements_cycles
+
+        assert len(cycles) == 1
+        assert set(cycles[0]) == {
+            ViewReference(space="my_space", external_id="ViewA", version="v1"),
+            ViewReference(space="my_space", external_id="ViewB", version="v1"),
+            ViewReference(space="my_space", external_id="ViewC", version="v1"),
+        }
+
     def test_requires_constraint_cycles(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test cycle detection in requires constraints."""
         resources = scenarios["requires-constraints"]
         cycles = resources.requires_constraint_cycles
 
-        assert cycles == [
-            {
-                ContainerReference(space="my_space", external_id="CycleContainerA"),
-                ContainerReference(space="my_space", external_id="CycleContainerB"),
-            }
-        ]
+        assert len(cycles) == 1
+        assert set(cycles[0]) == {
+            ContainerReference(space="my_space", external_id="CycleContainerB"),
+            ContainerReference(space="my_space", external_id="CycleContainerA"),
+        }
 
     @pytest.mark.parametrize(
         "containers,expected_complete",

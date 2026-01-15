@@ -24,7 +24,11 @@ LIMITS = SchemaLimits()
 now = datetime.now()
 
 LocalScenario: TypeAlias = Literal[
-    "ai_readiness", "bi_directional_connections", "requires_constraints", "uncategorized_validators"
+    "ai_readiness",
+    "bi_directional_connections",
+    "requires_constraints",
+    "uncategorized_validators",
+    "cyclic_implements",
 ]
 CDFScenario: TypeAlias = Literal["cdm", "for_validators"]
 
