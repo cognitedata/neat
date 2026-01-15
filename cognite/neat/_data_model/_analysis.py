@@ -876,34 +876,17 @@ class ValidationResources:
         view: ViewReference,
         to_add: list[tuple[ContainerReference, ContainerReference]],
     ) -> bool:
-        """Check if applying recommendations would create a valid hierarchy for the view.
-
-        Unlike forms_directed_path, this allows external bridge containers (not in the view)
-        to serve as roots - the view is still solvable for queries in that case.
-        """
+        """Check if applying recommendations would create a valid hierarchy for the view."""
         containers = self.containers_by_view.get(view, set())
         if len(containers) < 2:
             return True
 
-        # Build graph: recommended + existing + immutable constraints
+        # Build graph: recommended + existing constraints
         graph = nx.DiGraph()
         graph.add_edges_from(to_add)
         graph.add_edges_from(self.requires_constraint_graph.edges())
-        graph.add_edges_from(self.immutable_requires_constraint_graph.edges())
 
-        # Only check nodes that could potentially reach our containers (connected component)
-        # This avoids checking unrelated nodes in large graphs
-        relevant_nodes = set(containers)
-        for c in containers:
-            if c in graph:
-                relevant_nodes.update(nx.ancestors(graph, c))
-
-        for potential_root in relevant_nodes:
-            reachable = nx.descendants(graph, potential_root) | {potential_root}
-            if containers <= reachable:
-                return True
-
-        return False
+        return self.forms_directed_path(containers, graph)
 
     @cached_property
     def immutable_requires_constraint_graph(self) -> nx.DiGraph:
