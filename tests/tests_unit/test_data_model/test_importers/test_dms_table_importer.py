@@ -1493,7 +1493,7 @@ class TestTableViewFilter:
                 id="hasData, single container",
             ),
             pytest.param(
-                "hasData(my_space:container1, my_space2e:container2)",
+                "hasdata(my_space:container1, my_space2e:container2)",
                 EntityTableFilter(
                     type="hasData",
                     entities=[ParsedEntity("my_space", "container1", {}), ParsedEntity("my_space2e", "container2", {})],
@@ -1502,7 +1502,7 @@ class TestTableViewFilter:
                 id="hasData, multiple containers",
             ),
             pytest.param(
-                "hasData(container1,  container2)",
+                "HASDATA(container1,  container2)",
                 EntityTableFilter(
                     type="hasData", entities=[ParsedEntity("", "container1", {}), ParsedEntity("", "container2", {})]
                 ),
@@ -1516,7 +1516,7 @@ class TestTableViewFilter:
                 id="nodeType, single node",
             ),
             pytest.param(
-                "nodeType(my_space:node1,my_space2e:node2)",
+                "nodetype(my_space:node1,my_space2e:node2)",
                 EntityTableFilter(
                     type="nodeType",
                     entities=[ParsedEntity("my_space", "node1", {}), ParsedEntity("my_space2e", "node2", {})],
@@ -1525,7 +1525,7 @@ class TestTableViewFilter:
                 id="nodeType, multiple nodes",
             ),
             pytest.param(
-                "nodeType(node1,node2)",
+                "NoDeTyPe(node1,node2)",
                 EntityTableFilter(
                     type="nodeType", entities=[ParsedEntity("", "node1", {}), ParsedEntity("", "node2", {})]
                 ),
