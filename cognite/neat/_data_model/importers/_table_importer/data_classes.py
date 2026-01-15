@@ -165,13 +165,14 @@ def _parse_table_filter(v: str) -> dict[str, str] | EntityTableFilter | RAWFilte
     if isinstance(v, EntityTableFilter | RAWFilterTableFilter):
         return v
     filter_configs = {
-        "hasData(": ("hasData", "entities"),
-        "nodeType(": ("nodeType", "entities"),
-        "rawFilter(": ("rawFilter", "filter"),
+        "hasdata(": ("hasData", "entities"),
+        "nodetype(": ("nodeType", "entities"),
+        "rawfilter(": ("rawFilter", "filter"),
     }
+    v_lowered = v.casefold()
     for prefix, (filter_type, field_name) in filter_configs.items():
-        if v.startswith(prefix) and v.endswith(")"):
-            return {"type": filter_type, field_name: v.removeprefix(prefix).removesuffix(")")}
+        if v_lowered.startswith(prefix) and v_lowered.endswith(")"):
+            return {"type": filter_type, field_name: v[len(prefix) : -1]}
     # Fallback to raw filter with the whole string
     return {"type": "rawFilter", "filter": v}
 
