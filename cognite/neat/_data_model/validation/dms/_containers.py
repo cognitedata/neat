@@ -197,3 +197,41 @@ class RequiredContainerDoesNotExist(DataModelValidator):
                     )
 
         return errors
+
+
+class RequiresConstraintCycle(DataModelValidator):
+    """
+    Validates that requires constraints between containers do not form cycles.
+
+    ## What it does
+    This validator checks if the requires constraints between containers form a cycle.
+    For example, if container A requires B, B requires C, and C requires A, this forms
+    a cycle.
+
+    ## Why is this bad?
+    Cycles in requires constraints will be rejected by the CDF API. The deployment
+    of the data model will fail if any such cycle exists.
+
+    ## Example
+    Container `my_space:OrderContainer` requires `my_space:CustomerContainer`, which
+    requires `my_space:OrderContainer`. This creates a cycle and will be rejected.
+    """
+
+    code = f"{BASE_CODE}-005"
+    issue_type = ConsistencyError
+    alpha = True  # Still in development
+
+    def run(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+
+        for cycle in self.validation_resources.requires_constraint_cycles:
+            cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
+            errors.append(
+                ConsistencyError(
+                    message=f"Requires constraints form a cycle: {cycle_str}",
+                    fix="Remove one of the requires constraints to break the cycle",
+                    code=self.code,
+                )
+            )
+
+        return errors
