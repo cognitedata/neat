@@ -1,6 +1,6 @@
 """Validators for checking containers in the data model."""
 
-from typing import cast
+from pyparsing import cast
 
 from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
