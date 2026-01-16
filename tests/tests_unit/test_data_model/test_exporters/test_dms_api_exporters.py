@@ -69,14 +69,16 @@ class TestYAMLExporter:
             expected_files = {f"data_models/{schema.data_model.external_id}.datamodel.yaml"}
             if schema.spaces:
                 expected_files.update(f"data_models/{s.space}.space.yaml" for s in schema.spaces)
-            if schema.views:
-                expected_files.update(f"data_models/views/{v.external_id}.view.yaml" for v in schema.views)
-            if schema.containers:
-                expected_files.update(
-                    f"data_models/containers/{c.external_id}.container.yaml" for c in schema.containers
-                )
-            if schema.node_types:
-                expected_files.update(f"data_models/nodes/{n.external_id}.node.yaml" for n in schema.node_types)
+            component_checks = [
+                ("views", schema.views, "view"),
+                ("containers", schema.containers, "container"),
+                ("nodes", schema.node_types, "node"),
+            ]
+            for dir_name, components, suffix in component_checks:
+                if components:
+                    expected_files.update(
+                        f"data_models/{dir_name}/{c.external_id}.{suffix}.yaml" for c in components
+                    )
 
             assert actual_files == expected_files
 
