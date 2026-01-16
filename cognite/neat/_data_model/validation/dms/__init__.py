@@ -26,6 +26,7 @@ from ._containers import (
     ExternalContainerDoesNotExist,
     ExternalContainerPropertyDoesNotExist,
     RequiredContainerDoesNotExist,
+    RequiresConstraintCycle,
 )
 from ._limits import (
     ContainerPropertyCountIsOutOfLimits,
@@ -54,6 +55,7 @@ __all__ = [
     "ExternalContainerPropertyDoesNotExist",
     "ImplementedViewNotExisting",
     "RequiredContainerDoesNotExist",
+    "RequiresConstraintCycle",
     "ReverseConnectionContainerMissing",
     "ReverseConnectionContainerPropertyMissing",
     "ReverseConnectionContainerPropertyWrongType",
