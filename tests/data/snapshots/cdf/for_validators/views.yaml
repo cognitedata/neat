@@ -1,4 +1,3 @@
-
 - space: my_space
   externalId: DomainDescribable
   version: v1
@@ -47,7 +46,6 @@
         version: v1
         type: view
 
-
 - space: my_space
   externalId: SourceForReverseConnectionExistRemote
   version: v1
@@ -87,7 +85,6 @@
         externalId: MyDescribable
         version: v1
         type: view
-
 
 - space: my_space
   externalId: ImplementationChain1

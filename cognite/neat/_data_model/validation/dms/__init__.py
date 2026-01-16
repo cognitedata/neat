@@ -37,6 +37,12 @@ from ._limits import (
     ViewPropertyCountIsOutOfLimits,
 )
 from ._orchestrator import DmsDataModelValidation
+from ._performance import (
+    MissingRequiresConstraint,
+    RequiresConstraintIngestionDependency,
+    SuboptimalRequiresConstraint,
+    UnresolvableQueryPerformance,
+)
 from ._views import ImplementedViewNotExisting, ViewToContainerMappingNotPossible
 
 __all__ = [
@@ -54,8 +60,10 @@ __all__ = [
     "ExternalContainerDoesNotExist",
     "ExternalContainerPropertyDoesNotExist",
     "ImplementedViewNotExisting",
+    "MissingRequiresConstraint",
     "RequiredContainerDoesNotExist",
     "RequiresConstraintCycle",
+    "RequiresConstraintIngestionDependency",
     "ReverseConnectionContainerMissing",
     "ReverseConnectionContainerPropertyMissing",
     "ReverseConnectionContainerPropertyWrongType",
@@ -65,6 +73,8 @@ __all__ = [
     "ReverseConnectionSourceViewMissing",
     "ReverseConnectionTargetMismatch",
     "ReverseConnectionTargetMissing",
+    "SuboptimalRequiresConstraint",
+    "UnresolvableQueryPerformance",
     "ViewContainerCountIsOutOfLimits",
     "ViewImplementsCountIsOutOfLimits",
     "ViewMissingDescription",

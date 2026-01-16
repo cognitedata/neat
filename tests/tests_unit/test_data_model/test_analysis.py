@@ -4,6 +4,7 @@ import pytest
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat._data_model._analysis import ResourceSource, ValidationResources
+from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model.models.dms import ViewCorePropertyRequest, ViewReference, ViewRequest
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._references import ContainerReference
@@ -44,7 +45,6 @@ def scenarios() -> dict[str, ValidationResources]:
         ),
         "requires-constraints": catalog.load_scenario(
             "requires_constraints",
-            cdf_scenario_name="for_validators",
             modus_operandi="additive",
             include_cdm=False,
             format="validation-resource",
@@ -54,6 +54,12 @@ def scenarios() -> dict[str, ValidationResources]:
             cdf_scenario_name="for_validators",
             modus_operandi="additive",
             include_cdm=False,
+            format="validation-resource",
+        ),
+        "requires-constraints-with-cdm": catalog.load_scenario(
+            "requires_constraints",
+            modus_operandi="additive",
+            include_cdm=True,  # Include real CDM containers with their requires constraints
             format="validation-resource",
         ),
     }
@@ -611,18 +617,18 @@ class TestValidationResources:
 
 
 class TestValidationResourcesRequiresConstraints:
-    """Tests for requires constraint related methods in ValidationResources."""
+    """Tests for requires constraint recommendations."""
 
     def test_views_by_container(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test views_by_container returns correct view mappings."""
         resources = scenarios["requires-constraints"]
         views_by_container = resources.views_by_container
 
-        # Check a sample container mapping
-        transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
-        assert transitive_middle in views_by_container
-        transitive_views = views_by_container[transitive_middle]
-        assert any(v.external_id == "TransitiveView" for v in transitive_views)
+        # Check a sample container mapping - Level02_SharedTagContainer appears in multiple views
+        shared_tag = ContainerReference(space="my_space", external_id="Level02_SharedTagContainer")
+        assert shared_tag in views_by_container
+        shared_tag_views = views_by_container[shared_tag]
+        assert any(v.external_id == "SharedTagView" for v in shared_tag_views)
 
     def test_containers_by_view(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test containers_by_view returns correct container mappings."""
@@ -630,18 +636,22 @@ class TestValidationResourcesRequiresConstraints:
         containers_by_view = resources.containers_by_view
 
         # Check a sample view mapping
-        transitive_view = ViewReference(space="my_space", external_id="TransitiveView", version="v1")
-        assert transitive_view in containers_by_view
-        containers = containers_by_view[transitive_view]
+        shared_tag_view = ViewReference(space="my_space", external_id="SharedTagView", version="v1")
+        assert shared_tag_view in containers_by_view
+        containers = containers_by_view[shared_tag_view]
         container_ids = {c.external_id for c in containers}
-        assert container_ids == {"TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"}
+        assert container_ids == {
+            "Level02_SharedAssetContainer",
+            "Level02_SharedTagContainer",
+            "Level03_SharedDescribableContainer",
+        }
 
     @pytest.mark.parametrize(
         "container_ids,expect_found",
         [
             pytest.param(
-                ["TransitiveParent", "TransitiveMiddle"],
-                {ViewReference(space="my_space", external_id="TransitiveView", version="v1")},
+                ["Level02_SharedTagContainer", "Level02_SharedAssetContainer"],
+                {ViewReference(space="my_space", external_id="SharedTagView", version="v1")},
                 id="containers-appear-together",
             ),
             pytest.param(
@@ -668,10 +678,10 @@ class TestValidationResourcesRequiresConstraints:
         resources = scenarios["requires-constraints"]
         graph = resources.requires_constraint_graph
 
-        # Check edges exist
-        transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
-        transitive_leaf = ContainerReference(space="my_space", external_id="TransitiveLeaf")
-        assert graph.has_edge(transitive_middle, transitive_leaf)
+        # Check edges exist - Level01_PumpContainer requires Level02_TagWithWrongRequiresContainer
+        pump = ContainerReference(space="my_space", external_id="Level01_PumpContainer")
+        tag = ContainerReference(space="my_space", external_id="Level02_TagWithWrongRequiresContainer")
+        assert graph.has_edge(pump, tag)
 
         # Check cycle edges
         cycle_a = ContainerReference(space="my_space", external_id="CycleContainerA")
@@ -706,17 +716,17 @@ class TestValidationResourcesRequiresConstraints:
         "containers,expected_complete",
         [
             pytest.param(
-                ["TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"],
+                ["Level01_PumpContainer", "Level03_DescribableContainer", "Level03_SourceableContainer"],
                 False,
                 id="incomplete-hierarchy",
             ),
             pytest.param(
-                ["TransitiveParent"],
+                ["Level02_TagWithWrongRequiresContainer"],
                 True,
                 id="single-container-always-complete",
             ),
             pytest.param(
-                ["TagAssetContainer", "TagDescribableContainer"],
+                ["Level02_AssetContainer", "Level03_DescribableContainer"],
                 True,
                 id="complete-with-requires",
             ),
@@ -734,3 +744,191 @@ class TestValidationResourcesRequiresConstraints:
 
         result = ValidationResources.forms_directed_path(container_refs, resources.requires_constraint_graph)
         assert result == expected_complete, f"Containers {containers}: expected {expected_complete}, got {result}"
+
+    def test_external_non_cdm_containers_are_immutable(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that non-CDM containers from CDF are treated as immutable."""
+        resources = scenarios["requires-constraints"]
+
+        # ExternalOnlyContainer is in external_space (not CDM) but only defined in CDF
+        external_container = ContainerReference(space="external_space", external_id="ExternalOnlyContainer")
+
+        # Its requires constraint should be in the immutable graph
+        immutable_graph = resources.immutable_requires_constraint_graph
+        assert external_container in immutable_graph.nodes(), "Should be in immutable graph"
+
+        # Verify the constraint: ExternalOnlyContainer → CogniteDescribable
+        cognite_describable = ContainerReference(space="cdf_cdm", external_id="CogniteDescribable")
+        assert immutable_graph.has_edge(external_container, cognite_describable), (
+            "External container's requires constraint should be immutable"
+        )
+
+        # Edge forming cycle with external container should be forbidden
+        weight = resources._compute_requires_edge_weight(cognite_describable, external_container)
+        assert weight >= 1e9, f"Cycle with external container should be forbidden, got weight={weight}"
+
+    def test_requires_mst_handles_disconnected_components(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that MST handles independent container groups."""
+        resources = scenarios["requires-constraints"]
+        mst = resources.requires_mst
+
+        # Define the containers
+        group_a1 = ContainerReference(space="my_space", external_id="DisconnectedGroupAContainer1")
+        group_a2 = ContainerReference(space="my_space", external_id="DisconnectedGroupAContainer2")
+        group_b1 = ContainerReference(space="my_space", external_id="DisconnectedGroupBContainer1")
+        group_b2 = ContainerReference(space="my_space", external_id="DisconnectedGroupBContainer2")
+
+        group_a_containers = {group_a1, group_a2}
+        group_b_containers = {group_b1, group_b2}
+
+        # Get edges involving each group (MST has frozensets)
+        group_a_edges = [edge for edge in mst if edge & group_a_containers]
+        group_b_edges = [edge for edge in mst if edge & group_b_containers]
+
+        # Each group of 2 containers needs exactly 1 edge to connect them
+        assert len(group_a_edges) == 1, f"Expected exactly 1 edge for Group A (2 containers), got: {group_a_edges}"
+        assert len(group_b_edges) == 1, f"Expected exactly 1 edge for Group B (2 containers), got: {group_b_edges}"
+
+        # No edge should cross between groups (they never appear together)
+        for edge in mst:
+            in_a = bool(edge & group_a_containers)
+            in_b = bool(edge & group_b_containers)
+            assert not (in_a and in_b), f"Cross-group edge {edge}"
+
+    def test_to_remove_only_contains_non_mst_or_wrongly_oriented_edges(
+        self, scenarios: dict[str, ValidationResources]
+    ) -> None:
+        """Test that to_remove contains only suboptimal or wrongly-oriented edges."""
+        resources = scenarios["requires-constraints"]
+
+        for view_ref in resources.merged.views:
+            containers = resources.containers_by_view.get(view_ref, set())
+            if len(containers) < 2:
+                continue
+
+            _, to_remove = resources.get_requires_changes_for_view(view_ref)
+
+            for src, dst in to_remove:
+                edge_undirected = frozenset({src, dst})
+                is_in_mst = edge_undirected in resources.requires_mst
+                has_correct_orientation = (src, dst) in resources.oriented_requires_mst
+
+                # Edge should be removed if it's either:
+                # - Not in MST at all, OR
+                # - In MST but wrong orientation
+                assert not is_in_mst or not has_correct_orientation, (
+                    f"View {view_ref}: edge {src.external_id} → {dst.external_id} "
+                    f"is in to_remove but is in MST with correct orientation - should not remove!"
+                )
+
+    def test_cdf_containers_are_never_sources_in_add_recommendations(
+        self, scenarios: dict[str, ValidationResources]
+    ) -> None:
+        """Test that CDF containers are never recommended as sources for new constraints."""
+        resources = scenarios["requires-constraints-with-cdm"]
+
+        for view_ref in resources.merged.views:
+            to_add, _ = resources.get_requires_changes_for_view(view_ref)
+
+            for src, dst in to_add:
+                assert src.space not in COGNITE_SPACES, (
+                    f"CDF container {src} should not be a source in add recommendations. "
+                    f"Found: {src} -> {dst} for view {view_ref}"
+                )
+
+    def test_recommendations_based_on_local_not_merged(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that recommendations diff against LOCAL schema, not merged.
+
+        Scenario: PumpContainer exists in both local and CDF with DIFFERENT constraints:
+        - Local has: PumpContainer → TagWithWrongRequiresContainer
+        - CDF has: PumpContainer → CogniteDescribable
+
+        Merged would have BOTH constraints. But recommendations should be based on LOCAL only:
+        - If MST wants PumpContainer → CogniteDescribable, it SHOULD be in to_add
+          (even though CDF has it, local doesn't)
+        - CDF-only constraint should NOT affect to_remove
+        """
+        resources = scenarios["requires-constraints"]
+
+        pump_container = ContainerReference(space="my_space", external_id="Level01_PumpContainer")
+        describable = ContainerReference(space="cdf_cdm", external_id="CogniteDescribable")
+
+        # Verify the test setup: CDF has constraint that local doesn't
+        assert pump_container in resources.cdf.containers, "Test setup: PumpContainer should be in CDF"
+        cdf_container = resources.cdf.containers[pump_container]
+        assert cdf_container.constraints, "Test setup: CDF PumpContainer should have constraints"
+
+        local_container = resources.local.containers[pump_container]
+        local_constraint_targets = {
+            c.require for c in (local_container.constraints or {}).values() if hasattr(c, "require")
+        }
+        assert describable not in local_constraint_targets, (
+            "Test setup: Local PumpContainer should NOT have constraint to CogniteDescribable"
+        )
+
+        # Get recommendations for PumpView
+        view_ref = ViewReference(space="my_space", external_id="PumpView", version="v1")
+        to_add, to_remove = resources.get_requires_changes_for_view(view_ref)
+
+        # The key assertion: to_add and to_remove should be based on LOCAL constraints
+        # If to_remove contained CDF-only constraints, that would be wrong
+        to_remove_sources = {src for src, _ in to_remove}
+        for src in to_remove_sources:
+            local_c = resources.local.containers.get(src)
+            assert local_c is not None, (
+                f"to_remove contains {src} which is not in local schema - "
+                "recommendations should only remove LOCAL constraints"
+            )
+
+    def test_edge_is_used_in_external_views(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that edge_is_used_in_external_views correctly identifies edges used by CDF-only views."""
+        resources = scenarios["requires-constraints"]
+
+        # Level01_PumpEquipmentContainer is used by CdfOnlyViewUsingLocalContainer in CDF
+        pump = ContainerReference(space="my_space", external_id="Level01_PumpEquipmentContainer")
+        shared_tag = ContainerReference(space="my_space", external_id="Level02_TagWithWrongRequiresContainer")
+
+        # Edge between pump and shared_tag: check if they appear together in external views
+        # CdfOnlyViewUsingLocalContainer contains pump but NOT shared_tag, so this edge is NOT external
+        assert not resources.edge_is_used_in_external_views(pump, shared_tag), (
+            "Edge pump->shared_tag should NOT be in external views (they don't appear together in any external view)"
+        )
+
+    def test_requires_recommendations_baseline(
+        self, scenarios: dict[str, ValidationResources], data_regression: DataRegressionFixture
+    ) -> None:
+        """Regression test for requires constraint recommendations."""
+        resources = scenarios["requires-constraints-with-cdm"]
+
+        # Collect all recommendations sorted by view
+        all_recommendations = {}
+
+        for view_ref in sorted(resources.merged.views.keys(), key=lambda v: f"{v.space}:{v.external_id}"):
+            containers = resources.containers_by_view.get(view_ref, set())
+            if len(containers) < 2:
+                continue
+
+            to_add, to_remove = resources.get_requires_changes_for_view(view_ref)
+
+            # Apply recommendations to get final state
+            current = set()
+            for src in containers:
+                if src in resources.requires_constraint_graph:
+                    for dst in resources.requires_constraint_graph.successors(src):
+                        if dst in containers:
+                            current.add((src, dst))
+
+            final = current.copy()
+            for edge in to_add:
+                final.add(edge)
+            for edge in to_remove:
+                final.discard(edge)
+
+            view_key = f"{view_ref.space}:{view_ref.external_id}({view_ref.version})"
+            all_recommendations[view_key] = {
+                "containers": sorted([c.external_id for c in containers]),
+                "to_add": sorted([f"{src.external_id} -> {dst.external_id}" for src, dst in to_add]),
+                "to_remove": sorted([f"{src.external_id} -> {dst.external_id}" for src, dst in to_remove]),
+                "final_constraints": sorted([f"{src.external_id} -> {dst.external_id}" for src, dst in final]),
+            }
+
+        data_regression.check(all_recommendations)

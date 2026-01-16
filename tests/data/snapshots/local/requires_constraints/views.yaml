@@ -1,76 +1,169 @@
-# View for transitive requires test - Parent, Middle, Leaf together where Middle requires Leaf
-- space: my_space
-  externalId: TransitiveView
-  version: v1
-  name: Transitive View
-  description: View for testing transitive requires recommendations
-  properties:
-    fieldA:
-      name: fieldA
-      description: Field A
-      container:
-        space: my_space
-        externalId: TransitiveParent
-        type: container
-      containerPropertyIdentifier: fieldA
-    fieldB:
-      name: fieldB
-      description: Field B
-      container:
-        space: my_space
-        externalId: TransitiveMiddle
-        type: container
-      containerPropertyIdentifier: fieldB
-    fieldC:
-      name: fieldC
-      description: Field C
-      container:
-        space: my_space
-        externalId: TransitiveLeaf
-        type: container
-      containerPropertyIdentifier: fieldC
+# Test views for requires constraint recommendations
+# Naming: Level01=equipment(root), Level02=tag/asset, Level03=describable(leaf)
 
+# Already correctly configured
 - space: my_space
-  externalId: TagView
+  externalId: PreConfiguredView
   version: v1
-  name: Tag View
-  description: View with Tag, Asset, and Describable
+  name: Pre-Configured View
   properties:
-    tagId:
-      name: tagId
-      description: Tag ID
+    rootField:
+      name: rootField
       container:
         space: my_space
-        externalId: TagContainer
+        externalId: PreConfiguredRootContainer
         type: container
-      containerPropertyIdentifier: tagId
-    assetName:
-      name: assetName
-      description: Asset name
+      containerPropertyIdentifier: assetField
+    leafField:
+      name: leafField
       container:
         space: my_space
-        externalId: TagAssetContainer
-        type: container
-      containerPropertyIdentifier: assetName
-    tagDescription:
-      name: tagDescription
-      description: Tag description
-      container:
-        space: my_space
-        externalId: TagDescribableContainer
+        externalId: PreConfiguredLeafContainer
         type: container
       containerPropertyIdentifier: description
 
-# View for RequiresConstraintCycle test
+# Equipment views: Pump/Valve/Motor → Tag → Describable
+# Tag has wrong requires to Sourceable (should be Describable)
+- space: my_space
+  externalId: PumpView
+  version: v1
+  name: Pump View
+  properties:
+    pumpId:
+      name: pumpId
+      container:
+        space: my_space
+        externalId: Level01_PumpContainer
+        type: container
+      containerPropertyIdentifier: pumpId
+    tagName:
+      name: tagName
+      container:
+        space: my_space
+        externalId: Level02_TagWithWrongRequiresContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    description:
+      name: description
+      container:
+        space: my_space
+        externalId: Level03_DescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+- space: my_space
+  externalId: ValveView
+  version: v1
+  name: Valve View
+  properties:
+    valveId:
+      name: valveId
+      container:
+        space: my_space
+        externalId: Level01_ValveContainer
+        type: container
+      containerPropertyIdentifier: valveId
+    tagName:
+      name: tagName
+      container:
+        space: my_space
+        externalId: Level02_TagWithWrongRequiresContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    description:
+      name: description
+      container:
+        space: my_space
+        externalId: Level03_DescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+- space: my_space
+  externalId: MotorView
+  version: v1
+  name: Motor View
+  properties:
+    motorId:
+      name: motorId
+      container:
+        space: my_space
+        externalId: Level01_MotorContainer
+        type: container
+      containerPropertyIdentifier: motorId
+    tagName:
+      name: tagName
+      container:
+        space: my_space
+        externalId: Level02_TagWithWrongRequiresContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    description:
+      name: description
+      container:
+        space: my_space
+        externalId: Level03_DescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+# Two equipment containers with no shared intermediate
+# Path through Tag would create conflicting orientations (Motor→Tag vs Tag→Pump)
+# This view should be flagged as unsolvable
+- space: my_space
+  externalId: ConflictingEquipmentView
+  version: v1
+  name: Conflicting Equipment View
+  properties:
+    motorField:
+      name: motorField
+      container:
+        space: my_space
+        externalId: Level01_MotorContainer
+        type: container
+      containerPropertyIdentifier: motorId
+    pumpField:
+      name: pumpField
+      container:
+        space: my_space
+        externalId: Level01_PumpContainer
+        type: container
+      containerPropertyIdentifier: pumpId
+
+# Tag with Asset: Tag, Asset, Describable (no equipment)
+- space: my_space
+  externalId: TagWithAssetView
+  version: v1
+  name: Tag With Asset View
+  properties:
+    tagName:
+      name: tagName
+      container:
+        space: my_space
+        externalId: Level02_TagWithWrongRequiresContainer
+        type: container
+      containerPropertyIdentifier: tagName
+    assetName:
+      name: assetName
+      container:
+        space: my_space
+        externalId: Level02_AssetContainer
+        type: container
+      containerPropertyIdentifier: assetName
+    description:
+      name: description
+      container:
+        space: my_space
+        externalId: Level03_DescribableContainer
+        type: container
+      containerPropertyIdentifier: description
+
+# Cycle test
 - space: my_space
   externalId: CycleTestView
   version: v1
   name: Cycle Test View
-  description: View for testing cycle detection
   properties:
     propCycleA:
       name: propCycleA
-      description: Property from CycleContainerA
       container:
         space: my_space
         externalId: CycleContainerA
@@ -78,21 +171,19 @@
       containerPropertyIdentifier: propA
     propCycleB:
       name: propCycleB
-      description: Property from CycleContainerB
       container:
         space: my_space
         externalId: CycleContainerB
         type: container
       containerPropertyIdentifier: propB
 
-# Disconnected component test - View for Group A (never appears with Group B)
+# Disconnected groups (never appear together)
 - space: my_space
   externalId: DisconnectedGroupAView
-  version: '1'
+  version: v1
   properties:
     groupAField1:
       name: groupAField1
-      description: Field from DisconnectedGroupAContainer1
       container:
         space: my_space
         externalId: DisconnectedGroupAContainer1
@@ -100,21 +191,18 @@
       containerPropertyIdentifier: groupAField1
     groupAField2:
       name: groupAField2
-      description: Field from DisconnectedGroupAContainer2
       container:
         space: my_space
         externalId: DisconnectedGroupAContainer2
         type: container
       containerPropertyIdentifier: groupAField2
 
-# Disconnected component test - View for Group B (never appears with Group A)
 - space: my_space
   externalId: DisconnectedGroupBView
-  version: '1'
+  version: v1
   properties:
     groupBField1:
       name: groupBField1
-      description: Field from DisconnectedGroupBContainer1
       container:
         space: my_space
         externalId: DisconnectedGroupBContainer1
@@ -122,9 +210,400 @@
       containerPropertyIdentifier: groupBField1
     groupBField2:
       name: groupBField2
-      description: Field from DisconnectedGroupBContainer2
       container:
         space: my_space
         externalId: DisconnectedGroupBContainer2
         type: container
       containerPropertyIdentifier: groupBField2
+
+# User containers connected via immutable CDM container
+- space: my_space
+  externalId: ImmutableBridgeViewA
+  version: v1
+  properties:
+    name:
+      name: name
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: name
+    userAField:
+      name: userAField
+      container:
+        space: my_space
+        externalId: ImmutableBridgeUserAContainer
+        type: container
+      containerPropertyIdentifier: userAField
+
+- space: my_space
+  externalId: ImmutableBridgeViewB
+  version: v1
+  properties:
+    name:
+      name: name
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: name
+    userBField:
+      name: userBField
+      container:
+        space: my_space
+        externalId: ImmutableBridgeUserBContainer
+        type: container
+      containerPropertyIdentifier: userBField
+
+- space: my_space
+  externalId: ImmutableBridgeCombinedView
+  version: v1
+  properties:
+    name:
+      name: name
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: name
+    userAField:
+      name: userAField
+      container:
+        space: my_space
+        externalId: ImmutableBridgeUserAContainer
+        type: container
+      containerPropertyIdentifier: userAField
+    userBField:
+      name: userBField
+      container:
+        space: my_space
+        externalId: ImmutableBridgeUserBContainer
+        type: container
+      containerPropertyIdentifier: userBField
+
+# View-specific vs shared: FuncLoc(1 view), Pump(1 view), Tag(3 views), Describable(3 views)
+- space: my_space
+  externalId: FunctionalLocationView
+  version: v1
+  properties:
+    funcLocField:
+      name: funcLocField
+      container:
+        space: my_space
+        externalId: Level01_FunctionalLocationContainer
+        type: container
+      containerPropertyIdentifier: funcLocField
+    sharedTagField:
+      name: sharedTagField
+      container:
+        space: my_space
+        externalId: Level02_SharedTagContainer
+        type: container
+      containerPropertyIdentifier: sharedTagField
+    sharedDescField:
+      name: sharedDescField
+      container:
+        space: my_space
+        externalId: Level03_SharedDescribableContainer
+        type: container
+      containerPropertyIdentifier: sharedDescField
+
+- space: my_space
+  externalId: SharedTagView
+  version: v1
+  properties:
+    sharedTagField:
+      name: sharedTagField
+      container:
+        space: my_space
+        externalId: Level02_SharedTagContainer
+        type: container
+      containerPropertyIdentifier: sharedTagField
+    sharedAssetField:
+      name: sharedAssetField
+      container:
+        space: my_space
+        externalId: Level02_SharedAssetContainer
+        type: container
+      containerPropertyIdentifier: sharedAssetField
+    sharedDescField:
+      name: sharedDescField
+      container:
+        space: my_space
+        externalId: Level03_SharedDescribableContainer
+        type: container
+      containerPropertyIdentifier: sharedDescField
+
+- space: my_space
+  externalId: PumpEquipmentView
+  version: v1
+  properties:
+    pumpField:
+      name: pumpField
+      container:
+        space: my_space
+        externalId: Level01_PumpEquipmentContainer
+        type: container
+      containerPropertyIdentifier: pumpField
+    sharedTagField:
+      name: sharedTagField
+      container:
+        space: my_space
+        externalId: Level02_SharedTagContainer
+        type: container
+      containerPropertyIdentifier: sharedTagField
+    sharedDescField:
+      name: sharedDescField
+      container:
+        space: my_space
+        externalId: Level03_SharedDescribableContainer
+        type: container
+      containerPropertyIdentifier: sharedDescField
+
+# User containers extending CDM (leverages existing CogniteAsset → CogniteDescribable)
+- space: my_space
+  externalId: CogniteAssetExtensionView
+  version: v1
+  properties:
+    tagField:
+      name: tagField
+      container:
+        space: my_space
+        externalId: CogniteAssetExtensionContainer
+        type: container
+      containerPropertyIdentifier: tagField
+    assetPath:
+      name: assetPath
+      container:
+        space: cdf_cdm
+        externalId: CogniteAsset
+        type: container
+      containerPropertyIdentifier: assetHierarchy_path
+    descriptionFromCdm:
+      name: descriptionFromCdm
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: description
+
+- space: my_space
+  externalId: CogniteAssetExtensionSolutionModelScenarioView
+  version: v1
+  properties:
+    equipmentField:
+      name: equipmentField
+      container:
+        space: my_space
+        externalId: CogniteAssetExtensionSolutionModelScenarioContainer
+        type: container
+      containerPropertyIdentifier: equipmentField
+    tagFieldShared:
+      name: tagFieldShared
+      container:
+        space: my_space
+        externalId: CogniteAssetExtensionContainer
+        type: container
+      containerPropertyIdentifier: tagField
+    descriptionFromCdmEquip:
+      name: descriptionFromCdmEquip
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: description
+
+# Local view with external non-CDM container
+- space: my_space
+  externalId: LocalViewWithExternalContainer
+  version: v1
+  name: Local View With External Container
+  properties:
+    localRequiresField:
+      name: localRequiresField
+      container:
+        space: my_space
+        externalId: LocalContainerRequiringExternalContainer
+        type: container
+      containerPropertyIdentifier: localRequiresField
+
+# Test scenario: 1 local container + 3 external user containers
+# Expected: ManyExternalsRootContainer should require all 3 external containers
+- space: my_space
+  externalId: ManyExternalsView
+  version: v1
+  name: Many Externals View
+  properties:
+    rootField:
+      name: rootField
+      container:
+        space: my_space
+        externalId: ManyExternalsRootContainer
+        type: container
+      containerPropertyIdentifier: rootField
+    fieldA:
+      name: fieldA
+      container:
+        space: external_space
+        externalId: ExternalUserContainerA
+        type: container
+      containerPropertyIdentifier: fieldA
+    fieldB:
+      name: fieldB
+      container:
+        space: external_space
+        externalId: ExternalUserContainerB
+        type: container
+      containerPropertyIdentifier: fieldB
+    fieldC:
+      name: fieldC
+      container:
+        space: external_space
+        externalId: ExternalUserContainerC
+        type: container
+      containerPropertyIdentifier: fieldC
+
+# Test scenario: Equipment views connecting through user Tag and CDM containers
+# EquipmentPumpView: Pump, Tag, CogniteDescribable
+- space: my_space
+  externalId: EquipmentPumpView
+  version: v1
+  name: Equipment Pump View
+  properties:
+    pumpField:
+      name: pumpField
+      container:
+        space: my_space
+        externalId: EquipmentPumpContainer
+        type: container
+      containerPropertyIdentifier: pumpField
+    tagField:
+      name: tagField
+      container:
+        space: my_space
+        externalId: EquipmentTagContainer
+        type: container
+      containerPropertyIdentifier: tagField
+    description:
+      name: description
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: description
+
+# EquipmentHeatExchangerView: HeatExchanger, Tag, CogniteDescribable
+- space: my_space
+  externalId: EquipmentHeatExchangerView
+  version: v1
+  name: Equipment HeatExchanger View
+  properties:
+    heatExchangerField:
+      name: heatExchangerField
+      container:
+        space: my_space
+        externalId: EquipmentHeatExchangerContainer
+        type: container
+      containerPropertyIdentifier: heatExchangerField
+    tagField:
+      name: tagField
+      container:
+        space: my_space
+        externalId: EquipmentTagContainer
+        type: container
+      containerPropertyIdentifier: tagField
+    description:
+      name: description
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: description
+
+# EquipmentCompressorView: Compressor, Tag, CogniteDescribable
+- space: my_space
+  externalId: EquipmentCompressorView
+  version: v1
+  name: Equipment Compressor View
+  properties:
+    compressorField:
+      name: compressorField
+      container:
+        space: my_space
+        externalId: EquipmentCompressorContainer
+        type: container
+      containerPropertyIdentifier: compressorField
+    tagField:
+      name: tagField
+      container:
+        space: my_space
+        externalId: EquipmentTagContainer
+        type: container
+      containerPropertyIdentifier: tagField
+    description:
+      name: description
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: description
+
+# EquipmentTagView: Tag, CogniteAsset, CogniteSourceable, CogniteDescribable
+- space: my_space
+  externalId: EquipmentTagView
+  version: v1
+  name: Equipment Tag View
+  properties:
+    tagField:
+      name: tagField
+      container:
+        space: my_space
+        externalId: EquipmentTagContainer
+        type: container
+      containerPropertyIdentifier: tagField
+    assetName:
+      name: assetName
+      container:
+        space: cdf_cdm
+        externalId: CogniteAsset
+        type: container
+      containerPropertyIdentifier: name
+    sourceId:
+      name: sourceId
+      container:
+        space: cdf_cdm
+        externalId: CogniteSourceable
+        type: container
+      containerPropertyIdentifier: sourceId
+    description:
+      name: description
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: description
+
+# EquipmentUnsolvableView: Pump, HeatExchanger only (no Tag, no CDM)
+# This should NOT get recommendations because:
+# - Pump and HeatExchanger only appear together here (2-container view)
+# - Both have independent views with Tag
+# - Connecting them requires Tag as bridge, but Tag is user container outside view
+- space: my_space
+  externalId: EquipmentUnsolvableView
+  version: v1
+  name: Equipment Unsolvable View
+  properties:
+    pumpField:
+      name: pumpField
+      container:
+        space: my_space
+        externalId: EquipmentPumpContainer
+        type: container
+      containerPropertyIdentifier: pumpField
+    heatExchangerField:
+      name: heatExchangerField
+      container:
+        space: my_space
+        externalId: EquipmentHeatExchangerContainer
+        type: container
+      containerPropertyIdentifier: heatExchangerField
