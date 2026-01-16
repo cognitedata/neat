@@ -525,6 +525,51 @@ class ValidationResources:
 
         return graph
 
+    @cached_property
+    def modifiable_containers(self) -> set[ContainerReference]:
+        """Containers whose requires constraints can be modified in this session.
+
+        A container is modifiable if:
+        - It's in the LOCAL schema
+        - It's NOT in a CDF built-in space (CDM, IDM, etc.)
+
+        Non-modifiable containers include:
+        - CDF built-in containers (CDM, IDM) - managed by Cognite
+        - User containers that exist in CDF but not in our local schema - we can't
+          modify them in this deployment session
+        """
+        return {container_ref for container_ref in self.local.containers if container_ref.space not in COGNITE_SPACES}
+
+    @cached_property
+    def immutable_requires_constraint_graph(self) -> nx.DiGraph:
+        """Build a graph of requires constraints from non-modifiable containers.
+
+        A container is non-modifiable if it's in a CDF built-in space (managed by Cognite)
+        or not in the local/merged model. This graph represents constraints we cannot change.
+
+        Containers without edges here get empty descendants via _immutable_descendants.get().
+        """
+        graph: nx.DiGraph = nx.DiGraph()
+        for src, dst in self.requires_constraint_graph.edges():
+            if src not in self.modifiable_containers:
+                graph.add_edge(src, dst)
+
+        return graph
+
+    @cached_property
+    def _immutable_descendants(self) -> dict[ContainerReference, set[ContainerReference]]:
+        """Pre-compute descendants in immutable_requires_constraint_graph for all containers.
+
+        This avoids repeated nx.descendants() calls which are O(V+E) each.
+
+        Note: Only containers with edges in immutable_requires_constraint_graph are keys.
+        Use .get(container, set()) to handle containers without immutable edges.
+        """
+        return {
+            c: nx.descendants(self.immutable_requires_constraint_graph, c)
+            for c in self.immutable_requires_constraint_graph.nodes()
+        }
+
     @staticmethod
     def forms_directed_path(nodes: set[_NodeT], graph: nx.DiGraph) -> bool:
         """Check if nodes form an uninterrupted directed path in the graph.
@@ -577,21 +622,6 @@ class ValidationResources:
         """Returns cycles in the graph otherwise empty list"""
         return [candidate for candidate in nx.simple_cycles(graph) if len(candidate) > 1]
 
-    @cached_property
-    def modifiable_containers(self) -> set[ContainerReference]:
-        """Containers whose requires constraints can be modified in this session.
-
-        A container is modifiable if:
-        - It's in the LOCAL schema
-        - It's NOT in a CDF built-in space (CDM, IDM, etc.)
-
-        Non-modifiable containers include:
-        - CDF built-in containers (CDM, IDM) - managed by Cognite
-        - User containers that exist in CDF but not in our local schema - we can't
-          modify them in this deployment session
-        """
-        return {container_ref for container_ref in self.local.containers if container_ref.space not in COGNITE_SPACES}
-
     def constraint_exists_locally(self, src: ContainerReference, dst: ContainerReference) -> bool:
         """Check if a requires constraint exists in the LOCAL schema.
 
@@ -616,6 +646,31 @@ class ValidationResources:
                 return True
 
         return False
+
+    def _is_solvable_with_edges(
+        self,
+        new_edges: set[tuple[ContainerReference, ContainerReference]]
+        | list[tuple[ContainerReference, ContainerReference]],
+        containers: set[ContainerReference],
+        base_graph: nx.DiGraph,
+    ) -> bool:
+        """Check if new_edges + base_graph edges allow a root to reach all containers."""
+        graph = nx.DiGraph()
+        graph.add_edges_from(new_edges)
+        graph.add_edges_from(base_graph.edges())
+        return self.forms_directed_path(containers, graph)
+
+    def would_recommendations_solve_view(
+        self,
+        view: ViewReference,
+        to_add: list[tuple[ContainerReference, ContainerReference]],
+    ) -> bool:
+        """Check if applying recommendations would create a valid hierarchy for the view."""
+        containers = self.containers_by_view.get(view, set())
+        if len(containers) < 2:
+            return True
+
+        return self._is_solvable_with_edges(to_add, containers, self.requires_constraint_graph)
 
     def container_is_used_in_external_views(self, container: ContainerReference) -> bool:
         """Check if a container is used by views in CDF that aren't in our merged scope."""
@@ -788,7 +843,7 @@ class ValidationResources:
             if frozenset({src, dst}) in edges:
                 oriented.add((src, dst))
 
-        if self._check_edges_solvable(oriented, containers):
+        if self._is_solvable_with_edges(oriented, containers, self.immutable_requires_constraint_graph):
             return oriented
 
         # Try flipping edges (prefer edges WITHOUT existing constraints)
@@ -798,21 +853,10 @@ class ValidationResources:
             or self.requires_constraint_graph.has_edge(e[1], e[0]),
         ):
             flipped = (oriented - {(src, dst)}) | {(dst, src)}
-            if self._check_edges_solvable(flipped, containers):
+            if self._is_solvable_with_edges(flipped, containers, self.immutable_requires_constraint_graph):
                 return flipped
 
         return oriented  # Best effort
-
-    def _check_edges_solvable(
-        self,
-        oriented_edges: set[tuple[ContainerReference, ContainerReference]],
-        containers: set[ContainerReference],
-    ) -> bool:
-        """Check if oriented edges + immutable edges allow a root to reach all containers."""
-        graph = nx.DiGraph()
-        graph.add_edges_from(oriented_edges)
-        graph.add_edges_from(self.immutable_requires_constraint_graph.edges())
-        return self.forms_directed_path(containers, graph)
 
     def get_requires_changes_for_view(
         self, view: ViewReference
@@ -871,53 +915,6 @@ class ValidationResources:
             sorted(to_add, key=lambda x: (str(x[0]), str(x[1]))),
             sorted(to_remove, key=lambda x: (str(x[0]), str(x[1]))),
         )
-
-    def would_recommendations_solve_view(
-        self,
-        view: ViewReference,
-        to_add: list[tuple[ContainerReference, ContainerReference]],
-    ) -> bool:
-        """Check if applying recommendations would create a valid hierarchy for the view."""
-        containers = self.containers_by_view.get(view, set())
-        if len(containers) < 2:
-            return True
-
-        # Build graph: recommended + existing constraints
-        graph = nx.DiGraph()
-        graph.add_edges_from(to_add)
-        graph.add_edges_from(self.requires_constraint_graph.edges())
-
-        return self.forms_directed_path(containers, graph)
-
-    @cached_property
-    def immutable_requires_constraint_graph(self) -> nx.DiGraph:
-        """Build a graph of requires constraints from non-modifiable containers.
-
-        A container is non-modifiable if it's in a CDF built-in space (managed by Cognite)
-        or not in the local/merged model. This graph represents constraints we cannot change.
-
-        Containers without edges here get empty descendants via _immutable_descendants.get().
-        """
-        graph: nx.DiGraph = nx.DiGraph()
-        for src, dst in self.requires_constraint_graph.edges():
-            if src not in self.modifiable_containers:
-                graph.add_edge(src, dst)
-
-        return graph
-
-    @cached_property
-    def _immutable_descendants(self) -> dict[ContainerReference, set[ContainerReference]]:
-        """Pre-compute descendants in immutable_requires_constraint_graph for all containers.
-
-        This avoids repeated nx.descendants() calls which are O(V+E) each.
-
-        Note: Only containers with edges in immutable_requires_constraint_graph are keys.
-        Use .get(container, set()) to handle containers without immutable edges.
-        """
-        return {
-            c: nx.descendants(self.immutable_requires_constraint_graph, c)
-            for c in self.immutable_requires_constraint_graph.nodes()
-        }
 
     def _compute_requires_edge_weight(self, src: ContainerReference, dst: ContainerReference) -> float:
         """Compute the weight/cost of adding edge src → dst.
