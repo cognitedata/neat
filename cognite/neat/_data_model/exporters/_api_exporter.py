@@ -1,5 +1,6 @@
 import warnings
 import zipfile
+from collections.abc import Iterator
 from pathlib import Path
 
 import yaml
@@ -44,34 +45,8 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
             zip_file = zip_file.with_suffix(".zip")
 
         with zipfile.ZipFile(zip_file, "w") as zip_ref:
-            for space in data_model.spaces:
-                zip_ref.writestr(
-                    f"data_models/{space.space}.space.yaml",
-                    yaml.safe_dump(space.model_dump(mode="json", by_alias=True), sort_keys=False),
-                )
-
-            zip_ref.writestr(
-                f"data_models/{data_model.data_model.external_id}.datamodel.yaml",
-                yaml.safe_dump(data_model.data_model.model_dump(mode="json", by_alias=True), sort_keys=False),
-            )
-
-            for view in data_model.views:
-                zip_ref.writestr(
-                    f"data_models/views/{view.external_id}.view.yaml",
-                    yaml.safe_dump(view.model_dump(mode="json", by_alias=True), sort_keys=False),
-                )
-
-            for container in data_model.containers:
-                zip_ref.writestr(
-                    f"data_models/containers/{container.external_id}.container.yaml",
-                    yaml.safe_dump(container.model_dump(mode="json", by_alias=True), sort_keys=False),
-                )
-
-            for node in data_model.node_types:
-                zip_ref.writestr(
-                    f"data_models/nodes/{node.external_id}.node.yaml",
-                    yaml.safe_dump(node.model_dump(mode="json", by_alias=True), sort_keys=False),
-                )
+            for file_path, yaml_content in self._generate_yaml_entries(data_model):
+                zip_ref.writestr(f"data_models/{file_path}", yaml_content)
 
     def _export_to_directory(self, data_model: RequestSchema, directory: Path) -> None:
         """Save the schema to a directory as YAML files. This is compatible with the Cognite-Toolkit convention.
@@ -84,52 +59,62 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
         subdir = directory / "data_models"
         subdir.mkdir(parents=True, exist_ok=True)
 
-        if data_model.spaces:
-            for space in data_model.spaces:
-                (subdir / f"{space.space}.space.yaml").write_text(
-                    yaml.safe_dump(space.model_dump(mode="json", by_alias=True), sort_keys=False),
-                    encoding=self.ENCODING,
-                    newline=self.NEW_LINE,
-                )
+        for file_path, yaml_content in self._generate_yaml_entries(data_model):
+            full_path = subdir / file_path
+            # Create parent directories if needed (e.g., for views/, containers/, nodes/)
+            full_path.parent.mkdir(parents=True, exist_ok=True)
+            full_path.write_text(
+                yaml_content,
+                encoding=self.ENCODING,
+                newline=self.NEW_LINE,
+            )
 
-        (subdir / f"{data_model.data_model.external_id}.datamodel.yaml").write_text(
+    def _generate_yaml_entries(self, data_model: RequestSchema) -> Iterator[tuple[str, str]]:
+        """Generate file paths and YAML content for all data model components.
+
+        This helper method eliminates duplication by centralizing the logic for
+        iterating through spaces, views, containers, and node types.
+
+        Args:
+            data_model: Request schema
+
+        Yields:
+            Tuples of (file_path, yaml_content) for each component.
+            File paths are relative to the data_models directory.
+        """
+        # Export spaces
+        for space in data_model.spaces:
+            yield (
+                f"{space.space}.space.yaml",
+                yaml.safe_dump(space.model_dump(mode="json", by_alias=True), sort_keys=False),
+            )
+
+        # Export data model
+        yield (
+            f"{data_model.data_model.external_id}.datamodel.yaml",
             yaml.safe_dump(data_model.data_model.model_dump(mode="json", by_alias=True), sort_keys=False),
-            encoding=self.ENCODING,
-            newline=self.NEW_LINE,
         )
 
-        if data_model.views:
-            views_dir = subdir / "views"
-            views_dir.mkdir(parents=True, exist_ok=True)
+        # Export views
+        for view in data_model.views:
+            yield (
+                f"views/{view.external_id}.view.yaml",
+                yaml.safe_dump(view.model_dump(mode="json", by_alias=True), sort_keys=False),
+            )
 
-            for view in data_model.views:
-                (views_dir / f"{view.external_id}.view.yaml").write_text(
-                    yaml.safe_dump(view.model_dump(mode="json", by_alias=True), sort_keys=False),
-                    encoding=self.ENCODING,
-                    newline=self.NEW_LINE,
-                )
+        # Export containers
+        for container in data_model.containers:
+            yield (
+                f"containers/{container.external_id}.container.yaml",
+                yaml.safe_dump(container.model_dump(mode="json", by_alias=True), sort_keys=False),
+            )
 
-        if data_model.containers:
-            containers_dir = subdir / "containers"
-            containers_dir.mkdir(parents=True, exist_ok=True)
-
-            for container in data_model.containers:
-                (containers_dir / f"{container.external_id}.container.yaml").write_text(
-                    yaml.safe_dump(container.model_dump(mode="json", by_alias=True), sort_keys=False),
-                    encoding=self.ENCODING,
-                    newline=self.NEW_LINE,
-                )
-
-        if data_model.node_types:
-            nodes_dir = subdir / "nodes"
-            nodes_dir.mkdir(parents=True, exist_ok=True)
-
-            for node in data_model.node_types:
-                (nodes_dir / f"{node.external_id}.node.yaml").write_text(
-                    yaml.safe_dump(node.model_dump(mode="json", by_alias=True), sort_keys=False),
-                    encoding=self.ENCODING,
-                    newline=self.NEW_LINE,
-                )
+        # Export node types
+        for node in data_model.node_types:
+            yield (
+                f"nodes/{node.external_id}.node.yaml",
+                yaml.safe_dump(node.model_dump(mode="json", by_alias=True), sort_keys=False),
+            )
 
 
 class DMSAPIJSONExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
