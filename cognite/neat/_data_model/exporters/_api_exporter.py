@@ -64,7 +64,7 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
             for node in data_model.node_types:
                 zip_ref.writestr(
                     f"data_models/nodes/{node.external_id}.node.yaml",
-                    yaml.safe_dump(container.model_dump(mode="json", by_alias=True), sort_keys=False),
+                    yaml.safe_dump(node.model_dump(mode="json", by_alias=True), sort_keys=False),
                 )
 
     def _export_to_directory(self, data_model: RequestSchema, directory: Path) -> None:
