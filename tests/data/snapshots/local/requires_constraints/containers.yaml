@@ -361,3 +361,16 @@
         space: external_space
         externalId: ExternalOnlyContainer
         type: container
+
+# Test scenario: 1 local container + multiple external user containers
+# Tests: Can we correctly recommend local container requiring all externals?
+- space: my_space
+  externalId: ManyExternalsRootContainer
+  usedFor: node
+  properties:
+    rootField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false

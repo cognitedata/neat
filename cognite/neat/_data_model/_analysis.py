@@ -593,11 +593,12 @@ class ValidationResources:
         return {container_ref for container_ref in self.local.containers if container_ref.space not in COGNITE_SPACES}
 
     def constraint_exists_locally(self, src: ContainerReference, dst: ContainerReference) -> bool:
-        """Check if a requires constraint exists in the LOCAL schema (not just merged/CDF).
+        """Check if a requires constraint exists in the LOCAL schema.
 
-        This is used to filter recommendations - we should only recommend removing
-        constraints that the user can actually change (i.e., exist in their local schema).
-        Constraints that only exist in CDF will be removed on deploy anyway.
+        Used to filter removal recommendations - we only recommend removing constraints
+        that exist locally, because:
+        - Constraints only in CDF have already been removed by the user (no action needed)
+        - Local schema is the source of truth for what will be deployed
 
         Args:
             src: Source container

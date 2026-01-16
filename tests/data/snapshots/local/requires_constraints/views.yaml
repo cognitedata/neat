@@ -426,3 +426,39 @@
         externalId: LocalContainerRequiringExternalContainer
         type: container
       containerPropertyIdentifier: localRequiresField
+
+# Test scenario: 1 local container + 3 external user containers
+# Expected: ManyExternalsRootContainer should require all 3 external containers
+- space: my_space
+  externalId: ManyExternalsView
+  version: v1
+  name: Many Externals View
+  properties:
+    rootField:
+      name: rootField
+      container:
+        space: my_space
+        externalId: ManyExternalsRootContainer
+        type: container
+      containerPropertyIdentifier: rootField
+    fieldA:
+      name: fieldA
+      container:
+        space: external_space
+        externalId: ExternalUserContainerA
+        type: container
+      containerPropertyIdentifier: fieldA
+    fieldB:
+      name: fieldB
+      container:
+        space: external_space
+        externalId: ExternalUserContainerB
+        type: container
+      containerPropertyIdentifier: fieldB
+    fieldC:
+      name: fieldC
+      container:
+        space: external_space
+        externalId: ExternalUserContainerC
+        type: container
+      containerPropertyIdentifier: fieldC

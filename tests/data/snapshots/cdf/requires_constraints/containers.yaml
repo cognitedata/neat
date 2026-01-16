@@ -17,3 +17,41 @@
         space: cdf_cdm
         externalId: CogniteDescribable
         type: container
+
+# Test scenario: Multiple external user containers (not CDM, not local)
+# Used to test: Can we optimize a view with 1 local + many external containers?
+- space: external_space
+  externalId: ExternalUserContainerA
+  name: External User Container A
+  usedFor: node
+  properties:
+    fieldA:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: external_space
+  externalId: ExternalUserContainerB
+  name: External User Container B
+  usedFor: node
+  properties:
+    fieldB:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: external_space
+  externalId: ExternalUserContainerC
+  name: External User Container C
+  usedFor: node
+  properties:
+    fieldC:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false

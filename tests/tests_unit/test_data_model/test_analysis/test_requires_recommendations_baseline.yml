@@ -107,6 +107,21 @@ my_space:LocalViewWithExternalContainer(v1):
   - LocalContainerRequiringExternalContainer -> ExternalOnlyContainer
   to_add: []
   to_remove: []
+my_space:ManyExternalsView(v1):
+  containers:
+  - ExternalUserContainerA
+  - ExternalUserContainerB
+  - ExternalUserContainerC
+  - ManyExternalsRootContainer
+  final_constraints:
+  - ManyExternalsRootContainer -> ExternalUserContainerA
+  - ManyExternalsRootContainer -> ExternalUserContainerB
+  - ManyExternalsRootContainer -> ExternalUserContainerC
+  to_add:
+  - ManyExternalsRootContainer -> ExternalUserContainerA
+  - ManyExternalsRootContainer -> ExternalUserContainerB
+  - ManyExternalsRootContainer -> ExternalUserContainerC
+  to_remove: []
 my_space:MotorView(v1):
   containers:
   - Level01_MotorContainer
