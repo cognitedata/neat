@@ -438,7 +438,22 @@ class TestValidationResources:
         expected_properties: list[ViewCorePropertyRequest],
         scenarios: dict[str, ValidationResources],
     ) -> None:
-        """Test that view expansion correctly inherits and overrides properties through implements chain."""
+        """This test is doing very complicated PING-PONG of implements and corresponding property inheritance.
+
+        my_space:ImplementationChain1 -> another_space:ImplementationChain2 ->
+        my_space:ImplementationChain3 -> my_space:ImplementationChain4
+
+        where my_space is schema space, and another_space is external space, also
+        re the first three views exist both locally and in CDF, where as the last only exist in CDF.
+
+        By doing this, if we run `rebuild` mode, last view is not considered since it should be deleted in CDF
+        after push of local schema to CDF, and thus properties from that view should not be inherited.
+
+        This test also verifies that property definition are properly overridden, specifically property
+        `name` which container mapping gets to be updated at each view in the chain, despite the property
+        being implemented from the deepest view in the chain (ImplementationChain4 for additive and
+        ImplementationChain3 for rebuild).
+        """
         resources = scenarios[scenario]
         expanded_view = resources._expand_view(view_ref)
         expanded_view_from_cache = resources.expand_view_properties(view_ref)
@@ -862,10 +877,6 @@ class TestValidationResourcesRequiresConstraints:
         assert not resources.container_has_external_views(shared_tag), (
             "Level02_TagWithWrongRequiresContainer should NOT have external views (all its views are in local)"
         )
-
-    # NOTE: test_all_recommendations_are_solvable removed - it has code smell (testing func A with func B)
-    # and we uncovered a real issue: star topologies can be created when siblings share a common target
-    # This needs to be addressed separately by improving MST edge selection or topology validation
 
     def test_requires_recommendations_baseline(
         self, scenarios: dict[str, ValidationResources], data_regression: DataRegressionFixture
