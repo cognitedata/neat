@@ -700,38 +700,27 @@ class ValidationResources:
 
     @cached_property
     def _mst_edges_by_view(self) -> dict[ViewReference, set[frozenset[ContainerReference]]]:
-        """Map each view to the undirected MST edges it needs (Steiner tree).
-
-        For each view, finds the minimal subset of MST edges connecting its containers.
-        Since MST is a tree, this is the union of shortest paths between container pairs.
-        """
+        """Map each view to the undirected MST edges it needs (Steiner tree)."""
         if not self.requires_mst:
             return {}
 
-        # Build undirected MST graph
-        mst_graph = nx.Graph()
-        for edge in self.requires_mst:
-            mst_graph.add_edge(*edge)
-
+        mst_graph = nx.Graph(list(self.requires_mst))
         result: dict[ViewReference, set[frozenset[ContainerReference]]] = {}
 
         for view_ref in self.merged.views:
             containers = self.containers_by_view.get(view_ref, set())
-            containers_in_mst = [c for c in containers if c in mst_graph]
-
-            if len(containers_in_mst) < 2:
+            in_mst = [c for c in containers if c in mst_graph]
+            if len(in_mst) < 2:
                 continue
 
-            # Find Steiner tree edges (union of shortest paths between all container pairs)
+            # Single BFS from first container, trace paths to others (O(n) vs O(n²))
+            pred = dict(nx.bfs_predecessors(mst_graph, in_mst[0]))
             view_edges: set[frozenset[ContainerReference]] = set()
-            for i, c1 in enumerate(containers_in_mst):
-                for c2 in containers_in_mst[i + 1 :]:
-                    try:
-                        path = nx.shortest_path(mst_graph, c1, c2)
-                        for j in range(len(path) - 1):
-                            view_edges.add(frozenset({path[j], path[j + 1]}))
-                    except nx.NetworkXNoPath:
-                        pass
+            for target in in_mst[1:]:
+                node = target
+                while node in pred:
+                    view_edges.add(frozenset({node, pred[node]}))
+                    node = pred[node]
 
             if view_edges:
                 result[view_ref] = view_edges
@@ -771,96 +760,58 @@ class ValidationResources:
     def oriented_requires_mst(self) -> set[tuple[ContainerReference, ContainerReference]]:
         """Orient MST edges by voting across views.
 
-        1. Each view votes for orientations based on BFS from its preferred root
-        2. Orientation with more votes wins
-        3. Ties: prefer existing constraint, then fewer views as source
+        Each view's Steiner tree must form a directed tree from its root (most view-specific
+        container). Views vote for orientations based on BFS from root. Views with only
+        1 modifiable container get 2x weight since that container MUST be root.
         """
-        mst_graph = nx.Graph()
-        for edge in self.requires_mst:
-            mst_graph.add_edge(*edge)
-
-        # Pre-compute Steiner edges for each view
-        steiner_edges_by_view: dict[ViewReference, set[frozenset[ContainerReference]]] = {}
-        for view, containers in self.containers_by_view.items():
-            containers_in_mst = [c for c in containers if c in mst_graph]
-            if len(containers_in_mst) < 2:
-                steiner_edges_by_view[view] = set()
-                continue
-            steiner: set[frozenset[ContainerReference]] = set()
-            pred = dict(nx.bfs_predecessors(mst_graph, containers_in_mst[0]))
-            for target in containers_in_mst[1:]:
-                node = target
-                while node in pred:
-                    steiner.add(frozenset({node, pred[node]}))
-                    node = pred[node]
-            steiner_edges_by_view[view] = steiner
-
-        # Collect votes
+        mst_graph = nx.Graph(list(self.requires_mst))
         edge_votes: dict[frozenset[ContainerReference], dict[tuple[ContainerReference, ContainerReference], int]] = (
             defaultdict(lambda: defaultdict(int))
         )
 
-        for view, containers in self.containers_by_view.items():
-            modifiable_in_view = [c for c in containers if c in self.modifiable_containers]
-            if not modifiable_in_view:
+        for view, steiner in self._mst_edges_by_view.items():
+            containers = self.containers_by_view.get(view, set())
+            modifiable = [c for c in containers if c in self.modifiable_containers]
+            if not modifiable or not steiner:
                 continue
 
-            steiner = steiner_edges_by_view.get(view, set())
-            if not steiner:
-                continue
+            # Root: fewest views, prefer existing constraint sources
+            root = min(
+                modifiable,
+                key=lambda c: (
+                    len(self.views_by_container.get(c, set())),
+                    -int(any((c, o) in self.requires_constraint_graph.edges() for o in containers)),
+                    str(c),
+                ),
+            )
 
-            # Root: container in fewest views, preferring existing constraint sources
-            def root_score(c: ContainerReference) -> tuple[int, int, str]:
-                view_count = len(self.views_by_container.get(c, set()))
-                is_source = (
-                    1 if any((c, other) in self.requires_constraint_graph.edges() for other in containers) else 0
-                )
-                return (view_count, -is_source, str(c))
-
-            root = min(modifiable_in_view, key=root_score)
-
-            # Vote weight: views with fewer modifiable containers have stronger opinions
-            # (if only 1 modifiable, that MUST be root, so vote counts more)
-            weight = 1 if len(modifiable_in_view) > 1 else 2
-
+            weight = 1 if len(modifiable) > 1 else 2
             for u, v in nx.bfs_edges(mst_graph, root):
-                edge_key = frozenset({u, v})
-                if edge_key in steiner and u in self.modifiable_containers:
-                    edge_votes[edge_key][(u, v)] += weight
+                if frozenset({u, v}) in steiner and u in self.modifiable_containers:
+                    edge_votes[frozenset({u, v})][(u, v)] += weight
 
         oriented: set[tuple[ContainerReference, ContainerReference]] = set()
-
         for c1, c2 in self.requires_mst:
-            edge_key = frozenset({c1, c2})
-            votes = edge_votes.get(edge_key, {})
-            c1_mod = c1 in self.modifiable_containers
-            c2_mod = c2 in self.modifiable_containers
-
+            c1_mod, c2_mod = c1 in self.modifiable_containers, c2 in self.modifiable_containers
             if not c1_mod and not c2_mod:
                 continue
-
-            c1_votes = votes.get((c1, c2), 0)
-            c2_votes = votes.get((c2, c1), 0)
-
-            if c1_mod and c2_mod:
-                if c1_votes != c2_votes:
-                    oriented.add((c1, c2) if c1_votes > c2_votes else (c2, c1))
-                else:
-                    # Tie: prefer existing constraint
-                    c1_to_c2_exists = (c1, c2) in self.requires_constraint_graph.edges()
-                    c2_to_c1_exists = (c2, c1) in self.requires_constraint_graph.edges()
-                    if c1_to_c2_exists != c2_to_c1_exists:
-                        oriented.add((c1, c2) if c1_to_c2_exists else (c2, c1))
-                    else:
-                        # Use view counts
-                        c1_views = len(self.views_by_container.get(c1, set()))
-                        c2_views = len(self.views_by_container.get(c2, set()))
-                        if c1_views != c2_views:
-                            oriented.add((c1, c2) if c1_views < c2_views else (c2, c1))
-                        else:
-                            oriented.add((c1, c2) if str(c1) < str(c2) else (c2, c1))
-            else:
+            if not c1_mod or not c2_mod:
                 oriented.add((c1, c2) if c1_mod else (c2, c1))
+                continue
+
+            votes = edge_votes.get(frozenset({c1, c2}), {})
+            c1_votes, c2_votes = votes.get((c1, c2), 0), votes.get((c2, c1), 0)
+            if c1_votes != c2_votes:
+                oriented.add((c1, c2) if c1_votes > c2_votes else (c2, c1))
+            else:
+                # Tie-breakers: existing constraint → view count → alphabetical
+                c1_exists = (c1, c2) in self.requires_constraint_graph.edges()
+                c2_exists = (c2, c1) in self.requires_constraint_graph.edges()
+                c1_views = len(self.views_by_container.get(c1, set()))
+                c2_views = len(self.views_by_container.get(c2, set()))
+                score1 = (-int(c1_exists), c1_views, str(c1))
+                score2 = (-int(c2_exists), c2_views, str(c2))
+                oriented.add((c1, c2) if score1 <= score2 else (c2, c1))
 
         return oriented
 
