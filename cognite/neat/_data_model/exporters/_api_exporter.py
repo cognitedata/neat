@@ -107,7 +107,7 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
             containers_dir = subdir / "containers"
             containers_dir.mkdir(parents=True, exist_ok=True)
 
-            for container in data_model.views:
+            for container in data_model.containers:
                 (containers_dir / f"{container.external_id}.container.yaml").write_text(
                     yaml.safe_dump(container.model_dump(mode="json", by_alias=True), sort_keys=False),
                     encoding=self.ENCODING,
