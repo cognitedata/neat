@@ -87,7 +87,6 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
             File paths are relative to the data_models directory.
         """
 
-        # Export spaces
         def _dump(item: BaseModel) -> str:
             return yaml.safe_dump(item.model_dump(mode="json", by_alias=True), sort_keys=False)
 
