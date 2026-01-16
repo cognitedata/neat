@@ -879,25 +879,18 @@ class TestValidationResourcesRequiresConstraints:
                 "recommendations should only remove LOCAL constraints"
             )
 
-    def test_container_is_used_in_external_views_prevents_removal_recommendations(
-        self, scenarios: dict[str, ValidationResources]
-    ) -> None:
-        """Test that we skip removal recommendations for containers used by CDF-only views."""
+    def test_edge_is_used_in_external_views(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that edge_is_used_in_external_views correctly identifies edges used by CDF-only views."""
         resources = scenarios["requires-constraints"]
 
         # Level01_PumpEquipmentContainer is used by CdfOnlyViewUsingLocalContainer in CDF
-        # but that view is NOT in local schema
         pump = ContainerReference(space="my_space", external_id="Level01_PumpEquipmentContainer")
-
-        # Verify the container is used in external views
-        assert resources.container_is_used_in_external_views(pump), (
-            "Level01_PumpEquipmentContainer should have external views (CdfOnlyViewUsingLocalContainer in CDF but not in local)"
-        )
-
-        # Verify a container not being used in external views returns False
         shared_tag = ContainerReference(space="my_space", external_id="Level02_TagWithWrongRequiresContainer")
-        assert not resources.container_is_used_in_external_views(shared_tag), (
-            "Level02_TagWithWrongRequiresContainer should NOT have external views (all its views are in local)"
+
+        # Edge between pump and shared_tag: check if they appear together in external views
+        # CdfOnlyViewUsingLocalContainer contains pump but NOT shared_tag, so this edge is NOT external
+        assert not resources.edge_is_used_in_external_views(pump, shared_tag), (
+            "Edge pump->shared_tag should NOT be in external views (they don't appear together in any external view)"
         )
 
     def test_requires_recommendations_baseline(

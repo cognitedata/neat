@@ -641,11 +641,15 @@ class ValidationResources:
         graph.add_edges_from(base_graph.edges())
         return self.forms_directed_path(containers, graph)
 
-    def container_is_used_in_external_views(self, container: ContainerReference) -> bool:
-        """Check if a container is used by views in CDF that aren't in our merged scope."""
-        all_views = self.views_by_container.get(container, set())
-        external_views = all_views - set(self.merged.views.keys())
-        return len(external_views) > 0
+    def edge_is_used_in_external_views(self, src: ContainerReference, dst: ContainerReference) -> bool:
+        """Check if an edge (both containers together) is used by any external view."""
+        src_views = self.views_by_container.get(src, set())
+        dst_views = self.views_by_container.get(dst, set())
+        # Views containing both containers
+        shared_views = src_views & dst_views
+        # External views containing both
+        external_shared = shared_views - set(self.merged.views.keys())
+        return len(external_shared) > 0
 
     @cached_property
     def requires_mst(self) -> set[frozenset[ContainerReference]]:
@@ -775,11 +779,20 @@ class ValidationResources:
             if not modifiable or not steiner:
                 continue
 
-            # Root: fewest views, prefer existing constraint sources
+            # Root: fewest independent views (supersets don't count - they're just extensions)
+            # A container is "view-specific" if it appears in few views that are NOT supersets of this view
+            independent_view_counts = {
+                c: sum(
+                    1
+                    for v in self.views_by_container.get(c, set())
+                    if not (self.containers_by_view.get(v, set()) >= containers)
+                )
+                for c in modifiable
+            }
             root = min(
                 modifiable,
                 key=lambda c: (
-                    len(self.views_by_container.get(c, set())),
+                    independent_view_counts[c],
                     -int(any((c, o) in self.requires_constraint_graph.edges() for o in containers)),
                     str(c),
                 ),
@@ -804,13 +817,11 @@ class ValidationResources:
             if c1_votes != c2_votes:
                 oriented.add((c1, c2) if c1_votes > c2_votes else (c2, c1))
             else:
-                # Tie-breakers: existing constraint → view count → alphabetical
+                # Tie-breakers: existing constraint → alphabetical
                 c1_exists = (c1, c2) in self.requires_constraint_graph.edges()
                 c2_exists = (c2, c1) in self.requires_constraint_graph.edges()
-                c1_views = len(self.views_by_container.get(c1, set()))
-                c2_views = len(self.views_by_container.get(c2, set()))
-                score1 = (-int(c1_exists), c1_views, str(c1))
-                score2 = (-int(c2_exists), c2_views, str(c2))
+                score1 = (-int(c1_exists), str(c1))
+                score2 = (-int(c2_exists), str(c2))
                 oriented.add((c1, c2) if score1 <= score2 else (c2, c1))
 
         return oriented
@@ -848,8 +859,8 @@ class ValidationResources:
 
         to_remove: set[tuple[ContainerReference, ContainerReference]] = set()
         for src, dst in local_edges:
-            # Don't recommend removal if container might serve external views
-            if self.container_is_used_in_external_views(src):
+            # Don't recommend removal if this specific edge might serve external views
+            if self.edge_is_used_in_external_views(src, dst):
                 continue
             edge_undirected = frozenset({src, dst})
             # Remove if edge not in MST, or if it's in MST but wrong direction
