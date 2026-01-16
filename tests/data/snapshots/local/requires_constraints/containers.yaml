@@ -374,3 +374,51 @@
       type:
         type: text
         list: false
+
+# Test scenario: Equipment views connecting through user Tag and CDM containers
+# Tests: When 2 equipment containers appear together WITHOUT their shared Tag,
+# the view should not be optimizable (UnsolvableEquipmentView)
+# Pump, HeatExchanger, Compressor all connect through EquipmentTag
+- space: my_space
+  externalId: EquipmentPumpContainer
+  usedFor: node
+  properties:
+    pumpField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: EquipmentHeatExchangerContainer
+  usedFor: node
+  properties:
+    heatExchangerField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: EquipmentCompressorContainer
+  usedFor: node
+  properties:
+    compressorField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+
+- space: my_space
+  externalId: EquipmentTagContainer
+  usedFor: node
+  properties:
+    tagField:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false

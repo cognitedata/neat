@@ -69,9 +69,6 @@ class MissingRequiresConstraint(DataModelValidator):
             if not to_add:
                 continue
 
-            if not self.validation_resources.would_recommendations_solve_view(view_ref, to_add):
-                continue
-
             for src, dst in to_add:
                 src_views = self.validation_resources.views_by_container.get(src, set())
                 other_views_with_src = src_views - {view_ref}
@@ -200,9 +197,6 @@ class RequiresConstraintIngestionDependency(DataModelValidator):
             if not to_add:
                 continue
 
-            if not self.validation_resources.would_recommendations_solve_view(view_ref, to_add):
-                continue
-
             for src, dst in to_add:
                 src_views = self.validation_resources.views_by_container.get(src, set())
                 other_views_with_src = src_views - {view_ref}
@@ -303,9 +297,8 @@ class UnresolvableQueryPerformance(DataModelValidator):
 
             # Case 2: MST algorithm couldn't find a valid solution
             to_add, _ = self.validation_resources.get_requires_changes_for_view(view_ref)
-            would_solve = self.validation_resources.would_recommendations_solve_view(view_ref, to_add)
 
-            if not would_solve:
+            if not to_add:
                 recommendations.append(
                     Recommendation(
                         message=(

@@ -1,3 +1,25 @@
+# Test: Container exists in both local and CDF with DIFFERENT constraints
+# Local has: PumpContainer → TagWithWrongRequiresContainer
+# CDF has: PumpContainer → CogniteDescribable (different!)
+# Recommendations should be based on LOCAL, not merged
+- space: my_space
+  externalId: Level01_PumpContainer
+  usedFor: node
+  properties:
+    pumpId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    cdf_only_constraint:
+      constraintType: requires
+      require:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+
 # Non-CDM container from CDF (not in local schema) - treated as immutable
 - space: external_space
   externalId: ExternalOnlyContainer

@@ -462,3 +462,148 @@
         externalId: ExternalUserContainerC
         type: container
       containerPropertyIdentifier: fieldC
+
+# Test scenario: Equipment views connecting through user Tag and CDM containers
+# EquipmentPumpView: Pump, Tag, CogniteDescribable
+- space: my_space
+  externalId: EquipmentPumpView
+  version: v1
+  name: Equipment Pump View
+  properties:
+    pumpField:
+      name: pumpField
+      container:
+        space: my_space
+        externalId: EquipmentPumpContainer
+        type: container
+      containerPropertyIdentifier: pumpField
+    tagField:
+      name: tagField
+      container:
+        space: my_space
+        externalId: EquipmentTagContainer
+        type: container
+      containerPropertyIdentifier: tagField
+    description:
+      name: description
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: description
+
+# EquipmentHeatExchangerView: HeatExchanger, Tag, CogniteDescribable
+- space: my_space
+  externalId: EquipmentHeatExchangerView
+  version: v1
+  name: Equipment HeatExchanger View
+  properties:
+    heatExchangerField:
+      name: heatExchangerField
+      container:
+        space: my_space
+        externalId: EquipmentHeatExchangerContainer
+        type: container
+      containerPropertyIdentifier: heatExchangerField
+    tagField:
+      name: tagField
+      container:
+        space: my_space
+        externalId: EquipmentTagContainer
+        type: container
+      containerPropertyIdentifier: tagField
+    description:
+      name: description
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: description
+
+# EquipmentCompressorView: Compressor, Tag, CogniteDescribable
+- space: my_space
+  externalId: EquipmentCompressorView
+  version: v1
+  name: Equipment Compressor View
+  properties:
+    compressorField:
+      name: compressorField
+      container:
+        space: my_space
+        externalId: EquipmentCompressorContainer
+        type: container
+      containerPropertyIdentifier: compressorField
+    tagField:
+      name: tagField
+      container:
+        space: my_space
+        externalId: EquipmentTagContainer
+        type: container
+      containerPropertyIdentifier: tagField
+    description:
+      name: description
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: description
+
+# EquipmentTagView: Tag, CogniteAsset, CogniteSourceable, CogniteDescribable
+- space: my_space
+  externalId: EquipmentTagView
+  version: v1
+  name: Equipment Tag View
+  properties:
+    tagField:
+      name: tagField
+      container:
+        space: my_space
+        externalId: EquipmentTagContainer
+        type: container
+      containerPropertyIdentifier: tagField
+    assetName:
+      name: assetName
+      container:
+        space: cdf_cdm
+        externalId: CogniteAsset
+        type: container
+      containerPropertyIdentifier: name
+    sourceId:
+      name: sourceId
+      container:
+        space: cdf_cdm
+        externalId: CogniteSourceable
+        type: container
+      containerPropertyIdentifier: sourceId
+    description:
+      name: description
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: description
+
+# EquipmentUnsolvableView: Pump, HeatExchanger only (no Tag, no CDM)
+# This should NOT get recommendations because:
+# - Pump and HeatExchanger only appear together here (2-container view)
+# - Both have independent views with Tag
+# - Connecting them requires Tag as bridge, but Tag is user container outside view
+- space: my_space
+  externalId: EquipmentUnsolvableView
+  version: v1
+  name: Equipment Unsolvable View
+  properties:
+    pumpField:
+      name: pumpField
+      container:
+        space: my_space
+        externalId: EquipmentPumpContainer
+        type: container
+      containerPropertyIdentifier: pumpField
+    heatExchangerField:
+      name: heatExchangerField
+      container:
+        space: my_space
+        externalId: EquipmentHeatExchangerContainer
+        type: container
+      containerPropertyIdentifier: heatExchangerField
