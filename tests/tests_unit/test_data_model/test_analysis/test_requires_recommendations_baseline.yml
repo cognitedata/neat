@@ -25,9 +25,13 @@ my_space:ConflictingEquipmentView(v1):
   containers:
   - Level01_MotorContainer
   - Level01_PumpContainer
-  final_constraints: []
-  to_add: []
-  to_remove: []
+  final_constraints:
+  - Level01_MotorContainer -> Level01_PumpContainer
+  to_add:
+  - Level01_MotorContainer -> Level01_PumpContainer
+  to_remove:
+  - Level01_MotorContainer -> Level02_TagWithWrongRequiresContainer
+  - Level01_PumpContainer -> Level02_TagWithWrongRequiresContainer
 my_space:CycleTestView(v1):
   containers:
   - CycleContainerA
@@ -149,8 +153,10 @@ my_space:ImmutableBridgeViewB(v1):
   - CogniteDescribable
   - ImmutableBridgeUserBContainer
   final_constraints:
+  - ImmutableBridgeUserAContainer -> CogniteDescribable
   - ImmutableBridgeUserBContainer -> ImmutableBridgeUserAContainer
   to_add:
+  - ImmutableBridgeUserAContainer -> CogniteDescribable
   - ImmutableBridgeUserBContainer -> ImmutableBridgeUserAContainer
   to_remove: []
 my_space:LocalViewWithExternalContainer(v1):
@@ -182,10 +188,12 @@ my_space:MotorView(v1):
   - Level02_TagWithWrongRequiresContainer
   - Level03_DescribableContainer
   final_constraints:
-  - Level01_MotorContainer -> Level03_DescribableContainer
+  - Level01_MotorContainer -> Level01_PumpContainer
+  - Level01_PumpContainer -> Level03_DescribableContainer
   - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
   to_add:
-  - Level01_MotorContainer -> Level03_DescribableContainer
+  - Level01_MotorContainer -> Level01_PumpContainer
+  - Level01_PumpContainer -> Level03_DescribableContainer
   - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
   to_remove:
   - Level01_MotorContainer -> Level02_TagWithWrongRequiresContainer

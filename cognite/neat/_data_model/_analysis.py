@@ -671,32 +671,8 @@ class ValidationResources:
         if not pair_to_views:
             return set()
 
-        # Filter out "bridge-causing" pairs: if a pair only appears together in one view
-        # that has ONLY those two containers, but both containers appear independently
-        # in other views, including this edge would force those other views to use one
-        # container as a bridge. Skip such edges to avoid complicating otherwise-solvable views.
-        must_connect: set[frozenset[ContainerReference]] = set()
-        for pair, views_with_pair in pair_to_views.items():
-            c1, c2 = tuple(pair)
-
-            if len(views_with_pair) == 1:
-                sole_view = next(iter(views_with_pair))
-                sole_view_containers = self.containers_by_view.get(sole_view, set())
-
-                # Only skip if this view has NO other containers - just c1 and c2
-                # If it has other containers, c1-c2 might be essential for that view's connectivity
-                if len(sole_view_containers) == 2:
-                    c1_views = self.views_by_container.get(c1, set())
-                    c2_views = self.views_by_container.get(c2, set())
-                    c1_independent = c1_views - views_with_pair  # Views with c1 but not c2
-                    c2_independent = c2_views - views_with_pair  # Views with c2 but not c1
-
-                    # If both containers have independent usage in larger views,
-                    # skip this edge - the sole 2-container view is problematic
-                    if c1_independent and c2_independent:
-                        continue
-
-            must_connect.add(pair)
+        # All container pairs that appear together in any view need potential connectivity
+        must_connect = set(pair_to_views.keys())
 
         # Build undirected graph with edge weights
         G = nx.Graph()
@@ -795,74 +771,96 @@ class ValidationResources:
     def oriented_requires_mst(self) -> set[tuple[ContainerReference, ContainerReference]]:
         """Orient MST edges by voting across views.
 
-        For each edge, each view votes for the orientation that allows its
-        preferred root to reach all containers. The orientation with more votes wins.
+        1. Each view votes for orientations based on BFS from its preferred root
+        2. Orientation with more votes wins
+        3. Ties: prefer existing constraint, then fewer views as source
         """
-        # Collect votes: edge -> {(src, dst): vote_count}
-        edge_votes: dict[frozenset[ContainerReference], dict[tuple[ContainerReference, ContainerReference], int]] = {
-            edge: defaultdict(int) for edge in self.requires_mst
-        }
-
-        for view_ref in self.merged.views:
-            containers = self.containers_by_view.get(view_ref, set())
-            steiner_edges = self._mst_edges_by_view.get(view_ref, set())
-
-            if len(containers) < 2 or not steiner_edges:
-                continue
-
-            # Find preferred root: most view-specific modifiable container
-            modifiable = [c for c in containers if c in self.modifiable_containers]
-            if not modifiable:
-                continue
-            root = min(
-                modifiable,
-                key=lambda c: (
-                    len(self.views_by_container.get(c, set())),
-                    -self.requires_constraint_graph.out_degree(c),
-                    str(c),
-                ),
-            )
-            if not any(root in edge for edge in steiner_edges):
-                continue
-
-            # BFS from root to get edge orientations
-            graph = nx.Graph()
-            for edge in steiner_edges:
-                graph.add_edge(*edge)
-
-            # Cast votes for orientations where source is in the view and modifiable
-            for u, v in nx.bfs_edges(graph, root):
-                if u in containers and u in self.modifiable_containers:
-                    edge_votes[frozenset({u, v})][(u, v)] += 1
-
-        # Determine final orientation for each edge
-        oriented: set[tuple[ContainerReference, ContainerReference]] = set()
+        mst_graph = nx.Graph()
         for edge in self.requires_mst:
-            votes = edge_votes[edge]
-            c1, c2 = sorted(edge, key=str)
+            mst_graph.add_edge(*edge)
 
-            # Build valid orientations (source must be modifiable)
-            # Note: MST can include FREE edges between CDF containers, so candidates may be empty
-            candidates: list[tuple[ContainerReference, ContainerReference]] = []
-            if c1 in self.modifiable_containers:
-                candidates.append((c1, c2))
-            if c2 in self.modifiable_containers:
-                candidates.append((c2, c1))
+        # Pre-compute Steiner edges for each view
+        steiner_edges_by_view: dict[ViewReference, set[frozenset[ContainerReference]]] = {}
+        for view, containers in self.containers_by_view.items():
+            containers_in_mst = [c for c in containers if c in mst_graph]
+            if len(containers_in_mst) < 2:
+                steiner_edges_by_view[view] = set()
+                continue
+            steiner: set[frozenset[ContainerReference]] = set()
+            pred = dict(nx.bfs_predecessors(mst_graph, containers_in_mst[0]))
+            for target in containers_in_mst[1:]:
+                node = target
+                while node in pred:
+                    steiner.add(frozenset({node, pred[node]}))
+                    node = pred[node]
+            steiner_edges_by_view[view] = steiner
 
-            if not candidates:
-                continue  # Both CDF - no modifiable source available
+        # Collect votes
+        edge_votes: dict[frozenset[ContainerReference], dict[tuple[ContainerReference, ContainerReference], int]] = (
+            defaultdict(lambda: defaultdict(int))
+        )
 
-            # Pick orientation with most votes
-            # Tie-breakers: existing constraint, then alphabetical
-            best = max(
-                candidates,
-                key=lambda o: (
-                    votes.get(o, 0),  # Most votes wins
-                    self.requires_constraint_graph.has_edge(o[0], o[1]),  # Existing constraint preferred
-                    str(o[0]),  # Alphabetical by source (deterministic)
-                ),
-            )
-            oriented.add(best)
+        for view, containers in self.containers_by_view.items():
+            modifiable_in_view = [c for c in containers if c in self.modifiable_containers]
+            if not modifiable_in_view:
+                continue
+
+            steiner = steiner_edges_by_view.get(view, set())
+            if not steiner:
+                continue
+
+            # Root: container in fewest views, preferring existing constraint sources
+            def root_score(c: ContainerReference) -> tuple[int, int, str]:
+                view_count = len(self.views_by_container.get(c, set()))
+                is_source = (
+                    1 if any((c, other) in self.requires_constraint_graph.edges() for other in containers) else 0
+                )
+                return (view_count, -is_source, str(c))
+
+            root = min(modifiable_in_view, key=root_score)
+
+            # Vote weight: views with fewer modifiable containers have stronger opinions
+            # (if only 1 modifiable, that MUST be root, so vote counts more)
+            weight = 1 if len(modifiable_in_view) > 1 else 2
+
+            for u, v in nx.bfs_edges(mst_graph, root):
+                edge_key = frozenset({u, v})
+                if edge_key in steiner and u in self.modifiable_containers:
+                    edge_votes[edge_key][(u, v)] += weight
+
+        oriented: set[tuple[ContainerReference, ContainerReference]] = set()
+
+        for c1, c2 in self.requires_mst:
+            edge_key = frozenset({c1, c2})
+            votes = edge_votes.get(edge_key, {})
+            c1_mod = c1 in self.modifiable_containers
+            c2_mod = c2 in self.modifiable_containers
+
+            if not c1_mod and not c2_mod:
+                continue
+
+            c1_votes = votes.get((c1, c2), 0)
+            c2_votes = votes.get((c2, c1), 0)
+
+            if c1_mod and c2_mod:
+                if c1_votes != c2_votes:
+                    oriented.add((c1, c2) if c1_votes > c2_votes else (c2, c1))
+                else:
+                    # Tie: prefer existing constraint
+                    c1_to_c2_exists = (c1, c2) in self.requires_constraint_graph.edges()
+                    c2_to_c1_exists = (c2, c1) in self.requires_constraint_graph.edges()
+                    if c1_to_c2_exists != c2_to_c1_exists:
+                        oriented.add((c1, c2) if c1_to_c2_exists else (c2, c1))
+                    else:
+                        # Use view counts
+                        c1_views = len(self.views_by_container.get(c1, set()))
+                        c2_views = len(self.views_by_container.get(c2, set()))
+                        if c1_views != c2_views:
+                            oriented.add((c1, c2) if c1_views < c2_views else (c2, c1))
+                        else:
+                            oriented.add((c1, c2) if str(c1) < str(c2) else (c2, c1))
+            else:
+                oriented.add((c1, c2) if c1_mod else (c2, c1))
 
         return oriented
 
@@ -894,8 +892,8 @@ class ValidationResources:
                 if isinstance(constraint, RequiresConstraintDefinition):
                     local_edges.add((src, constraint.require))
 
-        # To add: oriented edges not in local
-        to_add = {(src, dst) for src, dst in oriented_edges - local_edges if src in modifiable_in_view}
+        # To add: oriented Steiner edges not in local (includes bridge containers outside view)
+        to_add = {(src, dst) for src, dst in oriented_edges - local_edges if src in self.modifiable_containers}
 
         to_remove: set[tuple[ContainerReference, ContainerReference]] = set()
         for src, dst in local_edges:
