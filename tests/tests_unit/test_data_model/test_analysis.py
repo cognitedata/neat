@@ -857,7 +857,7 @@ class TestValidationResourcesRequiresConstraints:
                 "should only be for edges that exist in local schema"
             )
 
-    def test_container_has_external_views_prevents_removal_recommendations(
+    def test_container_is_used_in_external_views_prevents_removal_recommendations(
         self, scenarios: dict[str, ValidationResources]
     ) -> None:
         """Test that we skip removal recommendations for containers used by CDF-only views."""
@@ -867,14 +867,14 @@ class TestValidationResourcesRequiresConstraints:
         # but that view is NOT in local schema
         pump = ContainerReference(space="my_space", external_id="Level01_PumpEquipmentContainer")
 
-        # Verify the container has external views
-        assert resources.container_has_external_views(pump), (
+        # Verify the container is used in external views
+        assert resources.container_is_used_in_external_views(pump), (
             "Level01_PumpEquipmentContainer should have external views (CdfOnlyViewUsingLocalContainer in CDF but not in local)"
         )
 
-        # Verify a container without external views returns False
+        # Verify a container not being used in external views returns False
         shared_tag = ContainerReference(space="my_space", external_id="Level02_TagWithWrongRequiresContainer")
-        assert not resources.container_has_external_views(shared_tag), (
+        assert not resources.container_is_used_in_external_views(shared_tag), (
             "Level02_TagWithWrongRequiresContainer should NOT have external views (all its views are in local)"
         )
 

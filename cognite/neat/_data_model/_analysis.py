@@ -617,7 +617,7 @@ class ValidationResources:
 
         return False
 
-    def container_has_external_views(self, container: ContainerReference) -> bool:
+    def container_is_used_in_external_views(self, container: ContainerReference) -> bool:
         """Check if a container is used by views in CDF that aren't in our merged scope."""
         all_views = self.views_by_container.get(container, set())
         external_views = all_views - set(self.merged.views.keys())
@@ -857,7 +857,7 @@ class ValidationResources:
         to_remove: set[tuple[ContainerReference, ContainerReference]] = set()
         for src, dst in local_edges:
             # Don't recommend removal if container might serve external views
-            if self.container_has_external_views(src):
+            if self.container_is_used_in_external_views(src):
                 continue
             edge_undirected = frozenset({src, dst})
             if edge_undirected not in self.requires_mst or (src, dst) not in oriented_edges:
