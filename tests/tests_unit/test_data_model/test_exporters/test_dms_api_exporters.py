@@ -76,9 +76,7 @@ class TestYAMLExporter:
             ]
             for dir_name, components, suffix in component_checks:
                 if components:
-                    expected_files.update(
-                        f"data_models/{dir_name}/{c.external_id}.{suffix}.yaml" for c in components
-                    )
+                    expected_files.update(f"data_models/{dir_name}/{c.external_id}.{suffix}.yaml" for c in components)
 
             assert actual_files == expected_files
 
