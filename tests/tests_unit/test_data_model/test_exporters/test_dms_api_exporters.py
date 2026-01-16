@@ -33,29 +33,22 @@ class TestYAMLExporter:
                 space_file = data_models_dir / f"{space.space}.space.yaml"
                 assert space_file.exists(), f"space file {space_file} not created"
 
-        # Verify views are exported
-        if schema.views:
-            views_dir = data_models_dir / "views"
-            assert views_dir.exists(), "views directory not created"
-            for view in schema.views:
-                view_file = views_dir / f"{view.external_id}.view.yaml"
-                assert view_file.exists(), f"view file {view_file} not created"
+        # Verify views, containers, and node_types are exported
+        component_checks = [
+            ("views", schema.views, "view"),
+            ("containers", schema.containers, "container"),
+            ("nodes", schema.node_types, "node"),
+        ]
 
-        # Verify containers are exported
-        if schema.containers:
-            containers_dir = data_models_dir / "containers"
-            assert containers_dir.exists(), "containers directory not created"
-            for container in schema.containers:
-                container_file = containers_dir / f"{container.external_id}.container.yaml"
-                assert container_file.exists(), f"container file {container_file} not created"
+        for dir_name, components, suffix in component_checks:
+            if not components:
+                continue
 
-        # Verify node_types are exported
-        if schema.node_types:
-            nodes_dir = data_models_dir / "nodes"
-            assert nodes_dir.exists(), "nodes directory not created"
-            for node in schema.node_types:
-                node_file = nodes_dir / f"{node.external_id}.node.yaml"
-                assert node_file.exists(), f"node file {node_file} not created"
+            component_dir = data_models_dir / dir_name
+            assert component_dir.exists(), f"{dir_name} directory not created"
+            for component in components:
+                component_file = component_dir / f"{component.external_id}.{suffix}.yaml"
+                assert component_file.exists(), f"file for {component.external_id} not created"
 
     def test_export_to_zip_file(self, example_dms_schema_request: dict[str, Any], tmp_path: Path) -> None:
         """Test exporting DMS to a zip file containing YAML files."""
