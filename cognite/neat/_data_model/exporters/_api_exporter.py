@@ -18,7 +18,13 @@ class DMSAPIExporter(DMSExporter[RequestSchema]):
 
 class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
     def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
-        """Export the data model to a YAML file in API format."""
+        """Export the data model to a YAML files or zip file in API format.
+
+        Args:
+            data_model: Request schema
+            file_path: The directory or zip file to save the schema to.
+
+        """
 
         if file_path.is_dir():
             self._export_to_directory(data_model, file_path)
@@ -30,8 +36,8 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
         This is compatible with the Cognite-Toolkit convention.
 
         Args:
-            data_model: RequestSchema
-            zip_file Path: The zip file to save the schema to.
+            data_model: Request schema
+            zip_file: The zip file path to save the schema to.
         """
         if zip_file.suffix not in {".zip"}:
             warnings.warn("File extension is not .zip, adding it to the file name", stacklevel=2)
@@ -71,8 +77,8 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
         """Save the schema to a directory as YAML files. This is compatible with the Cognite-Toolkit convention.
 
         Args:
-            data_model: RequestSchema
-            directory Path: The directory to save the schema to.
+            data_model: Request schema
+            directory: The directory to save the schema to.
         """
 
         subdir = directory / "data_models"
