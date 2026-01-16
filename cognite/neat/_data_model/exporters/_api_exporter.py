@@ -4,9 +4,13 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import yaml
+from pydantic import BaseModel
 
 from cognite.neat._data_model.exporters._base import DMSExporter, DMSFileExporter
 from cognite.neat._data_model.models.dms import RequestSchema
+from cognite.neat._data_model.models.dms._container import ContainerRequest
+from cognite.neat._data_model.models.dms._references import NodeReference
+from cognite.neat._data_model.models.dms._views import ViewRequest
 
 
 class DMSAPIExporter(DMSExporter[RequestSchema]):
@@ -82,39 +86,28 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
             Tuples of (file_path, yaml_content) for each component.
             File paths are relative to the data_models directory.
         """
+
+        # Export spaces
+        def _dump(item: BaseModel) -> str:
+            return yaml.safe_dump(item.model_dump(mode="json", by_alias=True), sort_keys=False)
+
         # Export spaces
         for space in data_model.spaces:
-            yield (
-                f"{space.space}.space.yaml",
-                yaml.safe_dump(space.model_dump(mode="json", by_alias=True), sort_keys=False),
-            )
+            yield f"{space.space}.space.yaml", _dump(space)
 
         # Export data model
-        yield (
-            f"{data_model.data_model.external_id}.datamodel.yaml",
-            yaml.safe_dump(data_model.data_model.model_dump(mode="json", by_alias=True), sort_keys=False),
-        )
+        yield f"{data_model.data_model.external_id}.datamodel.yaml", _dump(data_model.data_model)
 
-        # Export views
-        for view in data_model.views:
-            yield (
-                f"views/{view.external_id}.view.yaml",
-                yaml.safe_dump(view.model_dump(mode="json", by_alias=True), sort_keys=False),
-            )
+        component_configs: list[tuple[str, list[ViewRequest] | list[ContainerRequest] | list[NodeReference]]] = [
+            ("views", data_model.views),
+            ("containers", data_model.containers),
+            ("nodes", data_model.node_types),
+        ]
 
-        # Export containers
-        for container in data_model.containers:
-            yield (
-                f"containers/{container.external_id}.container.yaml",
-                yaml.safe_dump(container.model_dump(mode="json", by_alias=True), sort_keys=False),
-            )
-
-        # Export node types
-        for node in data_model.node_types:
-            yield (
-                f"nodes/{node.external_id}.node.yaml",
-                yaml.safe_dump(node.model_dump(mode="json", by_alias=True), sort_keys=False),
-            )
+        for dir_prefix, components in component_configs:
+            file_suffix = dir_prefix.removesuffix("s")
+            for component in components:
+                yield f"{dir_prefix}/{component.external_id}.{file_suffix}.yaml", _dump(component)
 
 
 class DMSAPIJSONExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
