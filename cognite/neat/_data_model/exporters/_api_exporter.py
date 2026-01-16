@@ -36,22 +36,6 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
         else:
             self._export_to_zip_file(data_model, file_path)
 
-    def _export_to_zip_file(self, data_model: RequestSchema, zip_file: Path) -> None:
-        """Save the schema as a zip file containing a directory as YAML files.
-        This is compatible with the Cognite-Toolkit convention.
-
-        Args:
-            data_model: Request schema
-            zip_file: The zip file path to save the schema to.
-        """
-        if zip_file.suffix not in {".zip"}:
-            warnings.warn("File extension is not .zip, adding it to the file name", stacklevel=2)
-            zip_file = zip_file.with_suffix(".zip")
-
-        with zipfile.ZipFile(zip_file, "w") as zip_ref:
-            for file_path, yaml_content in self._generate_yaml_entries(data_model):
-                zip_ref.writestr(f"data_models/{file_path}", yaml_content)
-
     def _export_to_directory(self, data_model: RequestSchema, directory: Path) -> None:
         """Save the schema to a directory as YAML files. This is compatible with the Cognite-Toolkit convention.
 
@@ -72,6 +56,22 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
                 encoding=self.ENCODING,
                 newline=self.NEW_LINE,
             )
+
+    def _export_to_zip_file(self, data_model: RequestSchema, zip_file: Path) -> None:
+        """Save the schema as a zip file containing a directory as YAML files.
+        This is compatible with the Cognite-Toolkit convention.
+
+        Args:
+            data_model: Request schema
+            zip_file: The zip file path to save the schema to.
+        """
+        if zip_file.suffix not in {".zip"}:
+            warnings.warn("File extension is not .zip, adding it to the file name", stacklevel=2)
+            zip_file = zip_file.with_suffix(".zip")
+
+        with zipfile.ZipFile(zip_file, "w") as zip_ref:
+            for file_path, yaml_content in self._generate_yaml_entries(data_model):
+                zip_ref.writestr(f"data_models/{file_path}", yaml_content)
 
     def _generate_yaml_entries(self, data_model: RequestSchema) -> Iterator[tuple[str, str]]:
         """Generate file paths and YAML content for all data model components.
