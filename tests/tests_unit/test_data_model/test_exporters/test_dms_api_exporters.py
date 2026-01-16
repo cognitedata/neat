@@ -71,35 +71,21 @@ class TestYAMLExporter:
 
         # Verify contents of zip file
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
-            file_names = zip_ref.namelist()
+            actual_files = set(zip_ref.namelist())
 
-            # Verify datamodel file exists in zip
-            datamodel_name = f"data_models/{schema.data_model.external_id}.datamodel.yaml"
-            assert datamodel_name in file_names, f"datamodel file {datamodel_name} not in zip"
-
-            # Verify spaces are in zip
+            expected_files = {f"data_models/{schema.data_model.external_id}.datamodel.yaml"}
             if schema.spaces:
-                for space in schema.spaces:
-                    space_name = f"data_models/{space.space}.space.yaml"
-                    assert space_name in file_names, f"space file {space_name} not in zip"
-
-            # Verify views are in zip
+                expected_files.update(f"data_models/{s.space}.space.yaml" for s in schema.spaces)
             if schema.views:
-                for view in schema.views:
-                    view_name = f"data_models/views/{view.external_id}.view.yaml"
-                    assert view_name in file_names, f"view file {view_name} not in zip"
-
-            # Verify containers are in zip
+                expected_files.update(f"data_models/views/{v.external_id}.view.yaml" for v in schema.views)
             if schema.containers:
-                for container in schema.containers:
-                    container_name = f"data_models/containers/{container.external_id}.container.yaml"
-                    assert container_name in file_names, f"container file {container_name} not in zip"
-
-            # Verify node_types are in zip
+                expected_files.update(
+                    f"data_models/containers/{c.external_id}.container.yaml" for c in schema.containers
+                )
             if schema.node_types:
-                for node in schema.node_types:
-                    node_name = f"data_models/nodes/{node.external_id}.node.yaml"
-                    assert node_name in file_names, f"node file {node_name} not in zip"
+                expected_files.update(f"data_models/nodes/{n.external_id}.node.yaml" for n in schema.node_types)
+
+            assert actual_files == expected_files
 
 
 class TestDMSAPIJSONExporter:
