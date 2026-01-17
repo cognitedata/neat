@@ -16,6 +16,7 @@ from cognite.neat._client.init.env_vars import (
     Provider,
     create_env_file_content,
 )
+from cognite.neat._client.init.interactive import get_interactive_flow
 from cognite.neat._client.init.main import CLIENT_NAME, get_cognite_client
 
 
@@ -304,6 +305,16 @@ class TestGetCogniteClient:
                 _ = get_cognite_client("test.env")
 
         assert expected_message in str(exc_info.value)
+
+    def test_get_cognite_client_env_file_not_found(self, tmp_path: Path) -> None:
+        module_str = get_cognite_client.__module__
+        with (
+            patch("cognite.neat._client.init.main.get_repo_root", return_value=tmp_path),
+            patch(f"{module_str}.{get_interactive_flow.__name__}", return_value=MagicMock()) as _,
+        ):
+            client = get_cognite_client("nonexistent.env")
+
+        assert client is None
 
 
 def template_env_file_test_cases() -> Iterable[tuple]:
