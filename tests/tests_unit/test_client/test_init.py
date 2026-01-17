@@ -114,41 +114,6 @@ CDF_TOKEN=my-secret-token
         ),
         id="Token credentials",
     )
-    yield pytest.param(
-        """CDF_CLUSTER=my_cluster
-CDF_PROJECT=my_project
-LOGIN_FLOW=infer
-IDP_CLIENT_ID=client-id-123
-IDP_CLIENT_SECRET=secret-xyz
-IDP_TENANT_ID=tenant-789
-""",
-        ClientConfig(
-            client_name=CLIENT_NAME,
-            project="my_project",
-            base_url="https://my_cluster.cognitedata.com",
-            credentials=OAuthClientCredentials(
-                token_url="https://login.microsoftonline.com/tenant-789/oauth2/v2.0/token",
-                client_id="client-id-123",
-                client_secret="secret-xyz",
-                scopes=["https://my_cluster.cognitedata.com/.default"],
-            ),
-        ),
-        id="Infer - client credentials (secret provided)",
-    )
-    yield pytest.param(
-        """CDF_CLUSTER=my_cluster
-CDF_PROJECT=my_project
-LOGIN_FLOW=infer
-CDF_TOKEN=my-secret-token
-""",
-        ClientConfig(
-            client_name=CLIENT_NAME,
-            project="my_project",
-            base_url="https://my_cluster.cognitedata.com",
-            credentials=Token("my-secret-token"),
-        ),
-        id="Infer - token (token provided)",
-    )
 
 
 def get_cognite_client_interactive_test_cases() -> Iterable[tuple]:
@@ -167,21 +132,6 @@ def get_cognite_client_interactive_test_cases() -> Iterable[tuple]:
             scopes=["https://my_cluster.cognitedata.com/.default"],
         ),
         id="Interactive credentials",
-    )
-
-    yield pytest.param(
-        """CDF_CLUSTER=my_cluster
-CDF_PROJECT=my_project
-LOGIN_FLOW=infer
-IDP_CLIENT_ID=client-id-123
-IDP_TENANT_ID=tenant-789
-""",
-        dict(
-            authority_url="https://login.microsoftonline.com/tenant-789",
-            client_id="client-id-123",
-            scopes=["https://my_cluster.cognitedata.com/.default"],
-        ),
-        id="Infer - interactive (only client_id provided)",
     )
 
 
@@ -279,7 +229,7 @@ class TestGetCogniteClient:
         module_str = get_cognite_client.__module__
         with (
             patch(f"{module_str}.{CogniteClient.__name__}", return_value=mock_client) as mock_cls,
-            patch("cognite.neat._client.init.env_vars.get_repo_root", return_value=tmp_path),
+            patch("cognite.neat._client.init.main.get_repo_root", return_value=tmp_path),
         ):
             client = get_cognite_client("test.env")
 
@@ -319,7 +269,7 @@ class TestGetCogniteClient:
         module_str = get_cognite_client.__module__
         with (
             patch(f"{module_str}.{CogniteClient.__name__}", return_value=MagicMock()) as _,
-            patch("cognite.neat._client.init.env_vars.get_repo_root", return_value=tmp_path),
+            patch("cognite.neat._client.init.main.get_repo_root", return_value=tmp_path),
             patch(
                 "cognite.neat._client.init.credentials.OAuthInteractive", return_value=mock_credentials
             ) as mock_interactive,
@@ -338,7 +288,7 @@ class TestGetCogniteClient:
         env_file.write_text(env_file_content)
         module_str = get_cognite_client.__module__
         with (
-            patch("cognite.neat._client.init.env_vars.get_repo_root", return_value=tmp_path),
+            patch("cognite.neat._client.init.main.get_repo_root", return_value=tmp_path),
             patch(f"{module_str}.{CogniteClient.__name__}", return_value=MagicMock()) as _,
         ):
             with pytest.raises(RuntimeError) as exc_info:
