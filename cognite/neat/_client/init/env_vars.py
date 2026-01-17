@@ -11,7 +11,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-LoginFlow: TypeAlias = Literal["infer", "client_credentials", "interactive", "token"]
+LoginFlow: TypeAlias = Literal["client_credentials", "interactive", "token"]
 AVAILABLE_LOGIN_FLOWS: tuple[LoginFlow, ...] = get_args(LoginFlow)
 Provider: TypeAlias = Literal["entra_id", "auth0", "cdf", "other"]
 AVAILABLE_PROVIDERS: tuple[Provider, ...] = get_args(Provider)
@@ -24,7 +24,7 @@ class ClientEnvironmentVariables(BaseModel):
     CDF_CLUSTER: str
     CDF_PROJECT: str
     PROVIDER: Provider = "entra_id"
-    LOGIN_FLOW: LoginFlow = "infer"
+    LOGIN_FLOW: LoginFlow = "client_credentials"
 
     IDP_CLIENT_ID: str | None = None
     IDP_CLIENT_SECRET: str | None = None
@@ -115,4 +115,31 @@ def parse_env_file(env_file_path: Path) -> ClientEnvironmentVariables:
 
 
 def create_env_file_content(provider: Provider, login_flow: LoginFlow) -> str:
-    raise NotImplementedError()
+    if login_flow == "infer":
+        raise ValueError("login_flow cannot be 'infer' when creating env file content.")
+    lines = [
+        "# Cognite NEAT Client Environment Variables",
+        "CDF_CLUSTER=<your-cdf-cluster>",
+        "CDF_PROJECT=<your-cdf-project>",
+        "",
+    ]
+    if login_flow != "token":
+        lines.append(f"PROVIDER={provider}")
+    lines.append(f"LOGIN_FLOW={login_flow}")
+    lines.append("")
+    if login_flow in ("client_credentials", "interactive"):
+        lines.append("IDP_CLIENT_ID=<your-idp-client-id>")
+        if login_flow == "client_credentials":
+            lines.append("IDP_CLIENT_SECRET=<your-idp-client-secret>")
+        if provider == "entra_id":
+            lines.append("IDP_TENANT_ID=<your-idp-tenant-id>")
+        if provider not in ("cdf", "entra_id"):
+            lines.append("# IDP_TOKEN_URL=<your-idp-token-url>")
+        if provider == "other":
+            lines.append("IDP_AUDIENCE=<your-idp-audience>")
+            lines.append("IDP_SCOPES=<your-idp-scopes-comma-separated>")
+            lines.append("IDP_AUTHORITY_URL=<your-idp-authority-url>")
+    elif login_flow == "token":
+        lines.append("CDF_TOKEN=<your-cdf-token>")
+
+    return "\n".join(lines)
