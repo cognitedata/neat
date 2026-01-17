@@ -151,12 +151,7 @@ def update_mock_router(snapshot: SchemaSnapshot, client: NeatClientConfig, respx
 
     responses = snapshot_to_response_schema(snapshot)
 
-    calls = [
-        "/models/containers?includeGlobal=true&limit=1000",
-        "/models/views?allVersions=true&includeInheritedProperties=false&includeGlobal=true&limit=1000",
-        "/models/datamodels?allVersions=true&includeGlobal=true&limit=1000",
-        "/models/spaces?includeGlobal=true&limit=1000",
-    ]
+    calls = ["/models/containers", "/models/views", "/models/datamodels", "/models/spaces"]
 
     for call in calls:
         resource = call.split("/")[-1].split("?")[0]
