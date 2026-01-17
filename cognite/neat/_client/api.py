@@ -7,10 +7,10 @@ from pydantic import BaseModel, JsonValue, TypeAdapter
 
 from cognite.neat._client.config import NeatClientConfig
 from cognite.neat._data_model.models.dms._base import T_Resource, T_Response
+from cognite.neat._utils.collection import chunker_sequence
 from cognite.neat._utils.http_client import HTTPClient, ParametersRequest, SimpleBodyRequest, SuccessResponse
 from cognite.neat._utils.useful_types import T_Reference
 
-from cognite.neat._utils.collection import chunker_sequence
 from .data_classes import PagedResponse
 
 _T_BaseModel = TypeVar("_T_BaseModel", bound=BaseModel)
@@ -45,6 +45,11 @@ class NeatAPI(Generic[T_Reference, T_Resource, T_Response], ABC):
         """Parse a single item response."""
         raise NotImplementedError()
 
+    @abstractmethod
+    def _validate_id_response(self, response: SuccessResponse) -> list[T_Reference]:
+        """Parse a single item response."""
+        raise NotImplementedError()
+
     def _make_url(self, path: str = "") -> str:
         """Create the full URL for this resource endpoint."""
         return self._config.create_api_url(path)
@@ -58,6 +63,17 @@ class NeatAPI(Generic[T_Reference, T_Resource, T_Response], ABC):
         response_items: list[T_Response] = []
         for response in self._chunk_requests(items, method, self._serialize_items, extra_body):
             response_items.extend(self._validate_page_response(response).items)
+        return response_items
+
+    def _request_id_response(
+        self,
+        items: Sequence[BaseModel],
+        method: APIMethod,
+        extra_body: dict[str, Any] | None = None,
+    ) -> list[T_Reference]:
+        response_items: list[T_Reference] = []
+        for response in self._chunk_requests(items, method, self._serialize_items, extra_body):
+            response_items.extend(self._validate_id_response(response))
         return response_items
 
     def _chunk_requests(
