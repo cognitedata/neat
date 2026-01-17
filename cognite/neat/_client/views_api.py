@@ -2,46 +2,45 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from cognite.neat._data_model.models.dms import DataModelBody, ViewReference, ViewRequest, ViewResponse
-from cognite.neat._utils.collection import chunker_sequence
-from cognite.neat._utils.http_client import ItemIDBody, ItemsRequest, ParametersRequest
-from cognite.neat._utils.useful_types import PrimitiveType
+from cognite.neat._data_model.models.dms import ViewReference, ViewRequest, ViewResponse
+from cognite.neat._utils.http_client import HTTPClient, SuccessResponse
 
-from .api import NeatAPI
+from .api import Endpoint, NeatAPI
+from .config import NeatClientConfig
 from .data_classes import PagedResponse
+from .filters import ViewFilter
 
 
 class ViewsAPI(NeatAPI):
-    ENDPOINT = "/models/views"
-    LIST_REQUEST_LIMIT = 1000
+    def __init__(self, neat_config: NeatClientConfig, http_client: HTTPClient) -> None:
+        super().__init__(
+            neat_config,
+            http_client,
+            endpoint_map={
+                "apply": Endpoint("POST", "/models/views", item_limit=100),
+                "retrieve": Endpoint("POST", "/models/views/byids", item_limit=100),
+                "delete": Endpoint("POST", "/models/views/delete", item_limit=100),
+                "list": Endpoint("GET", "/models/views", item_limit=1000),
+            },
+        )
+
+    def _validate_page_response(self, response: SuccessResponse) -> PagedResponse[ViewResponse]:
+        return PagedResponse[ViewResponse].model_validate_json(response.body)
+
+    def _validate_id_response(self, response: SuccessResponse) -> list[ViewReference]:
+        return PagedResponse[ViewReference].model_validate_json(response.body).items
 
     def apply(self, items: Sequence[ViewRequest]) -> list[ViewResponse]:
         """Create or update views in CDF Project.
+
         Args:
             items: List of ViewRequest objects to create or update.
         Returns:
             List of ViewResponse objects.
         """
-        if not items:
-            return []
-        if len(items) > 100:
-            raise ValueError("Cannot apply more than 100 views at once.")
-        result = self._http_client.request_with_retries(
-            ItemsRequest(
-                endpoint_url=self._config.create_api_url(self.ENDPOINT),
-                method="POST",
-                body=DataModelBody(items=items),
-            )
-        )
-        result.raise_for_status()
-        result = PagedResponse[ViewResponse].model_validate_json(result.success_response.body)
-        return result.items
+        return self._request_item_response(items, "apply")
 
-    def retrieve(
-        self,
-        items: list[ViewReference],
-        include_inherited_properties: bool = True,
-    ) -> list[ViewResponse]:
+    def retrieve(self, items: list[ViewReference], include_inherited_properties: bool = True) -> list[ViewResponse]:
         """Retrieve views by their identifiers.
 
         Args:
@@ -51,42 +50,20 @@ class ViewsAPI(NeatAPI):
         Returns:
             List of ViewResponse objects.
         """
-        results: list[ViewResponse] = []
-        for chunk in chunker_sequence(items, 100):
-            batch = self._http_client.request_with_retries(
-                ItemsRequest(
-                    endpoint_url=self._config.create_api_url(f"{self.ENDPOINT}/byids"),
-                    method="POST",
-                    body=ItemIDBody(items=chunk),
-                    parameters={"includeInheritedProperties": include_inherited_properties},
-                )
-            )
-            batch.raise_for_status()
-            result = PagedResponse[ViewResponse].model_validate_json(batch.success_response.body)
-            results.extend(result.items)
-        return results
+        return self._request_item_response(
+            items, "retrieve", extra_body={"includeInheritedProperties": include_inherited_properties}
+        )
 
     def delete(self, items: list[ViewReference]) -> list[ViewReference]:
         """Delete views by their identifiers.
 
         Args:
             items: List of (space, external_id, version) tuples identifying the views to delete.
-        """
-        if not items:
-            return []
-        if len(items) > 100:
-            raise ValueError("Cannot delete more than 100 views at once.")
 
-        result = self._http_client.request_with_retries(
-            ItemsRequest(
-                endpoint_url=self._config.create_api_url(f"{self.ENDPOINT}/delete"),
-                method="POST",
-                body=ItemIDBody(items=items),
-            )
-        )
-        result.raise_for_status()
-        result = PagedResponse[ViewReference].model_validate_json(result.success_response.body)
-        return result.items
+        Returns:
+            List of ViewReference objects representing the deleted views.
+        """
+        return self._request_id_response(items, "delete")
 
     def list(
         self,
@@ -108,37 +85,10 @@ class ViewsAPI(NeatAPI):
         Returns:
             List of ViewResponse objects.
         """
-        if limit is not None and limit < 0:
-            raise ValueError("Limit must be non-negative.")
-        elif limit is not None and limit == 0:
-            return []
-        parameters: dict[str, PrimitiveType] = {
-            "allVersions": all_versions,
-            "includeInheritedProperties": include_inherited_properties,
-            "includeGlobal": include_global,
-        }
-        if space is not None:
-            parameters["space"] = space
-        cursor: str | None = None
-        view_responses: list[ViewResponse] = []
-        while True:
-            if cursor is not None:
-                parameters["cursor"] = cursor
-            if limit is None:
-                parameters["limit"] = self.LIST_REQUEST_LIMIT
-            else:
-                parameters["limit"] = min(self.LIST_REQUEST_LIMIT, limit - len(view_responses))
-            result = self._http_client.request_with_retries(
-                ParametersRequest(
-                    endpoint_url=self._config.create_api_url(self.ENDPOINT),
-                    method="GET",
-                    parameters=parameters,
-                )
-            )
-            result.raise_for_status()
-            result = PagedResponse[ViewResponse].model_validate_json(result.success_response.body)
-            view_responses.extend(result.items)
-            cursor = result.next_cursor
-            if cursor is None or (limit is not None and len(view_responses) >= limit):
-                break
-        return view_responses
+        filter = ViewFilter(
+            space=space,
+            all_versions=all_versions,
+            include_inherited_properties=include_inherited_properties,
+            include_global=include_global,
+        )
+        return self._list(limit=limit, params=filter.dump())

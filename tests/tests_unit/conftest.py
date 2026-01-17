@@ -47,7 +47,7 @@ def empty_cdf(
     for endpoint in [
         "/models/spaces/byids",
         "/models/containers/byids",
-        "/models/views/byids?includeInheritedProperties=true",
+        "/models/views/byids",
         "/models/datamodels/byids",
     ]:
         respx_mock.post(
@@ -58,13 +58,10 @@ def empty_cdf(
         )
 
     for endpoint, response in [
-        ("/models/containers?includeGlobal=true&limit=1000", empty_response),
-        (
-            "/models/views?allVersions=true&includeInheritedProperties=false&includeGlobal=true&limit=1000",
-            empty_response,
-        ),
-        ("/models/datamodels?allVersions=true&includeGlobal=true&limit=1000", empty_response),
-        ("/models/spaces?includeGlobal=true&limit=1000", empty_response),
+        ("/models/containers", empty_response),
+        ("/models/views", empty_response),
+        ("/models/datamodels", empty_response),
+        ("/models/spaces", empty_response),
         ("/models/statistics", example_statistics_response),
     ]:
         respx_mock.get(

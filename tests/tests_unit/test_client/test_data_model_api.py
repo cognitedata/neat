@@ -27,7 +27,10 @@ class TestDataModelAPI:
         assert len(models) == 1
         assert len(respx_mock.calls) == 1
         call = respx_mock.calls[0]
-        assert str(call.request.url.params) == "allVersions=true&includeGlobal=false&limit=10&space=my_space"
+        assert (
+            str(call.request.url.params)
+            == "space=my_space&includeGlobal=false&inlineViews=false&allVersions=true&limit=10"
+        )
 
     def test_retrieve(
         self, neat_client: NeatClient, respx_mock: respx.MockRouter, example_dms_data_model_response: dict[str, Any]

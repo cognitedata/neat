@@ -167,7 +167,9 @@ class HTTPClient:
         if isinstance(item, BodyRequest):
             data = item.data()
             if not global_config.disable_gzip:
-                data = gzip.compress(data.encode("utf-8"))
+                if isinstance(data, str):
+                    data = data.encode("utf-8")
+                data = gzip.compress(data)
         return self.session.request(
             method=item.method,
             url=item.endpoint_url,
