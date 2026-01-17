@@ -1,7 +1,11 @@
 import importlib.util
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any
 
 from .env_vars import AVAILABLE_LOGIN_FLOWS, AVAILABLE_PROVIDERS, LoginFlow, Provider
+
+if TYPE_CHECKING:
+    from threading import Event
 
 
 class InteractiveFlow(ABC):
@@ -68,11 +72,106 @@ class NoDependencyFlow(InteractiveFlow):
 
 
 class NotebookFlow(InteractiveFlow):
+    def __init__(self) -> None:
+        import ipywidgets as widgets  # type: ignore[import-untyped]
+        from IPython.display import display
+
+        self._widgets = widgets
+        self._display = display
+
+    def _wait_for_answer(self, event: "Event") -> None:
+        from threading import Event as ThreadEvent
+
+        if isinstance(event, ThreadEvent):
+            while not event.is_set():
+                import time
+
+                time.sleep(0.1)
+        else:
+            raise TypeError(f"Expected threading.Event, got {type(event)}")
+
     def create_env_file(self, env_file_name: str) -> bool:
-        raise NotImplementedError
+        from threading import Event
+
+        result: bool = False
+        done_event = Event()
+
+        label = self._widgets.Label(value=self._create_question(env_file_name))
+        yes_button = self._widgets.Button(description="Yes", button_style="success")
+        no_button = self._widgets.Button(description="No", button_style="danger")
+        buttons = self._widgets.HBox([yes_button, no_button])
+        output = self._widgets.VBox([label, buttons])
+
+        def on_yes_click(b: Any) -> None:
+            nonlocal result
+            result = True
+            output.close()
+            done_event.set()
+
+        def on_no_click(b: Any) -> None:
+            nonlocal result
+            result = False
+            output.close()
+            done_event.set()
+
+        yes_button.on_click(on_yes_click)
+        no_button.on_click(on_no_click)
+        self._display(output)
+        self._wait_for_answer(done_event)
+        return result
 
     def provider(self) -> Provider:
-        raise NotImplementedError
+        from threading import Event
+
+        result: Provider | None = None
+        done_event = Event()
+
+        label = self._widgets.Label(value=self._provider_question())
+        dropdown = self._widgets.Dropdown(
+            options=list(AVAILABLE_PROVIDERS),
+            value=AVAILABLE_PROVIDERS[0],
+            description="Provider:",
+        )
+        confirm_button = self._widgets.Button(description="Confirm", button_style="primary")
+        output = self._widgets.VBox([label, dropdown, confirm_button])
+
+        def on_confirm_click(b: Any) -> None:
+            nonlocal result
+            result = dropdown.value
+            output.close()
+            done_event.set()
+
+        confirm_button.on_click(on_confirm_click)
+        self._display(output)
+        self._wait_for_answer(done_event)
+        if result is None:
+            raise RuntimeError("No provider selected")
+        return result
 
     def login_flow(self) -> LoginFlow:
-        raise NotImplementedError
+        from threading import Event
+
+        result: LoginFlow | None = None
+        done_event = Event()
+
+        label = self._widgets.Label(value=self._login_flow_question())
+        dropdown = self._widgets.Dropdown(
+            options=list(AVAILABLE_LOGIN_FLOWS),
+            value=AVAILABLE_LOGIN_FLOWS[0],
+            description="Login Flow:",
+        )
+        confirm_button = self._widgets.Button(description="Confirm", button_style="primary")
+        output = self._widgets.VBox([label, dropdown, confirm_button])
+
+        def on_confirm_click(b: Any) -> None:
+            nonlocal result
+            result = dropdown.value
+            output.close()
+            done_event.set()
+
+        confirm_button.on_click(on_confirm_click)
+        self._display(output)
+        self._wait_for_answer(done_event)
+        if result is None:
+            raise RuntimeError("No login flow selected")
+        return result
