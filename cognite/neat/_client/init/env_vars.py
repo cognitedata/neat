@@ -12,9 +12,9 @@ else:
     from typing_extensions import Self
 
 LoginFlow: TypeAlias = Literal["infer", "client_credentials", "interactive", "token"]
-VALID_LOGIN_FLOWS = get_args(LoginFlow)
+AVAILABLE_LOGIN_FLOWS: tuple[LoginFlow, ...] = get_args(LoginFlow)
 Provider: TypeAlias = Literal["entra_id", "auth0", "cdf", "other"]
-AVAILABLE_PROVIDERS = get_args(Provider)
+AVAILABLE_PROVIDERS: tuple[Provider, ...] = get_args(Provider)
 
 
 class ClientEnvironmentVariables(BaseModel):

@@ -54,7 +54,7 @@ def get_cognite_client_internal(env_file_name: str) -> CogniteClient:
     new_env_path = env_folder / env_file_name
     message = "Could not create CogniteClient because no environment file was found."
     user = get_interactive_flow()
-    if not user.create_env_file():
+    if not user.create_env_file(env_file_name):
         raise RuntimeError(message)
 
     provider, login_flow = user.provider(), user.login_flow()
