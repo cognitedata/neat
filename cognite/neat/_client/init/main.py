@@ -7,13 +7,13 @@ from cognite.neat import _version
 from cognite.neat._utils.repo import get_repo_root
 
 from .credentials import get_credentials
-from .env_vars import ClientEnvironmentVariables, create_env_file_content, parse_env_file
+from .env_vars import ClientEnvironmentVariables, parse_env_file
 from .interactive import get_interactive_flow
 
 CLIENT_NAME = f"CogniteNeat:{_version.__version__}"
 
 
-def get_cognite_client(env_file_name: str) -> CogniteClient:
+def get_cognite_client(env_file_name: str) -> CogniteClient | None:
     """Get a CogniteClient using environment variables from a .env file."
 
     Args:
@@ -24,13 +24,6 @@ def get_cognite_client(env_file_name: str) -> CogniteClient:
     Returns:
         CogniteClient: An instance of CogniteClient configured with the loaded environment variables.
     """
-    try:
-        return get_cognite_client_internal(env_file_name)
-    except Exception as e:
-        raise RuntimeError(f"Failed to create client ❌: {e!s}") from None
-
-
-def get_cognite_client_internal(env_file_name: str) -> CogniteClient:
     # This function raises exceptions on failure
     if not env_file_name.endswith(".env"):
         raise ValueError(f"env_file_name must end with '.env'. Got: {env_file_name!r}")
@@ -47,21 +40,14 @@ def get_cognite_client_internal(env_file_name: str) -> CogniteClient:
         env_vars = parse_env_file(env_path)
         client_config = create_client_config_from_env_vars(env_vars)
         return CogniteClient(client_config)
-
     print(f"Failed to find {env_file_name} in repository root or current working directory.")
 
     env_folder = repo_root if repo_root is not None else Path.cwd()
     new_env_path = env_folder / env_file_name
-    message = "Could not create CogniteClient because no environment file was found."
-    user = get_interactive_flow()
-    if not user.create_env_file(env_file_name):
-        raise RuntimeError(message)
-
-    provider, login_flow = user.provider(), user.login_flow()
-    env_content = create_env_file_content(provider, login_flow)
-    new_env_path.write_text(env_content, encoding="utf-8", newline="\n")
-    message += f" A template {env_file_name!r} has been created at {new_env_path!r}."
-    raise RuntimeError(message)
+    flow = get_interactive_flow(new_env_path)
+    flow.run()
+    print("Could not create CogniteClient because no environment file was found.")
+    return None
 
 
 def create_client_config_from_env_vars(env_vars: ClientEnvironmentVariables) -> ClientConfig:

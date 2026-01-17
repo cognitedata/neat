@@ -19,7 +19,7 @@ class NeatSession:
     """A session is an interface for neat operations."""
 
     def __init__(
-        self, client: CogniteClient | ClientConfig, config: PredefinedProfile | NeatConfig = "legacy-additive"
+        self, client: CogniteClient | ClientConfig | None, config: PredefinedProfile | NeatConfig = "legacy-additive"
     ) -> None:
         """Initialize a Neat session.
 
@@ -30,6 +30,8 @@ class NeatSession:
                 Defaults to "legacy-additive". This means Neat will perform additive modeling
                 and apply only validations that were part of the legacy Neat version.
         """
+        if client is None:
+            raise ValueError("A CogniteClient or ClientConfig must be provided to initialize a NeatSession.")
         self._config = NeatConfig.create_predefined(config) if isinstance(config, str) else config
 
         # Use configuration for physical data model
