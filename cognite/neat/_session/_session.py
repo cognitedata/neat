@@ -38,7 +38,7 @@ class NeatSession:
                 Defaults to "legacy-additive". This means Neat will perform additive modeling
                 and apply only validations that were part of the legacy Neat version.
         """
-        if client is None and _is_in_browser is True:
+        if client is None and _is_in_browser():
             client = CogniteClient()
         elif client is None:
             raise ValueError("A CogniteClient or ClientConfig must be provided to initialize a NeatSession.")
