@@ -82,7 +82,6 @@ class NeatAPI(Generic[T_Reference, T_Resource, T_Response], ABC):
         Args:
             items: The items to process.
             method: The API method to use. This is used ot look the up the endpoint.
-            serialization: A function to serialize the items to JSON-compatible dicts.
             extra_body: Optional extra body content to include in the request.
 
         Yields:
@@ -95,8 +94,11 @@ class NeatAPI(Generic[T_Reference, T_Resource, T_Response], ABC):
             request = SimpleBodyRequest(
                 endpoint_url=self._make_url(endpoint.path),
                 method=endpoint.method,
-                body=TypeAdapter(dict[str, JsonValue | Sequence[BaseModel]]).dump_json(
-                    {"items": chunk, **(extra_body or {})},
+                body=TypeAdapter(dict[str, JsonValue]).dump_json(
+                    {
+                        "items": [item.model_dump(by_alias=True, exclude_unset=True) for item in chunk],
+                        **(extra_body or {}),
+                    },
                 ),
             )
             response = self._http_client.request_with_retries(request)

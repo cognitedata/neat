@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from pydantic import TypeAdapter
-
 from cognite.neat._data_model.models.dms import SpaceRequest, SpaceResponse
 from cognite.neat._data_model.models.dms._references import SpaceReference
 from cognite.neat._utils.http_client import HTTPClient, SuccessResponse
@@ -31,7 +29,7 @@ class SpacesAPI(NeatAPI):
         return PagedResponse[SpaceResponse].model_validate_json(response.body)
 
     def _validate_id_response(self, response: SuccessResponse) -> list[SpaceReference]:
-        return TypeAdapter(list[SpaceReference]).validate_json(response.body)
+        return PagedResponse[SpaceReference].model_validate_json(response.body).items
 
     def apply(self, spaces: Sequence[SpaceRequest]) -> list[SpaceResponse]:
         """Apply (create or update) spaces in CDF.

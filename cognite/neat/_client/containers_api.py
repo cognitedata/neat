@@ -1,7 +1,5 @@
 from collections.abc import Sequence
 
-from pydantic import TypeAdapter
-
 from cognite.neat._data_model.models.dms import ContainerReference, ContainerRequest, ContainerResponse
 from cognite.neat._utils.http_client import HTTPClient, SuccessResponse
 
@@ -17,10 +15,10 @@ class ContainersAPI(NeatAPI):
             neat_config,
             http_client,
             endpoint_map={
-                "apply": Endpoint("POST", "/containers/apply", item_limit=100),
-                "retrieve": Endpoint("POST", "/containers/byids", item_limit=100),
-                "delete": Endpoint("POST", "/containers/delete", item_limit=100),
-                "list": Endpoint("GET", "/containers", item_limit=1000),
+                "apply": Endpoint("POST", "models/containers", item_limit=100),
+                "retrieve": Endpoint("POST", "models/containers/byids", item_limit=100),
+                "delete": Endpoint("POST", "models/containers/delete", item_limit=100),
+                "list": Endpoint("GET", "models/containers", item_limit=1000),
             },
         )
 
@@ -28,7 +26,7 @@ class ContainersAPI(NeatAPI):
         return PagedResponse[ContainerResponse].model_validate_json(response.body)
 
     def _validate_id_response(self, response: SuccessResponse) -> list[ContainerReference]:
-        return TypeAdapter(list[ContainerReference]).validate_json(response.body)
+        return PagedResponse[ContainerReference].model_validate_json(response.body).items
 
     def apply(self, items: Sequence[ContainerRequest]) -> list[ContainerResponse]:
         """Apply (create or update) containers in CDF.
@@ -40,10 +38,7 @@ class ContainersAPI(NeatAPI):
         """
         return self._request_item_response(items, "apply")
 
-    def retrieve(
-        self,
-        items: list[ContainerReference],
-    ) -> list[ContainerResponse]:
+    def retrieve(self, items: list[ContainerReference]) -> list[ContainerResponse]:
         """Retrieve containers by their identifiers.
 
         Args:
@@ -63,13 +58,10 @@ class ContainersAPI(NeatAPI):
         Returns:
             List of ContainerReference objects representing the deleted containers.
         """
-        return self._request_item_response(items, "delete")
+        return self._request_id_response(items, "delete")
 
     def list(
-        self,
-        space: str | None = None,
-        include_global: bool = False,
-        limit: int | None = 10,
+        self, space: str | None = None, include_global: bool = False, limit: int | None = 10
     ) -> list[ContainerResponse]:
         """List containers in CDF Project.
 

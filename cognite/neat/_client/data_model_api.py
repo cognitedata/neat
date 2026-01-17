@@ -1,7 +1,5 @@
 from collections.abc import Sequence
 
-from pydantic import TypeAdapter
-
 from cognite.neat._data_model.models.dms import DataModelReference, DataModelRequest, DataModelResponse
 from cognite.neat._utils.http_client import HTTPClient, SuccessResponse
 
@@ -28,7 +26,7 @@ class DataModelsAPI(NeatAPI):
         return PagedResponse[DataModelResponse].model_validate_json(response.body)
 
     def _validate_id_response(self, response: SuccessResponse) -> list[DataModelReference]:
-        return TypeAdapter(list[DataModelReference]).validate_json(response.body)
+        return PagedResponse[DataModelReference].model_validate_json(response.body).items
 
     def apply(self, data_models: Sequence[DataModelRequest]) -> list[DataModelResponse]:
         """Apply (create or update) data models in CDF.
@@ -40,10 +38,7 @@ class DataModelsAPI(NeatAPI):
         """
         return self._request_item_response(data_models, "apply")
 
-    def retrieve(
-        self,
-        items: list[DataModelReference],
-    ) -> list[DataModelResponse]:
+    def retrieve(self, items: list[DataModelReference]) -> list[DataModelResponse]:
         """Retrieve data models by their identifiers.
 
         Args:

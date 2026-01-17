@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from pydantic import TypeAdapter
-
 from cognite.neat._data_model.models.dms import ViewReference, ViewRequest, ViewResponse
 from cognite.neat._utils.http_client import HTTPClient, SuccessResponse
 
@@ -30,7 +28,7 @@ class ViewsAPI(NeatAPI):
         return PagedResponse[ViewResponse].model_validate_json(response.body)
 
     def _validate_id_response(self, response: SuccessResponse) -> list[ViewReference]:
-        return TypeAdapter(list[ViewReference]).validate_json(response.body)
+        return PagedResponse[ViewReference].model_validate_json(response.body).items
 
     def apply(self, items: Sequence[ViewRequest]) -> list[ViewResponse]:
         """Create or update views in CDF Project.
@@ -42,11 +40,7 @@ class ViewsAPI(NeatAPI):
         """
         return self._request_item_response(items, "apply")
 
-    def retrieve(
-        self,
-        items: list[ViewReference],
-        include_inherited_properties: bool = True,
-    ) -> list[ViewResponse]:
+    def retrieve(self, items: list[ViewReference], include_inherited_properties: bool = True) -> list[ViewResponse]:
         """Retrieve views by their identifiers.
 
         Args:
