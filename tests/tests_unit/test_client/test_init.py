@@ -1,4 +1,6 @@
+import textwrap
 from collections.abc import Iterable
+from itertools import product
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -7,6 +9,14 @@ import pytest
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import OAuthClientCredentials, Token
 
+from cognite.neat._client.init.env_vars import (
+    AVAILABLE_LOGIN_FLOWS,
+    AVAILABLE_PROVIDERS,
+    LoginFlow,
+    Provider,
+    create_env_file_content,
+)
+from cognite.neat._client.init.interactive import NoDependencyFlow, NotebookFlow, get_interactive_flow
 from cognite.neat._client.init.main import CLIENT_NAME, get_cognite_client
 
 
@@ -114,41 +124,6 @@ CDF_TOKEN=my-secret-token
         ),
         id="Token credentials",
     )
-    yield pytest.param(
-        """CDF_CLUSTER=my_cluster
-CDF_PROJECT=my_project
-LOGIN_FLOW=infer
-IDP_CLIENT_ID=client-id-123
-IDP_CLIENT_SECRET=secret-xyz
-IDP_TENANT_ID=tenant-789
-""",
-        ClientConfig(
-            client_name=CLIENT_NAME,
-            project="my_project",
-            base_url="https://my_cluster.cognitedata.com",
-            credentials=OAuthClientCredentials(
-                token_url="https://login.microsoftonline.com/tenant-789/oauth2/v2.0/token",
-                client_id="client-id-123",
-                client_secret="secret-xyz",
-                scopes=["https://my_cluster.cognitedata.com/.default"],
-            ),
-        ),
-        id="Infer - client credentials (secret provided)",
-    )
-    yield pytest.param(
-        """CDF_CLUSTER=my_cluster
-CDF_PROJECT=my_project
-LOGIN_FLOW=infer
-CDF_TOKEN=my-secret-token
-""",
-        ClientConfig(
-            client_name=CLIENT_NAME,
-            project="my_project",
-            base_url="https://my_cluster.cognitedata.com",
-            credentials=Token("my-secret-token"),
-        ),
-        id="Infer - token (token provided)",
-    )
 
 
 def get_cognite_client_interactive_test_cases() -> Iterable[tuple]:
@@ -167,21 +142,6 @@ def get_cognite_client_interactive_test_cases() -> Iterable[tuple]:
             scopes=["https://my_cluster.cognitedata.com/.default"],
         ),
         id="Interactive credentials",
-    )
-
-    yield pytest.param(
-        """CDF_CLUSTER=my_cluster
-CDF_PROJECT=my_project
-LOGIN_FLOW=infer
-IDP_CLIENT_ID=client-id-123
-IDP_TENANT_ID=tenant-789
-""",
-        dict(
-            authority_url="https://login.microsoftonline.com/tenant-789",
-            client_id="client-id-123",
-            scopes=["https://my_cluster.cognitedata.com/.default"],
-        ),
-        id="Infer - interactive (only client_id provided)",
     )
 
 
@@ -279,7 +239,7 @@ class TestGetCogniteClient:
         module_str = get_cognite_client.__module__
         with (
             patch(f"{module_str}.{CogniteClient.__name__}", return_value=mock_client) as mock_cls,
-            patch("cognite.neat._client.init.env_vars.get_repo_root", return_value=tmp_path),
+            patch("cognite.neat._client.init.main.get_repo_root", return_value=tmp_path),
         ):
             client = get_cognite_client("test.env")
 
@@ -319,7 +279,7 @@ class TestGetCogniteClient:
         module_str = get_cognite_client.__module__
         with (
             patch(f"{module_str}.{CogniteClient.__name__}", return_value=MagicMock()) as _,
-            patch("cognite.neat._client.init.env_vars.get_repo_root", return_value=tmp_path),
+            patch("cognite.neat._client.init.main.get_repo_root", return_value=tmp_path),
             patch(
                 "cognite.neat._client.init.credentials.OAuthInteractive", return_value=mock_credentials
             ) as mock_interactive,
@@ -338,10 +298,281 @@ class TestGetCogniteClient:
         env_file.write_text(env_file_content)
         module_str = get_cognite_client.__module__
         with (
-            patch("cognite.neat._client.init.env_vars.get_repo_root", return_value=tmp_path),
+            patch("cognite.neat._client.init.main.get_repo_root", return_value=tmp_path),
             patch(f"{module_str}.{CogniteClient.__name__}", return_value=MagicMock()) as _,
         ):
-            with pytest.raises(RuntimeError) as exc_info:
+            with pytest.raises(ValueError) as exc_info:
                 _ = get_cognite_client("test.env")
 
         assert expected_message in str(exc_info.value)
+
+    def test_get_cognite_client_env_file_not_found(self, tmp_path: Path) -> None:
+        module_str = get_cognite_client.__module__
+        with (
+            patch("cognite.neat._client.init.main.get_repo_root", return_value=tmp_path),
+            patch(f"{module_str}.{get_interactive_flow.__name__}", return_value=MagicMock()) as _,
+        ):
+            client = get_cognite_client("nonexistent.env")
+
+        assert client is None
+
+
+def template_env_file_test_cases() -> Iterable[tuple]:
+    file_header = textwrap.dedent("""\
+            # Cognite NEAT Client Environment Variables
+            CDF_CLUSTER=<your-cdf-cluster>
+            CDF_PROJECT=<your-cdf-project>
+
+    """)
+    # cdf provider
+    yield pytest.param(
+        "cdf",
+        "client_credentials",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=cdf
+            LOGIN_FLOW=client_credentials
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_CLIENT_SECRET=<your-idp-client-secret>
+            """
+        ),
+        id="CDF - Client Credentials",
+    )
+    yield pytest.param(
+        "cdf",
+        "interactive",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=cdf
+            LOGIN_FLOW=interactive
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            """
+        ),
+        id="CDF - Interactive",
+    )
+    yield pytest.param(
+        "cdf",
+        "token",
+        file_header
+        + textwrap.dedent(
+            """\
+            LOGIN_FLOW=token
+
+            CDF_TOKEN=<your-cdf-token>
+            """
+        ),
+        id="CDF - Token",
+    )
+    # entra_id provider
+    yield pytest.param(
+        "entra_id",
+        "client_credentials",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=entra_id
+            LOGIN_FLOW=client_credentials
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_CLIENT_SECRET=<your-idp-client-secret>
+            IDP_TENANT_ID=<your-idp-tenant-id>
+            """
+        ),
+        id="Entra ID - Client Credentials",
+    )
+    yield pytest.param(
+        "entra_id",
+        "interactive",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=entra_id
+            LOGIN_FLOW=interactive
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_TENANT_ID=<your-idp-tenant-id>
+            """
+        ),
+        id="Entra ID - Interactive",
+    )
+    yield pytest.param(
+        "entra_id",
+        "token",
+        file_header
+        + textwrap.dedent(
+            """\
+            LOGIN_FLOW=token
+
+            CDF_TOKEN=<your-cdf-token>
+            """
+        ),
+        id="Entra ID - Token",
+    )
+    # auth0 provider
+    yield pytest.param(
+        "auth0",
+        "client_credentials",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=auth0
+            LOGIN_FLOW=client_credentials
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_CLIENT_SECRET=<your-idp-client-secret>
+            IDP_TOKEN_URL=<your-idp-token-url>
+            """
+        ),
+        id="Auth0 - Client Credentials",
+    )
+    yield pytest.param(
+        "auth0",
+        "interactive",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=auth0
+            LOGIN_FLOW=interactive
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_TOKEN_URL=<your-idp-token-url>
+            """
+        ),
+        id="Auth0 - Interactive",
+    )
+    yield pytest.param(
+        "auth0",
+        "token",
+        file_header
+        + textwrap.dedent(
+            """\
+            LOGIN_FLOW=token
+
+            CDF_TOKEN=<your-cdf-token>
+            """
+        ),
+        id="Auth0 - Token",
+    )
+    # other provider
+    yield pytest.param(
+        "other",
+        "client_credentials",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=other
+            LOGIN_FLOW=client_credentials
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_CLIENT_SECRET=<your-idp-client-secret>
+            IDP_TOKEN_URL=<your-idp-token-url>
+            IDP_AUDIENCE=<your-idp-audience>
+            IDP_SCOPES=<your-idp-scopes-comma-separated>
+            IDP_AUTHORITY_URL=<your-idp-authority-url>
+            """
+        ),
+        id="Other - Client Credentials",
+    )
+    yield pytest.param(
+        "other",
+        "interactive",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=other
+            LOGIN_FLOW=interactive
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_TOKEN_URL=<your-idp-token-url>
+            IDP_AUDIENCE=<your-idp-audience>
+            IDP_SCOPES=<your-idp-scopes-comma-separated>
+            IDP_AUTHORITY_URL=<your-idp-authority-url>
+            """
+        ),
+        id="Other - Interactive",
+    )
+    yield pytest.param(
+        "other",
+        "token",
+        file_header
+        + textwrap.dedent(
+            """\
+            LOGIN_FLOW=token
+
+            CDF_TOKEN=<your-cdf-token>
+            """
+        ),
+        id="Other - Token",
+    )
+
+
+class TestCreateEnvFileContent:
+    @pytest.mark.parametrize("provider, login_flow, expected", list(template_env_file_test_cases()))
+    def test_create_env_file_content_valid(self, provider: Provider, login_flow: LoginFlow, expected: str) -> None:
+        content = create_env_file_content(provider, login_flow)
+        assert content.strip() == expected.strip()
+
+    def test_all_login_flows_covered(self) -> None:
+        """Ensure that all available login flows are covered in test cases."""
+        tested_cases = {case.values[:2] for case in template_env_file_test_cases()}  # type: ignore[attr-defined]
+        available_cases = {
+            (provider, login_flow) for provider, login_flow in product(AVAILABLE_PROVIDERS, AVAILABLE_LOGIN_FLOWS)
+        }
+        assert tested_cases == available_cases
+
+
+class TestInteractiveFlow:
+    @pytest.mark.parametrize(
+        "user_input, expected", [("y", True), ("Y", True), ("n", False), ("", False), ("foo", False)]
+    )
+    def test_run_no_dependency_flow(self, user_input: str, expected: bool, tmp_path: Path) -> None:
+        env_path = tmp_path / "test.env"
+        flow = NoDependencyFlow(env_path)
+        with patch("builtins.input", side_effect=[user_input, "not_valid", "3", "1"]):
+            flow.run()
+        assert env_path.exists() == expected
+
+    def test_run_notebook_flow(self, tmp_path: Path) -> None:
+        env_path = tmp_path / ".env"
+
+        # Mock ipywidgets and IPython
+        mock_widgets = MagicMock()
+        mock_display = MagicMock()
+        with patch(
+            "sys.modules",
+            {
+                "ipywidgets": mock_widgets,
+                "IPython.display": MagicMock(display=mock_display),
+            },
+        ):
+            flow = NotebookFlow(env_path)
+            flow.run()
+
+        # Get the on_click callback that was registered
+        confirm_button = mock_widgets.Button.return_value
+        on_click_callback = confirm_button.on_click.call_args[0][0]
+
+        # Simulate the click
+        on_click_callback(None)
+        # Simulate clicking twice
+        on_click_callback(None)
+
+        assert env_path.exists()
+
+    @pytest.mark.parametrize(
+        "in_notebook, expected_flow_type",
+        [
+            (True, NotebookFlow),
+            (False, NoDependencyFlow),
+        ],
+    )
+    def test_get_interactive_flow(self, in_notebook: bool, expected_flow_type: type, tmp_path: Path) -> None:
+        env_path = tmp_path / "test.env"
+        module_str = get_interactive_flow.__module__
+        with patch(f"{module_str}._is_in_notebook", return_value=in_notebook):
+            flow = get_interactive_flow(env_path)
+        assert isinstance(flow, expected_flow_type)

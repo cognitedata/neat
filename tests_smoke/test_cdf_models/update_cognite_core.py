@@ -12,7 +12,9 @@ from tests_smoke.test_cdf_models.constants import (
 
 
 def update_cognite_core_locally() -> None:
-    client = NeatClient(get_cognite_client(".env"))
+    cognite_client = get_cognite_client(".env")
+    assert cognite_client is not None
+    client = NeatClient(cognite_client)
     print("Updating Cognite Core data model locally...")
     COGNITE_CORE_MODEL_YAML.parent.mkdir(parents=True, exist_ok=True)
     models = client.data_models.retrieve([COGNITE_CORE_ID])

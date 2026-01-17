@@ -4,7 +4,6 @@ from typing import Any, Literal, TypeAlias, get_args
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from cognite.neat._utils.repo import get_repo_root
 from cognite.neat._utils.validation import humanize_validation_error
 
 if sys.version_info >= (3, 11):
@@ -12,9 +11,10 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-LoginFlow: TypeAlias = Literal["infer", "client_credentials", "interactive", "token"]
-VALID_LOGIN_FLOWS = get_args(LoginFlow)
+LoginFlow: TypeAlias = Literal["client_credentials", "interactive", "token"]
+AVAILABLE_LOGIN_FLOWS: tuple[LoginFlow, ...] = get_args(LoginFlow)
 Provider: TypeAlias = Literal["entra_id", "auth0", "cdf", "other"]
+AVAILABLE_PROVIDERS: tuple[Provider, ...] = get_args(Provider)
 
 
 class ClientEnvironmentVariables(BaseModel):
@@ -24,7 +24,7 @@ class ClientEnvironmentVariables(BaseModel):
     CDF_CLUSTER: str
     CDF_PROJECT: str
     PROVIDER: Provider = "entra_id"
-    LOGIN_FLOW: LoginFlow = "infer"
+    LOGIN_FLOW: LoginFlow = "client_credentials"
 
     IDP_CLIENT_ID: str | None = None
     IDP_CLIENT_SECRET: str | None = None
@@ -103,24 +103,7 @@ class ClientEnvironmentVariables(BaseModel):
         )
 
 
-def get_environment_variables(env_file_name: str) -> ClientEnvironmentVariables:
-    to_search: list[tuple[str, Path]] = []
-    try:
-        repo_root = get_repo_root()
-    except RuntimeError:
-        ...
-    else:
-        to_search.append(("repository root", repo_root))
-    to_search.append(("current working directory", Path.cwd()))
-    for location_desc, path in to_search:
-        env_path = path / env_file_name
-        if env_path.is_file():
-            print(f"Found {env_file_name} in {location_desc}.")
-            return _parse_env_file(env_path)
-    raise FileNotFoundError(f"Could not find {env_file_name} in the repository root or current working directory.")
-
-
-def _parse_env_file(env_file_path: Path) -> ClientEnvironmentVariables:
+def parse_env_file(env_file_path: Path) -> ClientEnvironmentVariables:
     content = env_file_path.read_text()
     variables: dict[str, Any] = {}
     for line in content.splitlines():
@@ -129,3 +112,32 @@ def _parse_env_file(env_file_path: Path) -> ClientEnvironmentVariables:
         key, value = line.strip().split("=", 1)
         variables[key] = value
     return ClientEnvironmentVariables.create_humanize(variables)
+
+
+def create_env_file_content(provider: Provider, login_flow: LoginFlow) -> str:
+    lines = [
+        "# Cognite NEAT Client Environment Variables",
+        "CDF_CLUSTER=<your-cdf-cluster>",
+        "CDF_PROJECT=<your-cdf-project>",
+        "",
+    ]
+    if login_flow != "token":
+        lines.append(f"PROVIDER={provider}")
+    lines.append(f"LOGIN_FLOW={login_flow}")
+    lines.append("")
+    if login_flow in ("client_credentials", "interactive"):
+        lines.append("IDP_CLIENT_ID=<your-idp-client-id>")
+        if login_flow == "client_credentials":
+            lines.append("IDP_CLIENT_SECRET=<your-idp-client-secret>")
+        if provider == "entra_id":
+            lines.append("IDP_TENANT_ID=<your-idp-tenant-id>")
+        if provider not in ("cdf", "entra_id"):
+            lines.append("IDP_TOKEN_URL=<your-idp-token-url>")
+        if provider == "other":
+            lines.append("IDP_AUDIENCE=<your-idp-audience>")
+            lines.append("IDP_SCOPES=<your-idp-scopes-comma-separated>")
+            lines.append("IDP_AUTHORITY_URL=<your-idp-authority-url>")
+    elif login_flow == "token":
+        lines.append("CDF_TOKEN=<your-cdf-token>")
+
+    return "\n".join(lines)
