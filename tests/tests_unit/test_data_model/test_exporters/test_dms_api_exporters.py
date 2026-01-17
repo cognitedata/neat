@@ -34,7 +34,7 @@ class TestYAMLExporter:
                 assert space_file.exists(), f"space file {space_file} not created"
 
         # Verify views, containers, and node_types are exported
-        component_checks = [
+        component_checks: list[tuple[str, list, str]] = [
             ("views", schema.views, "view"),
             ("containers", schema.containers, "container"),
             ("nodes", schema.node_types, "node"),
@@ -69,7 +69,7 @@ class TestYAMLExporter:
             expected_files = {f"data_models/{schema.data_model.external_id}.datamodel.yaml"}
             if schema.spaces:
                 expected_files.update(f"data_models/{s.space}.space.yaml" for s in schema.spaces)
-            component_checks = [
+            component_checks: list[tuple[str, list, str]] = [
                 ("views", schema.views, "view"),
                 ("containers", schema.containers, "container"),
                 ("nodes", schema.node_types, "node"),
