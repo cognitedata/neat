@@ -15,6 +15,14 @@ from ._physical import PhysicalDataModel
 from ._result import Result
 
 
+def _is_in_browser() -> bool:
+    try:
+        from pyodide.ffi import IN_BROWSER  # type: ignore [import-not-found]
+    except ModuleNotFoundError:
+        return False
+    return IN_BROWSER
+
+
 class NeatSession:
     """A session is an interface for neat operations."""
 
@@ -30,7 +38,9 @@ class NeatSession:
                 Defaults to "legacy-additive". This means Neat will perform additive modeling
                 and apply only validations that were part of the legacy Neat version.
         """
-        if client is None:
+        if client is None and _is_in_browser is True:
+            client = CogniteClient()
+        elif client is None:
             raise ValueError("A CogniteClient or ClientConfig must be provided to initialize a NeatSession.")
         self._config = NeatConfig.create_predefined(config) if isinstance(config, str) else config
 
