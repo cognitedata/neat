@@ -16,7 +16,7 @@ from cognite.neat._client.init.env_vars import (
     Provider,
     create_env_file_content,
 )
-from cognite.neat._client.init.interactive import get_interactive_flow
+from cognite.neat._client.init.interactive import NoDependencyFlow, NotebookFlow, get_interactive_flow
 from cognite.neat._client.init.main import CLIENT_NAME, get_cognite_client
 
 
@@ -523,3 +523,56 @@ class TestCreateEnvFileContent:
             (provider, login_flow) for provider, login_flow in product(AVAILABLE_PROVIDERS, AVAILABLE_LOGIN_FLOWS)
         }
         assert tested_cases == available_cases
+
+
+class TestInteractiveFlow:
+    @pytest.mark.parametrize(
+        "user_input, expected", [("y", True), ("Y", True), ("n", False), ("", False), ("foo", False)]
+    )
+    def test_run_no_dependency_flow(self, user_input: str, expected: bool, tmp_path: Path) -> None:
+        env_path = tmp_path / "test.env"
+        flow = NoDependencyFlow(env_path)
+        with patch("builtins.input", side_effect=[user_input, "not_valid", "3", "1"]):
+            flow.run()
+        assert env_path.exists() == expected
+
+    def test_run_notebook_flow(self, tmp_path: Path) -> None:
+        env_path = tmp_path / ".env"
+
+        # Mock ipywidgets and IPython
+        mock_widgets = MagicMock()
+        mock_display = MagicMock()
+        with patch(
+            "sys.modules",
+            {
+                "ipywidgets": mock_widgets,
+                "IPython.display": MagicMock(display=mock_display),
+            },
+        ):
+            flow = NotebookFlow(env_path)
+            flow.run()
+
+        # Get the on_click callback that was registered
+        confirm_button = mock_widgets.Button.return_value
+        on_click_callback = confirm_button.on_click.call_args[0][0]
+
+        # Simulate the click
+        on_click_callback(None)
+        # Simulate clicking twice
+        on_click_callback(None)
+
+        assert env_path.exists()
+
+    @pytest.mark.parametrize(
+        "in_notebook, expected_flow_type",
+        [
+            (True, NotebookFlow),
+            (False, NoDependencyFlow),
+        ],
+    )
+    def test_get_interactive_flow(self, in_notebook: bool, expected_flow_type: type, tmp_path: Path) -> None:
+        env_path = tmp_path / "test.env"
+        module_str = get_interactive_flow.__module__
+        with patch(f"{module_str}._is_in_notebook", return_value=in_notebook):
+            flow = get_interactive_flow(env_path)
+        assert isinstance(flow, expected_flow_type)

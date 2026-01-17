@@ -22,9 +22,24 @@ def get_interactive_flow(env_file_path: Path) -> InteractiveFlow:
     try:
         importlib.util.find_spec("IPython")
         importlib.util.find_spec("ipywidgets")
+        if not _is_in_notebook():
+            return NoDependencyFlow(env_file_path)
         return NotebookFlow(env_file_path)
     except ImportError:
         return NoDependencyFlow(env_file_path)
+
+
+def _is_in_notebook() -> bool:
+    try:
+        from IPython import get_ipython
+
+        if "IPKernelApp" not in get_ipython().config:
+            return False
+    except ImportError:
+        return False
+    except AttributeError:
+        return False
+    return True
 
 
 class NoDependencyFlow(InteractiveFlow):
