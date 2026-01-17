@@ -118,14 +118,14 @@ class BodyRequest(ParametersRequest, ABC):
     """Base class for HTTP request messages with a body"""
 
     @abstractmethod
-    def data(self) -> str:
+    def data(self) -> str | bytes:
         raise NotImplementedError()
 
 
 class SimpleBodyRequest(BodyRequest):
     body: str | bytes
 
-    def data(self) -> str:
+    def data(self) -> str | bytes:
         return self.body
 
 

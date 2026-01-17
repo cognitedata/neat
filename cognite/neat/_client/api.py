@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from typing import Any, Generic, Literal, TypeAlias, TypeVar
 
@@ -35,11 +35,6 @@ class NeatAPI(Generic[T_Reference, T_Resource, T_Response], ABC):
         self._http_client = http_client
         self._method_endpoint_map = endpoint_map
 
-    @classmethod
-    def _serialize_items(cls, items: Sequence[BaseModel]) -> list[dict[str, JsonValue]]:
-        """Serialize reference objects to JSON-compatible dicts."""
-        return [item.model_dump(mode="json", by_alias=True) for item in items]
-
     @abstractmethod
     def _validate_page_response(self, response: SuccessResponse) -> PagedResponse[T_Response]:
         """Parse a single item response."""
@@ -61,7 +56,7 @@ class NeatAPI(Generic[T_Reference, T_Resource, T_Response], ABC):
         extra_body: dict[str, Any] | None = None,
     ) -> list[T_Response]:
         response_items: list[T_Response] = []
-        for response in self._chunk_requests(items, method, self._serialize_items, extra_body):
+        for response in self._chunk_requests(items, method, extra_body):
             response_items.extend(self._validate_page_response(response).items)
         return response_items
 
@@ -72,7 +67,7 @@ class NeatAPI(Generic[T_Reference, T_Resource, T_Response], ABC):
         extra_body: dict[str, Any] | None = None,
     ) -> list[T_Reference]:
         response_items: list[T_Reference] = []
-        for response in self._chunk_requests(items, method, self._serialize_items, extra_body):
+        for response in self._chunk_requests(items, method, extra_body):
             response_items.extend(self._validate_id_response(response))
         return response_items
 
@@ -80,7 +75,6 @@ class NeatAPI(Generic[T_Reference, T_Resource, T_Response], ABC):
         self,
         items: Sequence[_T_BaseModel],
         method: APIMethod,
-        serialization: Callable[[Sequence[_T_BaseModel]], list[dict[str, JsonValue]]],
         extra_body: dict[str, Any] | None = None,
     ) -> Iterable[SuccessResponse]:
         """Send requests in chunks and yield responses.
@@ -101,8 +95,8 @@ class NeatAPI(Generic[T_Reference, T_Resource, T_Response], ABC):
             request = SimpleBodyRequest(
                 endpoint_url=self._make_url(endpoint.path),
                 method=endpoint.method,
-                body=TypeAdapter(dict[str, JsonValue]).dump_json(
-                    {"items": serialization(chunk), **(extra_body or {})},
+                body=TypeAdapter(dict[str, JsonValue | Sequence[BaseModel]]).dump_json(
+                    {"items": chunk, **(extra_body or {})},
                 ),
             )
             response = self._http_client.request_with_retries(request)
