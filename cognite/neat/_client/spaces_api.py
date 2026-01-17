@@ -8,8 +8,8 @@ from cognite.neat._data_model.models.dms import SpaceRequest, SpaceResponse
 from cognite.neat._data_model.models.dms._references import SpaceReference
 from cognite.neat._utils.http_client import HTTPClient, SuccessResponse
 
-from . import NeatClientConfig
 from .api import Endpoint, NeatAPI
+from .config import NeatClientConfig
 from .data_classes import PagedResponse
 from .filters import DataModelingFilter
 

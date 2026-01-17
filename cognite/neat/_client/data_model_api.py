@@ -5,8 +5,8 @@ from pydantic import TypeAdapter
 from cognite.neat._data_model.models.dms import DataModelReference, DataModelRequest, DataModelResponse
 from cognite.neat._utils.http_client import HTTPClient, SuccessResponse
 
-from . import NeatClientConfig
 from .api import Endpoint, NeatAPI
+from .config import NeatClientConfig
 from .data_classes import PagedResponse
 from .filters import DataModelFilter
 

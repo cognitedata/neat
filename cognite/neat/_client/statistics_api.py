@@ -1,6 +1,7 @@
-from cognite.neat._client import NeatClientConfig
-from cognite.neat._client.data_classes import StatisticsResponse
 from cognite.neat._utils.http_client import HTTPClient, ParametersRequest
+
+from .config import NeatClientConfig
+from .data_classes import StatisticsResponse
 
 
 class StatisticsAPI:
