@@ -21,7 +21,6 @@ class Endpoint:
     method: Literal["GET", "POST"]
     path: str
     item_limit: int
-    concurrency_max_workers: int = 1
 
 
 APIMethod: TypeAlias = Literal["apply", "retrieve", "delete", "list"]

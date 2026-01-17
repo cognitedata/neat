@@ -19,7 +19,7 @@ class SpacesAPI(NeatAPI):
             http_client,
             endpoint_map={
                 "apply": Endpoint("POST", "/models/spaces", item_limit=100),
-                "retrieve": Endpoint("POST", "/models/spaces/byids", item_limit=1000),
+                "retrieve": Endpoint("POST", "/models/spaces/byids", item_limit=100),
                 "delete": Endpoint("POST", "/models/spaces/delete", item_limit=100),
                 "list": Endpoint("GET", "/models/spaces", item_limit=1000),
             },
