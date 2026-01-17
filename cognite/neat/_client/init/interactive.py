@@ -47,7 +47,11 @@ class NoDependencyFlow(InteractiveFlow):
         if not self.should_create_env_file():
             return None
         provider = self.provider()
-        login_flow = self.login_flow()
+        login_flow: LoginFlow
+        if provider != "cdf":
+            login_flow = self.login_flow()
+        else:
+            login_flow = "client_credentials"
         self.create_env_file(provider, login_flow)
         print(f"Created environment file at {self.env_path!r}.")
         return None
