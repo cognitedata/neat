@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from collections.abc import Sequence
 
 from cognite.neat._data_model.models.dms import ContainerReference, ContainerRequest, ContainerResponse, DataModelBody

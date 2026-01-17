@@ -123,7 +123,7 @@ class BodyRequest(ParametersRequest, ABC):
 
 
 class SimpleBodyRequest(BodyRequest):
-    body: str
+    body: str | bytes
 
     def data(self) -> str:
         return self.body
