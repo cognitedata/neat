@@ -88,7 +88,7 @@ class NotebookFlow(InteractiveFlow):
             value=AVAILABLE_LOGIN_FLOWS[0],
             description="Login Flow:",
         )
-        confirm_button = self._widgets.Button(description="Create .env file", button_style="primary")
+        confirm_button = self._widgets.Button(description="Create template .env file", button_style="primary")
         dropdowns = self._widgets.HBox([dropdown_providers, dropdown_login_flows])
         output = self._widgets.Output()
         container = self._widgets.VBox([dropdowns, confirm_button, output])
