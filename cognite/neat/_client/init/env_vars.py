@@ -14,6 +14,7 @@ else:
 LoginFlow: TypeAlias = Literal["infer", "client_credentials", "interactive", "token"]
 VALID_LOGIN_FLOWS = get_args(LoginFlow)
 Provider: TypeAlias = Literal["entra_id", "auth0", "cdf", "other"]
+AVAILABLE_PROVIDERS = get_args(Provider)
 
 
 class ClientEnvironmentVariables(BaseModel):
@@ -111,3 +112,7 @@ def parse_env_file(env_file_path: Path) -> ClientEnvironmentVariables:
         key, value = line.strip().split("=", 1)
         variables[key] = value
     return ClientEnvironmentVariables.create_humanize(variables)
+
+
+def create_env_file_content(provider: Provider, login_flow: LoginFlow) -> str:
+    raise NotImplementedError()

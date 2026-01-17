@@ -7,8 +7,8 @@ from cognite.neat import _version
 from cognite.neat._utils.repo import get_repo_root
 
 from .credentials import get_credentials
-from .env_vars import ClientEnvironmentVariables, parse_env_file
-from .interactive import create_template_env
+from .env_vars import ClientEnvironmentVariables, create_env_file_content, parse_env_file
+from .interactive import get_interactive_flow
 
 CLIENT_NAME = f"CogniteNeat:{_version.__version__}"
 
@@ -52,10 +52,15 @@ def get_cognite_client_internal(env_file_name: str) -> CogniteClient:
 
     env_folder = repo_root if repo_root is not None else Path.cwd()
     new_env_path = env_folder / env_file_name
-    message = "Could not create CogniteClient because the required environment variables are not set."
-    if create_template_env(new_env_path):
-        message += f" A template {env_file_name!r} has been created at {new_env_path!r}."
+    message = "Could not create CogniteClient because no environment file was found."
+    user = get_interactive_flow()
+    if not user.create_env_file():
+        raise RuntimeError(message)
 
+    provider, login_flow = user.provider(), user.login_flow()
+    env_content = create_env_file_content(provider, login_flow)
+    new_env_path.write_text(env_content, encoding="utf-8", newline="\n")
+    message += f" A template {env_file_name!r} has been created at {new_env_path!r}."
     raise RuntimeError(message)
 
 
