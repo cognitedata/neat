@@ -1,10 +1,14 @@
+from pathlib import Path
+
 from cognite.client import CogniteClient
 from cognite.client.config import ClientConfig, global_config
 
 from cognite.neat import _version
+from cognite.neat._utils.repo import get_repo_root
 
 from .credentials import get_credentials
-from .env_vars import ClientEnvironmentVariables, get_environment_variables
+from .env_vars import ClientEnvironmentVariables, parse_env_file
+from .interactive import create_template_env
 
 CLIENT_NAME = f"CogniteNeat:{_version.__version__}"
 
@@ -32,12 +36,27 @@ def get_cognite_client_internal(env_file_name: str) -> CogniteClient:
         raise ValueError(f"env_file_name must end with '.env'. Got: {env_file_name!r}")
     global_config.disable_pypi_version_check = True
     global_config.silence_feature_preview_warnings = True
-    env_vars = get_environment_variables(env_file_name)
-    client_config = create_client_config_from_env_vars(env_vars)
-    # Todo validate credentials by making a simple call to CDF
-    #   Offer to store credentials securely if valid
-    #
-    return CogniteClient(client_config)
+
+    repo_root = get_repo_root()
+    if repo_root and (env_path := repo_root / env_file_name).exists():
+        print(f"Found {env_file_name} in repository root.")
+    elif (env_path := Path.cwd() / env_file_name).exists():
+        print(f"Found {env_file_name} in current working directory.")
+
+    if env_path.exists():
+        env_vars = parse_env_file(env_path)
+        client_config = create_client_config_from_env_vars(env_vars)
+        return CogniteClient(client_config)
+
+    print(f"Failed to find {env_file_name} in repository root or current working directory.")
+
+    env_folder = repo_root if repo_root is not None else Path.cwd()
+    new_env_path = env_folder / env_file_name
+    message = "Could not create CogniteClient because the required environment variables are not set."
+    if create_template_env(new_env_path):
+        message += f" A template {env_file_name!r} has been created at {new_env_path!r}."
+
+    raise RuntimeError(message)
 
 
 def create_client_config_from_env_vars(env_vars: ClientEnvironmentVariables) -> ClientConfig:
