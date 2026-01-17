@@ -118,6 +118,11 @@ class NotebookFlow(InteractiveFlow):
             with output:
                 provider = dropdown_providers.value
                 login_flow = dropdown_login_flows.value
+                if provider == "cdf" and login_flow != "client_credentials":
+                    print(
+                        "Warning: 'cdf' provider only supports 'client_credentials' login flow. Overriding selection."
+                    )
+                    login_flow = "client_credentials"
                 is_existing = self.env_path.exists()
                 self.create_env_file(provider, login_flow)
                 if is_existing:
