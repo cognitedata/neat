@@ -1,18 +1,39 @@
 from __future__ import annotations
 
-from cognite.neat._data_model.models.dms import DataModelBody, SpaceRequest, SpaceResponse
-from cognite.neat._data_model.models.dms._references import SpaceReference
-from cognite.neat._utils.http_client import ItemIDBody, ItemsRequest, ParametersRequest
-from cognite.neat._utils.useful_types import PrimitiveType
+from collections.abc import Sequence
 
-from .api import NeatAPI
+from pydantic import TypeAdapter
+
+from cognite.neat._data_model.models.dms import SpaceRequest, SpaceResponse
+from cognite.neat._data_model.models.dms._references import SpaceReference
+from cognite.neat._utils.http_client import HTTPClient, SuccessResponse
+
+from . import NeatClientConfig
+from .api import Endpoint, NeatAPI
 from .data_classes import PagedResponse
+from .filters import DataModelingFilter
 
 
 class SpacesAPI(NeatAPI):
-    ENDPOINT = "/models/spaces"
+    def __init__(self, neat_config: NeatClientConfig, http_client: HTTPClient) -> None:
+        super().__init__(
+            neat_config,
+            http_client,
+            endpoint_map={
+                "apply": Endpoint("POST", "/models/spaces", item_limit=100),
+                "retrieve": Endpoint("POST", "/models/spaces/byids", item_limit=1000),
+                "delete": Endpoint("POST", "/models/spaces/delete", item_limit=100),
+                "list": Endpoint("GET", "/models/spaces", item_limit=1000),
+            },
+        )
 
-    def apply(self, spaces: list[SpaceRequest]) -> list[SpaceResponse]:
+    def _validate_page_response(self, response: SuccessResponse) -> PagedResponse[SpaceResponse]:
+        return PagedResponse[SpaceResponse].model_validate_json(response.body)
+
+    def _validate_id_response(self, response: SuccessResponse) -> list[SpaceReference]:
+        return TypeAdapter(list[SpaceReference]).validate_json(response.body)
+
+    def apply(self, spaces: Sequence[SpaceRequest]) -> list[SpaceResponse]:
         """Apply (create or update) spaces in CDF.
 
         Args:
@@ -20,20 +41,7 @@ class SpacesAPI(NeatAPI):
         Returns:
             List of SpaceResponse objects.
         """
-        if not spaces:
-            return []
-        if len(spaces) > 100:
-            raise ValueError("Cannot apply more than 100 spaces at once.")
-        result = self._http_client.request_with_retries(
-            ItemsRequest(
-                endpoint_url=self._config.create_api_url(self.ENDPOINT),
-                method="POST",
-                body=DataModelBody(items=spaces),
-            )
-        )
-        result.raise_for_status()
-        result = PagedResponse[SpaceResponse].model_validate_json(result.success_response.body)
-        return result.items
+        return self._request_item_response(spaces, "apply")
 
     def retrieve(self, spaces: list[SpaceReference]) -> list[SpaceResponse]:
         """Retrieve spaces by their identifiers.
@@ -44,21 +52,7 @@ class SpacesAPI(NeatAPI):
         Returns:
             List of SpaceResponse objects.
         """
-        if not spaces:
-            return []
-        if len(spaces) > 1000:
-            raise ValueError("Cannot retrieve more than 1000 spaces at once.")
-
-        result = self._http_client.request_with_retries(
-            ItemsRequest(
-                endpoint_url=self._config.create_api_url(f"{self.ENDPOINT}/byids"),
-                method="POST",
-                body=ItemIDBody(items=spaces),
-            )
-        )
-        result.raise_for_status()
-        result = PagedResponse[SpaceResponse].model_validate_json(result.success_response.body)
-        return result.items
+        return self._request_item_response(spaces, "retrieve")
 
     def delete(self, spaces: list[SpaceReference]) -> list[SpaceReference]:
         """Delete spaces by their identifiers.
@@ -68,48 +62,21 @@ class SpacesAPI(NeatAPI):
         Returns:
             List of SpaceReference objects representing the deleted spaces.
         """
-        if not spaces:
-            return []
-        if len(spaces) > 100:
-            raise ValueError("Cannot delete more than 100 spaces at once.")
-        result = self._http_client.request_with_retries(
-            ItemsRequest(
-                endpoint_url=self._config.create_api_url(f"{self.ENDPOINT}/delete"),
-                method="POST",
-                body=ItemIDBody(items=spaces),
-            )
-        )
-        result.raise_for_status()
-        result = PagedResponse[SpaceReference].model_validate_json(result.success_response.body)
-        return result.items
+        return self._request_id_response(spaces, "delete")
 
     def list(
         self,
         include_global: bool = False,
-        limit: int = 10,
+        limit: int | None = 10,
     ) -> list[SpaceResponse]:
         """List spaces in CDF Project.
 
         Args:
             include_global: If True, include global spaces.
-            limit: Maximum number of spaces to return. Max is 1000.
+            limit: Maximum number of spaces to return. If None, return all spaces.
 
         Returns:
             List of SpaceResponse objects.
         """
-        if limit > 1000:
-            raise ValueError("Pagination is not (yet) supported for listing spaces. The maximum limit is 1000.")
-        parameters: dict[str, PrimitiveType] = {
-            "includeGlobal": include_global,
-            "limit": limit,
-        }
-        result = self._http_client.request_with_retries(
-            ParametersRequest(
-                endpoint_url=self._config.create_api_url(self.ENDPOINT),
-                method="GET",
-                parameters=parameters,
-            )
-        )
-        result.raise_for_status()
-        result = PagedResponse[SpaceResponse].model_validate_json(result.success_response.body)
-        return result.items
+        filter = DataModelingFilter(include_global=include_global)
+        return self._list(limit=limit, params=filter.dump())
