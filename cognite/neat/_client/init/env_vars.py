@@ -115,8 +115,6 @@ def parse_env_file(env_file_path: Path) -> ClientEnvironmentVariables:
 
 
 def create_env_file_content(provider: Provider, login_flow: LoginFlow) -> str:
-    if login_flow == "infer":
-        raise ValueError("login_flow cannot be 'infer' when creating env file content.")
     lines = [
         "# Cognite NEAT Client Environment Variables",
         "CDF_CLUSTER=<your-cdf-cluster>",

@@ -300,7 +300,7 @@ class TestGetCogniteClient:
             patch("cognite.neat._client.init.main.get_repo_root", return_value=tmp_path),
             patch(f"{module_str}.{CogniteClient.__name__}", return_value=MagicMock()) as _,
         ):
-            with pytest.raises(RuntimeError) as exc_info:
+            with pytest.raises(ValueError) as exc_info:
                 _ = get_cognite_client("test.env")
 
         assert expected_message in str(exc_info.value)
