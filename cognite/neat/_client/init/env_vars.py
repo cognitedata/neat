@@ -134,7 +134,7 @@ def create_env_file_content(provider: Provider, login_flow: LoginFlow) -> str:
         if provider == "entra_id":
             lines.append("IDP_TENANT_ID=<your-idp-tenant-id>")
         if provider not in ("cdf", "entra_id"):
-            lines.append("# IDP_TOKEN_URL=<your-idp-token-url>")
+            lines.append("IDP_TOKEN_URL=<your-idp-token-url>")
         if provider == "other":
             lines.append("IDP_AUDIENCE=<your-idp-audience>")
             lines.append("IDP_SCOPES=<your-idp-scopes-comma-separated>")

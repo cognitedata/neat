@@ -313,6 +313,7 @@ def template_env_file_test_cases() -> Iterable[tuple]:
             CDF_PROJECT=<your-cdf-project>
 
     """)
+    # cdf provider
     yield pytest.param(
         "cdf",
         "client_credentials",
@@ -327,6 +328,174 @@ def template_env_file_test_cases() -> Iterable[tuple]:
             """
         ),
         id="CDF - Client Credentials",
+    )
+    yield pytest.param(
+        "cdf",
+        "interactive",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=cdf
+            LOGIN_FLOW=interactive
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            """
+        ),
+        id="CDF - Interactive",
+    )
+    yield pytest.param(
+        "cdf",
+        "token",
+        file_header
+        + textwrap.dedent(
+            """\
+            LOGIN_FLOW=token
+
+            CDF_TOKEN=<your-cdf-token>
+            """
+        ),
+        id="CDF - Token",
+    )
+    # entra_id provider
+    yield pytest.param(
+        "entra_id",
+        "client_credentials",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=entra_id
+            LOGIN_FLOW=client_credentials
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_CLIENT_SECRET=<your-idp-client-secret>
+            IDP_TENANT_ID=<your-idp-tenant-id>
+            """
+        ),
+        id="Entra ID - Client Credentials",
+    )
+    yield pytest.param(
+        "entra_id",
+        "interactive",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=entra_id
+            LOGIN_FLOW=interactive
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_TENANT_ID=<your-idp-tenant-id>
+            """
+        ),
+        id="Entra ID - Interactive",
+    )
+    yield pytest.param(
+        "entra_id",
+        "token",
+        file_header
+        + textwrap.dedent(
+            """\
+            LOGIN_FLOW=token
+
+            CDF_TOKEN=<your-cdf-token>
+            """
+        ),
+        id="Entra ID - Token",
+    )
+    # auth0 provider
+    yield pytest.param(
+        "auth0",
+        "client_credentials",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=auth0
+            LOGIN_FLOW=client_credentials
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_CLIENT_SECRET=<your-idp-client-secret>
+            IDP_TOKEN_URL=<your-idp-token-url>
+            """
+        ),
+        id="Auth0 - Client Credentials",
+    )
+    yield pytest.param(
+        "auth0",
+        "interactive",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=auth0
+            LOGIN_FLOW=interactive
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_TOKEN_URL=<your-idp-token-url>
+            """
+        ),
+        id="Auth0 - Interactive",
+    )
+    yield pytest.param(
+        "auth0",
+        "token",
+        file_header
+        + textwrap.dedent(
+            """\
+            LOGIN_FLOW=token
+
+            CDF_TOKEN=<your-cdf-token>
+            """
+        ),
+        id="Auth0 - Token",
+    )
+    # other provider
+    yield pytest.param(
+        "other",
+        "client_credentials",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=other
+            LOGIN_FLOW=client_credentials
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_CLIENT_SECRET=<your-idp-client-secret>
+            IDP_TOKEN_URL=<your-idp-token-url>
+            IDP_AUDIENCE=<your-idp-audience>
+            IDP_SCOPES=<your-idp-scopes-comma-separated>
+            IDP_AUTHORITY_URL=<your-idp-authority-url>
+            """
+        ),
+        id="Other - Client Credentials",
+    )
+    yield pytest.param(
+        "other",
+        "interactive",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=other
+            LOGIN_FLOW=interactive
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_TOKEN_URL=<your-idp-token-url>
+            IDP_AUDIENCE=<your-idp-audience>
+            IDP_SCOPES=<your-idp-scopes-comma-separated>
+            IDP_AUTHORITY_URL=<your-idp-authority-url>
+            """
+        ),
+        id="Other - Interactive",
+    )
+    yield pytest.param(
+        "other",
+        "token",
+        file_header
+        + textwrap.dedent(
+            """\
+            LOGIN_FLOW=token
+
+            CDF_TOKEN=<your-cdf-token>
+            """
+        ),
+        id="Other - Token",
     )
 
 
