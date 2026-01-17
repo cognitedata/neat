@@ -1,4 +1,6 @@
+import textwrap
 from collections.abc import Iterable
+from itertools import product
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -7,6 +9,13 @@ import pytest
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import OAuthClientCredentials, Token
 
+from cognite.neat._client.init.env_vars import (
+    AVAILABLE_LOGIN_FLOWS,
+    AVAILABLE_PROVIDERS,
+    LoginFlow,
+    Provider,
+    create_env_file_content,
+)
 from cognite.neat._client.init.main import CLIENT_NAME, get_cognite_client
 
 
@@ -295,3 +304,42 @@ class TestGetCogniteClient:
                 _ = get_cognite_client("test.env")
 
         assert expected_message in str(exc_info.value)
+
+
+def template_env_file_test_cases() -> Iterable[tuple]:
+    file_header = textwrap.dedent("""\
+            # Cognite NEAT Client Environment Variables
+            CDF_CLUSTER=<your-cdf-cluster>
+            CDF_PROJECT=<your-cdf-project>
+
+    """)
+    yield pytest.param(
+        "cdf",
+        "client_credentials",
+        file_header
+        + textwrap.dedent(
+            """\
+            PROVIDER=cdf
+            LOGIN_FLOW=client_credentials
+
+            IDP_CLIENT_ID=<your-idp-client-id>
+            IDP_CLIENT_SECRET=<your-idp-client-secret>
+            """
+        ),
+        id="CDF - Client Credentials",
+    )
+
+
+class TestCreateEnvFileContent:
+    @pytest.mark.parametrize("provider, login_flow, expected", list(template_env_file_test_cases()))
+    def test_create_env_file_content_valid(self, provider: Provider, login_flow: LoginFlow, expected: str) -> None:
+        content = create_env_file_content(provider, login_flow)
+        assert content.strip() == expected.strip()
+
+    def test_all_login_flows_covered(self) -> None:
+        """Ensure that all available login flows are covered in test cases."""
+        tested_cases = {case.values[:2] for case in template_env_file_test_cases()}  # type: ignore[attr-defined]
+        available_cases = {
+            (provider, login_flow) for provider, login_flow in product(AVAILABLE_PROVIDERS, AVAILABLE_LOGIN_FLOWS)
+        }
+        assert tested_cases == available_cases
