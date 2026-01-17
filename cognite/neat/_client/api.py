@@ -96,7 +96,7 @@ class NeatAPI(Generic[T_Reference, T_Resource, T_Response], ABC):
                 method=endpoint.method,
                 body=TypeAdapter(dict[str, JsonValue]).dump_json(
                     {
-                        "items": [item.model_dump(by_alias=True, exclude_unset=True) for item in chunk],
+                        "items": [item.model_dump(by_alias=True) for item in chunk],
                         **(extra_body or {}),
                     },
                 ),
