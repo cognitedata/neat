@@ -670,7 +670,12 @@ class ValidationResources:
 
     @cached_property
     def _mst_edges_by_view(self) -> dict[ViewReference, set[frozenset[ContainerReference]]]:
-        """Map each view to the undirected MST edges it needs (Steiner tree)."""
+        """Map each view to the MST edges connecting its containers (Steiner tree).
+
+        A view only needs edges that connect ITS containers, not all MST edges.
+        This is the Steiner tree problem: find minimum edges to connect terminals.
+        On a tree (MST), this is simply the union of paths between terminals.
+        """
         if not self._requires_mst_graph:
             return {}
 
@@ -692,38 +697,6 @@ class ValidationResources:
                     node = predecessors[node]
 
         return result
-
-    # ========================================================================
-    # REQUIRES CONSTRAINT MST WEIGHT CONSTANTS
-    # ========================================================================
-    # Empirically tuned via regression tests (test_requires_recommendations_baseline).
-    #
-    # MST picks lowest-weight edges. Weight tiers (after bonuses):
-    #   - FREE:           0.0        (immutable CDF constraints handle it)
-    #   - USER→USER:      0.05-0.50  (strongly preferred for modifiable chains)
-    #   - USER→EXTERNAL:  0.60-1.0   (only when needed to reach CDF containers)
-    #   - FORBIDDEN:      infinity   (invalid: non-modifiable source, cycles)
-    #
-    # Gap between tiers ensures user→user always beats user→external.
-    # ========================================================================
-
-    # Base weights by edge type
-    _WEIGHT_FREE = 0.0  # Edge already satisfied by immutable CDF constraints
-    _WEIGHT_USER_TO_USER = 0.5  # Both containers modifiable (strongly preferred)
-    _WEIGHT_USER_TO_EXTERNAL = 1.0  # Target is non-modifiable (CDF/CDM)
-    _WEIGHT_FORBIDDEN = math.inf  # Invalid: non-modifiable source or would create cycle
-
-    # Bonuses reduce weight (making edges more attractive to MST)
-    _BONUS_SHARED_VIEWS_PER = 0.05  # Per view using both containers (max 5 views → 0.25)
-    _BONUS_SHARED_VIEWS_MAX = 0.25  # Cap shared views bonus at 5 views
-    _BONUS_COVERAGE_PER = 0.05  # Per descendant reachable via immutable edges (max 3 → 0.15)
-    _BONUS_COVERAGE_MAX = 0.15  # Cap coverage bonus at 3 descendants
-
-    # Penalty for wrong direction: container in fewer views should be root
-    _PENALTY_VIEW_COUNT = 0.1  # Applied when src is in more views than dst
-
-    # Tie-breaker: hash of edge ID divided by large number to keep it negligible
-    _TIE_BREAKER_DIVISOR = 1e9
 
     def _find_most_view_specific_container(self, containers: set[ContainerReference]) -> ContainerReference | None:
         """Find the most view-specific modifiable container to serve as root.
@@ -815,7 +788,14 @@ class ValidationResources:
     ) -> tuple[
         list[tuple[ContainerReference, ContainerReference]], list[tuple[ContainerReference, ContainerReference]]
     ]:
-        """Get requires constraint changes for a view."""
+        """Get requires constraint changes needed to optimize a view.
+
+        Returns (to_add, to_remove) where:
+        - to_add: New constraints needed (from global MST orientation)
+        - to_remove: Existing constraints that are redundant or wrongly oriented
+
+        Returns empty lists if the view would be unsolvable after changes, or if no changes are needed.
+        """
         containers = self.containers_by_view.get(view)
         modifiable_containers_in_view = containers.intersection(self.modifiable_containers)
         if not modifiable_containers_in_view:
@@ -834,10 +814,11 @@ class ValidationResources:
         to_add = {(src, dst) for src, dst in oriented_edges - current_edges if src in self.modifiable_containers}
 
         to_remove: set[tuple[ContainerReference, ContainerReference]] = set()
+        mst_edges = {frozenset(e) for e in self._requires_mst_graph.edges()}
 
         for src, dst in current_edges:
             edge_undirected = frozenset[ContainerReference]({src, dst})
-            edges_in_mst = edge_undirected in {frozenset(e) for e in self._requires_mst_graph.edges()}
+            edges_in_mst = edge_undirected in mst_edges
             mapped_by_external_views = self.find_views_mapping_to_containers([src, dst]) - set(self.merged.views.keys())
 
             # Edge is in MST but opposite direction → always remove (will be re-added flipped)
@@ -860,48 +841,70 @@ class ValidationResources:
             sorted(to_remove, key=lambda x: (str(x[0]), str(x[1]))),
         )
 
+    # ========================================================================
+    # REQUIRES CONSTRAINT MST WEIGHT CONSTANTS
+    # ========================================================================
+    # Weight = TIER + sub_weight.
+    #
+    # WHY THIS ENCODING:
+    # MST algorithm only support scalar weights, but we need a strict priority
+    # hierarchy where USER→USER ALWAYS beats USER→EXTERNAL. By using a large
+    # gap (1000) between tiers, sub-weights (max ~50) can never cause a lower
+    # tier to beat a higher tier.
+    #
+    # Tiers (explicit priority order):
+    #   - Tier 0 (FREE):          Immutable CDF constraints handle it
+    #   - Tier 1 (USER→USER):     Both containers modifiable - always preferred
+    #   - Tier 2 (USER→EXTERNAL): Target is CDF/CDM - only when needed
+    #   - Tier ∞ (FORBIDDEN):     Invalid edge
+    #
+    # Sub-weights refine ordering WITHIN a tier (shared views, direction, etc).
+    # ========================================================================
+
+    # Tier base weights (gap of 1000 ensures tier always wins)
+    _TIER_FREE = 0
+    _TIER_USER_TO_USER = 1000
+    _TIER_USER_TO_EXTERNAL = 2000
+    _TIER_FORBIDDEN = math.inf
+
+    # Sub-weight adjustments (applied within tier, max ~100)
+    _BONUS_SHARED_VIEWS_PER = 5  # Per shared view (max 5 views → 25)
+    _BONUS_SHARED_VIEWS_MAX = 25
+    _BONUS_COVERAGE_PER = 5  # Per descendant via immutable edges (max 3 → 15)
+    _BONUS_COVERAGE_MAX = 15
+    _PENALTY_VIEW_COUNT = 10  # When src is in more views than dst
+
+    # Tie-breaker for deterministic ordering
+    _TIE_BREAKER_DIVISOR = 1e9
+
     def _compute_requires_edge_weight(self, src: ContainerReference, dst: ContainerReference) -> float:
         """Compute the weight/cost of adding edge src → dst.
 
-        Weight priority (lower = preferred):
-        1. FREE (0.0): Already satisfied by immutable constraints
-        2. USER→USER (0.25-0.5): Stay within modifiable containers
-        3. USER→EXTERNAL (0.6-1.0): Only when needed to reach external containers
-        4. FORBIDDEN (inf): Invalid edges
-
-        Bonuses: shared_views (edges helping more views) and coverage (CDF with descendants).
+        Returns TIER + sub_weight where tier dominates (gap of 1000).
+        Sub-weights refine ordering within a tier based on shared views, direction, coverage.
         """
-        # Free: src can already reach dst via immutable constraints
         if dst in self._immutable_descendants.get(src, set()):
-            return self._WEIGHT_FREE
+            return self._TIER_FREE
 
-        # Forbidden: non-modifiable containers cannot be sources
-        if src not in self.modifiable_containers:
-            return self._WEIGHT_FORBIDDEN
-
-        # Forbidden: would create cycle with immutable constraints
-        if src in self._immutable_descendants.get(dst, set()):
-            return self._WEIGHT_FORBIDDEN
+        if src not in self.modifiable_containers or src in self._immutable_descendants.get(dst, set()):
+            return self._TIER_FORBIDDEN
 
         src_views = self.views_by_container.get(src, set())
         dst_views = self.views_by_container.get(dst, set())
 
-        # Shared views bonus: prefer edges connecting containers used together in many views
+        # Sub-weight adjustments
         shared_bonus = min(len(src_views & dst_views) * self._BONUS_SHARED_VIEWS_PER, self._BONUS_SHARED_VIEWS_MAX)
+        view_penalty = self._PENALTY_VIEW_COUNT if len(src_views) > len(dst_views) else 0
 
-        # View count penalty: container in fewer views should be root (source)
-        # This ensures view-specific containers point to shared containers, not vice versa
-        view_penalty = self._PENALTY_VIEW_COUNT if len(src_views) > len(dst_views) else 0.0
-
-        # Deterministic tie-breaker for consistent ordering
+        # Deterministic tie-breaker
         edge_str = f"{src.space}:{src.external_id}->{dst.space}:{dst.external_id}"
         tie_breaker = sum(ord(c) for c in edge_str) / self._TIE_BREAKER_DIVISOR
 
         if dst in self.modifiable_containers:
-            return self._WEIGHT_USER_TO_USER - shared_bonus + view_penalty + tie_breaker
+            return self._TIER_USER_TO_USER - shared_bonus + view_penalty + tie_breaker
 
-        # Coverage bonus: prefer external targets with more reachable descendants
+        # External target: add coverage bonus for well-connected CDF containers
         coverage_bonus = min(
             len(self._immutable_descendants.get(dst, set())) * self._BONUS_COVERAGE_PER, self._BONUS_COVERAGE_MAX
         )
-        return self._WEIGHT_USER_TO_EXTERNAL - shared_bonus - coverage_bonus + tie_breaker
+        return self._TIER_USER_TO_EXTERNAL - shared_bonus - coverage_bonus + tie_breaker
