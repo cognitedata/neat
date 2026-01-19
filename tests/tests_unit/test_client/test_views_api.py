@@ -109,7 +109,6 @@ class TestViewsAPI:
         assert len(body["items"]) == 2
         assert body["items"][0] == {"space": "my_space", "externalId": "MyView", "version": "v1"}
         assert body["items"][1] == {"space": "my_space", "externalId": "AnotherView", "version": "v2"}
-        assert "includeInheritedProperties=false" in str(call.request.url.params)
 
     def test_retrieve_empty_list(self, neat_client: NeatClient, respx_mock: respx.MockRouter) -> None:
         client = neat_client

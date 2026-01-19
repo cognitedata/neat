@@ -1,18 +1,32 @@
-from __future__ import annotations
-
 from collections.abc import Sequence
 
-from cognite.neat._data_model.models.dms import ContainerReference, ContainerRequest, ContainerResponse, DataModelBody
-from cognite.neat._utils.http_client import ItemIDBody, ItemsRequest, ParametersRequest
-from cognite.neat._utils.useful_types import PrimitiveType
+from cognite.neat._data_model.models.dms import ContainerReference, ContainerRequest, ContainerResponse
+from cognite.neat._utils.http_client import HTTPClient, SuccessResponse
 
-from .api import NeatAPI
+from .api import Endpoint, NeatAPI
+from .config import NeatClientConfig
 from .data_classes import PagedResponse
+from .filters import ContainerFilter
 
 
 class ContainersAPI(NeatAPI):
-    ENDPOINT = "/models/containers"
-    LIST_REQUEST_LIMIT = 1000
+    def __init__(self, neat_config: NeatClientConfig, http_client: HTTPClient) -> None:
+        super().__init__(
+            neat_config,
+            http_client,
+            endpoint_map={
+                "apply": Endpoint("POST", "models/containers", item_limit=100),
+                "retrieve": Endpoint("POST", "models/containers/byids", item_limit=100),
+                "delete": Endpoint("POST", "models/containers/delete", item_limit=100),
+                "list": Endpoint("GET", "models/containers", item_limit=1000),
+            },
+        )
+
+    def _validate_page_response(self, response: SuccessResponse) -> PagedResponse[ContainerResponse]:
+        return PagedResponse[ContainerResponse].model_validate_json(response.body)
+
+    def _validate_id_response(self, response: SuccessResponse) -> list[ContainerReference]:
+        return PagedResponse[ContainerReference].model_validate_json(response.body).items
 
     def apply(self, items: Sequence[ContainerRequest]) -> list[ContainerResponse]:
         """Apply (create or update) containers in CDF.
@@ -22,25 +36,9 @@ class ContainersAPI(NeatAPI):
         Returns:
             List of ContainerResponse objects.
         """
-        if not items:
-            return []
-        if len(items) > 100:
-            raise ValueError("Cannot apply more than 100 containers at once.")
-        result = self._http_client.request_with_retries(
-            ItemsRequest(
-                endpoint_url=self._config.create_api_url(self.ENDPOINT),
-                method="POST",
-                body=DataModelBody(items=items),
-            )
-        )
-        result.raise_for_status()
-        result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.body)
-        return result.items
+        return self._request_item_response(items, "apply")
 
-    def retrieve(
-        self,
-        items: list[ContainerReference],
-    ) -> list[ContainerResponse]:
+    def retrieve(self, items: list[ContainerReference]) -> list[ContainerResponse]:
         """Retrieve containers by their identifiers.
 
         Args:
@@ -49,21 +47,7 @@ class ContainersAPI(NeatAPI):
         Returns:
             List of ContainerResponse objects.
         """
-        if not items:
-            return []
-        if len(items) > 1000:
-            raise ValueError("Cannot retrieve more than 1000 containers at once.")
-
-        result = self._http_client.request_with_retries(
-            ItemsRequest(
-                endpoint_url=self._config.create_api_url(f"{self.ENDPOINT}/byids"),
-                method="POST",
-                body=ItemIDBody(items=items),
-            )
-        )
-        result.raise_for_status()
-        result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.body)
-        return result.items
+        return self._request_item_response(items, "retrieve")
 
     def delete(self, items: list[ContainerReference]) -> list[ContainerReference]:
         """Delete containers by their identifiers.
@@ -74,27 +58,10 @@ class ContainersAPI(NeatAPI):
         Returns:
             List of ContainerReference objects representing the deleted containers.
         """
-        if not items:
-            return []
-        if len(items) > 100:
-            raise ValueError("Cannot delete more than 100 containers at once.")
-
-        result = self._http_client.request_with_retries(
-            ItemsRequest(
-                endpoint_url=self._config.create_api_url(f"{self.ENDPOINT}/delete"),
-                method="POST",
-                body=ItemIDBody(items=items),
-            )
-        )
-        result.raise_for_status()
-        result = PagedResponse[ContainerReference].model_validate_json(result.success_response.body)
-        return result.items
+        return self._request_id_response(items, "delete")
 
     def list(
-        self,
-        space: str | None = None,
-        include_global: bool = False,
-        limit: int | None = 10,
+        self, space: str | None = None, include_global: bool = False, limit: int | None = 10
     ) -> list[ContainerResponse]:
         """List containers in CDF Project.
 
@@ -106,33 +73,5 @@ class ContainersAPI(NeatAPI):
         Returns:
             List of ContainerResponse objects.
         """
-        if limit is not None and limit < 0:
-            raise ValueError("Limit must be non-negative.")
-        elif limit is not None and limit == 0:
-            return []
-        parameters: dict[str, PrimitiveType] = {"includeGlobal": include_global}
-        if space is not None:
-            parameters["space"] = space
-        cursor: str | None = None
-        container_responses: list[ContainerResponse] = []
-        while True:
-            if cursor is not None:
-                parameters["cursor"] = cursor
-            if limit is None:
-                parameters["limit"] = self.LIST_REQUEST_LIMIT
-            else:
-                parameters["limit"] = min(self.LIST_REQUEST_LIMIT, limit - len(container_responses))
-            result = self._http_client.request_with_retries(
-                ParametersRequest(
-                    endpoint_url=self._config.create_api_url(self.ENDPOINT),
-                    method="GET",
-                    parameters=parameters,
-                )
-            )
-            result.raise_for_status()
-            result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.body)
-            container_responses.extend(result.items)
-            cursor = result.next_cursor
-            if cursor is None or (limit is not None and len(container_responses) >= limit):
-                break
-        return container_responses
+        filter = ContainerFilter(space=space, include_global=include_global)
+        return self._list(limit=limit, params=filter.dump())

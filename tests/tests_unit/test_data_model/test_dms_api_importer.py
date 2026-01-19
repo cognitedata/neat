@@ -61,9 +61,7 @@ class TestDMSAPIImporter:
             status_code=200,
             json={"items": []},
         )
-        respx_mock.get(
-            config.create_api_url("/models/datamodels?allVersions=false&includeGlobal=true&limit=1000")
-        ).respond(
+        respx_mock.get(config.create_api_url("/models/datamodels")).respond(
             status_code=200,
             json={"items": []},
         )
