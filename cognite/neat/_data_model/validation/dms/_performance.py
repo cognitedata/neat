@@ -135,8 +135,8 @@ class SuboptimalRequiresConstraint(DataModelValidator):
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"Container '{src!s}' has a requires constraint to '{dst!s}' that is not part of "
-                            f"any view's optimal structure. Consider removing this constraint."
+                            f"View '{view_ref!s}' is mapping to container '{src!s}' that has a requires constraint to "
+                            f"'{dst!s}' that is not part of any view's optimal structure. Consider removing this constraint."
                         ),
                         fix="Remove the unnecessary requires constraint",
                         code=self.code,
@@ -205,11 +205,10 @@ class RequiresConstraintIngestionDependency(DataModelValidator):
                 # Only include if this creates cross-view dependencies
                 # (other views use src AND current view is not a superset)
                 if other_views_with_src and view_ref not in superset_views:
-                    local_views = self.validation_resources.local.views
-                    local_superset_views = {v for v in superset_views if v in local_views}
+                    superset_views = {v for v in superset_views if v in self.validation_resources.merged.views}
 
-                    if local_superset_views:
-                        superset_example = min(local_superset_views, key=str)
+                    if superset_views:
+                        superset_example = min(superset_views, key=str)
                     elif superset_views:
                         superset_example = min(superset_views, key=str)
                     else:

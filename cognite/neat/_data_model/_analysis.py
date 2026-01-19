@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 import math
 from collections import defaultdict
 from collections.abc import Iterable
@@ -531,21 +532,14 @@ class ValidationResources:
         """Containers whose requires constraints can be modified in this session.
 
         A container is modifiable if:
-        - It's in the LOCAL schema
-        - It's in the SAME SPACE as the data model (deployer skips other spaces)
+        - It's in the currently loaded data model
         - It's NOT in a CDF built-in space (CDM, IDM, etc.)
 
         Non-modifiable containers include:
         - CDF built-in containers (CDM, IDM) - managed by Cognite
-        - User containers in different spaces - deployer skips them
-        - User containers in CDF but not local - can't modify in this deployment
+        - User containers in different data models - deployer skips them
         """
-        model_space = self.merged_data_model.space
-        return {
-            container_ref
-            for container_ref in self.local.containers
-            if container_ref.space == model_space and container_ref.space not in COGNITE_SPACES
-        }
+        return {container_ref for container_ref in self.merged.containers if container_ref.space not in COGNITE_SPACES}
 
     @cached_property
     def immutable_requires_constraint_graph(self) -> nx.DiGraph:
@@ -641,16 +635,6 @@ class ValidationResources:
         graph.add_edges_from(base_graph.edges())
         return self.forms_directed_path(containers, graph)
 
-    def edge_is_used_in_external_views(self, src: ContainerReference, dst: ContainerReference) -> bool:
-        """Check if an edge (both containers together) is used by any external view."""
-        src_views = self.views_by_container.get(src, set())
-        dst_views = self.views_by_container.get(dst, set())
-        # Views containing both containers
-        shared_views = src_views & dst_views
-        # External views containing both
-        external_shared = shared_views - set(self.merged.views.keys())
-        return len(external_shared) > 0
-
     @cached_property
     def requires_mst(self) -> set[frozenset[ContainerReference]]:
         """Compute global MST for container requires constraints.
@@ -717,8 +701,8 @@ class ValidationResources:
             if len(in_mst) < 2:
                 continue
 
-            # Single BFS from first container, trace paths to others (O(n) vs O(n²))
-            pred = dict(nx.bfs_predecessors(mst_graph, in_mst[0]))
+            # Single BFS from first container, trace paths to others
+            pred = dict[Incomplete, Incomplete](nx.bfs_predecessors(mst_graph, in_mst[0]))
             view_edges: set[frozenset[ContainerReference]] = set()
             for target in in_mst[1:]:
                 node = target
@@ -833,8 +817,8 @@ class ValidationResources:
     ]:
         """Get requires constraint changes for a view."""
         containers = self.containers_by_view.get(view, set())
-        modifiable_in_view = {c for c in containers if c in self.modifiable_containers}
-        if not modifiable_in_view:
+        modifiable_containers_in_view = {c for c in containers if c in self.modifiable_containers}
+        if not modifiable_containers_in_view:
             return ([], [])
 
         # Get oriented edges for this view's Steiner tree
@@ -843,28 +827,24 @@ class ValidationResources:
             (src, dst) for src, dst in self.oriented_requires_mst if frozenset({src, dst}) in steiner_edges
         }
 
-        # Get edges from LOCAL schema only
-        # Recommendations are about what LOCAL should look like, not diff vs CDF
-        local_edges: set[tuple[ContainerReference, ContainerReference]] = set()
-        for src in modifiable_in_view:
-            local_container = self.local.containers.get(src)
-            if not local_container or not local_container.constraints:
-                continue
-            for constraint in local_container.constraints.values():
-                if isinstance(constraint, RequiresConstraintDefinition):
-                    local_edges.add((src, constraint.require))
+        # Current requires edges from modifiable containers in this view
+        current_edges = {
+            (src, dst) for src, dst in self.requires_constraint_graph.edges() if src in modifiable_containers_in_view
+        }
 
-        # To add: oriented Steiner edges not in local (includes bridge containers outside view)
-        to_add = {(src, dst) for src, dst in oriented_edges - local_edges if src in self.modifiable_containers}
+        # To add: oriented Steiner edges (includes bridge containers outside view)
+        to_add = {(src, dst) for src, dst in oriented_edges - current_edges if src in modifiable_containers_in_view}
 
         to_remove: set[tuple[ContainerReference, ContainerReference]] = set()
-        for src, dst in local_edges:
-            # Don't recommend removal if this specific edge might serve external views
-            if self.edge_is_used_in_external_views(src, dst):
-                continue
-            edge_undirected = frozenset({src, dst})
-            # Remove if edge not in MST, or if it's in MST but wrong direction
-            if edge_undirected not in self.requires_mst or (src, dst) not in oriented_edges:
+        for src, dst in current_edges:
+            edge_undirected = frozenset[ContainerReference]({src, dst})
+            mapped_by_external_views = self.find_views_mapping_to_containers([src, dst]) - set(self.merged.views.keys())
+
+            # Edge is in MST but opposite direction → always remove (will be re-added flipped)
+            if edge_undirected in self.requires_mst and (src, dst) not in oriented_edges:
+                to_remove.add((src, dst))
+            # Edge not in MST → remove unless it serves external views
+            elif not mapped_by_external_views:
                 to_remove.add((src, dst))
 
         # Check if the view would be solvable after applying ALL global recommendations

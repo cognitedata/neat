@@ -862,20 +862,6 @@ class TestValidationResourcesRequiresConstraints:
             "to_remove should not include CDF-only constraints"
         )
 
-    def test_edge_is_used_in_external_views(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that edge_is_used_in_external_views correctly identifies edges used by CDF-only views."""
-        resources = scenarios["requires-constraints"]
-
-        # Level01_PumpEquipmentContainer is used by CdfOnlyViewUsingLocalContainer in CDF
-        pump = ContainerReference(space="my_space", external_id="Level01_PumpEquipmentContainer")
-        shared_tag = ContainerReference(space="my_space", external_id="Level02_TagWithWrongRequiresContainer")
-
-        # Edge between pump and shared_tag: check if they appear together in external views
-        # CdfOnlyViewUsingLocalContainer contains pump but NOT shared_tag, so this edge is NOT external
-        assert not resources.edge_is_used_in_external_views(pump, shared_tag), (
-            "Edge pump->shared_tag should NOT be in external views (they don't appear together in any external view)"
-        )
-
     def test_requires_recommendations_baseline(
         self, scenarios: dict[str, ValidationResources], data_regression: DataRegressionFixture
     ) -> None:
