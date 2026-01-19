@@ -687,8 +687,9 @@ class ValidationResources:
                 continue
 
             # Steiner tree on a tree: BFS from any terminal, trace paths to others
+            # Use min for deterministic starting point
             predecessors: dict[ContainerReference, ContainerReference] = dict(
-                nx.bfs_predecessors(self._requires_mst_graph, next(iter(containers_in_mst)))
+                nx.bfs_predecessors(self._requires_mst_graph, min(containers_in_mst, key=str))
             )
             for target in containers_in_mst:
                 node = target
@@ -733,9 +734,12 @@ class ValidationResources:
         """Orient MST edges by voting across views.
 
         Each view votes for edge orientations based on BFS from its most view-specific
-        container (root). Views with only 1 modifiable container get 2x vote weight since
-        that container MUST be root (no alternative). Tie-breakers: existing constraint,
-        then preferred_direction from weight function.
+        container (root). Tie-breaker: preferred_direction from weight function.
+
+        Special case handling:
+        Views with only 1 modifiable container, these have NO CHOICE - the single
+        modifiable container MUST be root to reach immutable containers. Using 'inf'
+        forces this direction regardless of other votes (a hard constraint).
         """
         edge_votes: dict[frozenset[ContainerReference], dict[tuple[ContainerReference, ContainerReference], int]] = (
             defaultdict(lambda: defaultdict(int))
@@ -747,10 +751,9 @@ class ValidationResources:
             if not view_specific_container or not steiner_edges:
                 continue
 
-            # Views with only 1 modifiable container get 2x weight - they have NO choice
-            # about which container is view_specific_container, so their vote is a hard constraint
             modifiable_in_view = containers.intersection(self.modifiable_containers)
-            vote_weight = 2 if len(modifiable_in_view) == 1 else 1
+            # inf = forced (single-modifiable view has no choice about root)
+            vote_weight = float("inf") if len(modifiable_in_view) == 1 else 1
 
             # BFS on Steiner subgraph: parent→child gives the direction this view wants
             steiner_nodes = {node for edge in steiner_edges for node in edge}
@@ -763,12 +766,14 @@ class ValidationResources:
         oriented: dict[frozenset[ContainerReference], tuple[ContainerReference, ContainerReference]] = {}
 
         for c1, c2 in self._requires_mst_graph.edges():
+            edge_key = frozenset({c1, c2})
+
             # Skip immutable-to-immutable edges
             if c1 not in self.modifiable_containers and c2 not in self.modifiable_containers:
                 continue
 
-            # Pick direction: most votes wins, preferred_direction breaks ties
-            votes = edge_votes.get(frozenset({c1, c2}), {})
+            # Most votes wins, preferred_direction breaks ties
+            votes = edge_votes.get(edge_key, {})
             c1_votes = votes.get((c1, c2), 0)
             c2_votes = votes.get((c2, c1), 0)
 
@@ -779,7 +784,7 @@ class ValidationResources:
             else:
                 direction = self._requires_mst_graph[c1][c2].get("preferred_direction", (c1, c2))
 
-            oriented[frozenset({c1, c2})] = direction
+            oriented[edge_key] = direction
 
         return oriented
 
