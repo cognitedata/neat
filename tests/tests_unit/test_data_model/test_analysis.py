@@ -781,9 +781,9 @@ class TestValidationResourcesRequiresConstraints:
             ContainerReference(space="my_space", external_id="DisconnectedGroupBContainer2"),
         }
 
-        mst_edges = {frozenset(e) for e in resources._requires_mst_graph.edges()}
-        for edge in mst_edges:
-            assert not (edge & group_a and edge & group_b), f"Cross-group edge was formed: {edge}"
+        for edge in resources.oriented_mst_edges:
+            edge_set = set(edge)
+            assert not (edge_set & group_a and edge_set & group_b), f"Cross-group edge was formed: {edge}"
 
     def test_to_remove_only_contains_non_mst_or_wrongly_oriented_edges(
         self, scenarios: dict[str, ValidationResources]
@@ -798,11 +798,10 @@ class TestValidationResourcesRequiresConstraints:
 
             _, to_remove = resources.get_requires_changes_for_view(view_ref)
 
-            mst_edges = {frozenset(e) for e in resources._requires_mst_graph.edges()}
             for src, dst in to_remove:
-                edge_undirected = frozenset({src, dst})
-                is_in_mst = edge_undirected in mst_edges
-                has_correct_orientation = resources.oriented_mst_edges.get(edge_undirected) == (src, dst)
+                oriented = resources.oriented_mst_edges
+                is_in_mst = (src, dst) in oriented or (dst, src) in oriented
+                has_correct_orientation = (src, dst) in oriented
 
                 # Edge should be removed if it's either:
                 # - Not in MST at all, OR
