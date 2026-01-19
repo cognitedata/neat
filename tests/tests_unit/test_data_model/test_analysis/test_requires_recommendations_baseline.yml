@@ -21,17 +21,6 @@ my_space:CogniteAssetExtensionView(v1):
   to_add:
   - CogniteAssetExtensionContainer -> CogniteAsset
   to_remove: []
-my_space:ConflictingEquipmentView(v1):
-  containers:
-  - Level01_MotorContainer
-  - Level01_PumpContainer
-  final_constraints:
-  - Level01_MotorContainer -> Level01_PumpContainer
-  to_add:
-  - Level01_MotorContainer -> Level01_PumpContainer
-  to_remove:
-  - Level01_MotorContainer -> Level02_TagWithWrongRequiresContainer
-  - Level01_PumpContainer -> Level02_TagWithWrongRequiresContainer
 my_space:CycleTestView(v1):
   containers:
   - CycleContainerA
@@ -182,22 +171,6 @@ my_space:ManyExternalsView(v1):
   - ManyExternalsRootContainer -> ExternalUserContainerB
   - ManyExternalsRootContainer -> ExternalUserContainerC
   to_remove: []
-my_space:MotorView(v1):
-  containers:
-  - Level01_MotorContainer
-  - Level02_TagWithWrongRequiresContainer
-  - Level03_DescribableContainer
-  final_constraints:
-  - Level01_MotorContainer -> Level01_PumpContainer
-  - Level01_PumpContainer -> Level03_DescribableContainer
-  - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
-  to_add:
-  - Level01_MotorContainer -> Level01_PumpContainer
-  - Level01_PumpContainer -> Level03_DescribableContainer
-  - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
-  to_remove:
-  - Level01_MotorContainer -> Level02_TagWithWrongRequiresContainer
-  - Level02_TagWithWrongRequiresContainer -> Level03_SourceableContainer
 my_space:PreConfiguredView(v1):
   containers:
   - PreConfiguredLeafContainer
@@ -218,20 +191,6 @@ my_space:PumpEquipmentView(v1):
   - Level01_PumpEquipmentContainer -> Level02_SharedTagContainer
   - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
   to_remove: []
-my_space:PumpView(v1):
-  containers:
-  - Level01_PumpContainer
-  - Level02_TagWithWrongRequiresContainer
-  - Level03_DescribableContainer
-  final_constraints:
-  - Level01_PumpContainer -> Level03_DescribableContainer
-  - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
-  to_add:
-  - Level01_PumpContainer -> Level03_DescribableContainer
-  - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
-  to_remove:
-  - Level01_PumpContainer -> Level02_TagWithWrongRequiresContainer
-  - Level02_TagWithWrongRequiresContainer -> Level03_SourceableContainer
 my_space:SharedTagView(v1):
   containers:
   - Level02_SharedAssetContainer

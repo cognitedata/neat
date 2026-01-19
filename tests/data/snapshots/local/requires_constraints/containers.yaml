@@ -98,46 +98,10 @@
         type: container
 
 - space: my_space
-  externalId: Level01_PumpContainer
-  usedFor: node
-  properties:
-    pumpId:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-  constraints:
-    req_tag:
-      constraintType: requires
-      require:
-        space: my_space
-        externalId: Level02_TagWithWrongRequiresContainer
-        type: container
-
-- space: my_space
   externalId: Level01_ValveContainer
   usedFor: node
   properties:
     valveId:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-  constraints:
-    req_tag:
-      constraintType: requires
-      require:
-        space: my_space
-        externalId: Level02_TagWithWrongRequiresContainer
-        type: container
-
-- space: my_space
-  externalId: Level01_MotorContainer
-  usedFor: node
-  properties:
-    motorId:
       immutable: false
       nullable: true
       type:

@@ -1,7 +1,7 @@
 import math
 from collections import defaultdict
 from itertools import chain, combinations
-from typing import Literal, TypeAlias, TypeVar
+from typing import Iterable, Literal, TypeAlias, TypeVar
 
 import networkx as nx
 from pyparsing import cached_property
@@ -630,8 +630,7 @@ class ValidationResources:
 
     def _is_solvable_with_edges(
         self,
-        new_edges: set[tuple[ContainerReference, ContainerReference]]
-        | list[tuple[ContainerReference, ContainerReference]],
+        new_edges: Iterable[tuple[ContainerReference, ContainerReference]],
         containers: set[ContainerReference],
         base_graph: nx.DiGraph,
     ) -> bool:

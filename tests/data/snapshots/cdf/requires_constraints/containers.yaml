@@ -1,12 +1,12 @@
 # Test: Container exists in both local and CDF with DIFFERENT constraints
-# Local has: PumpContainer → TagWithWrongRequiresContainer
-# CDF has: PumpContainer → CogniteDescribable (different!)
+# Local ValveContainer has: ValveContainer → TagWithWrongRequiresContainer
+# CDF ValveContainer has: ValveContainer → CogniteDescribable (different!)
 # Recommendations should be based on LOCAL, not merged
 - space: my_space
-  externalId: Level01_PumpContainer
+  externalId: Level01_ValveContainer
   usedFor: node
   properties:
-    pumpId:
+    valveId:
       immutable: false
       nullable: true
       type:

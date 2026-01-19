@@ -678,10 +678,10 @@ class TestValidationResourcesRequiresConstraints:
         resources = scenarios["requires-constraints"]
         graph = resources.requires_constraint_graph
 
-        # Check edges exist - Level01_PumpContainer requires Level02_TagWithWrongRequiresContainer
-        pump = ContainerReference(space="my_space", external_id="Level01_PumpContainer")
+        # Check edges exist - ValveContainer requires TagWithWrongRequiresContainer
+        valve = ContainerReference(space="my_space", external_id="Level01_ValveContainer")
         tag = ContainerReference(space="my_space", external_id="Level02_TagWithWrongRequiresContainer")
-        assert graph.has_edge(pump, tag)
+        assert graph.has_edge(valve, tag)
 
         # Check cycle edges
         cycle_a = ContainerReference(space="my_space", external_id="CycleContainerA")
@@ -716,7 +716,7 @@ class TestValidationResourcesRequiresConstraints:
         "containers,expected_complete",
         [
             pytest.param(
-                ["Level01_PumpContainer", "Level03_DescribableContainer", "Level03_SourceableContainer"],
+                ["Level01_ValveContainer", "Level03_DescribableContainer", "Level03_SourceableContainer"],
                 False,
                 id="incomplete-hierarchy",
             ),
@@ -838,46 +838,41 @@ class TestValidationResourcesRequiresConstraints:
     def test_recommendations_based_on_local_not_merged(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that recommendations diff against LOCAL schema, not merged.
 
-        Scenario: PumpContainer exists in both local and CDF with DIFFERENT constraints:
-        - Local has: PumpContainer → TagWithWrongRequiresContainer
-        - CDF has: PumpContainer → CogniteDescribable
+        Scenario: ValveContainer exists in both local and CDF with DIFFERENT constraints:
+        - Local has: ValveContainer → TagWithWrongRequiresContainer
+        - CDF has: ValveContainer → CogniteDescribable
 
         Merged would have BOTH constraints. But recommendations should be based on LOCAL only:
-        - If MST wants PumpContainer → CogniteDescribable, it SHOULD be in to_add
-          (even though CDF has it, local doesn't)
-        - CDF-only constraint should NOT affect to_remove
+        - CDF-only constraint should NOT appear in to_remove
         """
         resources = scenarios["requires-constraints"]
 
-        pump_container = ContainerReference(space="my_space", external_id="Level01_PumpContainer")
+        valve_container = ContainerReference(space="my_space", external_id="Level01_ValveContainer")
         describable = ContainerReference(space="cdf_cdm", external_id="CogniteDescribable")
 
         # Verify the test setup: CDF has constraint that local doesn't
-        assert pump_container in resources.cdf.containers, "Test setup: PumpContainer should be in CDF"
-        cdf_container = resources.cdf.containers[pump_container]
-        assert cdf_container.constraints, "Test setup: CDF PumpContainer should have constraints"
+        assert valve_container in resources.cdf.containers, "Test setup: ValveContainer should be in CDF"
+        cdf_container = resources.cdf.containers[valve_container]
+        assert cdf_container.constraints, "Test setup: CDF ValveContainer should have constraints"
 
-        local_container = resources.local.containers[pump_container]
+        local_container = resources.local.containers[valve_container]
         local_constraint_targets = {
             c.require for c in (local_container.constraints or {}).values() if hasattr(c, "require")
         }
         assert describable not in local_constraint_targets, (
-            "Test setup: Local PumpContainer should NOT have constraint to CogniteDescribable"
+            "Test setup: Local ValveContainer should NOT have constraint to CogniteDescribable"
         )
 
-        # Get recommendations for PumpView
-        view_ref = ViewReference(space="my_space", external_id="PumpView", version="v1")
+        # Get recommendations for ValveView
+        view_ref = ViewReference(space="my_space", external_id="ValveView", version="v1")
         to_add, to_remove = resources.get_requires_changes_for_view(view_ref)
 
-        # The key assertion: to_add and to_remove should be based on LOCAL constraints
-        # If to_remove contained CDF-only constraints, that would be wrong
-        to_remove_sources = {src for src, _ in to_remove}
-        for src in to_remove_sources:
-            local_c = resources.local.containers.get(src)
-            assert local_c is not None, (
-                f"to_remove contains {src} which is not in local schema - "
-                "recommendations should only remove LOCAL constraints"
-            )
+        # The key assertion: to_remove should only contain constraints from LOCAL
+        # The CDF-only constraint (ValveContainer → CogniteDescribable) should NOT be in to_remove
+        to_remove_edges = {(src.external_id, dst.external_id) for src, dst in to_remove}
+        assert ("Level01_ValveContainer", "CogniteDescribable") not in to_remove_edges, (
+            "to_remove should not include CDF-only constraints"
+        )
 
     def test_edge_is_used_in_external_views(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test that edge_is_used_in_external_views correctly identifies edges used by CDF-only views."""

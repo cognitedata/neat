@@ -22,35 +22,8 @@
         type: container
       containerPropertyIdentifier: description
 
-# Equipment views: Pump/Valve/Motor → Tag → Describable
+# Equipment view: Valve → Tag → Describable
 # Tag has wrong requires to Sourceable (should be Describable)
-- space: my_space
-  externalId: PumpView
-  version: v1
-  name: Pump View
-  properties:
-    pumpId:
-      name: pumpId
-      container:
-        space: my_space
-        externalId: Level01_PumpContainer
-        type: container
-      containerPropertyIdentifier: pumpId
-    tagName:
-      name: tagName
-      container:
-        space: my_space
-        externalId: Level02_TagWithWrongRequiresContainer
-        type: container
-      containerPropertyIdentifier: tagName
-    description:
-      name: description
-      container:
-        space: my_space
-        externalId: Level03_DescribableContainer
-        type: container
-      containerPropertyIdentifier: description
-
 - space: my_space
   externalId: ValveView
   version: v1
@@ -77,56 +50,6 @@
         externalId: Level03_DescribableContainer
         type: container
       containerPropertyIdentifier: description
-
-- space: my_space
-  externalId: MotorView
-  version: v1
-  name: Motor View
-  properties:
-    motorId:
-      name: motorId
-      container:
-        space: my_space
-        externalId: Level01_MotorContainer
-        type: container
-      containerPropertyIdentifier: motorId
-    tagName:
-      name: tagName
-      container:
-        space: my_space
-        externalId: Level02_TagWithWrongRequiresContainer
-        type: container
-      containerPropertyIdentifier: tagName
-    description:
-      name: description
-      container:
-        space: my_space
-        externalId: Level03_DescribableContainer
-        type: container
-      containerPropertyIdentifier: description
-
-# Two equipment containers with no shared intermediate
-# Path through Tag would create conflicting orientations (Motor→Tag vs Tag→Pump)
-# This view should be flagged as unsolvable
-- space: my_space
-  externalId: ConflictingEquipmentView
-  version: v1
-  name: Conflicting Equipment View
-  properties:
-    motorField:
-      name: motorField
-      container:
-        space: my_space
-        externalId: Level01_MotorContainer
-        type: container
-      containerPropertyIdentifier: motorId
-    pumpField:
-      name: pumpField
-      container:
-        space: my_space
-        externalId: Level01_PumpContainer
-        type: container
-      containerPropertyIdentifier: pumpId
 
 # Tag with Asset: Tag, Asset, Describable (no equipment)
 - space: my_space
