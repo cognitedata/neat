@@ -1,7 +1,8 @@
 import math
 from collections import defaultdict
+from collections.abc import Iterable
 from itertools import chain, combinations
-from typing import Iterable, Literal, TypeAlias, TypeVar
+from typing import Literal, TypeAlias, TypeVar
 
 import networkx as nx
 from pyparsing import cached_property
