@@ -39,7 +39,6 @@ from ._limits import (
 from ._orchestrator import DmsDataModelValidation
 from ._performance import (
     MissingRequiresConstraint,
-    RequiresConstraintIngestionDependency,
     SuboptimalRequiresConstraint,
     UnresolvableQueryPerformance,
 )
@@ -63,7 +62,6 @@ __all__ = [
     "MissingRequiresConstraint",
     "RequiredContainerDoesNotExist",
     "RequiresConstraintCycle",
-    "RequiresConstraintIngestionDependency",
     "ReverseConnectionContainerMissing",
     "ReverseConnectionContainerPropertyMissing",
     "ReverseConnectionContainerPropertyWrongType",

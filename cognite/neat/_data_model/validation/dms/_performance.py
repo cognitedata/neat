@@ -1,14 +1,10 @@
 """Validators for checking performance-related aspects of the data model.
 
 This module contains validators that check for query performance issues related to
-container requires constraints. The validators are split into two categories:
+container requires constraints:
 
-**Auto-fixable** (safe to auto-apply):
-- MissingRequiresConstraint: Add constraints with no cross-view side effects
+- MissingRequiresConstraint: Add constraints to optimize query performance
 - SuboptimalRequiresConstraint: Remove constraints not in the optimal structure
-
-**NOT auto-fixable** (require manual intervention):
-- RequiresConstraintIngestionDependency: Add constraints that affect other views' ingestion
 - UnresolvableQueryPerformance: Structural issues that can't be solved with requires
 """
 
@@ -19,32 +15,22 @@ from cognite.neat._issues import Recommendation
 BASE_CODE = "NEAT-DMS-PERFORMANCE"
 
 
-# =============================================================================
-# AUTO-FIXABLE VALIDATORS
-# =============================================================================
-
-
 class MissingRequiresConstraint(DataModelValidator):
     """
-    Recommends adding requires constraints that can be safely auto-applied.
+    Recommends adding requires constraints to optimize query performance.
 
     ## What it does
-    Identifies views where adding a requires constraint would improve query performance
-    WITHOUT creating ingestion order dependencies for other views. These are "safe"
-    recommendations that can be automatically applied.
-
-    A recommendation is considered safe when:
-    - The source container only appears in views that also contain the target, OR
-    - The current view IS the superset view (maps to both containers)
+    Identifies views where adding a requires constraint would improve query performance.
+    The recommendation message indicates whether the change is "safe" (no cross-view
+    dependencies) or requires attention to ingestion order.
 
     ## Why is this important?
-    These constraints can be added without affecting how other views are populated.
-    The recommendation is purely beneficial with no side effects.
+    Views without proper requires constraints may have poor query performance.
+    Adding requires constraints creates a connected hierarchy that enables efficient queries.
 
     ## Example
-    View `Tag` maps to containers `Tag` and `CogniteAsset`.
-    Adding `Tag requires CogniteAsset` improves query performance and doesn't
-    affect any other views since Tag view itself is the ingestion point.
+    View `Valve` needs `Tag → CogniteAsset` for optimization. The message will indicate
+    if other views using `Tag` will also be affected by this change.
     """
 
     code = f"{BASE_CODE}-001"
@@ -74,19 +60,35 @@ class MissingRequiresConstraint(DataModelValidator):
                 other_views_with_src = src_views - {view_ref}
                 superset_views = self.validation_resources.find_views_mapping_to_containers([src, dst])
 
-                # Only include if this is a "safe" recommendation (no cross-view dependencies)
-                # Safe means: no other views use src, OR current view is a superset view
-                if not other_views_with_src or view_ref in superset_views:
-                    recommendations.append(
-                        Recommendation(
-                            message=(
-                                f"View '{view_ref!s}' is not optimized for querying. "
-                                f"Add a 'requires' constraint from '{src!s}' to '{dst!s}'."
-                            ),
-                            fix="Add requires constraint between the containers",
-                            code=self.code,
-                        )
+                # Check if this is a "safe" recommendation (no cross-view dependencies)
+                is_safe = not other_views_with_src or view_ref in superset_views
+
+                if is_safe:
+                    message = (
+                        f"View '{view_ref!s}' is not optimized for querying. "
+                        f"Add a 'requires' constraint from '{src!s}' to '{dst!s}'."
                     )
+                else:
+                    # Find a superset view to suggest for ingestion
+                    # Prefer views matching the source container name (e.g., Tag view for Tag container)
+                    superset_views = {v for v in superset_views if v in self.validation_resources.merged.views}
+                    matching_view = next((v for v in superset_views if v.external_id == src.external_id), None)
+                    superset_example = matching_view or (min(superset_views, key=str) if superset_views else view_ref)
+
+                    message = (
+                        f"View '{view_ref!s}' is not optimized for querying. "
+                        f"Add a 'requires' constraint from '{src!s}' to '{dst!s}'. "
+                        f"Note: this will require '{dst!s}' to be populated before '{src!s}', "
+                        f"or ingest through a view that maps to both (e.g., '{superset_example!s}')."
+                    )
+
+                recommendations.append(
+                    Recommendation(
+                        message=message,
+                        fix="Add requires constraint between the containers",
+                        code=self.code,
+                    )
+                )
 
         return recommendations
 
@@ -146,90 +148,6 @@ class SuboptimalRequiresConstraint(DataModelValidator):
         return recommendations
 
 
-# =============================================================================
-# NOT AUTO-FIXABLE VALIDATORS
-# =============================================================================
-
-
-class RequiresConstraintIngestionDependency(DataModelValidator):
-    """
-    Identifies requires constraints that would create ingestion dependencies for other views.
-
-    ## What it does
-    When a requires constraint is added, any view using the source container will need
-    the target container populated first. This validator identifies cases where adding
-    the recommended constraint would affect OTHER views' ingestion order.
-
-    These recommendations are NOT auto-fixable because the user must:
-    1. Understand which views will be affected
-    2. Ensure their ingestion pipeline populates containers in the correct order
-    3. Or use a superset view for ingestion
-
-    ## Why is this important?
-    Blindly adding these constraints could break existing ingestion pipelines.
-    The user needs to make an informed decision.
-
-    ## Example
-    View `Valve` needs `Tag → CogniteAsset` for optimization, but `Tag` container
-    is also used by views `Compressor`, `Pump`, etc. Adding this constraint means
-    ALL those views now require `CogniteAsset` to be populated before `Tag`.
-    """
-
-    code = f"{BASE_CODE}-003"
-    issue_type = Recommendation
-    alpha = True
-
-    def run(self) -> list[Recommendation]:
-        recommendations: list[Recommendation] = []
-
-        for view_ref in self.validation_resources.merged.views:
-            containers_in_view = self.validation_resources.containers_by_view.get(view_ref, set())
-
-            if len(containers_in_view) < 2:
-                continue
-
-            user_containers = [c for c in containers_in_view if c.space not in COGNITE_SPACES]
-            if not user_containers:
-                continue
-
-            to_add, _ = self.validation_resources.get_requires_changes_for_view(view_ref)
-
-            if not to_add:
-                continue
-
-            for src, dst in to_add:
-                src_views = self.validation_resources.views_by_container.get(src, set())
-                other_views_with_src = src_views - {view_ref}
-                superset_views = self.validation_resources.find_views_mapping_to_containers([src, dst])
-
-                # Only include if this creates cross-view dependencies
-                # (other views use src AND current view is not a superset)
-                if other_views_with_src and view_ref not in superset_views:
-                    superset_views = {v for v in superset_views if v in self.validation_resources.merged.views}
-
-                    if superset_views:
-                        superset_example = min(superset_views, key=str)
-                    elif superset_views:
-                        superset_example = min(superset_views, key=str)
-                    else:
-                        superset_example = view_ref
-
-                    recommendations.append(
-                        Recommendation(
-                            message=(
-                                f"View '{view_ref!s}' is not optimized for querying. "
-                                f"Add a 'requires' constraint from '{src!s}' to '{dst!s}'. "
-                                f"Note: this will require the container '{src!s}' to be populated first, "
-                                f"or through a view that maps to both (e.g., '{superset_example!s}')."
-                            ),
-                            fix="Add requires constraint between the containers",
-                            code=self.code,
-                        )
-                    )
-
-        return recommendations
-
-
 class UnresolvableQueryPerformance(DataModelValidator):
     """
     Identifies views with query performance issues that cannot be resolved with requires.
@@ -256,7 +174,7 @@ class UnresolvableQueryPerformance(DataModelValidator):
     can reach each other. The view needs a new container or restructuring.
     """
 
-    code = f"{BASE_CODE}-004"
+    code = f"{BASE_CODE}-003"
     issue_type = Recommendation
     alpha = True
 
