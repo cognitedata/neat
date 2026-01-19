@@ -1,8 +1,6 @@
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from cognite.neat._utils.repo import get_repo_root
 
 
@@ -16,13 +14,11 @@ class TestRepoRoot:
     def test_repo_root_git_not_found(self) -> None:
         with (
             patch("subprocess.run", side_effect=FileNotFoundError("git not found")),
-            pytest.raises(RuntimeError, match="Git is not installed or not found in PATH"),
         ):
-            _ = get_repo_root()
+            assert get_repo_root() is None
 
     def test_repo_root_not_in_git_repo(self) -> None:
         with (
             patch("subprocess.run", return_value=type("CompletedProcess", (), {"stdout": b""})),
-            pytest.raises(RuntimeError),
         ):
-            _ = get_repo_root()
+            assert get_repo_root() is None

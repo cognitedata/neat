@@ -22,6 +22,9 @@ class WriteableResource(Resource, Generic[T_Resource], ABC):
         raise NotImplementedError()
 
 
+T_Response = TypeVar("T_Response", bound=WriteableResource)
+
+
 class APIResource(Generic[T_Reference], ABC):
     """Base class for all API data modeling resources."""
 
