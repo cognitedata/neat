@@ -12,7 +12,6 @@ def get_credentials(env_vars: ClientEnvironmentVariables) -> CredentialProvider:
         "client_credentials": create_client_credentials,
         "interactive": create_interactive_credentials,
         "token": create_token_credentials,
-        "infer": create_infer_credentials,
     }
     return options[env_vars.LOGIN_FLOW](env_vars)
 
@@ -59,12 +58,3 @@ def create_token_credentials(env_vars: ClientEnvironmentVariables) -> Credential
     if not env_vars.CDF_TOKEN:
         raise ValueError("CDF_TOKEN environment variable must be set for token authentication.")
     return Token(env_vars.CDF_TOKEN)
-
-
-def create_infer_credentials(env_vars: ClientEnvironmentVariables) -> CredentialProvider:
-    if env_vars.IDP_CLIENT_SECRET:
-        return create_client_credentials(env_vars)
-    elif env_vars.CDF_TOKEN:
-        return create_token_credentials(env_vars)
-    else:
-        return create_interactive_credentials(env_vars)
