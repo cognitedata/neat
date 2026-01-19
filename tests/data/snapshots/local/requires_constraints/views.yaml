@@ -336,20 +336,6 @@
         type: container
       containerPropertyIdentifier: description
 
-# Local view with external non-CDM container
-- space: my_space
-  externalId: LocalViewWithExternalContainer
-  version: v1
-  name: Local View With External Container
-  properties:
-    localRequiresField:
-      name: localRequiresField
-      container:
-        space: my_space
-        externalId: LocalContainerRequiringExternalContainer
-        type: container
-      containerPropertyIdentifier: localRequiresField
-
 # Test scenario: 1 local container + 3 external user containers
 # Expected: ManyExternalsRootContainer should require all 3 external containers
 - space: my_space

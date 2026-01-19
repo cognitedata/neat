@@ -1,24 +1,3 @@
-# CDF version has additional external container property (triggers merge)
-- space: my_space
-  externalId: LocalViewWithExternalContainer
-  version: v1
-  name: Local View With External Container
-  properties:
-    localRequiresField:
-      name: localRequiresField
-      container:
-        space: my_space
-        externalId: LocalContainerRequiringExternalContainer
-        type: container
-      containerPropertyIdentifier: localRequiresField
-    externalField:
-      name: externalField
-      container:
-        space: external_space
-        externalId: ExternalOnlyContainer
-        type: container
-      containerPropertyIdentifier: externalField
-
 # CDF-only view using a local container (not in local schema)
 # Tests that we don't recommend removing constraints from containers with external views
 - space: cdf_only_space

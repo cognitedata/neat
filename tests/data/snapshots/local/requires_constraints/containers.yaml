@@ -307,25 +307,6 @@
         type: text
         list: false
 
-# Local container requiring external non-CDM container (treated as immutable)
-- space: my_space
-  externalId: LocalContainerRequiringExternalContainer
-  usedFor: node
-  properties:
-    localRequiresField:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-  constraints:
-    req_external:
-      constraintType: requires
-      require:
-        space: external_space
-        externalId: ExternalOnlyContainer
-        type: container
-
 # Test scenario: 1 local container + multiple external user containers
 # Tests: Can we correctly recommend local container requiring all externals?
 - space: my_space

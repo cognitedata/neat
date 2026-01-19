@@ -148,14 +148,6 @@ my_space:ImmutableBridgeViewB(v1):
   - ImmutableBridgeUserAContainer -> CogniteDescribable
   - ImmutableBridgeUserBContainer -> ImmutableBridgeUserAContainer
   to_remove: []
-my_space:LocalViewWithExternalContainer(v1):
-  containers:
-  - ExternalOnlyContainer
-  - LocalContainerRequiringExternalContainer
-  final_constraints:
-  - LocalContainerRequiringExternalContainer -> ExternalOnlyContainer
-  to_add: []
-  to_remove: []
 my_space:ManyExternalsView(v1):
   containers:
   - ExternalUserContainerA

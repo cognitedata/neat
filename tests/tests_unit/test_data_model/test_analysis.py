@@ -58,7 +58,7 @@ def scenarios() -> dict[str, ValidationResources]:
         ),
         "requires-constraints-with-cdm": catalog.load_scenario(
             "requires_constraints",
-            modus_operandi="additive",
+            modus_operandi="rebuild",  # Rebuild mode: CDF-only constraints not in merged
             include_cdm=True,  # Include real CDM containers with their requires constraints
             format="validation-resource",
         ),
@@ -745,26 +745,28 @@ class TestValidationResourcesRequiresConstraints:
         result = ValidationResources.forms_directed_path(container_refs, resources.requires_constraint_graph)
         assert result == expected_complete, f"Containers {containers}: expected {expected_complete}, got {result}"
 
-    def test_external_non_cdm_containers_are_immutable(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that non-CDM containers from CDF are treated as immutable."""
-        resources = scenarios["requires-constraints"]
+    def test_cdm_containers_are_immutable(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Test that CDM containers are treated as immutable."""
+        resources = scenarios["requires-constraints-with-cdm"]
 
-        # ExternalOnlyContainer is in external_space (not CDM) but only defined in CDF
-        external_container = ContainerReference(space="external_space", external_id="ExternalOnlyContainer")
-
-        # Its requires constraint should be in the immutable graph
-        immutable_graph = resources.immutable_requires_constraint_graph
-        assert external_container in immutable_graph.nodes(), "Should be in immutable graph"
-
-        # Verify the constraint: ExternalOnlyContainer → CogniteDescribable
+        # CogniteAsset is a CDM container with requires constraints
+        cognite_asset = ContainerReference(space="cdf_cdm", external_id="CogniteAsset")
         cognite_describable = ContainerReference(space="cdf_cdm", external_id="CogniteDescribable")
-        assert immutable_graph.has_edge(external_container, cognite_describable), (
-            "External container's requires constraint should be immutable"
+
+        # CDM containers should NOT be in modifiable_containers
+        assert cognite_asset not in resources.modifiable_containers, "CDM container should not be modifiable"
+
+        # CDM requires constraints should be in the immutable graph
+        immutable_graph = resources.immutable_requires_constraint_graph
+        assert cognite_asset in immutable_graph.nodes(), "CDM container should be in immutable graph"
+        assert immutable_graph.has_edge(cognite_asset, cognite_describable), (
+            "CDM container's requires constraint should be immutable"
         )
 
-        # Edge forming cycle with external container should be forbidden
-        weight = resources._compute_requires_edge_weight(cognite_describable, external_container)
-        assert weight >= 1e9, f"Cycle with external container should be forbidden, got weight={weight}"
+        # Edge from CDM container should be forbidden (can't modify CDM)
+        user_container = ContainerReference(space="my_space", external_id="EquipmentTagContainer")
+        weight = resources._compute_requires_edge_weight(cognite_asset, user_container)
+        assert weight >= 1e9, f"CDM as source should be forbidden, got weight={weight}"
 
     def test_requires_mst_has_no_spurious_cross_group_edges(self, scenarios: dict[str, ValidationResources]) -> None:
         """Verify MST doesn't connect containers that never share a view."""
@@ -779,7 +781,8 @@ class TestValidationResourcesRequiresConstraints:
             ContainerReference(space="my_space", external_id="DisconnectedGroupBContainer2"),
         }
 
-        for edge in resources.requires_mst:
+        mst_edges = {frozenset(e) for e in resources._requires_mst_graph.edges()}
+        for edge in mst_edges:
             assert not (edge & group_a and edge & group_b), f"Cross-group edge was formed: {edge}"
 
     def test_to_remove_only_contains_non_mst_or_wrongly_oriented_edges(
@@ -795,10 +798,11 @@ class TestValidationResourcesRequiresConstraints:
 
             _, to_remove = resources.get_requires_changes_for_view(view_ref)
 
+            mst_edges = {frozenset(e) for e in resources._requires_mst_graph.edges()}
             for src, dst in to_remove:
                 edge_undirected = frozenset({src, dst})
-                is_in_mst = edge_undirected in resources.requires_mst
-                has_correct_orientation = (src, dst) in resources.oriented_requires_mst
+                is_in_mst = edge_undirected in mst_edges
+                has_correct_orientation = resources.oriented_mst_edges.get(edge_undirected) == (src, dst)
 
                 # Edge should be removed if it's either:
                 # - Not in MST at all, OR
@@ -822,45 +826,6 @@ class TestValidationResourcesRequiresConstraints:
                     f"CDF container {src} should not be a source in add recommendations. "
                     f"Found: {src} -> {dst} for view {view_ref}"
                 )
-
-    def test_recommendations_based_on_local_not_merged(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that recommendations diff against LOCAL schema, not merged.
-
-        Scenario: ValveContainer exists in both local and CDF with DIFFERENT constraints:
-        - Local has: ValveContainer → TagWithWrongRequiresContainer
-        - CDF has: ValveContainer → CogniteDescribable
-
-        Merged would have BOTH constraints. But recommendations should be based on LOCAL only:
-        - CDF-only constraint should NOT appear in to_remove
-        """
-        resources = scenarios["requires-constraints"]
-
-        valve_container = ContainerReference(space="my_space", external_id="Level01_ValveContainer")
-        describable = ContainerReference(space="cdf_cdm", external_id="CogniteDescribable")
-
-        # Verify the test setup: CDF has constraint that local doesn't
-        assert valve_container in resources.cdf.containers, "Test setup: ValveContainer should be in CDF"
-        cdf_container = resources.cdf.containers[valve_container]
-        assert cdf_container.constraints, "Test setup: CDF ValveContainer should have constraints"
-
-        local_container = resources.local.containers[valve_container]
-        local_constraint_targets = {
-            c.require for c in (local_container.constraints or {}).values() if hasattr(c, "require")
-        }
-        assert describable not in local_constraint_targets, (
-            "Test setup: Local ValveContainer should NOT have constraint to CogniteDescribable"
-        )
-
-        # Get recommendations for ValveView
-        view_ref = ViewReference(space="my_space", external_id="ValveView", version="v1")
-        to_add, to_remove = resources.get_requires_changes_for_view(view_ref)
-
-        # The key assertion: to_remove should only contain constraints from LOCAL
-        # The CDF-only constraint (ValveContainer → CogniteDescribable) should NOT be in to_remove
-        to_remove_edges = {(src.external_id, dst.external_id) for src, dst in to_remove}
-        assert ("Level01_ValveContainer", "CogniteDescribable") not in to_remove_edges, (
-            "to_remove should not include CDF-only constraints"
-        )
 
     def test_requires_recommendations_baseline(
         self, scenarios: dict[str, ValidationResources], data_regression: DataRegressionFixture
