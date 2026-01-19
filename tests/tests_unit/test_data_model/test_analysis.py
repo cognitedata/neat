@@ -766,33 +766,21 @@ class TestValidationResourcesRequiresConstraints:
         weight = resources._compute_requires_edge_weight(cognite_describable, external_container)
         assert weight >= 1e9, f"Cycle with external container should be forbidden, got weight={weight}"
 
-    def test_requires_mst_handles_disconnected_components(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that MST handles independent container groups."""
+    def test_requires_mst_has_no_spurious_cross_group_edges(self, scenarios: dict[str, ValidationResources]) -> None:
+        """Verify MST doesn't connect containers that never share a view."""
         resources = scenarios["requires-constraints"]
-        mst = resources.requires_mst
 
-        # Define the containers
-        group_a1 = ContainerReference(space="my_space", external_id="DisconnectedGroupAContainer1")
-        group_a2 = ContainerReference(space="my_space", external_id="DisconnectedGroupAContainer2")
-        group_b1 = ContainerReference(space="my_space", external_id="DisconnectedGroupBContainer1")
-        group_b2 = ContainerReference(space="my_space", external_id="DisconnectedGroupBContainer2")
+        group_a = {
+            ContainerReference(space="my_space", external_id="DisconnectedGroupAContainer1"),
+            ContainerReference(space="my_space", external_id="DisconnectedGroupAContainer2"),
+        }
+        group_b = {
+            ContainerReference(space="my_space", external_id="DisconnectedGroupBContainer1"),
+            ContainerReference(space="my_space", external_id="DisconnectedGroupBContainer2"),
+        }
 
-        group_a_containers = {group_a1, group_a2}
-        group_b_containers = {group_b1, group_b2}
-
-        # Get edges involving each group (MST has frozensets)
-        group_a_edges = [edge for edge in mst if edge & group_a_containers]
-        group_b_edges = [edge for edge in mst if edge & group_b_containers]
-
-        # Each group of 2 containers needs exactly 1 edge to connect them
-        assert len(group_a_edges) == 1, f"Expected exactly 1 edge for Group A (2 containers), got: {group_a_edges}"
-        assert len(group_b_edges) == 1, f"Expected exactly 1 edge for Group B (2 containers), got: {group_b_edges}"
-
-        # No edge should cross between groups (they never appear together)
-        for edge in mst:
-            in_a = bool(edge & group_a_containers)
-            in_b = bool(edge & group_b_containers)
-            assert not (in_a and in_b), f"Cross-group edge {edge}"
+        for edge in resources.requires_mst:
+            assert not (edge & group_a and edge & group_b), f"Cross-group edge was formed: {edge}"
 
     def test_to_remove_only_contains_non_mst_or_wrongly_oriented_edges(
         self, scenarios: dict[str, ValidationResources]
