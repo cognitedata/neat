@@ -275,7 +275,7 @@ class DMSAPICreator(DMSImporter):
 
                 if len(entity) != 1:
                     errors.append(
-                        ModelSyntaxError(message=f"Invalid view reference '{view}': Expected a single entity.")
+                        ModelSyntaxError(message=f"Invalid view reference '{view}': Expected a single view definition.")
                     )
                     continue
 

@@ -344,18 +344,48 @@ class TestDataModelCreation:
             space="cdf_cdm",
             external_id="SolutionModel",
             version="v1",
-            views=["cdf=cdm:CogniteAsset(version=v1)", "cdf_cdm:CogniteAsset(version=1320)"],
+            views=[
+                "cdf_cdm:CogniteAsset(ver=1320)",
+                "cdf=cdm:CogniteAsset(version=v1)",
+                "cdf_cdm:CogniteAsset(ver=1320),cdf_cdm:CogniteAsset(ver=1321)",
+                "cdf_cdm:CogniteAsset(version=1320)",
+                "1983:CogniteAsset(version=1320)",
+            ],
         )
 
         last_change = cast(Change, session._store.provenance.last_change)
 
         by_type = cast(IssueList, last_change.errors).by_type()
 
-        assert len(by_type[ModelSyntaxError]) == 1
-        assert "Invalid view reference" in by_type[ModelSyntaxError][0].message
+        expected_errors = {
+            ModelSyntaxError: {
+                "Invalid view reference '1983:CogniteAsset(version=1320)', cannot parse it!",
+                (
+                    "Invalid view reference 'cdf_cdm:CogniteAsset(ver=1320),"
+                    "cdf_cdm:CogniteAsset(ver=1321)': Expected a single view definition."
+                ),
+                "Invalid view reference 'cdf=cdm:CogniteAsset(version=v1)', cannot parse it!",
+                "Invalid view reference 'cdf_cdm:CogniteAsset(ver=1320)': Missing 'version' property.",
+            },
+            ConsistencyError: {
+                (
+                    "View 'cdf_cdm:CogniteAsset(version=1320)' not found in "
+                    "the provided CDF snapshot. Cannot create data model."
+                )
+            },
+        }
 
-        assert len(by_type[ConsistencyError]) == 1
-        assert (
-            "'cdf_cdm:CogniteAsset(version=1320)' not found in the provided CDF snapshot"
-            in by_type[ConsistencyError][0].message
-        )
+        assert set(by_type.keys()) == set(expected_errors.keys())
+
+        found = set()
+        actual = set()
+
+        for issue_type, issues in by_type.items():
+            for issue in issues:
+                actual.add(issue.message)
+                for expected_message in expected_errors[issue_type]:
+                    if expected_message in issue.message:
+                        found.add(issue.message)
+                        break
+
+        assert found == actual
