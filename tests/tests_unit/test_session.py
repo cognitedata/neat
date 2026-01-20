@@ -389,3 +389,23 @@ class TestDataModelCreation:
                         break
 
         assert found == actual
+
+    def test_successful_data_model_creation(self, new_session_with_alpha_features: NeatSession) -> None:
+        session = new_session_with_alpha_features
+
+        session.physical_data_model.create(  # type: ignore[attr-defined]
+            space="my_space",
+            external_id="MySolution",
+            version="v3",
+            views=["cdf_cdm:CogniteAsset(version=v1)"],
+        )
+
+        last_change = cast(Change, session._store.provenance.last_change)
+
+        assert len(cast(IssueList, last_change.errors)) == 0
+        assert len(session._store.physical_data_model) == 1
+
+        assert session._store.physical_data_model[0].views[0].external_id == "CogniteAsset"
+        assert session._store.physical_data_model[0].views[0].space == "my_space"
+        assert session._store.physical_data_model[0].views[0].version == "v3"
+        assert session._store.physical_data_model[0].views[0].implements is None
