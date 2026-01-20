@@ -1,17 +1,17 @@
-Recommends removing requires constraints that are not part of the optimal structure.
+Recommends removing requires constraints that are not part of the structure
+considered optimal for query performance by Neat.
 
 ## What it does
-Identifies existing requires constraints that are not part of ANY view's optimal
-MST structure. These constraints can be safely removed as they don't contribute
-to query optimization.
+Identifies existing requires constraints that are not optimal. These constraints
+can be safely removed as they don't contribute to query optimization when all other
+optimal constraints are applied.
 
 ## Why is this important?
 Unnecessary requires constraints can:
-- Create false ingestion dependencies
-- Make the data model harder to understand
-- Potentially cause issues if the constraint becomes invalid
+- Create unnecessary ingestion dependencies
+- Cause invalid requires constraint cycles if optimal constraints are applied
 
 ## Example
-Container `Pump` has `requires: Tag`, but the optimal MST determined that
-`Pump → CogniteAsset` (which transitively covers Tag) is better.
-The `Pump → Tag` constraint can be removed.
+Container `Tag` has a `requires` constraint to `Pump`, but NEAT determined that
+`Pump → Tag` is more optimal. The existing `Tag → Pump` constraint should then
+be removed when applying all optimal constraints.

@@ -84,8 +84,8 @@ container requires constraints:
 | code | name | message |
 |------|------|---------|
 | NEAT-DMS-PERFORMANCE-001 | [MissingRequiresConstraint](neat-dms-performance-001.md) | Recommends adding requires constraints to optimize query performance. |
-| NEAT-DMS-PERFORMANCE-002 | [SuboptimalRequiresConstraint](neat-dms-performance-002.md) | Recommends removing requires constraints that are not part of the optimal structure. |
-| NEAT-DMS-PERFORMANCE-003 | [UnresolvableQueryPerformance](neat-dms-performance-003.md) | Identifies views with query performance issues that cannot be resolved with requires. |
+| NEAT-DMS-PERFORMANCE-002 | [SuboptimalRequiresConstraint](neat-dms-performance-002.md) | Recommends removing requires constraints that are not part of the structure |
+| NEAT-DMS-PERFORMANCE-003 | [UnresolvableQueryPerformance](neat-dms-performance-003.md) | Identifies views with query performance issues that cannot be resolved. |
 
 ### Views (NEAT-DMS-VIEW)
 
