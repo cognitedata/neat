@@ -421,7 +421,7 @@ class ValidationResources:
         Includes views from both the merged schema and all CDF views.
         Uses expanded views to include inherited properties.
         """
-        containers_by_view: dict[ViewReference, set[ContainerReference]] = defaultdict(set)
+        containers_by_view: dict[ViewReference, set[ContainerReference]] = {}
 
         # Include all unique views from merged and CDF
         all_view_refs = set(self.merged.views.keys()) | set(self.cdf.views.keys())
@@ -432,7 +432,7 @@ class ValidationResources:
             if view is not None:
                 containers_by_view[view_ref] = view.used_containers
 
-        return dict(containers_by_view)
+        return containers_by_view
 
     def find_views_mapping_to_containers(self, containers: list[ContainerReference]) -> set[ViewReference]:
         """Find views that map to all specified containers.
@@ -643,11 +643,10 @@ class ValidationResources:
                 must_connect.add(edge)
 
         G = nx.Graph()
-        # Sort pairs for deterministic edge addition order
         for src, dst in must_connect:
             w1 = self._compute_requires_edge_weight(src, dst)
             w2 = self._compute_requires_edge_weight(dst, src)
-            # Store minimum weight and preferred direction
+            # Store minimum weight and preferred direction for tie-breaking during orientation
             direction = (src, dst) if w1 <= w2 else (dst, src)
             G.add_edge(src, dst, weight=min(w1, w2), preferred_direction=direction)
 
@@ -728,7 +727,6 @@ class ValidationResources:
 
         Returns set of directed (src, dst) tuples representing the oriented MST edges.
         """
-        # Flat dict: directed edge → vote count
         edge_votes: dict[tuple[ContainerReference, ContainerReference], float] = defaultdict(float)
 
         for view, steiner_tree_nodes in self._steiner_tree_nodes_by_view.items():
@@ -833,6 +831,7 @@ class ValidationResources:
     #   - Tier ∞ (FORBIDDEN):     Invalid edge
     #
     # Sub-weights refine ordering WITHIN a tier (shared views, direction, etc).
+    #   - These have been empirically tuned through trial and error.
     # ========================================================================
 
     # Tier base weights (gap of 1000 ensures tier always wins)
