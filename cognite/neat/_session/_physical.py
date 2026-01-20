@@ -1,3 +1,4 @@
+from types import MethodType
 from typing import Any, Literal
 
 from cognite.neat._client import NeatClient
@@ -37,7 +38,7 @@ class PhysicalDataModel:
 
         # attach alpha methods
         if self._config.alpha.enable_solution_model_creation:
-            self.__class__.create = create  # type: ignore[attr-defined]
+            self.create = MethodType(create, self)  # type: ignore[attr-defined]
 
     def _repr_html_(self) -> str:
         if not isinstance(self._store.state, PhysicalState):
