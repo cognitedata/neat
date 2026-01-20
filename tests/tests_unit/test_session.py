@@ -10,6 +10,7 @@ import respx
 from cognite.neat import _state_machine as states
 from cognite.neat._client import NeatClientConfig
 from cognite.neat._config import NeatConfig
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
@@ -337,6 +338,27 @@ class TestDMSSerialization:
 
 @pytest.mark.usefixtures("not_empty_cdf")
 class TestDataModelCreation:
+    def test_empty_cdf(self, new_session_with_alpha_features: NeatSession) -> None:
+        session = new_session_with_alpha_features
+
+        session._store._cdf_snapshot = SchemaSnapshot()
+
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            session.physical_data_model.create(  # type: ignore[attr-defined]
+                space="my_space",
+                external_id="MySolution",
+                version="v3",
+                views=["cdf_cdm:CogniteAsset(version=v1)"],
+            )
+
+        printed_statements = output.getvalue()
+
+        assert (
+            "Physical Data Model - create ❌\nThere are no data models in CDF. Cannot create solution model.\n"
+            in printed_statements
+        )
+
     def test_issue_with_view_reference(self, new_session_with_alpha_features: NeatSession) -> None:
         session = new_session_with_alpha_features
 

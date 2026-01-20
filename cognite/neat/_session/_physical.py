@@ -323,6 +323,9 @@ def create(
         kind (Literal["solution"]): The kind of the data model. Currently, only "solution" is supported.
     """
 
+    if not self._store.cdf_snapshot.data_model:
+        raise ValueError("There are no data models in CDF. Cannot create solution model.")
+
     creator = DMSAPICreator(
         space=space,
         external_id=external_id,
