@@ -4,7 +4,6 @@ from cognite.neat._exceptions import NeatImportError
 
 try:
     importlib.import_module("rdflib")
-    # Legacy is installed, allow v0 tests
 except ImportError as e:
     raise NeatImportError("legacy module", "legacy") from e
 
