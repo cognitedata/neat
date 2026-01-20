@@ -32,6 +32,5 @@ class CDF:
                 "views_limit": self._store.cdf_limits.views.limit,
                 "data_models_current": self._store.cdf_limits.data_models.count,
                 "data_models_limit": self._store.cdf_limits.data_models.limit,
-                "node_types": len(self._store.cdf_snapshot.node_types),
             },
         )
