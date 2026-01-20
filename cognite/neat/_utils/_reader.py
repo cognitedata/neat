@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import IO, Any, TextIO
 from urllib.parse import urlparse
 
-import requests
+import httpx
 
 
 class NeatReader(ABC):
@@ -124,24 +124,24 @@ class HttpFileReader(NeatReader):
         return self.path
 
     def read_text(self) -> str:
-        response = requests.get(self._url)
+        response = httpx.get(self._url)
         response.raise_for_status()
         return response.text
 
     def read_bytes(self) -> bytes:
-        response = requests.get(self._url)
+        response = httpx.get(self._url)
         response.raise_for_status()
         return response.content
 
     def size(self) -> int:
-        response = requests.head(self._url)
+        response = httpx.head(self._url)
         response.raise_for_status()
         return int(response.headers["Content-Length"])
 
     def iterate(self, chunk_size: int) -> Iterable[str]:
-        with requests.get(self._url, stream=True) as response:
+        with httpx.stream("GET", self._url) as response:
             response.raise_for_status()
-            for chunk in response.iter_content(chunk_size):
+            for chunk in response.iter_bytes(chunk_size):
                 yield chunk.decode("utf-8")
 
     def __enter__(self) -> IO:
@@ -151,7 +151,7 @@ class HttpFileReader(NeatReader):
         return self._url
 
     def exists(self) -> bool:
-        response = requests.head(self._url)
+        response = httpx.head(self._url)
         return 200 <= response.status_code < 400
 
     def materialize_path(self) -> Path:

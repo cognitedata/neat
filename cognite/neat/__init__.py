@@ -1,4 +1,4 @@
-from cognite.neat._v0.core._utils.auth import get_cognite_client
+from cognite.neat._client.init.main import get_cognite_client
 
 from ._config import NeatConfig, get_neat_config_from_file
 from ._session import NeatSession
