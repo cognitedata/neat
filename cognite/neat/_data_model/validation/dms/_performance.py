@@ -8,6 +8,7 @@ container requires constraints:
 - UnresolvableQueryPerformance: Structural issues that can't be solved with requires
 """
 
+from cognite.neat._data_model._analysis import RequiresChangeStatus
 from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import Recommendation
@@ -42,27 +43,18 @@ class MissingRequiresConstraint(DataModelValidator):
         recommendations: list[Recommendation] = []
 
         for view_ref in self.validation_resources.merged.views:
-            containers_in_view = self.validation_resources.containers_by_view.get(view_ref, set())
+            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
 
-            if len(containers_in_view) < 2:
+            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
                 continue
 
-            user_containers = [c for c in containers_in_view if c.space not in COGNITE_SPACES]
-            if not user_containers:
-                continue
-
-            to_add, _ = self.validation_resources.get_requires_changes_for_view(view_ref)
-
-            if not to_add:
-                continue
-
-            for src, dst in to_add:
+            for src, dst in changes.to_add:
                 src_views = self.validation_resources.views_by_container.get(src, set())
                 other_views_with_src = src_views - {view_ref}
-                superset_views = self.validation_resources.find_views_mapping_to_containers([src, dst])
+                views_impacted_by_change = self.validation_resources.find_views_mapping_to_containers([src, dst])
 
                 # Check if this is a "safe" recommendation (no cross-view dependencies)
-                is_safe = not other_views_with_src or view_ref in superset_views
+                is_safe = not other_views_with_src or view_ref in views_impacted_by_change
 
                 if is_safe:
                     message = (
@@ -70,17 +62,22 @@ class MissingRequiresConstraint(DataModelValidator):
                         f"Add a 'requires' constraint from '{src!s}' to '{dst!s}'."
                     )
                 else:
-                    # Find a superset view to suggest for ingestion
-                    # Prefer views matching the source container name (e.g., Tag view for Tag container)
-                    superset_views = {v for v in superset_views if v in self.validation_resources.merged.views}
-                    matching_view = next((v for v in superset_views if v.external_id == src.external_id), None)
-                    superset_example = matching_view or (min(superset_views, key=str) if superset_views else view_ref)
+                    # Find a view to suggest: prefer one mapping to both, fallback to one mapping to dst
+                    merged_views = set(self.validation_resources.merged.views)
+                    merged_views_mapping_to_both = views_impacted_by_change & merged_views
+                    if merged_views_mapping_to_both:
+                        view_example = min(merged_views_mapping_to_both, key=str)
+                    else:
+                        dst_views = self.validation_resources.views_by_container.get(dst, set()) & merged_views
+                        view_example = min(dst_views, key=str) if dst_views else None
 
                     message = (
                         f"View '{view_ref!s}' is not optimized for querying. "
                         f"Add a 'requires' constraint from '{src!s}' to '{dst!s}'. "
-                        f"Note: this will require '{dst!s}' to be populated before '{src!s}', "
-                        f"or ingest through a view that maps to both (e.g., '{superset_example!s}')."
+                        "Note: this causes an ingestion dependency for this view, "
+                        "if you will be using it to ingest instances, you will "
+                        f"need to populate these instances into '{dst!s}' "
+                        + (f"first, for example through view '{view_example!s}'." if view_example else "first.")
                     )
 
                 recommendations.append(
@@ -123,18 +120,12 @@ class SuboptimalRequiresConstraint(DataModelValidator):
         recommendations: list[Recommendation] = []
 
         for view_ref in self.validation_resources.merged.views:
-            containers_in_view = self.validation_resources.containers_by_view.get(view_ref, set())
+            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
 
-            if len(containers_in_view) < 2:
+            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
                 continue
 
-            user_containers = [c for c in containers_in_view if c.space not in COGNITE_SPACES]
-            if not user_containers:
-                continue
-
-            _, to_remove = self.validation_resources.get_requires_changes_for_view(view_ref)
-
-            for src, dst in to_remove:
+            for src, dst in changes.to_remove:
                 recommendations.append(
                     Recommendation(
                         message=(
@@ -189,20 +180,9 @@ class UnresolvableQueryPerformance(DataModelValidator):
             if view_ref.space in COGNITE_SPACES:
                 continue
 
-            containers_in_view = self.validation_resources.containers_by_view.get(view_ref, set())
+            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
 
-            if len(containers_in_view) < 2:
-                continue
-
-            if self.validation_resources.forms_directed_path(
-                containers_in_view, self.validation_resources.requires_constraint_graph
-            ):
-                continue
-
-            user_containers = [c for c in containers_in_view if c.space not in COGNITE_SPACES]
-
-            # Case 1: All containers are CDF built-in (not modifiable)
-            if not user_containers:
+            if changes.status == RequiresChangeStatus.NO_MODIFIABLE_CONTAINERS:
                 recommendations.append(
                     Recommendation(
                         message=(
@@ -214,20 +194,14 @@ class UnresolvableQueryPerformance(DataModelValidator):
                         code=self.code,
                     )
                 )
-                continue
-
-            # Case 2: MST algorithm couldn't find a valid solution
-            to_add, _ = self.validation_resources.get_requires_changes_for_view(view_ref)
-
-            if not to_add:
+            elif changes.status == RequiresChangeStatus.UNSOLVABLE:
                 recommendations.append(
                     Recommendation(
                         message=(
                             f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
-                            "No valid requires constraint solution was found, since the optimal configuration of constraints "
-                            "do not create a connected hierarchy for this view's containers. "
+                            "No valid requires constraint solution was found for this view's mapped containers. "
                             "Consider adding a view-specific container (with at least one property) "
-                            "that requires the others, or restructure the view."
+                            "that requires the others, or restructuring the view to use different containers."
                         ),
                         fix="Add a container (with at least one property) that requires the others, or restructure the view",
                         code=self.code,

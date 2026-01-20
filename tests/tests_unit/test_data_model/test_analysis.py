@@ -796,9 +796,9 @@ class TestValidationResourcesRequiresConstraints:
             if len(containers) < 2:
                 continue
 
-            _, to_remove = resources.get_requires_changes_for_view(view_ref)
+            changes = resources.get_requires_changes_for_view(view_ref)
 
-            for src, dst in to_remove:
+            for src, dst in changes.to_remove:
                 oriented = resources.oriented_mst_edges
                 is_in_mst = (src, dst) in oriented or (dst, src) in oriented
                 has_correct_orientation = (src, dst) in oriented
@@ -818,9 +818,9 @@ class TestValidationResourcesRequiresConstraints:
         resources = scenarios["requires-constraints-with-cdm"]
 
         for view_ref in resources.merged.views:
-            to_add, _ = resources.get_requires_changes_for_view(view_ref)
+            changes = resources.get_requires_changes_for_view(view_ref)
 
-            for src, dst in to_add:
+            for src, dst in changes.to_add:
                 assert src.space not in COGNITE_SPACES, (
                     f"CDF container {src} should not be a source in add recommendations. "
                     f"Found: {src} -> {dst} for view {view_ref}"
@@ -840,7 +840,7 @@ class TestValidationResourcesRequiresConstraints:
             if len(containers) < 2:
                 continue
 
-            to_add, to_remove = resources.get_requires_changes_for_view(view_ref)
+            changes = resources.get_requires_changes_for_view(view_ref)
 
             # Apply recommendations to get final state
             current = set()
@@ -851,16 +851,16 @@ class TestValidationResourcesRequiresConstraints:
                             current.add((src, dst))
 
             final = current.copy()
-            for edge in to_add:
+            for edge in changes.to_add:
                 final.add(edge)
-            for edge in to_remove:
+            for edge in changes.to_remove:
                 final.discard(edge)
 
             view_key = f"{view_ref.space}:{view_ref.external_id}({view_ref.version})"
             all_recommendations[view_key] = {
                 "containers": sorted([c.external_id for c in containers]),
-                "to_add": sorted([f"{src.external_id} -> {dst.external_id}" for src, dst in to_add]),
-                "to_remove": sorted([f"{src.external_id} -> {dst.external_id}" for src, dst in to_remove]),
+                "to_add": sorted([f"{src.external_id} -> {dst.external_id}" for src, dst in changes.to_add]),
+                "to_remove": sorted([f"{src.external_id} -> {dst.external_id}" for src, dst in changes.to_remove]),
                 "final_constraints": sorted([f"{src.external_id} -> {dst.external_id}" for src, dst in final]),
             }
 

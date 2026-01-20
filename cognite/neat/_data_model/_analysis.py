@@ -1,6 +1,7 @@
 import math
 from collections import defaultdict
-from collections.abc import Iterable
+from dataclasses import dataclass
+from enum import Enum
 from itertools import chain, combinations
 from typing import Literal, TypeAlias, TypeVar
 
@@ -42,6 +43,24 @@ ConnectionEndNodeTypes: TypeAlias = dict[tuple[ViewReference, str], ViewReferenc
 ResourceSource = Literal["auto", "merged", "cdf", "both"]
 
 _NodeT = TypeVar("_NodeT", ContainerReference, ViewReference)
+
+
+class RequiresChangeStatus(Enum):
+    """Status of requires constraint changes for a view."""
+
+    OPTIMAL = "optimal"  # Already optimized, no changes needed
+    CHANGES_AVAILABLE = "changes_available"  # Recommendations available
+    UNSOLVABLE = "unsolvable"  # Structural issue - can't create connected hierarchy
+    NO_MODIFIABLE_CONTAINERS = "no_modifiable_containers"  # All containers are immutable
+
+
+@dataclass
+class RequiresChangesForView:
+    """Result of computing requires constraint changes for a view."""
+
+    to_add: set[tuple[ContainerReference, ContainerReference]]
+    to_remove: set[tuple[ContainerReference, ContainerReference]]
+    status: RequiresChangeStatus
 
 
 class ValidationResources:
@@ -762,23 +781,18 @@ class ValidationResources:
 
         return oriented
 
-    def get_requires_changes_for_view(
-        self, view: ViewReference
-    ) -> tuple[
-        Iterable[tuple[ContainerReference, ContainerReference]], Iterable[tuple[ContainerReference, ContainerReference]]
-    ]:
+    def get_requires_changes_for_view(self, view: ViewReference) -> RequiresChangesForView:
         """Get requires constraint changes needed to optimize a view.
 
-        Returns (to_add, to_remove) where:
+        Returns a RequiresChangesForView with:
         - to_add: New constraints needed (from global MST orientation)
         - to_remove: Existing constraints that are redundant or wrongly oriented
-
-        Returns empty lists if the view would be unsolvable after changes, or if no changes are needed.
+        - status: The optimization status for this view
         """
         containers = self.containers_by_view.get(view)
         modifiable_containers_in_view = containers.intersection(self.modifiable_containers)
         if not modifiable_containers_in_view:
-            return ([], [])
+            return RequiresChangesForView(set(), set(), RequiresChangeStatus.NO_MODIFIABLE_CONTAINERS)
 
         # Get directed Steiner edges for this view
         steiner_tree_nodes = self._steiner_tree_nodes_by_view.get(view, set())
@@ -809,9 +823,17 @@ class ValidationResources:
 
         # Check if the view would be solvable after applying ALL global recommendations
         if not self.forms_directed_path(containers, self.optimized_requires_constraint_graph):
-            return ([], [])
+            print("view not solvable", view)
+            print(
+                [(src.external_id, dst.external_id) for src, dst in to_add],
+                [(src.external_id, dst.external_id) for src, dst in to_remove],
+            )
+            return RequiresChangesForView(set(), set(), RequiresChangeStatus.UNSOLVABLE)
 
-        return to_add, to_remove
+        if not to_add and not to_remove:
+            return RequiresChangesForView(set(), set(), RequiresChangeStatus.OPTIMAL)
+
+        return RequiresChangesForView(to_add, to_remove, RequiresChangeStatus.CHANGES_AVAILABLE)
 
     # ========================================================================
     # REQUIRES CONSTRAINT MST WEIGHT CONSTANTS
