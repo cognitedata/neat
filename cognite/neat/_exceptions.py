@@ -33,7 +33,7 @@ class DataModelCreateException(NeatException):
         self.errors = errors
 
     def __str__(self) -> str:
-        return f"Model import failed with {len(self.errors)} errors: " + "; ".join(map(str, self.errors))
+        return f"Model creation failed with {len(self.errors)} errors: " + "; ".join(map(str, self.errors))
 
 
 class CDFAPIException(NeatException):
