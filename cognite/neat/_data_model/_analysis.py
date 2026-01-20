@@ -586,11 +586,6 @@ class ValidationResources:
         """Cached set of existing requires constraint edges."""
         return set(self.requires_constraint_graph.edges())
 
-    @cached_property
-    def _immutable_requires_edges(self) -> set[tuple[ContainerReference, ContainerReference]]:
-        """Cached set of immutable requires constraint edges."""
-        return set(self.immutable_requires_constraint_graph.edges())
-
     @staticmethod
     def forms_directed_path(nodes: set[_NodeT], graph: nx.DiGraph) -> bool:
         """Check if nodes form an uninterrupted directed path in the graph.
@@ -702,15 +697,11 @@ class ValidationResources:
                 continue
 
             containers = self.containers_by_view.get(view_ref)
-            # Need at least 2 containers to form a requires constraint
-            if len(containers) < 2:
+            if len(containers) < 2:  # Need at least 2 containers to have a constraint
                 continue
-
-            # Skip views with no modifiable containers (can't add constraints)
             if not containers.intersection(self.modifiable_containers):
                 continue
 
-            # Subgraph with only this view's containers
             subgraph = self._requires_candidate_graph.subgraph(containers)
             if not nx.is_connected(subgraph):
                 continue
@@ -735,26 +726,17 @@ class ValidationResources:
             if not modifiable:
                 continue
 
-            best_root: ContainerReference | None = None
-            best_score: tuple[int, int, str] | None = None
-
-            for container in modifiable:
-                view_count = len(self.views_by_container.get(container, set()))
-                has_existing = any((container, other) in self._existing_requires_edges for other in containers)
-                score = (view_count, 0 if has_existing else 1, str(container))
-
-                if best_score is None or score < best_score:
-                    best_root, best_score = container, score
-
-            if best_root:
-                result[view] = best_root
+            # Score: (view_count, no_existing_penalty, alphabetical)
+            result[view] = min(
+                modifiable,
+                key=lambda c: (
+                    len(self.views_by_container.get(c, set())),
+                    0 if any((c, other) in self._existing_requires_edges for other in containers) else 1,
+                    str(c),
+                ),
+            )
 
         return result
-
-    @cached_property
-    def _view_specific_containers(self) -> set[ContainerReference]:
-        """Containers that are roots for at least one view."""
-        return set(self._root_by_view.values())
 
     @cached_property
     def _views_with_root_conflicts(self) -> set[ViewReference]:
@@ -777,7 +759,7 @@ class ValidationResources:
                 continue
 
             # No immutable anchor AND all modifiables are roots elsewhere
-            if not immutable and modifiable <= self._view_specific_containers:
+            if not immutable and modifiable <= set(self._root_by_view.values()):
                 unsolvable.add(view)
 
         return unsolvable
@@ -838,7 +820,7 @@ class ValidationResources:
 
         # Optimal graph = MST + immutable (no existing - that's just for diffing later)
         optimal = nx.DiGraph()
-        optimal.add_edges_from(self._immutable_requires_edges)
+        optimal.add_edges_from(self.immutable_requires_constraint_graph.edges())
         optimal.add_edges_from(self.oriented_mst_edges)
 
         reduced = nx.transitive_reduction(optimal)
