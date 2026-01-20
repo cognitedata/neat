@@ -361,12 +361,19 @@ class TestDataModelCreation:
         expected_errors = {
             ModelSyntaxError: {
                 "Invalid view reference '': Could not parse entity.",
-                "Invalid view reference '1983:CogniteAsset(version=1320)', cannot parse it!",
+                (
+                    "Invalid view reference '1983:CogniteAsset(version=1320)', cannot parse it: "
+                    "In field 'space', string '1983' does not match the required pattern: "
+                    "'^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'"
+                ),
                 (
                     "Invalid view reference 'cdf_cdm:CogniteAsset(ver=1320),"
                     "cdf_cdm:CogniteAsset(ver=1321)': Expected a single view definition."
                 ),
-                "Invalid view reference 'cdf=cdm:CogniteAsset(version=v1)', cannot parse it!",
+                (
+                    "Invalid view reference 'cdf=cdm:CogniteAsset(version=v1)', cannot parse it: "
+                    "Unexpected characters after properties at position 3. Got '='"
+                ),
                 "Invalid view reference 'cdf_cdm:CogniteAsset(ver=1320)': Missing 'version' property.",
             },
             ConsistencyError: {

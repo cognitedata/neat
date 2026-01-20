@@ -292,10 +292,15 @@ class DMSAPICreator(DMSImporter):
                         version=str(entity[0].properties["version"]),
                     )
                     view_references.append(view_ref)
-                except ValidationError:
-                    errors.append(ModelSyntaxError(message=f"Invalid view reference '{view}', cannot parse it!"))
+                except ValidationError as e:
+                    humanized = [humanize_validation_error(error) for error in e.errors()]
+                    errors.append(
+                        ModelSyntaxError(
+                            message=f"Invalid view reference '{view}', cannot parse it: " + ", ".join(humanized)
+                        )
+                    )
 
-            except ValueError:
-                errors.append(ModelSyntaxError(message=f"Invalid view reference '{view}', cannot parse it!"))
+            except ValueError as e:
+                errors.append(ModelSyntaxError(message=f"Invalid view reference '{view}', cannot parse it: {e}"))
 
         return errors, view_references
