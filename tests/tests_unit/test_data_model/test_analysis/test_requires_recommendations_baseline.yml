@@ -122,31 +122,29 @@ my_space:ImmutableBridgeCombinedView(v1):
   - ImmutableBridgeUserAContainer
   - ImmutableBridgeUserBContainer
   final_constraints:
-  - ImmutableBridgeUserAContainer -> CogniteDescribable
-  - ImmutableBridgeUserBContainer -> ImmutableBridgeUserAContainer
+  - ImmutableBridgeUserAContainer -> ImmutableBridgeUserBContainer
+  - ImmutableBridgeUserBContainer -> CogniteDescribable
   to_add:
-  - ImmutableBridgeUserAContainer -> CogniteDescribable
-  - ImmutableBridgeUserBContainer -> ImmutableBridgeUserAContainer
+  - ImmutableBridgeUserAContainer -> ImmutableBridgeUserBContainer
+  - ImmutableBridgeUserBContainer -> CogniteDescribable
   to_remove: []
 my_space:ImmutableBridgeViewA(v1):
   containers:
   - CogniteDescribable
   - ImmutableBridgeUserAContainer
   final_constraints:
-  - ImmutableBridgeUserAContainer -> CogniteDescribable
+  - ImmutableBridgeUserAContainer -> ImmutableBridgeUserBContainer
   to_add:
-  - ImmutableBridgeUserAContainer -> CogniteDescribable
+  - ImmutableBridgeUserAContainer -> ImmutableBridgeUserBContainer
   to_remove: []
 my_space:ImmutableBridgeViewB(v1):
   containers:
   - CogniteDescribable
   - ImmutableBridgeUserBContainer
   final_constraints:
-  - ImmutableBridgeUserAContainer -> CogniteDescribable
-  - ImmutableBridgeUserBContainer -> ImmutableBridgeUserAContainer
+  - ImmutableBridgeUserBContainer -> CogniteDescribable
   to_add:
-  - ImmutableBridgeUserAContainer -> CogniteDescribable
-  - ImmutableBridgeUserBContainer -> ImmutableBridgeUserAContainer
+  - ImmutableBridgeUserBContainer -> CogniteDescribable
   to_remove: []
 my_space:ManyExternalsView(v1):
   containers:
