@@ -9,6 +9,7 @@ class SpaceLimit(BaseModel):
     """Limits for spaces."""
 
     limit: int = 100
+    count: int = 0
 
 
 class ListablePropertyLimits(BaseModel):
@@ -51,6 +52,7 @@ class ContainerLimits(BaseModel):
     """Limits for containers."""
 
     limit: int = 1_000
+    count: int = 0
     properties: ContainerPropertyLimits = Field(default_factory=ContainerPropertyLimits)
 
 
@@ -58,6 +60,7 @@ class ViewLimits(BaseModel):
     """Limits for views."""
 
     limit: int = 2_000
+    count: int = 0
     versions: int = 100
     properties: int = 300
     implements: int = 10
@@ -68,6 +71,7 @@ class DataModelLimits(BaseModel):
     """Limits for data models."""
 
     limit: int = 500
+    count: int = 0
     versions: int = Field(100, description="Limit of versions per data model.")
     views: int = Field(100, description="Limit of views per data model.")
 
