@@ -43,10 +43,14 @@ _NodeT = TypeVar("_NodeT", ContainerReference, ViewReference)
 
 class ValidationResources:
     def __init__(
-        self, modus_operandi: ModusOperandi, local: SchemaSnapshot, cdf: SchemaSnapshot, limits: SchemaLimits
+        self,
+        modus_operandi: ModusOperandi,
+        local: SchemaSnapshot,
+        cdf: SchemaSnapshot,
+        limits: SchemaLimits | None = None,
     ) -> None:
         self._modus_operandi = modus_operandi
-        self.limits = limits
+        self.limits = limits or SchemaLimits()
 
         self.local = local
         self.cdf = cdf

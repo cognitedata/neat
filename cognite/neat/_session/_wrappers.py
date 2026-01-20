@@ -96,6 +96,18 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
             if callable(attr):
                 # Replace the original method with wrapped version
                 setattr(cls, attr_name, _handle_method_call(attr))
+    # Intercept __init__ to wrap any methods added via setattr
+    original_init = cls.__init__
 
-    # Return the modified class
+    @wraps(original_init)
+    def new_init(self: HasStore, *args: Any, **kwargs: Any) -> Any:
+        original_init(self, *args, **kwargs)
+        # Wrap any new methods added during init
+        for attr_name in dir(self.__class__):
+            if not attr_name.startswith("_"):
+                attr = getattr(self.__class__, attr_name)
+                if callable(attr) and not hasattr(attr, "__wrapped__"):
+                    setattr(self.__class__, attr_name, _handle_method_call(attr))
+
+    cls.__init__ = new_init  # type: ignore[assignment]
     return cls
