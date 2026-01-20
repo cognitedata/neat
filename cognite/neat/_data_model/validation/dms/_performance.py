@@ -29,8 +29,9 @@ class MissingRequiresConstraint(DataModelValidator):
     Adding requires constraints creates a connected hierarchy that enables efficient queries.
 
     ## Example
-    View `Valve` needs `Tag → CogniteAsset` for optimization. The message will indicate
-    if other views using `Tag` will also be affected by this change.
+    View `Valve` is mapping to both containers `Valve` and `CogniteEquipment`.
+    A `requires` constraint from `Valve` to `CogniteEquipment` is likely needed
+    to enable efficient query performance.
     """
 
     code = f"{BASE_CODE}-001"
@@ -95,23 +96,23 @@ class MissingRequiresConstraint(DataModelValidator):
 
 class SuboptimalRequiresConstraint(DataModelValidator):
     """
-    Recommends removing requires constraints that are not part of the optimal structure.
+    Recommends removing requires constraints that are not part of the structure
+    considered optimal for query performance by Neat.
 
     ## What it does
-    Identifies existing requires constraints that are not part of ANY view's optimal
-    MST structure. These constraints can be safely removed as they don't contribute
-    to query optimization.
+    Identifies existing requires constraints that are not optimal. These constraints
+    can be safely removed as they don't contribute to query optimization when all other
+    optimal constraints are applied.
 
     ## Why is this important?
     Unnecessary requires constraints can:
-    - Create false ingestion dependencies
-    - Make the data model harder to understand
-    - Potentially cause issues if the constraint becomes invalid
+    - Create unnecessary ingestion dependencies
+    - Cause invalid requires constraint cycles if optimal constraints are applied
 
     ## Example
-    Container `Pump` has `requires: Tag`, but the optimal MST determined that
-    `Pump → CogniteAsset` (which transitively covers Tag) is better.
-    The `Pump → Tag` constraint can be removed.
+    Container `Tag` has a `requires` constraint to `Pump`, but NEAT determined that
+    `Pump → Tag` is more optimal. The existing `Tag → Pump` constraint should then
+    be removed when applying all optimal constraints.
     """
 
     code = f"{BASE_CODE}-002"
@@ -150,28 +151,31 @@ class SuboptimalRequiresConstraint(DataModelValidator):
 
 class UnresolvableQueryPerformance(DataModelValidator):
     """
-    Identifies views with query performance issues that cannot be resolved with requires.
+    Identifies views with query performance issues that cannot be resolved.
+    This is likely to be caused by unintended modeling choices.
 
     ## What it does
     Detects views where no valid requires constraint solution exists:
 
-    1. **CDF-only containers**: Views mapping only to CDF built-in containers.
+    1. **View maps only to CDF built-in containers**:
        Since CDF containers cannot be modified, no requires can be added.
 
-    2. **No valid solution**: The optimal MST structure doesn't create a connected
-       hierarchy for this view (e.g., convergent edges pointing to a shared hub).
+    2. **No valid solution**:
+       This view is causing issues when optimizing requires constraints
+       for other views, due to its structure (mapping non-overlapping containers)
 
     ## Why is this important?
     These views will have suboptimal query performance that CANNOT be fixed by
     adding or removing requires constraints. The only solutions require restructuring:
-    - Add a view-specific container that requires the others
+    - Add a view-specific container that requires all the other containers in the view
     - Restructure the view to use different containers
 
     ## Example
-    View `Test` maps to containers `Valve`, `InstrumentEquipment`, and `Tag`.
-    The optimal constraints are `Valve → Tag` and `InstrumentEquipment → Tag`,
-    but this creates a convergent structure where neither Valve nor InstrumentEquipment
-    can reach each other. The view needs a new container or restructuring.
+    View `MultipleEquipments` maps only to containers `Valve` and `InstrumentEquipment`.
+    The optimal constraints are `Valve → CogniteEquipment` and `InstrumentEquipment → CogniteEquipment`
+    due to other views needing these constraints to optimize their query performance.
+    This means however, that neither Valve nor InstrumentEquipment can reach each other without
+    creating complex ingestion dependencies. The view needs a new container or restructuring.
     """
 
     code = f"{BASE_CODE}-003"
