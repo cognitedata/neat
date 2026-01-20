@@ -1,104 +1,168 @@
-function initializeStatistics(uniqueId) {
-    /**
-     * Initialize stat cards with data from attributes and apply colors.
-     * Supports light/dark mode with color schema from shared CSS.
-     * Uses uniqueId to support multiple instances on the same page.
-     */
+let currentFilter = 'all';
+let currentSearch = '';
+const storageKey = 'neat-issues-theme-' + uniqueId;
+let isDarkMode = localStorage.getItem(storageKey) === 'dark';
+let expandedGroups = new Set();
 
-    function getColor(percentage) {
-        if (percentage < 50) return '#10b981';    // green
-        if (percentage < 80) return '#f59e0b';    // amber
-        return '#ef4444';                         // red
+const container = document.getElementById('issuesContainer-' + uniqueId);
+const themeToggle = document.getElementById('themeToggle-' + uniqueId);
+const themeIcon = document.getElementById('themeIcon-' + uniqueId);
+const themeText = document.getElementById('themeText-' + uniqueId);
+
+// Initialize theme
+function updateTheme() {
+    if (isDarkMode) {
+        container.classList.add('dark-mode');
+        themeIcon.textContent = '☀️';
+        themeText.textContent = 'Light';
+    } else {
+        container.classList.remove('dark-mode');
+        themeIcon.textContent = '🌙';
+        themeText.textContent = 'Dark';
     }
+}
 
-    function renderCards() {
-        const container = document.getElementById('statisticsContainer-' + uniqueId);
-        if (!container) return;
+updateTheme();
 
-        const cards = container.querySelectorAll('.stat-card');
+// Theme toggle
+themeToggle.addEventListener('click', function() {
+    isDarkMode = !isDarkMode;
+    localStorage.setItem(storageKey, isDarkMode ? 'dark' : 'light');
+    updateTheme();
+});
 
-        cards.forEach(card => {
-            // Skip if already rendered
-            if (card.querySelector('.stat-label')) return;
+function groupIssues(issuesList) {
+    const grouped = new Map();
 
-            const current = parseInt(card.dataset.current);
-            const limit = parseInt(card.dataset.limit);
-            const label = card.dataset.label;
-            const percentage = (current / limit * 100) || 0;
-            const color = getColor(percentage);
+    issuesList.forEach(issue => {
+        const key = issue.code ? `${issue.type}:${issue.code}` : `${issue.type}:${issue.id}`;
 
-            // Build card HTML
-            card.innerHTML = `
-                <h3 class="stat-label">${label}</h3>
-                <div class="stat-value">
-                    <span class="stat-current">${current}</span>
-                    <span class="stat-limit">/ ${limit}</span>
-                </div>
-                <div class="stat-progress-bg">
-                    <div class="stat-progress-bar" style="background: ${color}; width: ${Math.min(percentage, 100)}%;"></div>
-                </div>
-                <div class="stat-usage" style="color: ${color};">${percentage.toFixed(1)}% used</div>
-            `;
-        });
-    }
-
-    function setupThemeToggle() {
-        const container = document.getElementById('statisticsContainer-' + uniqueId);
-        if (!container) return;
-
-        // Check if theme toggle already exists
-        if (container.querySelector('.theme-toggle')) return;
-
-        // Create theme toggle button
-        const header = container.querySelector('.statistics-header');
-        const themeToggle = document.createElement('button');
-        themeToggle.className = 'theme-toggle';
-        themeToggle.id = 'themeToggleStats-' + uniqueId;
-        themeToggle.innerHTML = '<span id="themeIcon-' + uniqueId + '">🌙</span><span id="themeText-' + uniqueId + '">Dark</span>';
-
-        header.insertBefore(themeToggle, header.firstChild);
-
-        // Load saved theme preference
-        const storageKey = 'neat-statistics-theme-' + uniqueId;
-        const savedTheme = localStorage.getItem(storageKey) || 'light';
-        applyTheme(savedTheme);
-
-        // Toggle theme on button click
-        themeToggle.addEventListener('click', () => {
-            const isDarkMode = container.classList.contains('dark-mode');
-            const newTheme = isDarkMode ? 'light' : 'dark';
-            applyTheme(newTheme);
-            localStorage.setItem(storageKey, newTheme);
-        });
-
-        function applyTheme(theme) {
-            const isDark = theme === 'dark';
-            const themeIcon = document.querySelector('#themeIcon-' + uniqueId);
-            const themeText = document.querySelector('#themeText-' + uniqueId);
-
-            if (isDark) {
-                container.classList.add('dark-mode');
-                if (themeIcon) themeIcon.textContent = '☀️';
-                if (themeText) themeText.textContent = 'Light';
-            } else {
-                container.classList.remove('dark-mode');
-                if (themeIcon) themeIcon.textContent = '🌙';
-                if (themeText) themeText.textContent = 'Dark';
-            }
+        if (!grouped.has(key)) {
+            grouped.set(key, []);
         }
+        grouped.get(key).push(issue);
+    });
+
+    return grouped;
+}
+
+function renderIssues() {
+    const listContainer = document.getElementById('issuesList-' + uniqueId);
+    const filtered = issues.filter(issue => {
+        const matchesFilter = currentFilter === 'all' || issue.type === currentFilter;
+        const matchesSearch = !currentSearch ||
+            issue.message.toLowerCase().includes(currentSearch.toLowerCase()) ||
+            (issue.code && issue.code.toLowerCase().includes(currentSearch.toLowerCase())) ||
+            (issue.fix && issue.fix.toLowerCase().includes(currentSearch.toLowerCase()));
+        return matchesFilter && matchesSearch;
+    });
+
+    if (filtered.length === 0) {
+        listContainer.innerHTML = '<div class="no-issues">No issues match your filters</div>';
+        return;
     }
 
-    // Render cards and setup theme toggle
-    renderCards();
-    setupThemeToggle();
-}
+    const grouped = groupIssues(filtered);
+    const html = [];
 
-// Call immediately with uniqueId for Jupyter notebooks
-initializeStatistics(uniqueId);
+    grouped.forEach((groupIssues, key) => {
+        const firstIssue = groupIssues[0];
+        const count = groupIssues.length;
+        const isExpanded = expandedGroups.has(key);
+        const codeLink = firstIssue.code
+            ? `<span class="issue-code-link" onclick="event.stopPropagation(); window.open('https://cognite-neat.readthedocs-hosted.com/en/latest/validation/${firstIssue.code.toLowerCase()}.html', '_blank')">${firstIssue.code}</span>`
+            : '';
 
-// Also try on DOMContentLoaded for regular HTML pages
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeStatistics(uniqueId);
+        if (count === 1) {
+            // Single issue - render normally
+            html.push(`
+                <div class="issue-item">
+                    <div class="issue-header">
+                        <span class="issue-badge badge-${firstIssue.type}">${firstIssue.type}</span>
+                        ${codeLink}
+                    </div>
+                    <div class="issue-message">${firstIssue.message}</div>
+                    ${firstIssue.fix ? `
+                        <div class="issue-fix">
+                            <div class="issue-fix-label">💡 Suggested Fix</div>
+                            <div class="issue-fix-content">${firstIssue.fix}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `);
+        } else {
+            // Grouped issues
+            html.push(`
+                <div class="issue-group ${isExpanded ? 'expanded' : ''}">
+                    <div class="issue-group-header" onclick="toggleGroup_${uniqueId}('${key}')">
+                        <div class="issue-group-info">
+                            <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
+                            <span class="issue-badge badge-${firstIssue.type}">${firstIssue.type}</span>
+                            ${codeLink}
+                            <span class="issue-count">${count} issues</span>
+                        </div>
+                    </div>
+                    <div class="issue-group-items">
+                        ${groupIssues.map((issue, idx) => `
+                            <div class="issue-item grouped">
+                                <div class="issue-number">#${idx + 1}</div>
+                                <div class="issue-message">${issue.message}</div>
+                            </div>
+                        `).join('')}
+                        ${firstIssue.fix ? `
+                            <div class="issue-fix grouped">
+                                <div class="issue-fix-label">💡 Suggested Fix</div>
+                                <div class="issue-fix-content">${firstIssue.fix}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `);
+        }
     });
+
+    listContainer.innerHTML = html.join('');
 }
+
+window['toggleGroup_' + uniqueId] = function(key) {
+    if (expandedGroups.has(key)) {
+        expandedGroups.delete(key);
+    } else {
+        expandedGroups.add(key);
+    }
+    renderIssues();
+};
+
+// Stat item filters
+document.querySelectorAll('#issuesContainer-' + uniqueId + ' .stat-item').forEach(item => {
+    item.addEventListener('click', function() {
+        document.querySelectorAll('#issuesContainer-' + uniqueId + ' .stat-item').forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+        currentFilter = this.dataset.filter;
+        renderIssues();
+    });
+});
+
+// Search
+document.getElementById('searchInput-' + uniqueId).addEventListener('input', function(e) {
+    currentSearch = e.target.value;
+    renderIssues();
+});
+
+// Export function
+window['exportIssues_' + uniqueId] = function() {
+    const csv = [
+        ['Type', 'Code', 'Message', 'Fix'],
+        ...issues.map(i => [i.type, i.code || '', i.message, i.fix || ''])
+    ].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'session_issues.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+};
+
+renderIssues();
