@@ -345,6 +345,7 @@ class TestDataModelCreation:
             external_id="SolutionModel",
             version="v1",
             views=[
+                "",
                 "cdf_cdm:CogniteAsset(ver=1320)",
                 "cdf=cdm:CogniteAsset(version=v1)",
                 "cdf_cdm:CogniteAsset(ver=1320),cdf_cdm:CogniteAsset(ver=1321)",
@@ -359,6 +360,7 @@ class TestDataModelCreation:
 
         expected_errors = {
             ModelSyntaxError: {
+                "Invalid view reference '': Could not parse entity.",
                 "Invalid view reference '1983:CogniteAsset(version=1320)', cannot parse it!",
                 (
                     "Invalid view reference 'cdf_cdm:CogniteAsset(ver=1320),"
