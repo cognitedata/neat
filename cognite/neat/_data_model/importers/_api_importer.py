@@ -298,7 +298,4 @@ class DMSAPICreator(DMSImporter):
             except ValueError:
                 errors.append(ModelSyntaxError(message=f"Invalid view reference '{view}', cannot parse it!"))
 
-        if errors:
-            raise DataModelCreateException(errors)
-
         return errors, view_references

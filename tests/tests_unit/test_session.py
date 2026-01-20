@@ -9,13 +9,15 @@ import respx
 
 from cognite.neat import _state_machine as states
 from cognite.neat._client import NeatClientConfig
+from cognite.neat._config import NeatConfig
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
-from cognite.neat._issues import IssueList
+from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError
 from cognite.neat._session._physical import ReadPhysicalDataModel
 from cognite.neat._session._session import NeatSession
 from cognite.neat._session._usage_analytics._collector import Collector
+from cognite.neat._store._provenance import Change
 from tests.data import SNAPSHOT_CATALOG
 from tests.data.snapshots.utils import update_mock_router
 
@@ -23,6 +25,14 @@ from tests.data.snapshots.utils import update_mock_router
 @pytest.fixture()
 def new_session(neat_config: NeatClientConfig) -> NeatSession:
     return NeatSession(neat_config)
+
+
+@pytest.fixture()
+def new_session_with_alpha_features(neat_config: NeatClientConfig) -> NeatSession:
+    cfg = NeatConfig.create_predefined("legacy-additive")
+    cfg.alpha.enable_solution_model_creation = True
+
+    return NeatSession(neat_config, cfg)
 
 
 @pytest.fixture()
@@ -323,3 +333,29 @@ class TestDMSSerialization:
 
         # missing container from toolkit schema should be added in neat schema
         assert "- Container: CogniteDescribable" in write_yaml.write_text.call_args[0][0]
+
+
+@pytest.mark.usefixtures("not_empty_cdf")
+class TestDataModelCreation:
+    def test_issue_with_view_reference(self, new_session_with_alpha_features: NeatSession) -> None:
+        session = new_session_with_alpha_features
+
+        session.physical_data_model.create(  # type: ignore[attr-defined]
+            space="cdf_cdm",
+            external_id="SolutionModel",
+            version="v1",
+            views=["cdf=cdm:CogniteAsset(version=v1)", "cdf_cdm:CogniteAsset(version=1320)"],
+        )
+
+        last_change = cast(Change, session._store.provenance.last_change)
+
+        by_type = cast(IssueList, last_change.errors).by_type()
+
+        assert len(by_type[ModelSyntaxError]) == 1
+        assert "Invalid view reference" in by_type[ModelSyntaxError][0].message
+
+        assert len(by_type[ConsistencyError]) == 1
+        assert (
+            "'cdf_cdm:CogniteAsset(version=1320)' not found in the provided CDF snapshot"
+            in by_type[ConsistencyError][0].message
+        )
