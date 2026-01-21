@@ -32,6 +32,7 @@ def new_session(neat_config: NeatClientConfig) -> NeatSession:
 def new_session_with_alpha_features(neat_config: NeatClientConfig) -> NeatSession:
     cfg = NeatConfig.create_predefined("legacy-additive")
     cfg.alpha.enable_solution_model_creation = True
+    cfg.alpha.enable_cdf_analysis = True
 
     return NeatSession(neat_config, cfg)
 
@@ -315,6 +316,12 @@ class TestRender:
     def test_render_session_physical(self, physical_state_session: NeatSession) -> None:
         session = physical_state_session
         html_repr = session._repr_html_()
+
+        assert isinstance(html_repr, str)
+
+    def test_render_session_cdf(self, new_session_with_alpha_features: NeatSession) -> None:
+        session = new_session_with_alpha_features
+        html_repr = session.cdf._repr_html_()
 
         assert isinstance(html_repr, str)
 

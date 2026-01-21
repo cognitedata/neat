@@ -4,13 +4,13 @@ from . import static, templates
 
 ENCODING = "utf-8"
 
-Template: TypeAlias = Literal["issues", "deployment"]
+Template: TypeAlias = Literal["issues", "deployment", "statistics"]
 
 
-def render(template_name: Literal["issues", "deployment"], variables: dict[str, Any]) -> str:
+def render(template_name: Literal["issues", "deployment", "statistics"], variables: dict[str, Any]) -> str:
     """Generate HTML content from a template and variables."""
 
-    if template_name not in ["issues", "deployment"]:
+    if template_name not in ["issues", "deployment", "statistics"]:
         raise ValueError(f"Unknown template name: {template_name}")
 
     variables["SHARED_CSS"] = static.shared_style.read_text(encoding=ENCODING)
@@ -24,6 +24,11 @@ def render(template_name: Literal["issues", "deployment"], variables: dict[str, 
         template = templates.deployment.read_text(encoding=ENCODING)
         variables["SCRIPTS"] = static.deployment_scripts.read_text(encoding=ENCODING)
         variables["SPECIFIC_CSS"] = static.deployment_style.read_text(encoding=ENCODING)
+
+    elif template_name == "statistics":
+        template = templates.statistics.read_text(encoding=ENCODING)
+        variables["SCRIPTS"] = static.statistics_scripts.read_text(encoding=ENCODING)
+        variables["SPECIFIC_CSS"] = static.statistics_style.read_text(encoding=ENCODING)
 
     for key, value in variables.items():
         template = template.replace(f"{{{{{key}}}}}", str(value))

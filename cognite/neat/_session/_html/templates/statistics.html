@@ -1,0 +1,26 @@
+<style>
+{{SHARED_CSS}}
+{{SPECIFIC_CSS}}
+</style>
+
+<div class="statistics-container" id="statisticsContainer-{{unique_id}}">
+    <div class="statistics-header">
+        <h2 class="statistics-title">CDF DMS Statistics</h2>
+        <p class="statistics-subtitle">Project usage and limits overview</p>
+    </div>
+
+    <div class="statistics-grid">
+        <div class="stat-card" data-current="{{spaces_current}}" data-limit="{{spaces_limit}}" data-label="Spaces"></div>
+        <div class="stat-card" data-current="{{containers_current}}" data-limit="{{containers_limit}}" data-label="Containers"></div>
+        <div class="stat-card" data-current="{{views_current}}" data-limit="{{views_limit}}" data-label="Views"></div>
+        <div class="stat-card" data-current="{{data_models_current}}" data-limit="{{data_models_limit}}" data-label="Data Models"></div>
+    </div>
+
+</div>
+
+<script>
+(function() {
+    const uniqueId = '{{unique_id}}';
+    {{SCRIPTS}}
+})();
+</script>

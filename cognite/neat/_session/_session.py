@@ -10,6 +10,7 @@ from cognite.neat._state_machine import EmptyState, PhysicalState
 from cognite.neat._store import NeatStore
 from cognite.neat._utils.http_client import ParametersRequest, SuccessResponse
 
+from ._cdf import CDF
 from ._issues import Issues
 from ._physical import PhysicalDataModel
 from ._result import Result
@@ -50,6 +51,9 @@ class NeatSession:
         self.physical_data_model = PhysicalDataModel(self._store, self._client, self._config)
         self.issues = Issues(self._store)
         self.result = Result(self._store)
+
+        if self._config.alpha.enable_cdf_analysis:
+            self.cdf = CDF(self._store, self._client, self._config)
 
         collector = Collector()
         if collector.can_collect:
