@@ -211,6 +211,9 @@ class DMSAPICreator(DMSImporter):
 
         errors, view_refs = self._parse_view_references(self._views)
 
+        if not view_refs:
+            errors.append(ModelSyntaxError(message="No valid views provided to create the data model."))
+
         # Check if all views exist in the cdf snapshot:
         for view in view_refs:
             if not self._resources.select_view(view):
@@ -237,6 +240,25 @@ class DMSAPICreator(DMSImporter):
             # set space and version to data model values
             expanded_view.space = self._space
             expanded_view.version = self._version
+
+            # Connections should be dropped if their source are not part of the expanded view
+            properties_to_remove = []
+            for id, property_ in expanded_view.properties.items():
+                # Currently only supporting explicit connections where source is defined
+                if self._resources.is_explicit_connection(property_):
+                    source = property_.source
+                    if source not in view_refs:
+                        properties_to_remove.append(id)
+
+                    # Update source to point to view of solution data model
+                    else:
+                        property_.source = ViewReference(
+                            space=self._space, external_id=source.external_id, version=self._version
+                        )
+
+            # Dropping connections which sources will not be part of the data model
+            for property_id in properties_to_remove:
+                expanded_view.properties.pop(property_id)
 
             expanded_views.append(expanded_view)
 

@@ -389,6 +389,18 @@ class ValidationResources:
 
         return connection_end_node_types
 
+    @staticmethod
+    def is_explicit_connection(property_: ViewRequestProperty) -> bool:
+        """Check if a property is an explicit connection property, meaning end node type is explicitly defined.
+
+        Args:
+            property_: The property to check.
+
+        Returns:
+            True if the property is a connection property, False otherwise.
+        """
+        return True if property_.source else False
+
     @cached_property
     def views_by_container(self) -> dict[ContainerReference, set[ViewReference]]:
         """Get a mapping from containers to the views that use them.
