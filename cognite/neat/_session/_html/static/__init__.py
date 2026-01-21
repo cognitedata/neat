@@ -6,3 +6,6 @@ issues_scripts = Path(__file__).parent / "issues.js"
 
 deployment_style = Path(__file__).parent / "deployment.css"
 deployment_scripts = Path(__file__).parent / "deployment.js"
+
+statistics_style = Path(__file__).parent / "statistics.css"
+statistics_scripts = Path(__file__).parent / "statistics.js"
