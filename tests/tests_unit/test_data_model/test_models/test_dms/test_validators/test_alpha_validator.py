@@ -12,6 +12,8 @@ from cognite.neat._issues import ConsistencyError
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from tests.data import SNAPSHOT_CATALOG
 
+BASE_CODE = "NEAT-ALPHA"
+
 
 @pytest.mark.parametrize("enable", [True, False])
 def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> None:
@@ -20,8 +22,8 @@ def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> Non
     mode = config.modeling.mode
     can_run_validator = config.validation.can_run_validator
 
-    class AlphaValidatorLocal(DataModelValidator):
-        code = "NEAT-ALPHA-001"
+    class TestAlphaValidator(DataModelValidator):
+        code = f"{BASE_CODE}-001"
         issue_type = ConsistencyError
         alpha = True
 
@@ -37,7 +39,7 @@ def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> Non
         found = get_concrete_subclasses(base_cls, exclude_direct_abc_inheritance)
         # Only modify when caller asks about DataModelValidator
         if base_cls is DataModelValidator:
-            return [*found, AlphaValidatorLocal]
+            return [*found, TestAlphaValidator]
         return found
 
     monkeypatch.setattr(
@@ -60,5 +62,5 @@ def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> Non
     on_success.run(data_model)
     by_code = on_success.issues.by_code()
 
-    assert (AlphaValidatorLocal.code in by_code) == enable
+    assert (TestAlphaValidator.code in by_code) == enable
     assert (CyclicImplements.code in by_code) == enable

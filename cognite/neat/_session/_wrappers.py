@@ -96,6 +96,24 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
             if callable(attr):
                 # Replace the original method with wrapped version
                 setattr(cls, attr_name, _handle_method_call(attr))
+    # Intercept __init__ to wrap any methods added via setattr
+    original_init = cls.__init__
 
-    # Return the modified class
+    @wraps(original_init)
+    def pick_alpha_methods(self: HasStore, *args: Any, **kwargs: Any) -> Any:
+        """This method wraps any instance methods added during __init__. which is the case for alpha methods"""
+        original_init(self, *args, **kwargs)
+        # Wrap any instance methods added during init
+        for attr_name in dir(self):
+            if not attr_name.startswith("_"):
+                attr = getattr(self, attr_name, None)
+                # Check if it's an instance method (not from the class)
+                if callable(attr) and attr_name not in vars(self.__class__):
+                    # Wrap and set on the instance
+                    wrapped = (
+                        _handle_method_call(attr.__func__) if hasattr(attr, "__func__") else _handle_method_call(attr)
+                    )
+                    setattr(self, attr_name, wrapped.__get__(self, type(self)))
+
+    cls.__init__ = pick_alpha_methods  # type: ignore[assignment]
     return cls
