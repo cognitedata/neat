@@ -13,6 +13,8 @@ from cognite.neat._issues import ConsistencyError
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from tests.data import SNAPSHOT_CATALOG
 
+BASE_CODE = "NEAT-ALPHA"
+
 
 @pytest.fixture
 def alpha_validator_cleanup() -> Iterator[None]:
@@ -35,7 +37,7 @@ def test_with_test_scoped_alpha_validator(
     can_run_validator = config.validation.can_run_validator
 
     class AlphaValidatorLocal(DataModelValidator):
-        code = "NEAT-ALPHA-001"
+        code = f"{BASE_CODE}-001"
         issue_type = ConsistencyError
         alpha = True
 
