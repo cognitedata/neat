@@ -234,6 +234,9 @@ class DMSAPICreator(DMSImporter):
             if not expanded_view:
                 raise RuntimeError(f"Failed to expand view '{view}' despite earlier checks. This is a bug.")
 
+            # make a deep copy to avoid modifying the cached view in resources
+            expanded_view = expanded_view.model_copy(deep=True)
+
             # remove implements after expansion
             expanded_view.implements = None
 
