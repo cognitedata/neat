@@ -176,8 +176,8 @@ jobs:
         run: npm install pyodide@0.27.6 # JupyterLite currently using pyodide 0.26.2
       - name: Install neat in pyodide environment
         run: |
-          whl_file=$(find dist -name "*.whl" | sed 's|^dist/||') # Find the built wheel file, remove dist/ prefix
+          whl_file=$(find dist -name "*.whl" | sed 's|^dist/||')
           echo "Found built wheel file: $whl_file"
           NEAT_FILE_PATH=$whl_file \
-          PACKAGES="[\"pyodide-http\", \"pandas\", \"typing-extensions>=4.14.0\", \"http://localhost:3000/dist/$whl_file\"]" \
+          PACKAGES="[\"pyodide-http\", \"http://localhost:3000/dist/$whl_file\"]" \
           node test-pyodide.js
