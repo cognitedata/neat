@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 from typing import Any
 
 import pytest
@@ -16,21 +15,8 @@ from tests.data import SNAPSHOT_CATALOG
 BASE_CODE = "NEAT-ALPHA"
 
 
-@pytest.fixture
-def alpha_validator_cleanup() -> Iterator[None]:
-    """Fixture to clean up AlphaValidatorLocal after test completes"""
-    yield
-    # After test, remove AlphaValidatorLocal from the subclass registry
-    if hasattr(DataModelValidator, "__subclasses__"):
-        DataModelValidator.__subclasses__.cache_clear() if hasattr(
-            DataModelValidator.__subclasses__, "cache_clear"
-        ) else None
-
-
 @pytest.mark.parametrize("enable", [True, False])
-def test_with_test_scoped_alpha_validator(
-    monkeypatch: Any, enable: bool, alpha_validator_cleanup: Iterator[None]
-) -> None:
+def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> None:
     config = NeatConfig.create_predefined()
     config.alpha.enable_experimental_validators = enable
     mode = config.modeling.mode
