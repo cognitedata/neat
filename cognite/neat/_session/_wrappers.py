@@ -100,7 +100,8 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
     original_init = cls.__init__
 
     @wraps(original_init)
-    def new_init(self: HasStore, *args: Any, **kwargs: Any) -> Any:
+    def pick_alpha_methods(self: HasStore, *args: Any, **kwargs: Any) -> Any:
+        """This method wraps any instance methods added during __init__. which is the case for alpha methods"""
         original_init(self, *args, **kwargs)
         # Wrap any instance methods added during init
         for attr_name in dir(self):
@@ -114,5 +115,5 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
                     )
                     setattr(self, attr_name, wrapped.__get__(self, type(self)))
 
-    cls.__init__ = new_init  # type: ignore[assignment]
+    cls.__init__ = pick_alpha_methods  # type: ignore[assignment]
     return cls
