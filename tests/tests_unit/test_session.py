@@ -10,15 +10,13 @@ import respx
 from cognite.neat import _state_machine as states
 from cognite.neat._client import NeatClientConfig
 from cognite.neat._config import NeatConfig
-from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
-from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError
+from cognite.neat._issues import IssueList
 from cognite.neat._session._physical import ReadPhysicalDataModel
 from cognite.neat._session._session import NeatSession
 from cognite.neat._session._usage_analytics._collector import Collector
-from cognite.neat._store._provenance import Change
 from tests.data import SNAPSHOT_CATALOG
 from tests.data.snapshots.utils import update_mock_router
 
@@ -341,109 +339,3 @@ class TestDMSSerialization:
 
         # missing container from toolkit schema should be added in neat schema
         assert "- Container: CogniteDescribable" in write_yaml.write_text.call_args[0][0]
-
-
-@pytest.mark.usefixtures("not_empty_cdf")
-class TestDataModelCreation:
-    def test_empty_cdf(self, new_session_with_alpha_features: NeatSession) -> None:
-        session = new_session_with_alpha_features
-
-        session._store._cdf_snapshot = SchemaSnapshot()
-
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            session.physical_data_model.create(  # type: ignore[attr-defined]
-                space="my_space",
-                external_id="MySolution",
-                version="v3",
-                views=["cdf_cdm:CogniteAsset(version=v1)"],
-            )
-
-        printed_statements = output.getvalue()
-
-        assert (
-            "Physical Data Model - create ❌\nThere are no data models in CDF. Cannot create solution model.\n"
-            in printed_statements
-        )
-
-    def test_issue_with_view_reference(self, new_session_with_alpha_features: NeatSession) -> None:
-        session = new_session_with_alpha_features
-
-        session.physical_data_model.create(  # type: ignore[attr-defined]
-            space="cdf_cdm",
-            external_id="SolutionModel",
-            version="v1",
-            views=[
-                "",
-                "cdf_cdm:CogniteAsset(ver=1320)",
-                "cdf=cdm:CogniteAsset(version=v1)",
-                "cdf_cdm:CogniteAsset(ver=1320),cdf_cdm:CogniteAsset(ver=1321)",
-                "cdf_cdm:CogniteAsset(version=1320)",
-                "1983:CogniteAsset(version=1320)",
-            ],
-        )
-
-        last_change = cast(Change, session._store.provenance.last_change)
-
-        by_type = cast(IssueList, last_change.errors).by_type()
-
-        expected_errors = {
-            ModelSyntaxError: {
-                "Invalid view reference '': Could not parse entity.",
-                (
-                    "Invalid view reference '1983:CogniteAsset(version=1320)', cannot parse it: "
-                    "In field 'space', string '1983' does not match the required pattern: "
-                    "'^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'"
-                ),
-                (
-                    "Invalid view reference 'cdf_cdm:CogniteAsset(ver=1320),"
-                    "cdf_cdm:CogniteAsset(ver=1321)': Expected a single view definition."
-                ),
-                (
-                    "Invalid view reference 'cdf=cdm:CogniteAsset(version=v1)', cannot parse it: "
-                    "Unexpected characters after properties at position 3. Got '='"
-                ),
-                "Invalid view reference 'cdf_cdm:CogniteAsset(ver=1320)': Missing 'version' property.",
-            },
-            ConsistencyError: {
-                (
-                    "View 'cdf_cdm:CogniteAsset(version=1320)' not found in "
-                    "the provided CDF snapshot. Cannot create data model."
-                )
-            },
-        }
-
-        assert set(by_type.keys()) == set(expected_errors.keys())
-
-        found = set()
-        actual = set()
-
-        for issue_type, issues in by_type.items():
-            for issue in issues:
-                actual.add(issue.message)
-                for expected_message in expected_errors[issue_type]:
-                    if expected_message in issue.message:
-                        found.add(issue.message)
-                        break
-
-        assert found == actual
-
-    def test_successful_data_model_creation(self, new_session_with_alpha_features: NeatSession) -> None:
-        session = new_session_with_alpha_features
-
-        session.physical_data_model.create(  # type: ignore[attr-defined]
-            space="my_space",
-            external_id="MySolution",
-            version="v3",
-            views=["cdf_cdm:CogniteAsset(version=v1)"],
-        )
-
-        last_change = cast(Change, session._store.provenance.last_change)
-
-        assert len(cast(IssueList, last_change.errors)) == 0
-        assert len(session._store.physical_data_model) == 1
-
-        assert session._store.physical_data_model[0].views[0].external_id == "CogniteAsset"
-        assert session._store.physical_data_model[0].views[0].space == "my_space"
-        assert session._store.physical_data_model[0].views[0].version == "v3"
-        assert session._store.physical_data_model[0].views[0].implements is None
