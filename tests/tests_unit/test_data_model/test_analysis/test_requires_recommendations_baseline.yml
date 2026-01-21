@@ -188,36 +188,33 @@ my_space:SharedTagView(v1):
   - Level03_SharedDescribableContainer
   final_constraints:
   - Level02_SharedAssetContainer -> Level02_SharedTagContainer
+  - Level02_SharedAssetContainer -> Level03_SharedDescribableContainer
   - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
   to_add:
   - Level02_SharedAssetContainer -> Level02_SharedTagContainer
   - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
-  to_remove:
-  - Level02_SharedAssetContainer -> Level03_SharedDescribableContainer
+  to_remove: []
 my_space:TagWithAssetView(v1):
   containers:
   - Level02_AssetContainer
   - Level02_TagWithWrongRequiresContainer
   - Level03_DescribableContainer
   final_constraints:
+  - Level02_AssetContainer -> Level02_TagWithWrongRequiresContainer
   - Level02_AssetContainer -> Level03_DescribableContainer
-  - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
   to_add:
-  - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
-  to_remove:
-  - Level02_AssetContainer -> Level03_SourceableContainer
-  - Level02_TagWithWrongRequiresContainer -> Level03_SourceableContainer
+  - Level02_AssetContainer -> Level02_TagWithWrongRequiresContainer
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_remove: []
 my_space:ValveView(v1):
   containers:
   - Level01_ValveContainer
   - Level02_TagWithWrongRequiresContainer
   - Level03_DescribableContainer
   final_constraints:
-  - Level01_ValveContainer -> Level03_DescribableContainer
-  - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
-  to_add:
-  - Level01_ValveContainer -> Level03_DescribableContainer
-  - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
-  to_remove:
   - Level01_ValveContainer -> Level02_TagWithWrongRequiresContainer
-  - Level02_TagWithWrongRequiresContainer -> Level03_SourceableContainer
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_add:
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_remove: []

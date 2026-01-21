@@ -3,11 +3,19 @@ from typing import cast
 import pytest
 from pytest_regressions.data_regression import DataRegressionFixture
 
-from cognite.neat._data_model._analysis import ResourceSource, ValidationResources
+from cognite.neat._data_model._analysis import (
+    RequiresChangesForView,
+    RequiresChangeStatus,
+    ResourceSource,
+    ValidationResources,
+)
 from cognite.neat._data_model._constants import COGNITE_SPACES
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms import ViewCorePropertyRequest, ViewReference, ViewRequest
 from cognite.neat._data_model.models.dms._container import ContainerRequest
-from cognite.neat._data_model.models.dms._references import ContainerReference
+from cognite.neat._data_model.models.dms._data_model import DataModelRequest
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
+from cognite.neat._data_model.models.dms._references import ContainerReference, DataModelReference
 from tests.data.snapshots.catalog import Catalog
 
 
@@ -618,6 +626,168 @@ class TestValidationResources:
 
 class TestValidationResourcesRequiresConstraints:
     """Tests for requires constraint recommendations."""
+
+    DEFAULT_SPACE = "my_space"
+    DEFAULT_VERSION = "v1"
+
+    def create_test_scenario(
+        self,
+        mapped_containers_by_view: dict[str, list[str]],
+        requires_graph: dict[str, list[str]],
+    ) -> ValidationResources:
+        """Create a minimal ValidationResources for testing requires constraint logic.
+
+        Args:
+            mapped_containers_by_view: Dict mapping view names to list of container names
+            requires_graph: Dict mapping container name to list of containers it requires
+
+        Returns:
+            ValidationResources with minimal setup for testing
+        """
+        space = self.DEFAULT_SPACE
+        version = self.DEFAULT_VERSION
+
+        # Collect all containers
+        all_containers: set[str] = set()
+        for containers in mapped_containers_by_view.values():
+            all_containers.update(containers)
+        for src, targets in requires_graph.items():
+            all_containers.add(src)
+            all_containers.update(targets)
+
+        # Build containers dict
+        containers: dict[ContainerReference, ContainerRequest] = {}
+        for container_name in all_containers:
+            ref = ContainerReference(space=space, external_id=container_name)
+            targets = requires_graph.get(container_name, [])
+            constraints = (
+                {
+                    f"requires_{target}": {
+                        "constraintType": "requires",
+                        "require": {"space": space, "externalId": target},
+                    }
+                    for target in targets
+                }
+                if targets
+                else None
+            )
+            containers[ref] = ContainerRequest.model_validate(
+                {
+                    "space": space,
+                    "externalId": container_name,
+                    "properties": {},
+                    "constraints": constraints,
+                }
+            )
+
+        # Build views dict
+        views: dict[ViewReference, ViewRequest] = {}
+        for view_name, container_names in mapped_containers_by_view.items():
+            view_ref = ViewReference(space=space, external_id=view_name, version=version)
+            properties = {
+                f"prop_{c}": {
+                    "container": {"space": space, "externalId": c},
+                    "containerPropertyIdentifier": f"prop_{c}",
+                }
+                for c in container_names
+            }
+            views[view_ref] = ViewRequest.model_validate(
+                {
+                    "space": space,
+                    "externalId": view_name,
+                    "version": version,
+                    "properties": properties,
+                }
+            )
+
+        # Build data model
+        dm_ref = DataModelReference(space=space, external_id="test_model", version=version)
+        data_model = {
+            dm_ref: DataModelRequest.model_validate(
+                {
+                    "space": space,
+                    "externalId": "test_model",
+                    "version": version,
+                    "views": [{"space": v.space, "externalId": v.external_id, "version": v.version} for v in views],
+                }
+            )
+        }
+
+        # Create snapshot and ValidationResources
+        local = SchemaSnapshot(data_model=data_model, views=views, containers=containers)
+        cdf = SchemaSnapshot()  # Empty CDF state
+        limits = SchemaLimits()
+
+        return ValidationResources(modus_operandi="additive", local=local, cdf=cdf, limits=limits)
+
+    def _container_ref(self, name: str) -> ContainerReference:
+        """Helper to create ContainerReference with default space."""
+        return ContainerReference(space=self.DEFAULT_SPACE, external_id=name)
+
+    def _view_ref(self, name: str) -> ViewReference:
+        """Helper to create ViewReference with default space and version."""
+        return ViewReference(space=self.DEFAULT_SPACE, external_id=name, version=self.DEFAULT_VERSION)
+
+    @pytest.mark.parametrize(
+        "mapped_containers_by_view,requires_graph,view_name,expected",
+        [
+            pytest.param(
+                {"TagView": ["TagContainer", "AssetContainer"]},
+                {"TagContainer": ["AssetContainer"]},
+                "TagView",
+                RequiresChangesForView(set(), set(), RequiresChangeStatus.OPTIMAL),
+                id="already-optimal",
+            ),
+            pytest.param(
+                {"TagView": ["TagContainer", "AssetContainer"]},
+                {},
+                "TagView",
+                RequiresChangesForView(
+                    to_add={
+                        (
+                            ContainerReference(space="my_space", external_id="AssetContainer"),
+                            ContainerReference(space="my_space", external_id="TagContainer"),
+                        )
+                    },
+                    to_remove=set(),
+                    status=RequiresChangeStatus.CHANGES_AVAILABLE,
+                ),
+                id="missing-constraint",
+            ),
+            pytest.param(
+                {"TagView": ["TagContainer", "AssetContainer"]},
+                {"TagContainer": ["AssetContainer"]},  # Existing constraint - algorithm preserves it
+                "TagView",
+                RequiresChangesForView(
+                    to_add=set(),
+                    to_remove=set(),
+                    status=RequiresChangeStatus.OPTIMAL,
+                ),
+                id="existing-constraint-preserved",
+            ),
+            pytest.param(
+                {"SingleContainerView": ["OnlyContainer"]},
+                {},
+                "SingleContainerView",
+                RequiresChangesForView(set(), set(), RequiresChangeStatus.OPTIMAL),
+                id="single-container-view-is-optimal",
+            ),
+        ],
+    )
+    def test_get_requires_changes_for_view(
+        self,
+        mapped_containers_by_view: dict[str, list[str]],
+        requires_graph: dict[str, list[str]],
+        view_name: str,
+        expected: RequiresChangesForView,
+    ) -> None:
+        """Test get_requires_changes_for_view for isolated scenarios."""
+        resources = self.create_test_scenario(mapped_containers_by_view, requires_graph)
+        result = resources.get_requires_changes_for_view(self._view_ref(view_name))
+
+        assert result.to_add == expected.to_add
+        assert result.to_remove == expected.to_remove
+        assert result.status == expected.status
 
     def test_views_by_container(self, scenarios: dict[str, ValidationResources]) -> None:
         """Test views_by_container returns correct view mappings."""

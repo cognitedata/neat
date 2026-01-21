@@ -538,10 +538,11 @@ class ValidationResources:
             container = self.select_container(container_ref)
             if not container or not container.constraints:
                 continue
-            for constraint in container.constraints.values():
+            for constraint_id, constraint in container.constraints.items():
                 if not isinstance(constraint, RequiresConstraintDefinition):
                     continue
-                graph.add_edge(container_ref, constraint.require)
+                is_auto = constraint_id.endswith("__auto")
+                graph.add_edge(container_ref, constraint.require, is_auto=is_auto)
 
         return graph
 
@@ -571,20 +572,49 @@ class ValidationResources:
         )
 
     @cached_property
-    def _immutable_descendants(self) -> defaultdict[ContainerReference, set[ContainerReference]]:
-        """Pre-compute descendants in immutable_requires_constraint_graph for all containers.
+    def _fixed_constraint_graph(self) -> nx.DiGraph:
+        """Graph of all fixed constraints (immutable + user-intentional).
 
-        Returns defaultdict - missing keys return empty set (container has no immutable descendants).
+        Both are "fixed" from the optimizer's perspective - existing paths that can't be changed.
         """
+        G = nx.DiGraph()
+        G.add_edges_from(self.immutable_requires_constraint_graph.edges())
+        G.add_edges_from(self._user_intentional_constraints)
+        return G
+
+    @cached_property
+    def _fixed_descendants(self) -> defaultdict[ContainerReference, set[ContainerReference]]:
+        """Pre-compute descendants via fixed constraints. Missing keys return empty set."""
         result: defaultdict[ContainerReference, set[ContainerReference]] = defaultdict(set)
-        for container in self.immutable_requires_constraint_graph.nodes():
-            result[container] = nx.descendants(self.immutable_requires_constraint_graph, container)
+        for container in self._fixed_constraint_graph.nodes():
+            result[container] = nx.descendants(self._fixed_constraint_graph, container)
         return result
 
     @cached_property
     def _existing_requires_edges(self) -> set[tuple[ContainerReference, ContainerReference]]:
         """Cached set of existing requires constraint edges."""
         return set(self.requires_constraint_graph.edges())
+
+    @cached_property
+    def _user_intentional_constraints(self) -> set[tuple[ContainerReference, ContainerReference]]:
+        """Constraints that appear to be user-intentional and should not be auto-removed
+
+        A constraint is user-intentional if:
+        1. The constraint identifier does NOT have '__auto' postfix
+        2. Neither src nor dst is part of a cycle (cyclic constraints are errors)
+
+        These constraints are preserved even if they're not in the optimal structure, because
+        they may be used for data integrity purposes.
+        We DON'T consider manual-created constraints as user-intended if they form part of a cycle,
+        because that indicates a problem with the data model where we likely can provide a better solution.
+        """
+        containers_in_cycles = {container for cycle in self.requires_constraint_cycles for container in cycle}
+
+        return {
+            (src, dst)
+            for src, dst, data in self.requires_constraint_graph.edges(data=True)
+            if not data.get("is_auto", False) and src not in containers_in_cycles and dst not in containers_in_cycles
+        }
 
     @staticmethod
     def forms_directed_path(nodes: set[_NodeT], graph: nx.DiGraph) -> bool:
@@ -640,10 +670,10 @@ class ValidationResources:
 
     @cached_property
     def optimized_requires_constraint_graph(self) -> nx.DiGraph:
-        """Target state of requires constraints after optimizing."""
+        """Target state of requires constraints after optimizing (MST + fixed constraints)."""
         graph = nx.DiGraph()
         graph.add_edges_from(self.oriented_mst_edges)
-        graph.add_edges_from(self.immutable_requires_constraint_graph.edges())
+        graph.add_edges_from(self._fixed_constraint_graph.edges())
         return graph
 
     @cached_property
@@ -663,7 +693,8 @@ class ValidationResources:
             if len(containers) < 2:
                 continue  # Need at least 2 containers to form a requires constraint
 
-            for src, dst in combinations(containers, 2):
+            # Sort for deterministic preferred_direction when weights are equal
+            for src, dst in combinations(sorted(containers, key=str), 2):
                 if G.has_edge(src, dst):
                     continue  # Already added from another view
 
@@ -779,7 +810,9 @@ class ValidationResources:
         edge_votes: dict[tuple[ContainerReference, ContainerReference], float] = defaultdict(float)
         all_edges: set[tuple[ContainerReference, ContainerReference]] = set()
 
-        for view, mst in self._mst_by_view.items():
+        # Sort for deterministic iteration (dict order can vary with hash randomization)
+        for view in sorted(self._mst_by_view.keys(), key=str):
+            mst = self._mst_by_view[view]
             root = self._root_by_view[view]  # Always exists for views in _mst_by_view
             containers = self.containers_by_view.get(view)
             modifiable_count = len(containers & self.modifiable_containers)
@@ -798,7 +831,8 @@ class ValidationResources:
         # Pick direction: most votes wins, preferred_direction breaks ties
         oriented: set[tuple[ContainerReference, ContainerReference]] = set()
 
-        for c1, c2 in all_edges:
+        # Sort for deterministic iteration (hash randomization affects set order)
+        for c1, c2 in sorted(all_edges, key=lambda e: (str(e[0]), str(e[1]))):
             c1_votes = edge_votes.get((c1, c2), 0)
             c2_votes = edge_votes.get((c2, c1), 0)
 
@@ -818,12 +852,15 @@ class ValidationResources:
         if not self.oriented_mst_edges:
             return set()
 
-        # Optimal graph = MST + immutable (no existing - that's just for diffing later)
+        # Optimal graph = MST + immutable + user-intentional (these provide existing paths)
         optimal = nx.DiGraph()
         optimal.add_edges_from(self.immutable_requires_constraint_graph.edges())
+        optimal.add_edges_from(self._user_intentional_constraints)
         optimal.add_edges_from(self.oriented_mst_edges)
 
         reduced = nx.transitive_reduction(optimal)
+
+        # Return MST edges that survive reduction
         return {e for e in reduced.edges() if e in self.oriented_mst_edges}
 
     def get_requires_changes_for_view(self, view: ViewReference) -> RequiresChangesForView:
@@ -855,8 +892,12 @@ class ValidationResources:
         to_add = optimal_for_view - existing_from_view
 
         # To remove: existing edges with wrong direction or not in MST (and not needed externally)
+        # But NEVER remove user-intentional constraints (manually defined, no __auto postfix)
         to_remove: set[tuple[ContainerReference, ContainerReference]] = set()
         for src, dst in existing_from_view:
+            # Skip user-intentional constraints - they were set by the user on purpose
+            if (src, dst) in self._user_intentional_constraints:
+                continue
             if (dst, src) in self.oriented_mst_edges:
                 to_remove.add((src, dst))  # Always remove if opposite direction from optimal solution
             elif (src, dst) not in self.oriented_mst_edges and not (
@@ -885,17 +926,15 @@ class ValidationResources:
     # tier to beat a higher tier.
     #
     # Tiers (explicit priority order):
-    #   - Tier 0 (FREE):          Immutable CDF constraints handle it
     #   - Tier 1 (USER→USER):     Both containers modifiable - always preferred
     #   - Tier 2 (USER→EXTERNAL): Target is CDF/CDM - only when needed
-    #   - Tier ∞ (FORBIDDEN):     Invalid edge
+    #   - Tier ∞ (FORBIDDEN):     Invalid edge, forms cycle or source is not modifiable
     #
     # Sub-weights refine ordering WITHIN a tier (shared views, direction, etc).
     #   - These have been empirically tuned through trial and error.
     # ========================================================================
 
     # Tier base weights (gap of 1000 ensures tier always wins)
-    _TIER_FREE = 0
     _TIER_USER_TO_USER = 1000
     _TIER_USER_TO_EXTERNAL = 2000
     _TIER_FORBIDDEN = math.inf
@@ -916,10 +955,11 @@ class ValidationResources:
         Returns TIER + sub_weight where tier dominates (gap of 1000).
         Sub-weights refine ordering within a tier based on shared views, direction, coverage.
         """
-        if dst in self._immutable_descendants[src]:
-            return self._TIER_FREE
+        # Opposite direction of fixed constraints is forbidden (would conflict with existing path)
+        if src in self._fixed_descendants[dst]:
+            return self._TIER_FORBIDDEN
 
-        if src not in self.modifiable_containers or src in self._immutable_descendants[dst]:
+        if src not in self.modifiable_containers:
             return self._TIER_FORBIDDEN
 
         src_views = self.views_by_container.get(src, set())
@@ -927,15 +967,14 @@ class ValidationResources:
 
         # Sub-weight adjustments
         shared_bonus = min(len(src_views & dst_views) * self._BONUS_SHARED_VIEWS_PER, self._BONUS_SHARED_VIEWS_MAX)
+        coverage_bonus = min(len(self._fixed_descendants[dst]) * self._BONUS_COVERAGE_PER, self._BONUS_COVERAGE_MAX)
         view_penalty = self._PENALTY_VIEW_COUNT if len(src_views) > len(dst_views) else 0
 
-        # Deterministic tie-breaker
+        # Deterministic tie-breaker (very small, only matters when all else is equal)
         edge_str = f"{src.space}:{src.external_id}->{dst.space}:{dst.external_id}"
         tie_breaker = sum(ord(c) for c in edge_str) / self._TIE_BREAKER_DIVISOR
 
         if dst in self.modifiable_containers:
-            return self._TIER_USER_TO_USER - shared_bonus + view_penalty + tie_breaker
+            return self._TIER_USER_TO_USER - shared_bonus - coverage_bonus + view_penalty + tie_breaker
 
-        # External target: add coverage bonus for well-connected CDF containers
-        coverage_bonus = min(len(self._immutable_descendants[dst]) * self._BONUS_COVERAGE_PER, self._BONUS_COVERAGE_MAX)
         return self._TIER_USER_TO_EXTERNAL - shared_bonus - coverage_bonus + tie_breaker
