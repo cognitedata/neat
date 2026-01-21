@@ -11,7 +11,7 @@ from cognite.neat._data_model.models.dms._view_property import (
 from cognite.neat._data_model.validation.dms._base import (
     DataModelValidator,
 )
-from cognite.neat._issues import ConsistencyError
+from cognite.neat._issues import ConsistencyError, Recommendation
 
 BASE_CODE = "NEAT-DMS-LIMITS"
 
@@ -124,19 +124,19 @@ class ViewContainerCountIsOutOfLimits(DataModelValidator):
     Checks that the view references no more containers than the CDF limit allows.
 
     ## Why is this bad?
-    CDF enforces limits on the number of containers per view to prevent overly complex view definitions, leading
-    to too many joins and performance degradation.
+    Mapping too many containers to a single view can lead to performance issues to increasing number of joins
+    that need to be performed when querying data through the view.
 
     ## Example
     If a view references 20 containers and the CDF limit is 10 containers per view,
-    this validator will raise a ConsistencyError issue.
+    this validator will raise a Recommendation.
     """
 
     code = f"{BASE_CODE}-VIEW-002"
-    issue_type = ConsistencyError
+    issue_type = Recommendation
 
-    def run(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
+    def run(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
 
         # Single loop over all views
         for view_ref in self.validation_resources.merged_data_model.views or []:
@@ -152,18 +152,18 @@ class ViewContainerCountIsOutOfLimits(DataModelValidator):
                     }
                 )
                 if count > self.validation_resources.limits.views.containers:
-                    errors.append(
-                        ConsistencyError(
+                    recommendations.append(
+                        Recommendation(
                             message=(
                                 f"View {view_ref!s} references "
-                                f"{count} containers, which exceeds the limit of "
+                                f"{count} containers, which exceeds a common sense limit of "
                                 f"{self.validation_resources.limits.views.containers} containers per view."
                             ),
                             code=self.code,
                         )
                     )
 
-        return errors
+        return recommendations
 
 
 class ViewImplementsCountIsOutOfLimits(DataModelValidator):
