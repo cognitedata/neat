@@ -29,7 +29,6 @@ def new_session(neat_config: NeatClientConfig) -> NeatSession:
 @pytest.fixture()
 def new_session_with_alpha_features(neat_config: NeatClientConfig) -> NeatSession:
     cfg = NeatConfig.create_predefined("legacy-additive")
-    cfg.alpha.enable_solution_model_creation = True
     cfg.alpha.enable_cdf_analysis = True
 
     return NeatSession(neat_config, cfg)
