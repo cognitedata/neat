@@ -10,7 +10,6 @@ container requires constraints:
 
 from cognite.neat._data_model._analysis import RequiresChangeStatus
 from cognite.neat._data_model._constants import COGNITE_SPACES
-from cognite.neat._data_model.models.dms import ViewReference
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import Recommendation
 
@@ -57,30 +56,20 @@ class MissingRequiresConstraint(DataModelValidator):
                 # Check if this is a "safe" recommendation (no cross-view dependencies)
                 is_safe = not other_views_with_src or view_ref in views_impacted_by_change
 
-                if is_safe:
-                    message = (
-                        f"View '{view_ref!s}' is not optimized for querying. "
-                        f"Add a 'requires' constraint from '{src!s}' to '{dst!s}'."
-                    )
-                else:
-                    # Find a view to suggest: prefer one mapping to both, fallback to one mapping to dst
+                message = (
+                    f"View '{view_ref!s}' is not optimized for querying. "
+                    f"Add a 'requires' constraint from '{src!s}' to '{dst!s}'."
+                )
+                if not is_safe:
+                    # Find a superset view to suggest for ingestion
                     merged_views = set(self.validation_resources.merged.views)
-                    merged_views_mapping_to_both = views_impacted_by_change & merged_views
-                    view_example: ViewReference | None = None
-                    if merged_views_mapping_to_both:
-                        view_example = min(merged_views_mapping_to_both, key=str)
-                    else:
-                        dst_views = self.validation_resources.views_by_container.get(dst, set()) & merged_views
-                        if dst_views:
-                            view_example = min(dst_views, key=str)
-
-                    message = (
-                        f"View '{view_ref!s}' is not optimized for querying. "
-                        f"Add a 'requires' constraint from '{src!s}' to '{dst!s}'. "
-                        "Note: this causes an ingestion dependency for this view, "
-                        "if you will be using it to ingest instances, you will "
-                        f"need to populate these instances into '{dst!s}' "
-                        + (f"first, for example through view '{view_example!s}'." if view_example else "first.")
+                    superset_views = views_impacted_by_change & merged_views
+                    view_example = min(superset_views, key=str) if superset_views else None
+                    message += (
+                        " Note: this causes an ingestion dependency for this view, "
+                        " if you will be using this view to ingest instances, you will "
+                        f"need to populate these instances into '{dst!s}' first"
+                        + (f", for example through view '{view_example!s}'." if view_example else ".")
                     )
 
                 recommendations.append(
