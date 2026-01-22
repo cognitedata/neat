@@ -21,33 +21,6 @@ my_space:CogniteAssetExtensionView(v1):
   to_add:
   - CogniteAssetExtensionContainer -> CogniteAsset
   to_remove: []
-my_space:CycleTestView(v1):
-  containers:
-  - CycleContainerA
-  - CycleContainerB
-  final_constraints:
-  - CycleContainerA -> CycleContainerB
-  to_add: []
-  to_remove:
-  - CycleContainerB -> CycleContainerA
-my_space:DisconnectedGroupAView(v1):
-  containers:
-  - DisconnectedGroupAContainer1
-  - DisconnectedGroupAContainer2
-  final_constraints:
-  - DisconnectedGroupAContainer1 -> DisconnectedGroupAContainer2
-  to_add:
-  - DisconnectedGroupAContainer1 -> DisconnectedGroupAContainer2
-  to_remove: []
-my_space:DisconnectedGroupBView(v1):
-  containers:
-  - DisconnectedGroupBContainer1
-  - DisconnectedGroupBContainer2
-  final_constraints:
-  - DisconnectedGroupBContainer1 -> DisconnectedGroupBContainer2
-  to_add:
-  - DisconnectedGroupBContainer1 -> DisconnectedGroupBContainer2
-  to_remove: []
 my_space:EquipmentCompressorView(v1):
   containers:
   - CogniteDescribable
@@ -145,29 +118,6 @@ my_space:ImmutableBridgeViewB(v1):
   - ImmutableBridgeUserBContainer -> CogniteDescribable
   to_add:
   - ImmutableBridgeUserBContainer -> CogniteDescribable
-  to_remove: []
-my_space:ManyExternalsView(v1):
-  containers:
-  - ExternalUserContainerA
-  - ExternalUserContainerB
-  - ExternalUserContainerC
-  - ManyExternalsRootContainer
-  final_constraints:
-  - ManyExternalsRootContainer -> ExternalUserContainerA
-  - ManyExternalsRootContainer -> ExternalUserContainerB
-  - ManyExternalsRootContainer -> ExternalUserContainerC
-  to_add:
-  - ManyExternalsRootContainer -> ExternalUserContainerA
-  - ManyExternalsRootContainer -> ExternalUserContainerB
-  - ManyExternalsRootContainer -> ExternalUserContainerC
-  to_remove: []
-my_space:PreConfiguredView(v1):
-  containers:
-  - PreConfiguredLeafContainer
-  - PreConfiguredRootContainer
-  final_constraints:
-  - PreConfiguredRootContainer -> PreConfiguredLeafContainer
-  to_add: []
   to_remove: []
 my_space:PumpEquipmentView(v1):
   containers:

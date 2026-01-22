@@ -1,27 +1,6 @@
 # Test views for requires constraint recommendations
 # Naming: Level01=equipment(root), Level02=tag/asset, Level03=describable(leaf)
 
-# Already correctly configured
-- space: my_space
-  externalId: PreConfiguredView
-  version: v1
-  name: Pre-Configured View
-  properties:
-    rootField:
-      name: rootField
-      container:
-        space: my_space
-        externalId: PreConfiguredRootContainer
-        type: container
-      containerPropertyIdentifier: assetField
-    leafField:
-      name: leafField
-      container:
-        space: my_space
-        externalId: PreConfiguredLeafContainer
-        type: container
-      containerPropertyIdentifier: description
-
 # Equipment view: Valve → Tag → Describable
 # Tag has wrong requires to Sourceable (should be Describable)
 - space: my_space
@@ -78,66 +57,6 @@
         externalId: Level03_DescribableContainer
         type: container
       containerPropertyIdentifier: description
-
-# Cycle test
-- space: my_space
-  externalId: CycleTestView
-  version: v1
-  name: Cycle Test View
-  properties:
-    propCycleA:
-      name: propCycleA
-      container:
-        space: my_space
-        externalId: CycleContainerA
-        type: container
-      containerPropertyIdentifier: propA
-    propCycleB:
-      name: propCycleB
-      container:
-        space: my_space
-        externalId: CycleContainerB
-        type: container
-      containerPropertyIdentifier: propB
-
-# Disconnected groups (never appear together)
-- space: my_space
-  externalId: DisconnectedGroupAView
-  version: v1
-  properties:
-    groupAField1:
-      name: groupAField1
-      container:
-        space: my_space
-        externalId: DisconnectedGroupAContainer1
-        type: container
-      containerPropertyIdentifier: groupAField1
-    groupAField2:
-      name: groupAField2
-      container:
-        space: my_space
-        externalId: DisconnectedGroupAContainer2
-        type: container
-      containerPropertyIdentifier: groupAField2
-
-- space: my_space
-  externalId: DisconnectedGroupBView
-  version: v1
-  properties:
-    groupBField1:
-      name: groupBField1
-      container:
-        space: my_space
-        externalId: DisconnectedGroupBContainer1
-        type: container
-      containerPropertyIdentifier: groupBField1
-    groupBField2:
-      name: groupBField2
-      container:
-        space: my_space
-        externalId: DisconnectedGroupBContainer2
-        type: container
-      containerPropertyIdentifier: groupBField2
 
 # User containers connected via immutable CDM container
 - space: my_space
@@ -335,42 +254,6 @@
         externalId: CogniteDescribable
         type: container
       containerPropertyIdentifier: description
-
-# Test scenario: 1 local container + 3 external user containers
-# Expected: ManyExternalsRootContainer should require all 3 external containers
-- space: my_space
-  externalId: ManyExternalsView
-  version: v1
-  name: Many Externals View
-  properties:
-    rootField:
-      name: rootField
-      container:
-        space: my_space
-        externalId: ManyExternalsRootContainer
-        type: container
-      containerPropertyIdentifier: rootField
-    fieldA:
-      name: fieldA
-      container:
-        space: external_space
-        externalId: ExternalUserContainerA
-        type: container
-      containerPropertyIdentifier: fieldA
-    fieldB:
-      name: fieldB
-      container:
-        space: external_space
-        externalId: ExternalUserContainerB
-        type: container
-      containerPropertyIdentifier: fieldB
-    fieldC:
-      name: fieldC
-      container:
-        space: external_space
-        externalId: ExternalUserContainerC
-        type: container
-      containerPropertyIdentifier: fieldC
 
 # Test scenario: Equipment views connecting through user Tag and CDM containers
 # EquipmentPumpView: Pump, Tag, CogniteDescribable

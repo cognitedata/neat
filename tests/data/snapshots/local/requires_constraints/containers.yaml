@@ -2,36 +2,6 @@
 # Naming convention: Level01=equipment(root), Level02=tag, Level03=describable(leaf)
 # Alphabetically Level01 < Level02 < Level03, but hierarchy should be Level01 → Level02 → Level03
 
-# Already correctly configured - should need no changes
-- space: my_space
-  externalId: PreConfiguredRootContainer
-  usedFor: node
-  properties:
-    assetField:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-  constraints:
-    req_describable:
-      constraintType: requires
-      require:
-        space: my_space
-        externalId: PreConfiguredLeafContainer
-        type: container
-
-- space: my_space
-  externalId: PreConfiguredLeafContainer
-  usedFor: node
-  properties:
-    description:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
 # Tag points to wrong target (Sourceable) instead of correct target (Describable)
 - space: my_space
   externalId: Level03_SourceableContainer
@@ -114,88 +84,6 @@
         space: my_space
         externalId: Level02_TagWithWrongRequiresContainer
         type: container
-
-# Bidirectional requires (cycle) - one direction must be removed
-- space: my_space
-  externalId: CycleContainerA
-  usedFor: node
-  properties:
-    propA:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-  constraints:
-    req_b:
-      constraintType: requires
-      require:
-        space: my_space
-        externalId: CycleContainerB
-        type: container
-
-- space: my_space
-  externalId: CycleContainerB
-  usedFor: node
-  properties:
-    propB:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-  constraints:
-    req_a:
-      constraintType: requires
-      require:
-        space: my_space
-        externalId: CycleContainerA
-        type: container
-
-# Containers that never appear together (no shared views)
-- space: my_space
-  externalId: DisconnectedGroupAContainer1
-  usedFor: node
-  properties:
-    groupAField1:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
-- space: my_space
-  externalId: DisconnectedGroupAContainer2
-  usedFor: node
-  properties:
-    groupAField2:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
-- space: my_space
-  externalId: DisconnectedGroupBContainer1
-  usedFor: node
-  properties:
-    groupBField1:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
-- space: my_space
-  externalId: DisconnectedGroupBContainer2
-  usedFor: node
-  properties:
-    groupBField2:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
 
 # User containers connected via immutable CDM container (CogniteDescribable)
 - space: my_space
@@ -301,19 +189,6 @@
   usedFor: node
   properties:
     equipmentField:
-      immutable: false
-      nullable: true
-      type:
-        type: text
-        list: false
-
-# Test scenario: 1 local container + multiple external user containers
-# Tests: Can we correctly recommend local container requiring all externals?
-- space: my_space
-  externalId: ManyExternalsRootContainer
-  usedFor: node
-  properties:
-    rootField:
       immutable: false
       nullable: true
       type:

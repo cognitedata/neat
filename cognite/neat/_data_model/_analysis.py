@@ -743,7 +743,10 @@ class ValidationResources:
 
     @cached_property
     def _root_by_view(self) -> dict[ViewReference, ContainerReference]:
-        """Map each view to its most view-specific (root) container.
+        """Map each view (with 2+ containers) to its most view-specific (root) container.
+
+        Only includes views with 2+ containers since single-container views
+        are trivially satisfied and don't need root direction.
 
         Selection criteria (in priority order):
         1. Fewest views: Containers appearing in fewer views are more "view-specific"
@@ -753,6 +756,9 @@ class ValidationResources:
         result: dict[ViewReference, ContainerReference] = {}
 
         for view, containers in self.containers_by_view.items():
+            if len(containers) < 2:
+                continue
+
             modifiable = containers.intersection(self.modifiable_containers)
             if not modifiable:
                 continue
@@ -779,18 +785,19 @@ class ValidationResources:
 
         Such views would require edges between forced roots, causing conflicts.
         """
+        forced_roots = set(self._root_by_view.values())
         unsolvable: set[ViewReference] = set()
 
         for view, containers in self.containers_by_view.items():
             modifiable = containers & self.modifiable_containers
             immutable = containers - self.modifiable_containers
 
-            # Need at least 2 modifiable containers to have a conflic
+            # Need at least 2 modifiable containers to have a conflict
             if len(modifiable) < 2:
                 continue
 
             # No immutable anchor AND all modifiables are roots elsewhere
-            if not immutable and modifiable <= set(self._root_by_view.values()):
+            if not immutable and modifiable <= forced_roots:
                 unsolvable.add(view)
 
         return unsolvable
