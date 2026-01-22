@@ -726,3 +726,20 @@ class TestContainerIndexDiffer:
             field_path=f"indexes.{BTREE_INDEX_ID}.cursorable",
             in_error_message=BTREE_INDEX_ID,
         )
+
+    def test_adding_index(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        new_index_id = "newIndex"
+        new_index = BtreeIndex(properties=[FLOAT_PROPERTY_ID], bySpace=False, cursorable=False)
+        # Happy mypy, we know indexes is not None since there are existing indexes
+        assert current_container.indexes is not None
+        new_container = current_container.model_copy(
+            update={"indexes": {**current_container.indexes, new_index_id: new_index}}
+        )
+
+        assert_change(
+            ContainerDiffer(),
+            current_container,
+            new_container,
+            neat_client.containers,
+            field_path=f"indexes.{new_index_id}",
+        )
