@@ -1,12 +1,4 @@
-"""Validators for checking performance-related aspects of the data model.
-
-This module contains validators that check for query performance issues related to
-container requires constraints:
-
-- MissingRequiresConstraint: Add constraints to optimize query performance
-- SuboptimalRequiresConstraint: Remove constraints not in the optimal structure
-- UnresolvableQueryPerformance: Structural issues that can't be solved with requires
-"""
+"""Validators for checking performance-related aspects of the data model."""
 
 from cognite.neat._data_model._analysis import RequiresChangeStatus
 from cognite.neat._data_model._constants import COGNITE_SPACES
@@ -85,13 +77,13 @@ class MissingRequiresConstraint(DataModelValidator):
 
 class SuboptimalRequiresConstraint(DataModelValidator):
     """
-    Recommends removing requires constraints that are not part of the structure
-    considered optimal for query performance by Neat.
+    Recommends removing requires constraints that are not optimal.
 
     ## What it does
-    Identifies existing requires constraints that are not optimal. These constraints
-    can be safely removed as they don't contribute to query optimization when all other
-    optimal constraints are applied.
+    Identifies existing requires constraints that are not optimal for querying purposes,
+    as they are either redundant or create unnecessary ingestion dependencies when all
+    other optimal constraints are applied. These constraints can be safely removed
+    without affecting query performance.
 
     ## Why is this important?
     Unnecessary requires constraints can:

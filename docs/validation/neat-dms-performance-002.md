@@ -1,10 +1,10 @@
-Recommends removing requires constraints that are not part of the structure
-considered optimal for query performance by Neat.
+Recommends removing requires constraints that are not optimal.
 
 ## What it does
-Identifies existing requires constraints that are not optimal. These constraints
-can be safely removed as they don't contribute to query optimization when all other
-optimal constraints are applied.
+Identifies existing requires constraints that are not optimal for querying purposes,
+as they are either redundant or create unnecessary ingestion dependencies when all
+other optimal constraints are applied. These constraints can be safely removed
+without affecting query performance.
 
 ## Why is this important?
 Unnecessary requires constraints can:
