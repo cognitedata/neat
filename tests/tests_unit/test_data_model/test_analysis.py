@@ -682,9 +682,9 @@ class TestValidationResourcesRequiresConstraints:
             )
 
         # Build views
-        views = {}
+        views: dict[ViewReference, ViewRequest] = {}
         for view_name, container_names in mapped_containers_by_view.items():
-            ref = self._view_ref(view_name)
+            view_ref = self._view_ref(view_name)
             props = {
                 f"prop_{c}": {
                     "container": {"space": self._space_for(c), "externalId": c},
@@ -692,8 +692,13 @@ class TestValidationResourcesRequiresConstraints:
                 }
                 for c in container_names
             }
-            views[ref] = ViewRequest.model_validate(
-                {"space": ref.space, "externalId": ref.external_id, "version": ref.version, "properties": props}
+            views[view_ref] = ViewRequest.model_validate(
+                {
+                    "space": view_ref.space,
+                    "externalId": view_ref.external_id,
+                    "version": view_ref.version,
+                    "properties": props,
+                }
             )
 
         # Build data model

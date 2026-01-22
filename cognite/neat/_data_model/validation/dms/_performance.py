@@ -10,6 +10,7 @@ container requires constraints:
 
 from cognite.neat._data_model._analysis import RequiresChangeStatus
 from cognite.neat._data_model._constants import COGNITE_SPACES
+from cognite.neat._data_model.models.dms import ViewReference
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import Recommendation
 
@@ -65,11 +66,13 @@ class MissingRequiresConstraint(DataModelValidator):
                     # Find a view to suggest: prefer one mapping to both, fallback to one mapping to dst
                     merged_views = set(self.validation_resources.merged.views)
                     merged_views_mapping_to_both = views_impacted_by_change & merged_views
+                    view_example: ViewReference | None = None
                     if merged_views_mapping_to_both:
                         view_example = min(merged_views_mapping_to_both, key=str)
                     else:
                         dst_views = self.validation_resources.views_by_container.get(dst, set()) & merged_views
-                        view_example = min(dst_views, key=str) if dst_views else None
+                        if dst_views:
+                            view_example = min(dst_views, key=str)
 
                     message = (
                         f"View '{view_ref!s}' is not optimized for querying. "
@@ -129,8 +132,8 @@ class SuboptimalRequiresConstraint(DataModelValidator):
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"View '{view_ref!s}' is mapping to container '{src!s}' that has a requires constraint to "
-                            f"'{dst!s}' that is not part of any view's optimal structure. Consider removing this constraint."
+                            f"View '{view_ref!s}' has a requires constraint '{src!s}' -> '{dst!s}' "
+                            "that is not part of the optimal structure. Consider removing it."
                         ),
                         fix="Remove the unnecessary requires constraint",
                         code=self.code,
@@ -186,11 +189,11 @@ class UnresolvableQueryPerformance(DataModelValidator):
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
-                            "The view maps only to CDF built-in containers which cannot be modified to add requires constraints. "
-                            "Consider adding a view-specific container (with at least one property) that requires the others."
+                            f"View '{view_ref!s}' has poor query performance. "
+                            "It maps only to CDF built-in containers which cannot have requires constraints. "
+                            "Consider adding a view-specific container that requires the others."
                         ),
-                        fix="Add a container (with at least one property) that requires the others, or restructure the view",
+                        fix="Add a container that requires the others, or restructure the view",
                         code=self.code,
                     )
                 )
@@ -198,12 +201,11 @@ class UnresolvableQueryPerformance(DataModelValidator):
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"View '{view_ref!s}' is not optimized for querying which can lead to poor query performance. "
-                            "No valid requires constraint solution was found for this view's mapped containers. "
-                            "Consider adding a view-specific container (with at least one property) "
-                            "that requires the others, or restructuring the view to use different containers."
+                            f"View '{view_ref!s}' has poor query performance. "
+                            "No valid requires constraint solution was found. "
+                            "Consider adding a view-specific container that requires the others."
                         ),
-                        fix="Add a container (with at least one property) that requires the others, or restructure the view",
+                        fix="Add a container that requires the others, or restructure the view",
                         code=self.code,
                     )
                 )

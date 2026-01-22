@@ -701,7 +701,7 @@ class ValidationResources:
         G = nx.Graph()
 
         for view_ref in self.merged.views:
-            containers = self.containers_by_view.get(view_ref)
+            containers = self.containers_by_view.get(view_ref, set())
             if len(containers) < 2:
                 continue  # Need at least 2 containers to form a requires constraint
 
@@ -739,7 +739,7 @@ class ValidationResources:
             if view_ref in self._views_with_root_conflicts:
                 continue
 
-            containers = self.containers_by_view.get(view_ref)
+            containers = self.containers_by_view.get(view_ref, set())
             if len(containers) < 2:  # Need at least 2 containers to have a constraint
                 continue
             if not containers.intersection(self.modifiable_containers):
@@ -775,7 +775,7 @@ class ValidationResources:
             if not modifiable:
                 continue
 
-            # Score: (view_count, no_existing_penalty, alphabetical)
+            # Selection priority: fewest views, has existing constraint, alphabetical
             result[view] = min(
                 modifiable,
                 key=lambda c: (
@@ -833,13 +833,13 @@ class ValidationResources:
         for view in sorted(self._mst_by_view.keys(), key=str):
             mst = self._mst_by_view[view]
             root = self._root_by_view[view]  # Always exists for views in _mst_by_view
-            containers = self.containers_by_view.get(view)
+            containers = self.containers_by_view.get(view, set())
             modifiable_count = len(containers & self.modifiable_containers)
             # Views with only 1 modifiable container have no choice - that container MUST be root
             vote_weight = float("inf") if modifiable_count == 1 else 1.0
 
             # BFS from root orients edges away from root (parent → child)
-            for parent, child in nx.bfs_edges(mst, root):
+            for parent, child in nx.bfs_edges(mst, root):  # type: ignore[func-returns-value]
                 if parent in self.modifiable_containers:
                     edge_votes[(parent, child)] += vote_weight
 
@@ -890,7 +890,9 @@ class ValidationResources:
         - to_remove: Existing constraints that are redundant or wrongly oriented
         - status: The optimization status for this view
         """
-        modifiable_containers_in_view = self.containers_by_view.get(view).intersection(self.modifiable_containers)
+        modifiable_containers_in_view = self.containers_by_view.get(view, set()).intersection(
+            self.modifiable_containers
+        )
         if not modifiable_containers_in_view:
             return RequiresChangesForView(set(), set(), RequiresChangeStatus.NO_MODIFIABLE_CONTAINERS)
 
@@ -925,7 +927,9 @@ class ValidationResources:
                 to_remove.add((src, dst))  # Remove if not in optimal solution and not needed by external views
 
         # Check solvability in optimized state
-        if not self.forms_directed_path(self.containers_by_view.get(view), self.optimized_requires_constraint_graph):
+        if not self.forms_directed_path(
+            self.containers_by_view.get(view, set()), self.optimized_requires_constraint_graph
+        ):
             return RequiresChangesForView(set(), set(), RequiresChangeStatus.UNSOLVABLE)
 
         if not to_add and not to_remove:
