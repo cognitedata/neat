@@ -24,7 +24,7 @@ class Validator:
     cls: type[DataModelValidator]
 
 
-def _get_production_validators() -> list[type[DataModelValidator]]:
+def get_production_validators() -> list[type[DataModelValidator]]:
     """Get all production validators, excluding test validators."""
     return [v for v in get_concrete_subclasses(DataModelValidator) if v.__name__ != "TestAlphaValidator"]
 
@@ -39,7 +39,7 @@ def get_filename(validation: type[DataModelValidator]) -> str:
 
 def write_validation_markdown_docs() -> int:
     count = 0
-    for validator in _get_production_validators():
+    for validator in get_production_validators():
         doc_content = generate_validation_markdown_docs(validator)
         file_path = VALIDATION_DIRECTORY / get_filename(validator)
         file_path.write_text(doc_content, encoding=ENCODING, newline=NEWLINE)
@@ -57,7 +57,7 @@ def get_validator_group_heading(module: ModuleType) -> str:
 def generate_validation_index_markdown_docs() -> str:
     validators = [
         Validator(validator_cls.__module__, validator_cls.code, validator_cls)
-        for validator_cls in _get_production_validators()
+        for validator_cls in get_production_validators()
     ]
     lines: list[
         str

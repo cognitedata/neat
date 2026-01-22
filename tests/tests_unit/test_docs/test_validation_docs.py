@@ -5,7 +5,6 @@ import pytest
 import yaml
 
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
-from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from tests.tests_unit.test_docs import generate_docs
 from tests.tests_unit.test_docs.generate_docs import (
     ENCODING,
@@ -15,6 +14,7 @@ from tests.tests_unit.test_docs.generate_docs import (
     generate_validation_index_markdown_docs,
     generate_validation_markdown_docs,
     get_filename,
+    get_production_validators,
     get_validator_group_heading,
 )
 
@@ -31,7 +31,7 @@ class TestValidationDocs:
             f"{RUN_SCRIPT}\n"
         )
 
-    @pytest.mark.parametrize("validator_cls", get_concrete_subclasses(DataModelValidator))
+    @pytest.mark.parametrize("validator_cls", get_production_validators())
     def test_validation_md_is_up_to_date(self, validator_cls: type[DataModelValidator]) -> None:
         expected_content = generate_validation_markdown_docs(validator_cls)
         file_path = VALIDATION_DIRECTORY / get_filename(validator_cls)
@@ -53,9 +53,7 @@ class TestValidationDocs:
             raise AssertionError(
                 "The mkdocs.yml file is missing the 'Validations' section in the 'nav' configuration."
             ) from None
-        module_names = sorted(
-            {validator_cls.__module__ for validator_cls in get_concrete_subclasses(DataModelValidator)}
-        )
+        module_names = sorted({validator_cls.__module__ for validator_cls in get_production_validators()})
         modules = [importlib.import_module(module_name) for module_name in module_names]
         expected_validation_groups: list[dict[str, str]] = []
         for module in modules:
