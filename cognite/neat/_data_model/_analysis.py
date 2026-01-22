@@ -65,10 +65,14 @@ class RequiresChangesForView:
 
 class ValidationResources:
     def __init__(
-        self, modus_operandi: ModusOperandi, local: SchemaSnapshot, cdf: SchemaSnapshot, limits: SchemaLimits
+        self,
+        modus_operandi: ModusOperandi,
+        local: SchemaSnapshot,
+        cdf: SchemaSnapshot,
+        limits: SchemaLimits | None = None,
     ) -> None:
         self._modus_operandi = modus_operandi
-        self.limits = limits
+        self.limits = limits or SchemaLimits()
 
         self.local = local
         self.cdf = cdf
@@ -406,6 +410,18 @@ class ValidationResources:
                         connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
         return connection_end_node_types
+
+    @staticmethod
+    def is_explicit_connection(property_: ViewRequestProperty) -> bool:
+        """Check if a property is an explicit connection property, meaning end node type is explicitly defined.
+
+        Args:
+            property_: The property to check.
+
+        Returns:
+            True if the property is a connection property, False otherwise.
+        """
+        return True if property_.source else False
 
     @cached_property
     def views_by_container(self) -> dict[ContainerReference, set[ViewReference]]:

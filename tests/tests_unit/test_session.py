@@ -9,6 +9,7 @@ import respx
 
 from cognite.neat import _state_machine as states
 from cognite.neat._client import NeatClientConfig
+from cognite.neat._config import NeatConfig
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
@@ -23,6 +24,14 @@ from tests.data.snapshots.utils import update_mock_router
 @pytest.fixture()
 def new_session(neat_config: NeatClientConfig) -> NeatSession:
     return NeatSession(neat_config)
+
+
+@pytest.fixture()
+def new_session_with_alpha_features(neat_config: NeatClientConfig) -> NeatSession:
+    cfg = NeatConfig.create_predefined("legacy-additive")
+    cfg.alpha.enable_cdf_analysis = True
+
+    return NeatSession(neat_config, cfg)
 
 
 @pytest.fixture()
@@ -304,6 +313,12 @@ class TestRender:
     def test_render_session_physical(self, physical_state_session: NeatSession) -> None:
         session = physical_state_session
         html_repr = session._repr_html_()
+
+        assert isinstance(html_repr, str)
+
+    def test_render_session_cdf(self, new_session_with_alpha_features: NeatSession) -> None:
+        session = new_session_with_alpha_features
+        html_repr = session.cdf._repr_html_()
 
         assert isinstance(html_repr, str)
 

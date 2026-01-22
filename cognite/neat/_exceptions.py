@@ -1,6 +1,8 @@
 from abc import ABC
 from typing import TYPE_CHECKING
 
+from cognite.neat._issues import ConsistencyError
+
 if TYPE_CHECKING:
     from cognite.neat._issues import ModelSyntaxError
     from cognite.neat._utils.http_client import HTTPMessage
@@ -21,6 +23,17 @@ class DataModelImportException(NeatException):
 
     def __str__(self) -> str:
         return f"Model import failed with {len(self.errors)} errors: " + "; ".join(map(str, self.errors))
+
+
+class DataModelCreateException(NeatException):
+    """Raised when there is an error creating a data model."""
+
+    def __init__(self, errors: "list[ModelSyntaxError | ConsistencyError]") -> None:
+        super().__init__(errors)
+        self.errors = errors
+
+    def __str__(self) -> str:
+        return f"Model creation failed with {len(self.errors)} errors: " + "; ".join(map(str, self.errors))
 
 
 class CDFAPIException(NeatException):

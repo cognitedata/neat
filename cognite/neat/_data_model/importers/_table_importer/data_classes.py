@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Annotated, Literal, cast, get_args
+from typing import Annotated, Any, Literal, cast, get_args
 
 from pydantic import (
     AliasGenerator,
@@ -12,7 +12,6 @@ from pydantic import (
 )
 from pydantic.alias_generators import to_camel
 from pydantic.fields import FieldInfo
-from traitlets import Any
 
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._utils.text import title_case

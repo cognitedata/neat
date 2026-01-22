@@ -105,6 +105,10 @@ class AlphaFlagConfig(ConfigModel):
         default=False,
         description="If enabled, Neat will run experimental validators that are still in alpha stage.",
     )
+    enable_solution_model_creation: bool = Field(
+        default=False, description="If enabled, neat.physical_data_model.create() will be available"
+    )
+    enable_cdf_analysis: bool = Field(default=False, description="If enabled, neat.cdf endpoint will be available.")
 
     def __setattr__(self, key: str, value: Any) -> None:
         """Set attribute value or raise AttributeError."""
