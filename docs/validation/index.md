@@ -73,19 +73,11 @@ Validators for checking if defined data model is within CDF DMS schema limits.
 
 Validators for checking performance-related aspects of the data model.
 
-This module contains validators that check for query performance issues related to
-container requires constraints:
-
-- MissingRequiresConstraint: Add constraints to optimize query performance
-- SuboptimalRequiresConstraint: Remove constraints not in the optimal structure
-- UnresolvableQueryPerformance: Structural issues that can't be solved with requires
-
-
 | code | name | message |
 |------|------|---------|
-| NEAT-DMS-PERFORMANCE-001 | [MissingRequiresConstraint](neat-dms-performance-001.md) | Recommends adding requires constraints to optimize query performance. |
-| NEAT-DMS-PERFORMANCE-002 | [SuboptimalRequiresConstraint](neat-dms-performance-002.md) | Recommends removing requires constraints that are not part of the structure |
-| NEAT-DMS-PERFORMANCE-003 | [UnresolvableQueryPerformance](neat-dms-performance-003.md) | Identifies views with query performance issues that cannot be resolved. |
+| NEAT-DMS-PERFORMANCE-001 | [MissingRequiresConstraint](neat-dms-performance-001.md) | Recommends adding requires constraints to containers to optimize for query performance in views mapping to them. |
+| NEAT-DMS-PERFORMANCE-002 | [SuboptimalRequiresConstraint](neat-dms-performance-002.md) | Recommends removing requires constraints that are not part of the structure considered optimal for query performance by Neat. |
+| NEAT-DMS-PERFORMANCE-003 | [UnresolvableQueryPerformance](neat-dms-performance-003.md) | Identifies views with query performance issues that cannot be resolved due to unintended modeling choices. |
 
 ### Views (NEAT-DMS-VIEW)
 

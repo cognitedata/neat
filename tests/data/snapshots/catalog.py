@@ -30,7 +30,7 @@ LocalScenario: TypeAlias = Literal[
     "uncategorized_validators",
     "cyclic_implements",
 ]
-CDFScenario: TypeAlias = Literal["cdm", "for_validators"]
+CDFScenario: TypeAlias = Literal["cdm", "for_validators", "requires_constraints"]
 
 
 class Catalog:
