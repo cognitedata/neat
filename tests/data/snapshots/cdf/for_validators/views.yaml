@@ -5,6 +5,7 @@
   description: An example view
   properties: {}
 
+
 - space: not_my_space
   externalId: ExistingEdgeConnection
   version: v1
@@ -46,6 +47,7 @@
         version: v1
         type: view
 
+
 - space: my_space
   externalId: SourceForReverseConnectionExistRemote
   version: v1
@@ -65,6 +67,7 @@
         externalId: MyDescribable
         version: v1
         type: view
+
 
 - space: prodigy
   externalId: OutOfSpace

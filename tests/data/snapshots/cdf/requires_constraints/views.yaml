@@ -1,14 +1,1 @@
-# CDF-only view using a local container (not in local schema)
-# Tests that we don't recommend removing constraints from containers with external views
-- space: cdf_only_space
-  externalId: CdfOnlyViewUsingLocalContainer
-  version: v1
-  name: CDF Only View
-  properties:
-    pumpField:
-      name: pumpField
-      container:
-        space: my_space
-        externalId: Level01_PumpEquipmentContainer
-        type: container
-      containerPropertyIdentifier: pumpField
+# CDF snapshot - no views, only containers

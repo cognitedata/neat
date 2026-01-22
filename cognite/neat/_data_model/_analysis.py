@@ -551,12 +551,8 @@ class ValidationResources:
         """Containers whose requires constraints can be modified in this session.
 
         A container is modifiable if:
-        - It's in the currently loaded data model
         - It's NOT in a CDF built-in space (CDM, IDM, etc.)
-
-        Non-modifiable containers include:
-        - CDF built-in containers (CDM, IDM) - managed by Cognite
-        - User containers in different data models - deployer skips them
+        - It's a user container brought in through the loaded data model scope or view implements chain
         """
         return {container_ref for container_ref in self.merged.containers if container_ref.space not in COGNITE_SPACES}
 
