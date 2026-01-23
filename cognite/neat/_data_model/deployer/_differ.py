@@ -89,6 +89,8 @@ def field_differences(
     add_severity: SeverityType,
     remove_severity: SeverityType,
     differ: ObjectDiffer[T_Item],
+    add_message: str | None = None,
+    remove_message: str | None = None,
 ) -> list[FieldChange]:
     """Diff two containers of items.
 
@@ -102,6 +104,8 @@ def field_differences(
         add_severity: The severity to assign to added items.
         remove_severity: The severity to assign to removed items.
         differ: The differ to use for comparing individual items.
+        add_message: Optional message to include with added items.
+        remove_message: Optional message to include with removed items.
 
     """
     changes: list[FieldChange] = []
@@ -117,6 +121,7 @@ def field_differences(
                 item_severity=add_severity,
                 field_path=item_path,
                 new_value=new_map[key],
+                message=add_message,
             )
         )
 
@@ -126,6 +131,7 @@ def field_differences(
                 item_severity=remove_severity,
                 field_path=f"{parent_path}.{key}",
                 current_value=current_map[key],
+                message=remove_message,
             )
         )
 

@@ -222,20 +222,33 @@ class SchemaDeployer(OnSuccessResultProducer):
                     raise RuntimeError("Bug in Neat. Malformed field path for constraint/index change.")
                 # Field type is either "constraints" or "indexes"
                 field_type, identifier, *_ = diff.field_path.split(".", maxsplit=2)
-                # Mark for removal
+                is_constraint = field_type == "constraints"
+                # Mark for removal (modification requires remove + re-add)
+                remove_message = (
+                    "Removing constraints may affect query performance."
+                    if is_constraint
+                    else "Removing indexes may affect query performance."
+                )
                 modified_diffs.append(
                     RemovedField(
                         field_path=f"{field_type}.{identifier}",
                         item_severity=SeverityType.WARNING,
                         current_value=getattr(current_resource, field_type)[identifier],
+                        message=remove_message,
                     )
                 )
-                # Mark for addition
+                # Mark for addition - constraints are WARNING, indexes are SAFE
+                add_message = (
+                    "Adding constraints may cause ingestion failures if the data being ingested violates the constraint"
+                    if is_constraint
+                    else None
+                )
                 modified_diffs.append(
                     AddedField(
                         field_path=f"{field_type}.{identifier}",
-                        item_severity=SeverityType.SAFE,
+                        item_severity=SeverityType.WARNING if is_constraint else SeverityType.SAFE,
                         new_value=getattr(new_resource, field_type)[identifier],
+                        message=add_message,
                     )
                 )
             else:

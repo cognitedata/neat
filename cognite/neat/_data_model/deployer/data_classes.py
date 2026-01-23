@@ -12,7 +12,6 @@ from pydantic.alias_generators import to_camel
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms import (
     BaseModelObject,
-    Constraint,
     ContainerConstraintReference,
     ContainerIndexReference,
     ContainerPropertyDefinition,
@@ -20,7 +19,6 @@ from cognite.neat._data_model.models.dms import (
     ContainerRequest,
     DataModelRequest,
     DataModelResource,
-    Index,
     T_DataModelResource,
     T_ResourceId,
     ViewRequest,
@@ -76,6 +74,7 @@ class PrimitiveField(FieldChange, ABC):
     """Base class for changes to primitive properties."""
 
     item_severity: SeverityType
+    message: str | None = None
 
     @property
     def severity(self) -> SeverityType:
@@ -87,13 +86,19 @@ class PrimitiveField(FieldChange, ABC):
         """Human-readable description of the change."""
         ...
 
+    def _with_message(self, base_description: str) -> str:
+        """Append the message to the description if present."""
+        if self.message:
+            return f"{base_description}. {self.message}"
+        return base_description
+
 
 class AddedField(PrimitiveField):
     new_value: BaseModelObject | str | int | float | bool | None
 
     @property
     def description(self) -> str:
-        return f"added with value {self.new_value!r}"
+        return self._with_message(f"added with value {self.new_value!r}")
 
 
 class RemovedField(PrimitiveField):
@@ -101,7 +106,7 @@ class RemovedField(PrimitiveField):
 
     @property
     def description(self) -> str:
-        return f"removed (was {self.current_value!r})"
+        return self._with_message(f"removed (was {self.current_value!r})")
 
 
 class ChangedField(PrimitiveField):
@@ -271,6 +276,14 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
                             for change in resource.changes
                             if not isinstance(change, RemovedField)
                             or (isinstance(change, RemovedField) and change.field_path in addition_paths)
+                            # Keep RemovedField for indexes and constraints as they are allowed to be removed
+                            or (
+                                isinstance(change, RemovedField)
+                                and (
+                                    change.field_path.startswith("indexes.")
+                                    or change.field_path.startswith("constraints.")
+                                )
+                            )
                         ],
                     }
                 )
@@ -320,22 +333,14 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
         resource: ContainerRequest, removals: list[RemovedField], addition_paths: set[str]
     ) -> DataModelResource:
         container_properties = resource.properties.copy()
-        indexes = (resource.indexes or {}).copy()
-        constraints = (resource.constraints or {}).copy()
         for removal in removals:
             if removal.field_path.startswith("properties."):
                 prop_key = removal.field_path.removeprefix("properties.")
                 container_properties[prop_key] = cast(ContainerPropertyDefinition, removal.current_value)
-            elif removal.field_path.startswith("indexes.") and removal.field_path not in addition_paths:
-                # Index was removed and not re-added, so we need to restore it.
-                index_key = removal.field_path.removeprefix("indexes.")
-                indexes[index_key] = cast(Index, removal.current_value)
-            elif removal.field_path.startswith("constraints.") and removal.field_path not in addition_paths:
-                # Constraint was removed and not re-added, so we need to restore it.
-                constraint_key = removal.field_path.removeprefix("constraints.")
-                constraints[constraint_key] = cast(Constraint, removal.current_value)
+            # Note: indexes and constraints are allowed to be removed in additive mode,
+            # so we don't restore them here unlike properties.
         return resource.model_copy(
-            update={"properties": container_properties, "indexes": indexes or None, "constraints": constraints or None},
+            update={"properties": container_properties},
             deep=True,
         )
 

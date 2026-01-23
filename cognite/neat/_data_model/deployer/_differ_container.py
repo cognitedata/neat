@@ -55,9 +55,11 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
                 "constraints",
                 current.constraints,
                 new.constraints,
-                add_severity=SeverityType.SAFE,
+                add_severity=SeverityType.WARNING,
                 remove_severity=SeverityType.WARNING,
                 differ=ConstraintDiffer("constraints"),
+                add_message="Adding constraints may cause ingestion failures if the data being ingested violates the constraint",
+                remove_message="Removing constraints may affect query performance",
             )
         )
         changes.extend(
@@ -69,6 +71,7 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.WARNING,
                 differ=IndexDiffer("indexes"),
+                remove_message="Removing indexes may affect query performance",
             )
         )
 

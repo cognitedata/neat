@@ -140,15 +140,17 @@ class TestContainerDiffer:
                     ),
                     AddedField(
                         field_path="constraints.constraintToAdd",
-                        item_severity=SeverityType.SAFE,
+                        item_severity=SeverityType.WARNING,
                         # MyPy do not see that we hardcoded the "toAdd" key in the changed_container
                         new_value=changed_container.constraints["constraintToAdd"],  # type: ignore[index]
+                        message="Adding constraints may cause ingestion failures if newly added data violates the constraint",
                     ),
                     RemovedField(
                         field_path="constraints.constraintToRemove",
                         item_severity=SeverityType.WARNING,
                         # See above
                         current_value=cdf_container.constraints["constraintToRemove"],  # type: ignore[index]
+                        message="Removing constraints may affect query performance",
                     ),
                     FieldChanges(
                         field_path=f"constraints.{CONSTRAINTS_TO_MODIFY_ID}",
@@ -172,6 +174,7 @@ class TestContainerDiffer:
                         item_severity=SeverityType.WARNING,
                         # See above
                         current_value=cdf_container.indexes["indexToRemove"],  # type: ignore[index]
+                        message="Removing indexes may affect query performance",
                     ),
                     FieldChanges(
                         field_path=f"indexes.{INDEX_TO_MODIFY_ID}",
