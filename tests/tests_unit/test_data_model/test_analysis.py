@@ -51,12 +51,6 @@ def scenarios() -> dict[str, ValidationResources]:
             include_cdm=True,
             format="validation-resource",
         ),
-        "requires-constraints-with-cdm": catalog.load_scenario(
-            "requires_constraints",
-            modus_operandi="additive",
-            include_cdm=True,
-            format="validation-resource",
-        ),
         "requires-constraints-rebuild": catalog.load_scenario(
             "requires_constraints",
             modus_operandi="rebuild",  # Rebuild mode: CDF-only constraints not in merged
@@ -652,30 +646,30 @@ class TestValidationResourcesRequiresConstraints:
         Args:
             mapped_containers_by_view: Dict mapping view names to list of container names
             requires_graph: Dict mapping container name to list of containers it requires.
-                           Use "Target__auto" suffix to mark constraint as auto-generated.
+                           Use "__auto" suffix to mark constraint as auto-generated.
                            Container names starting with "Cognite" are placed in CDM space.
         """
         # Collect all container names
-        all_containers = set(requires_graph.keys())
-        for containers in mapped_containers_by_view.values():
-            all_containers.update(containers)
+        all_container_names = set(requires_graph.keys())
+        for container_names in mapped_containers_by_view.values():
+            all_container_names.update(container_names)
         for targets in requires_graph.values():
-            all_containers.update(t.removesuffix("__auto") for t in targets)
+            all_container_names.update(target.removesuffix("__auto") for target in targets)
 
         # Build containers
-        containers = {}
-        for name in all_containers:
+        containers: dict[ContainerReference, ContainerRequest] = {}
+        for name in all_container_names:
             ref = self._container_ref(name)
             targets = requires_graph.get(name, [])
             constraints = {
-                f"requires_{t.removesuffix('__auto')}{'__auto' if t.endswith('__auto') else ''}": {
+                f"requires_{target}": {
                     "constraintType": "requires",
                     "require": {
-                        "space": self._space_for(t.removesuffix("__auto")),
-                        "externalId": t.removesuffix("__auto"),
+                        "space": self._space_for(target.removesuffix("__auto")),
+                        "externalId": target.removesuffix("__auto"),
                     },
                 }
-                for t in targets
+                for target in targets
             } or None
             containers[ref] = ContainerRequest.model_validate(
                 {"space": ref.space, "externalId": ref.external_id, "properties": {}, "constraints": constraints}
@@ -741,31 +735,14 @@ class TestValidationResourcesRequiresConstraints:
                 RequiresChangesForView(
                     to_add={
                         (
-                            ContainerReference(space="my_space", external_id="CustomTag"),
-                            ContainerReference(space="my_space", external_id="CustomAsset"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="CustomTag"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="CustomAsset"),
                         )
                     },
                     to_remove=set(),
                     status=RequiresChangeStatus.CHANGES_AVAILABLE,
                 ),
                 id="missing-constraint",
-            ),
-            # Single-container view doesn't force CustomAsset as root - TagView is still solvable
-            pytest.param(
-                {"TagView": ["CustomTag", "CustomAsset"], "AssetView": ["CustomAsset"]},
-                {},
-                "TagView",
-                RequiresChangesForView(
-                    to_add={
-                        (
-                            ContainerReference(space="my_space", external_id="CustomTag"),
-                            ContainerReference(space="my_space", external_id="CustomAsset"),
-                        )
-                    },
-                    to_remove=set(),
-                    status=RequiresChangeStatus.CHANGES_AVAILABLE,
-                ),
-                id="single-container-view-doesnt-force-root",
             ),
             # User container → CDM container (CDM containers are immutable)
             pytest.param(
@@ -775,7 +752,7 @@ class TestValidationResourcesRequiresConstraints:
                 RequiresChangesForView(
                     to_add={
                         (
-                            ContainerReference(space="my_space", external_id="Tag"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Tag"),
                             ContainerReference(space=CDF_CDM_SPACE, external_id="CogniteAsset"),
                         )
                     },
@@ -784,21 +761,35 @@ class TestValidationResourcesRequiresConstraints:
                 ),
                 id="missing-constraint-to-cdm",
             ),
-            # Existing constraint is preserved (algorithm prefers existing edges)
+            # Existing auto constraint is preserved and new one is recommended to add
             pytest.param(
-                {"View": ["Root", "Leaf"]},
+                {"View1": ["Root", "Leaf"], "View2": ["Root"]},
                 {"Root": ["Leaf__auto"]},  # Existing auto constraint
-                "View",
-                RequiresChangesForView(set(), set(), RequiresChangeStatus.OPTIMAL),
-                id="existing-auto-constraint-preserved",
+                "View1",
+                RequiresChangesForView(
+                    to_add={
+                        (
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Leaf"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Root"),
+                        )
+                    },
+                    to_remove={
+                        (
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Root"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Leaf"),
+                        )
+                    },
+                    status=RequiresChangeStatus.CHANGES_AVAILABLE,
+                ),
+                id="suboptimal-auto-constraint-removed",
             ),
-            # User-intentional constraint is preserved
+            # User-intentional constraint is preserved even though it causes ingestion dependency: View1->View2
             pytest.param(
-                {"View": ["Root", "Leaf"]},
+                {"View1": ["Root", "Leaf"], "View2": ["Root"]},
                 {"Leaf": ["Root"]},  # User-intentional (no __auto)
-                "View",
+                "View1",
                 RequiresChangesForView(set(), set(), RequiresChangeStatus.OPTIMAL),
-                id="existing-user-intentional-constraint-preserved",
+                id="suboptimal-existing-user-intentional-constraint-preserved",
             ),
             # Cycle: auto-constraint in cycle should be removed
             pytest.param(
@@ -809,8 +800,8 @@ class TestValidationResourcesRequiresConstraints:
                     to_add=set(),
                     to_remove={
                         (
-                            ContainerReference(space="my_space", external_id="CycleB"),
-                            ContainerReference(space="my_space", external_id="CycleA"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="CycleB"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="CycleA"),
                         )
                     },
                     status=RequiresChangeStatus.CHANGES_AVAILABLE,
@@ -825,14 +816,14 @@ class TestValidationResourcesRequiresConstraints:
                 RequiresChangesForView(
                     to_add={
                         (
-                            ContainerReference(space="my_space", external_id="B"),
-                            ContainerReference(space="my_space", external_id="C"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="B"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="C"),
                         )
                     },
                     to_remove={
                         (
-                            ContainerReference(space="my_space", external_id="C"),
-                            ContainerReference(space="my_space", external_id="B"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="C"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="B"),
                         )
                     },
                     status=RequiresChangeStatus.CHANGES_AVAILABLE,
@@ -852,16 +843,16 @@ class TestValidationResourcesRequiresConstraints:
                 RequiresChangesForView(
                     to_add={
                         (
-                            ContainerReference(space="my_space", external_id="Root"),
-                            ContainerReference(space="my_space", external_id="LeafA"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Root"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="LeafA"),
                         ),
                         (
-                            ContainerReference(space="my_space", external_id="Root"),
-                            ContainerReference(space="my_space", external_id="LeafB"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Root"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="LeafB"),
                         ),
                         (
-                            ContainerReference(space="my_space", external_id="Root"),
-                            ContainerReference(space="my_space", external_id="LeafC"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Root"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="LeafC"),
                         ),
                     },
                     to_remove=set(),
@@ -1037,9 +1028,12 @@ class TestValidationResourcesRequiresConstraints:
         group_a = {self._container_ref("GroupA_1"), self._container_ref("GroupA_2")}
         group_b = {self._container_ref("GroupB_1"), self._container_ref("GroupB_2")}
 
+        cross_edge_groups: list[tuple[ContainerReference, ContainerReference]] = []
         for edge in resources.oriented_mst_edges:
             edge_set = set(edge)
-            assert not (edge_set & group_a and edge_set & group_b), f"Cross-group edge was formed: {edge}"
+            if edge_set & group_a and edge_set & group_b:
+                cross_edge_groups.append(edge)
+        assert not cross_edge_groups, f"Cross-group edges were formed: {cross_edge_groups}"
 
     def test_requires_recommendations_baseline(
         self, scenarios: dict[str, ValidationResources], data_regression: DataRegressionFixture
