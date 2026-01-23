@@ -1,0 +1,170 @@
+my_space:CogniteAssetExtensionSolutionModelScenarioView(v1):
+  containers:
+  - CogniteAssetExtensionContainer
+  - CogniteAssetExtensionSolutionModelScenarioContainer
+  - CogniteDescribable
+  final_constraints:
+  - CogniteAssetExtensionContainer -> CogniteAsset
+  - CogniteAssetExtensionSolutionModelScenarioContainer -> CogniteAssetExtensionContainer
+  to_add:
+  - CogniteAssetExtensionContainer -> CogniteAsset
+  - CogniteAssetExtensionSolutionModelScenarioContainer -> CogniteAssetExtensionContainer
+  to_remove: []
+my_space:CogniteAssetExtensionView(v1):
+  containers:
+  - CogniteAsset
+  - CogniteAssetExtensionContainer
+  - CogniteDescribable
+  final_constraints:
+  - CogniteAsset -> CogniteDescribable
+  - CogniteAssetExtensionContainer -> CogniteAsset
+  to_add:
+  - CogniteAssetExtensionContainer -> CogniteAsset
+  to_remove: []
+my_space:EquipmentCompressorView(v1):
+  containers:
+  - CogniteDescribable
+  - EquipmentCompressorContainer
+  - EquipmentTagContainer
+  final_constraints:
+  - EquipmentCompressorContainer -> EquipmentTagContainer
+  - EquipmentTagContainer -> CogniteAsset
+  to_add:
+  - EquipmentCompressorContainer -> EquipmentTagContainer
+  - EquipmentTagContainer -> CogniteAsset
+  to_remove: []
+my_space:EquipmentHeatExchangerView(v1):
+  containers:
+  - CogniteDescribable
+  - EquipmentHeatExchangerContainer
+  - EquipmentTagContainer
+  final_constraints:
+  - EquipmentHeatExchangerContainer -> EquipmentTagContainer
+  - EquipmentTagContainer -> CogniteAsset
+  to_add:
+  - EquipmentHeatExchangerContainer -> EquipmentTagContainer
+  - EquipmentTagContainer -> CogniteAsset
+  to_remove: []
+my_space:EquipmentPumpView(v1):
+  containers:
+  - CogniteDescribable
+  - EquipmentPumpContainer
+  - EquipmentTagContainer
+  final_constraints:
+  - EquipmentPumpContainer -> EquipmentTagContainer
+  - EquipmentTagContainer -> CogniteAsset
+  to_add:
+  - EquipmentPumpContainer -> EquipmentTagContainer
+  - EquipmentTagContainer -> CogniteAsset
+  to_remove: []
+my_space:EquipmentTagView(v1):
+  containers:
+  - CogniteAsset
+  - CogniteDescribable
+  - CogniteSourceable
+  - EquipmentTagContainer
+  final_constraints:
+  - CogniteAsset -> CogniteDescribable
+  - CogniteAsset -> CogniteSourceable
+  - EquipmentTagContainer -> CogniteAsset
+  to_add:
+  - EquipmentTagContainer -> CogniteAsset
+  to_remove: []
+my_space:EquipmentUnsolvableView(v1):
+  containers:
+  - EquipmentHeatExchangerContainer
+  - EquipmentPumpContainer
+  final_constraints: []
+  to_add: []
+  to_remove: []
+my_space:FunctionalLocationView(v1):
+  containers:
+  - Level01_FunctionalLocationContainer
+  - Level02_SharedTagContainer
+  - Level03_SharedDescribableContainer
+  final_constraints:
+  - Level01_FunctionalLocationContainer -> Level02_SharedTagContainer
+  - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
+  to_add:
+  - Level01_FunctionalLocationContainer -> Level02_SharedTagContainer
+  - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
+  to_remove: []
+my_space:ImmutableBridgeCombinedView(v1):
+  containers:
+  - CogniteDescribable
+  - ImmutableBridgeUserAContainer
+  - ImmutableBridgeUserBContainer
+  final_constraints:
+  - ImmutableBridgeUserAContainer -> ImmutableBridgeUserBContainer
+  - ImmutableBridgeUserBContainer -> CogniteDescribable
+  to_add:
+  - ImmutableBridgeUserAContainer -> ImmutableBridgeUserBContainer
+  - ImmutableBridgeUserBContainer -> CogniteDescribable
+  to_remove: []
+my_space:ImmutableBridgeViewA(v1):
+  containers:
+  - CogniteDescribable
+  - ImmutableBridgeUserAContainer
+  final_constraints:
+  - ImmutableBridgeUserAContainer -> ImmutableBridgeUserBContainer
+  to_add:
+  - ImmutableBridgeUserAContainer -> ImmutableBridgeUserBContainer
+  to_remove: []
+my_space:ImmutableBridgeViewB(v1):
+  containers:
+  - CogniteDescribable
+  - ImmutableBridgeUserBContainer
+  final_constraints:
+  - ImmutableBridgeUserBContainer -> CogniteDescribable
+  to_add:
+  - ImmutableBridgeUserBContainer -> CogniteDescribable
+  to_remove: []
+my_space:PumpEquipmentView(v1):
+  containers:
+  - Level01_PumpEquipmentContainer
+  - Level02_SharedTagContainer
+  - Level03_SharedDescribableContainer
+  final_constraints:
+  - Level01_PumpEquipmentContainer -> Level02_SharedTagContainer
+  - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
+  to_add:
+  - Level01_PumpEquipmentContainer -> Level02_SharedTagContainer
+  - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
+  to_remove: []
+my_space:SharedTagView(v1):
+  containers:
+  - Level02_SharedAssetContainer
+  - Level02_SharedTagContainer
+  - Level03_SharedDescribableContainer
+  final_constraints:
+  - Level02_SharedAssetContainer -> Level02_SharedTagContainer
+  - Level02_SharedAssetContainer -> Level03_SharedDescribableContainer
+  - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
+  to_add:
+  - Level02_SharedAssetContainer -> Level02_SharedTagContainer
+  - Level02_SharedTagContainer -> Level03_SharedDescribableContainer
+  to_remove: []
+my_space:TagWithAssetView(v1):
+  containers:
+  - Level02_AssetContainer
+  - Level02_TagWithWrongRequiresContainer
+  - Level03_DescribableContainer
+  final_constraints:
+  - Level02_AssetContainer -> Level02_TagWithWrongRequiresContainer
+  - Level02_AssetContainer -> Level03_DescribableContainer
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_add:
+  - Level02_AssetContainer -> Level02_TagWithWrongRequiresContainer
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_remove: []
+my_space:ValveView(v1):
+  containers:
+  - Level01_ValveContainer
+  - Level02_TagWithWrongRequiresContainer
+  - Level03_DescribableContainer
+  final_constraints:
+  - Level01_ValveContainer -> Level02_TagWithWrongRequiresContainer
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_add:
+  - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
+  to_remove: []

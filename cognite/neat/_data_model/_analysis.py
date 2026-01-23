@@ -1,10 +1,14 @@
+import math
 from collections import defaultdict
-from itertools import chain
+from dataclasses import dataclass
+from enum import Enum
+from itertools import chain, combinations
 from typing import Literal, TypeAlias, TypeVar
 
 import networkx as nx
 from pyparsing import cached_property
 
+from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._container import ContainerRequest
@@ -39,6 +43,24 @@ ConnectionEndNodeTypes: TypeAlias = dict[tuple[ViewReference, str], ViewReferenc
 ResourceSource = Literal["auto", "merged", "cdf", "both"]
 
 _NodeT = TypeVar("_NodeT", ContainerReference, ViewReference)
+
+
+class RequiresChangeStatus(Enum):
+    """Status of requires constraint changes for a view."""
+
+    OPTIMAL = "optimal"  # Already optimized, no changes needed
+    CHANGES_AVAILABLE = "changes_available"  # Recommendations available
+    UNSOLVABLE = "unsolvable"  # Structural issue - can't create connected hierarchy
+    NO_MODIFIABLE_CONTAINERS = "no_modifiable_containers"  # All containers are immutable
+
+
+@dataclass
+class RequiresChangesForView:
+    """Result of computing requires constraint changes for a view."""
+
+    to_add: set[tuple[ContainerReference, ContainerReference]]
+    to_remove: set[tuple[ContainerReference, ContainerReference]]
+    status: RequiresChangeStatus
 
 
 class ValidationResources:
@@ -528,16 +550,83 @@ class ValidationResources:
             graph.add_node(container_ref)
 
         # Add edges for requires constraints from all known containers
-        for container_ref in graph.nodes():
+        for container_ref in list(graph.nodes()):
             container = self.select_container(container_ref)
             if not container or not container.constraints:
                 continue
-            for constraint in container.constraints.values():
+            for constraint_id, constraint in container.constraints.items():
                 if not isinstance(constraint, RequiresConstraintDefinition):
                     continue
-                graph.add_edge(container_ref, constraint.require)
+                is_auto = constraint_id.endswith("__auto")
+                graph.add_edge(container_ref, constraint.require, is_auto=is_auto)
 
         return graph
+
+    @cached_property
+    def modifiable_containers(self) -> set[ContainerReference]:
+        """Containers whose requires constraints can be modified in this session.
+
+        A container is modifiable if:
+        - It's NOT in a CDF built-in space (CDM, IDM, etc.)
+        - It's a user container brought in through the loaded data model scope or view implements chain
+        """
+        return {container_ref for container_ref in self.merged.containers if container_ref.space not in COGNITE_SPACES}
+
+    @cached_property
+    def immutable_requires_constraint_graph(self) -> nx.DiGraph:
+        """Subgraph of requires constraints from non-modifiable (CDM) containers.
+
+        Used to check reachability via existing immutable constraints.
+        """
+        return nx.subgraph_view(
+            self.requires_constraint_graph,
+            filter_edge=lambda src, _: src not in self.modifiable_containers,
+        )
+
+    @cached_property
+    def _fixed_constraint_graph(self) -> nx.DiGraph:
+        """Graph of all fixed constraints (immutable + user-intentional).
+
+        Both are "fixed" from the optimizer's perspective - existing paths that can't be changed.
+        """
+        G = nx.DiGraph()
+        G.add_edges_from(self.immutable_requires_constraint_graph.edges())
+        G.add_edges_from(self._user_intentional_constraints)
+        return G
+
+    @cached_property
+    def _fixed_descendants(self) -> defaultdict[ContainerReference, set[ContainerReference]]:
+        """Pre-compute descendants via fixed constraints. Missing keys return empty set."""
+        result: defaultdict[ContainerReference, set[ContainerReference]] = defaultdict(set)
+        for container in self._fixed_constraint_graph.nodes():
+            result[container] = nx.descendants(self._fixed_constraint_graph, container)
+        return result
+
+    @cached_property
+    def _existing_requires_edges(self) -> set[tuple[ContainerReference, ContainerReference]]:
+        """Cached set of existing requires constraint edges."""
+        return set(self.requires_constraint_graph.edges())
+
+    @cached_property
+    def _user_intentional_constraints(self) -> set[tuple[ContainerReference, ContainerReference]]:
+        """Constraints that appear to be user-intentional and should not be auto-removed
+
+        A constraint is user-intentional if:
+        1. The constraint identifier does NOT have '__auto' postfix
+        2. Neither src nor dst is part of a cycle (cyclic constraints are errors)
+
+        These constraints are preserved even if they're not in the optimal structure, because
+        they may be used for data integrity purposes.
+        We DON'T consider manual-created constraints as user-intended if they form part of a cycle,
+        because that indicates a problem with the data model where we likely can provide a better solution.
+        """
+        containers_in_cycles = {container for cycle in self.requires_constraint_cycles for container in cycle}
+
+        return {
+            (src, dst)
+            for src, dst, data in self.requires_constraint_graph.edges(data=True)
+            if not data.get("is_auto", False) and src not in containers_in_cycles and dst not in containers_in_cycles
+        }
 
     @staticmethod
     def forms_directed_path(nodes: set[_NodeT], graph: nx.DiGraph) -> bool:
@@ -565,8 +654,14 @@ class ValidationResources:
         if len(nodes) <= 1:
             return True
 
-        for candidate in nodes:
-            others = nodes - {candidate}
+        # Filter to nodes that are actually in the graph
+        nodes_in_graph = {n for n in nodes if n in graph}
+        if len(nodes_in_graph) < len(nodes):
+            # Some nodes aren't in the graph, so we can't form a complete path
+            return False
+
+        for candidate in nodes_in_graph:
+            others = nodes_in_graph - {candidate}
             if others.issubset(nx.descendants(graph, candidate)):
                 return True
 
@@ -578,10 +673,331 @@ class ValidationResources:
         Returns:
             List of lists, where each list contains the ordered containers involved in forming the requires cycle.
         """
-
         return self.graph_cycles(self.requires_constraint_graph)
 
     @staticmethod
     def graph_cycles(graph: nx.DiGraph) -> list[list[T_Reference]]:
         """Returns cycles in the graph otherwise empty list"""
         return [candidate for candidate in nx.simple_cycles(graph) if len(candidate) > 1]
+
+    @cached_property
+    def optimized_requires_constraint_graph(self) -> nx.DiGraph:
+        """Target state of requires constraints after optimizing (MST + fixed constraints)."""
+        graph = nx.DiGraph()
+        graph.add_edges_from(self.oriented_mst_edges)
+        graph.add_edges_from(self._fixed_constraint_graph.edges())
+        return graph
+
+    @cached_property
+    def _requires_candidate_graph(self) -> nx.Graph:
+        """Build weighted candidate graph for requires constraints.
+
+        Contains all container pairs that appear together in any view, with:
+        - weight: minimum directional weight (for MST computation)
+        - preferred_direction: direction with lower weight (for tie-breaking)
+
+        This graph is used to compute per-view MSTs.
+        """
+        G = nx.Graph()
+
+        for view_ref in self.merged.views:
+            containers = self.containers_by_view.get(view_ref, set())
+            if len(containers) < 2:
+                continue  # Need at least 2 containers to form a requires constraint
+
+            # Sort for deterministic preferred_direction when weights are equal
+            for src, dst in combinations(sorted(containers, key=str), 2):
+                if G.has_edge(src, dst):
+                    continue  # Already added from another view
+
+                w1 = self._compute_requires_edge_weight(src, dst)
+                w2 = self._compute_requires_edge_weight(dst, src)
+                direction = (src, dst) if w1 <= w2 else (dst, src)
+                weight = min(w1, w2)
+
+                G.add_edge(src, dst, weight=weight, preferred_direction=direction)
+
+        return G
+
+    @cached_property
+    def _mst_by_view(self) -> dict[ViewReference, nx.Graph]:
+        """Compute per-view MST graphs.
+
+        Each view gets its own MST over just its containers. This ensures:
+        - No routing through containers not in the view
+        - Each view gets exactly the edges it needs
+        - Voting handles orientation conflicts between views
+
+        Skips inherently unsolvable views (no immutable anchor + all modifiables are roots).
+        """
+        if not self._requires_candidate_graph:
+            return {}
+
+        result: dict[ViewReference, nx.Graph] = {}
+
+        for view_ref in self.merged.views:
+            if view_ref in self._views_with_root_conflicts:
+                continue
+
+            containers = self.containers_by_view.get(view_ref, set())
+            if len(containers) < 2:  # Need at least 2 containers to have a constraint
+                continue
+            if not containers.intersection(self.modifiable_containers):
+                continue
+
+            subgraph = self._requires_candidate_graph.subgraph(containers)
+            if not nx.is_connected(subgraph):
+                continue
+
+            result[view_ref] = nx.minimum_spanning_tree(subgraph, weight="weight")
+
+        return result
+
+    @cached_property
+    def _root_by_view(self) -> dict[ViewReference, ContainerReference]:
+        """Map each view (with 2+ containers) to its most view-specific (root) container.
+
+        Only includes views with 2+ containers since single-container views
+        are trivially satisfied and don't need root direction.
+
+        Selection criteria (in priority order):
+        1. Fewest views: Containers appearing in fewer views are more "view-specific"
+        2. Has existing constraint: Prefer containers with existing outgoing constraints
+        3. Alphabetical: Deterministic tie-breaker
+        """
+        result: dict[ViewReference, ContainerReference] = {}
+
+        for view, containers in self.containers_by_view.items():
+            if len(containers) < 2:
+                continue
+
+            modifiable = containers.intersection(self.modifiable_containers)
+            if not modifiable:
+                continue
+
+            # Selection priority: fewest views, has existing constraint, alphabetical
+            result[view] = min(
+                modifiable,
+                key=lambda c: (
+                    len(self.views_by_container.get(c, set())),
+                    0 if any((c, other) in self._existing_requires_edges for other in containers) else 1,
+                    str(c),
+                ),
+            )
+
+        return result
+
+    @cached_property
+    def _views_with_root_conflicts(self) -> set[ViewReference]:
+        """Views where all modifiable containers are forced roots for other views.
+
+        A view has root conflicts if:
+        1. It has no immutable containers (no shared CDM anchor)
+        2. All its modifiable containers are already forced roots for other views
+
+        Such views would require edges between forced roots, causing conflicts.
+        """
+        forced_roots = set(self._root_by_view.values())
+        unsolvable: set[ViewReference] = set()
+
+        for view, containers in self.containers_by_view.items():
+            modifiable = containers & self.modifiable_containers
+            immutable = containers - self.modifiable_containers
+
+            # Need at least 2 modifiable containers to have a conflict
+            if len(modifiable) < 2:
+                continue
+
+            # No immutable anchor AND all modifiables are roots elsewhere
+            if not immutable and modifiable <= forced_roots:
+                unsolvable.add(view)
+
+        return unsolvable
+
+    @cached_property
+    def oriented_mst_edges(self) -> set[tuple[ContainerReference, ContainerReference]]:
+        """Orient per-view MST edges by voting across views.
+
+        Each view votes for edge orientations based on BFS from its root container.
+        Views with only 1 modifiable container use 'inf' vote weight to force
+        that container as root.
+
+        Tie-breaker: preferred_direction from weight function.
+
+        Returns set of directed (src, dst) tuples.
+        """
+        edge_votes: dict[tuple[ContainerReference, ContainerReference], float] = defaultdict(float)
+        all_edges: set[tuple[ContainerReference, ContainerReference]] = set()
+
+        # Sort for deterministic iteration (dict order can vary with hash randomization)
+        for view in sorted(self._mst_by_view.keys(), key=str):
+            mst = self._mst_by_view[view]
+            root = self._root_by_view[view]  # Always exists for views in _mst_by_view
+            containers = self.containers_by_view.get(view, set())
+            modifiable_count = len(containers & self.modifiable_containers)
+            # Views with only 1 modifiable container have no choice - that container MUST be root
+            vote_weight = float("inf") if modifiable_count == 1 else 1.0
+
+            # BFS from root orients edges away from root (parent → child)
+            for parent, child in nx.bfs_edges(mst, root):  # type: ignore[func-returns-value]
+                if parent in self.modifiable_containers:
+                    edge_votes[(parent, child)] += vote_weight
+
+            # Normalize edges to canonical form so votes for same undirected edge are counted together
+            for c1, c2 in mst.edges():
+                all_edges.add((c1, c2) if str(c1) < str(c2) else (c2, c1))
+
+        # Pick direction: most votes wins, preferred_direction breaks ties
+        oriented: set[tuple[ContainerReference, ContainerReference]] = set()
+
+        # Sort for deterministic iteration (hash randomization affects set order)
+        for c1, c2 in sorted(all_edges, key=lambda e: (str(e[0]), str(e[1]))):
+            c1_votes = edge_votes.get((c1, c2), 0)
+            c2_votes = edge_votes.get((c2, c1), 0)
+
+            if c1_votes > c2_votes:
+                oriented.add((c1, c2))
+            elif c2_votes > c1_votes:
+                oriented.add((c2, c1))
+            else:
+                # Tie-breaker: use preferred_direction from weight function
+                oriented.add(self._requires_candidate_graph[c1][c2].get("preferred_direction", (c1, c2)))
+
+        return oriented
+
+    @cached_property
+    def _transitively_reduced_edges(self) -> set[tuple[ContainerReference, ContainerReference]]:
+        """Reduce MST edges to minimal necessary set (remove edges with alternative paths via immutable)."""
+        if not self.oriented_mst_edges:
+            return set()
+
+        # Optimal graph = MST + immutable + user-intentional (these provide existing paths)
+        optimal = nx.DiGraph()
+        optimal.add_edges_from(self.immutable_requires_constraint_graph.edges())
+        optimal.add_edges_from(self._user_intentional_constraints)
+        optimal.add_edges_from(self.oriented_mst_edges)
+
+        reduced = nx.transitive_reduction(optimal)
+
+        # Return MST edges that survive reduction
+        return {e for e in reduced.edges() if e in self.oriented_mst_edges}
+
+    def get_requires_changes_for_view(self, view: ViewReference) -> RequiresChangesForView:
+        """Get requires constraint changes needed to optimize a view.
+
+        Returns a RequiresChangesForView with:
+        - to_add: New constraints needed where source is mapped in this view
+        - to_remove: Existing constraints that are redundant or wrongly oriented
+        - status: The optimization status for this view
+        """
+        modifiable_containers_in_view = self.containers_by_view.get(view, set()).intersection(
+            self.modifiable_containers
+        )
+        if not modifiable_containers_in_view:
+            return RequiresChangesForView(set(), set(), RequiresChangeStatus.NO_MODIFIABLE_CONTAINERS)
+
+        # Early exit for inherently unsolvable views (no CDM anchor + all modifiables are roots)
+        if view in self._views_with_root_conflicts:
+            return RequiresChangesForView(
+                set[tuple[ContainerReference, ContainerReference]](), set(), RequiresChangeStatus.UNSOLVABLE
+            )
+
+        # Filter edges to those where source is in this view's modifiable containers
+        existing_from_view = {
+            edge for edge in self._existing_requires_edges if edge[0] in modifiable_containers_in_view
+        }
+        optimal_for_view = {
+            edge for edge in self._transitively_reduced_edges if edge[0] in modifiable_containers_in_view
+        }
+
+        to_add = optimal_for_view - existing_from_view
+
+        # To remove: existing edges with wrong direction or not in MST (and not needed externally)
+        # But NEVER remove user-intentional constraints (manually defined, no __auto postfix)
+        to_remove: set[tuple[ContainerReference, ContainerReference]] = set()
+        for src, dst in existing_from_view:
+            # Skip user-intentional constraints - they were set by the user on purpose
+            if (src, dst) in self._user_intentional_constraints:
+                continue
+            if (dst, src) in self.oriented_mst_edges:
+                to_remove.add((src, dst))  # Always remove if opposite direction from optimal solution
+            elif (src, dst) not in self.oriented_mst_edges and not (
+                self.find_views_mapping_to_containers([src, dst]) - set(self.merged.views)
+            ):
+                to_remove.add((src, dst))  # Remove if not in optimal solution and not needed by external views
+
+        # Check solvability in optimized state
+        if not self.forms_directed_path(
+            self.containers_by_view.get(view, set()), self.optimized_requires_constraint_graph
+        ):
+            return RequiresChangesForView(set(), set(), RequiresChangeStatus.UNSOLVABLE)
+
+        if not to_add and not to_remove:
+            return RequiresChangesForView(set(), set(), RequiresChangeStatus.OPTIMAL)
+
+        return RequiresChangesForView(to_add, to_remove, RequiresChangeStatus.CHANGES_AVAILABLE)
+
+    # ========================================================================
+    # REQUIRES CONSTRAINT MST WEIGHT CONSTANTS
+    # ========================================================================
+    # Weight = TIER + sub_weight.
+    #
+    # WHY THIS ENCODING:
+    # MST algorithm only support scalar weights, but we need a strict priority
+    # hierarchy where USER→USER ALWAYS beats USER→EXTERNAL. By using a large
+    # gap (1000) between tiers, sub-weights (max ~50) can never cause a lower
+    # tier to beat a higher tier.
+    #
+    # Tiers (explicit priority order):
+    #   - Tier 1 (USER→USER):     Both containers modifiable - always preferred
+    #   - Tier 2 (USER→EXTERNAL): Target is CDF/CDM - only when needed
+    #   - Tier ∞ (FORBIDDEN):     Invalid edge, forms cycle or source is not modifiable
+    #
+    # Sub-weights refine ordering WITHIN a tier (shared views, direction, etc).
+    #   - These have been empirically tuned through trial and error.
+    # ========================================================================
+
+    # Tier base weights (gap of 1000 ensures tier always wins)
+    _TIER_USER_TO_USER = 1000
+    _TIER_USER_TO_EXTERNAL = 2000
+    _TIER_FORBIDDEN = math.inf
+
+    # Sub-weight adjustments (applied within tier, max ~100)
+    _BONUS_SHARED_VIEWS_PER = 5  # Per shared view (max 5 views → 25)
+    _BONUS_SHARED_VIEWS_MAX = 25
+    _BONUS_COVERAGE_PER = 5  # Per descendant via immutable edges (max 3 → 15)
+    _BONUS_COVERAGE_MAX = 15
+    _PENALTY_VIEW_COUNT = 10  # When src is in more views than dst
+
+    # Tie-breaker for deterministic ordering
+    _TIE_BREAKER_DIVISOR = 1e9
+
+    def _compute_requires_edge_weight(self, src: ContainerReference, dst: ContainerReference) -> float:
+        """Compute the weight/cost of adding edge src → dst.
+
+        Returns TIER + sub_weight where tier dominates (gap of 1000).
+        Sub-weights refine ordering within a tier based on shared views, direction, coverage.
+        """
+        # Opposite direction of fixed constraints is forbidden (would conflict with existing path)
+        if src in self._fixed_descendants[dst]:
+            return self._TIER_FORBIDDEN
+
+        if src not in self.modifiable_containers:
+            return self._TIER_FORBIDDEN
+
+        src_views = self.views_by_container.get(src, set())
+        dst_views = self.views_by_container.get(dst, set())
+
+        # Sub-weight adjustments
+        shared_bonus = min(len(src_views & dst_views) * self._BONUS_SHARED_VIEWS_PER, self._BONUS_SHARED_VIEWS_MAX)
+        coverage_bonus = min(len(self._fixed_descendants[dst]) * self._BONUS_COVERAGE_PER, self._BONUS_COVERAGE_MAX)
+        view_penalty = self._PENALTY_VIEW_COUNT if len(src_views) > len(dst_views) else 0
+
+        # Deterministic tie-breaker (very small, only matters when all else is equal)
+        edge_str = f"{src.space}:{src.external_id}->{dst.space}:{dst.external_id}"
+        tie_breaker = sum(ord(c) for c in edge_str) / self._TIE_BREAKER_DIVISOR
+
+        if dst in self.modifiable_containers:
+            return self._TIER_USER_TO_USER - shared_bonus - coverage_bonus + view_penalty + tie_breaker
+
+        return self._TIER_USER_TO_EXTERNAL - shared_bonus - coverage_bonus + tie_breaker

@@ -223,12 +223,26 @@ class RequiresConstraintCycle(DataModelValidator):
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
+        optimal_edges = self.validation_resources.oriented_mst_edges
 
         for cycle in self.validation_resources.requires_constraint_cycles:
             cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
+
+            # Find edges in cycle that are NOT in optimal structure (these should be removed)
+            edges_to_remove = []
+            for i, container in enumerate(cycle):
+                next_container = cycle[(i + 1) % len(cycle)]
+                edge = (container, next_container)
+                if edge not in optimal_edges:
+                    edges_to_remove.append(f"{container} -> {next_container}")
+
+            message = f"Requires constraints form a cycle: {cycle_str}"
+            if edges_to_remove:
+                message += f". Recommended removal: {', '.join(edges_to_remove)} (not in optimal structure)"
+
             errors.append(
                 ConsistencyError(
-                    message=f"Requires constraints form a cycle: {cycle_str}",
+                    message=message,
                     fix="Remove one of the requires constraints to break the cycle",
                     code=self.code,
                 )

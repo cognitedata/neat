@@ -61,6 +61,7 @@ COGNITE_CONCEPTS: tuple[str, ...] = (
 
 COGNITE_SPACES = (
     CDF_CDM_SPACE,
+    "cdf_idm",
     "cdf_360_image_schema",
     "cdf_3d_schema",
     "cdf_apm",

@@ -1,4 +1,4 @@
-**Neat supports 33 validation rules** for data modeling. These rules are learned
+**Neat supports 36 validation rules** for data modeling. These rules are learned
  from best practice, knowledge of the Cognite Data Fusion data modeling service, and practical experience from
  helping customers build and maintain their data models.
 
@@ -68,6 +68,16 @@ Validators for checking if defined data model is within CDF DMS schema limits.
 | NEAT-DMS-LIMITS-VIEW-001 | [ViewPropertyCountIsOutOfLimits](neat-dms-limits-view-001.md) | Validates that a view does not exceed the maximum number of properties. |
 | NEAT-DMS-LIMITS-VIEW-002 | [ViewContainerCountIsOutOfLimits](neat-dms-limits-view-002.md) | Validates that a view does not reference too many containers. |
 | NEAT-DMS-LIMITS-VIEW-003 | [ViewImplementsCountIsOutOfLimits](neat-dms-limits-view-003.md) | Validates that a view does not implement too many other views. |
+
+### Performance (NEAT-DMS-PERFORMANCE)
+
+Validators for checking performance-related aspects of the data model.
+
+| code | name | message |
+|------|------|---------|
+| NEAT-DMS-PERFORMANCE-001 | [MissingRequiresConstraint](neat-dms-performance-001.md) | Recommends adding requires constraints to optimize query performance. |
+| NEAT-DMS-PERFORMANCE-002 | [SuboptimalRequiresConstraint](neat-dms-performance-002.md) | Recommends removing requires constraints that are not optimal. |
+| NEAT-DMS-PERFORMANCE-003 | [UnresolvableQueryPerformance](neat-dms-performance-003.md) | Identifies views with query performance issues that cannot be resolved. |
 
 ### Views (NEAT-DMS-VIEW)
 
