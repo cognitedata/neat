@@ -1,10 +1,10 @@
+
 - space: my_space
   externalId: DomainDescribable
   version: v1
   name: My View
   description: An example view
   properties: {}
-
 
 - space: not_my_space
   externalId: ExistingEdgeConnection
@@ -68,7 +68,6 @@
         version: v1
         type: view
 
-
 - space: prodigy
   externalId: OutOfSpace
   version: '1992'
@@ -88,6 +87,7 @@
         externalId: MyDescribable
         version: v1
         type: view
+
 
 - space: my_space
   externalId: ImplementationChain1
