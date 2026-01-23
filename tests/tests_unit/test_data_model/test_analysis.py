@@ -53,8 +53,9 @@ def scenarios() -> dict[str, ValidationResources]:
         ),
         "requires-constraints-rebuild": catalog.load_scenario(
             "requires_constraints",
-            modus_operandi="rebuild",  # Rebuild mode: CDF-only constraints not in merged
-            include_cdm=True,  # Include real CDM containers with their requires constraints
+            cdf_scenario_name="for_validators",
+            modus_operandi="rebuild",
+            include_cdm=True,
             format="validation-resource",
         ),
         "cyclic_implements": catalog.load_scenario(
