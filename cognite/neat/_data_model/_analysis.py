@@ -890,10 +890,12 @@ class ValidationResources:
         - to_remove: Existing constraints that are redundant or wrongly oriented
         - status: The optimization status for this view
         """
-        modifiable_containers_in_view = self.containers_by_view.get(view, set()).intersection(
-            self.modifiable_containers
-        )
+        containers_in_view = self.containers_by_view.get(view, set())
+        modifiable_containers_in_view = containers_in_view.intersection(self.modifiable_containers)
         if not modifiable_containers_in_view:
+            # No modifiable containers - check if view is already optimized via existing constraints
+            if self.forms_directed_path(containers_in_view, self.requires_constraint_graph):
+                return RequiresChangesForView(set(), set(), RequiresChangeStatus.OPTIMAL)
             return RequiresChangesForView(set(), set(), RequiresChangeStatus.NO_MODIFIABLE_CONTAINERS)
 
         # Early exit for inherently unsolvable views (no CDM anchor + all modifiables are roots)

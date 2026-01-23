@@ -50,7 +50,7 @@ class MissingRequiresConstraint(DataModelValidator):
 
                 message = (
                     f"View '{view_ref!s}' is not optimized for querying. "
-                    f"Add a 'requires' constraint from '{src!s}' to '{dst!s}'."
+                    f"Add a 'requires' constraint from the container '{src!s}' to '{dst!s}'."
                 )
                 if not is_safe:
                     # Find a superset view to suggest for ingestion
@@ -113,8 +113,9 @@ class SuboptimalRequiresConstraint(DataModelValidator):
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"View '{view_ref!s}' has a requires constraint '{src!s}' -> '{dst!s}' "
-                            "that is not part of the optimal structure. Consider removing it."
+                            f"View '{view_ref!s}' is mapping to container '{src!s}' "
+                            f"that has a requires constraint to '{dst!s}'. This constraint is "
+                            "not part of the optimal structure. Consider removing it."
                         ),
                         fix="Remove the unnecessary requires constraint",
                         code=self.code,
@@ -170,8 +171,8 @@ class UnresolvableQueryPerformance(DataModelValidator):
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"View '{view_ref!s}' has poor query performance. "
-                            "It maps only to CDF built-in containers which cannot have requires constraints. "
+                            f"View '{view_ref!s}' is not optimized for querying. It maps only to CDF "
+                            "built-in containers and some of these lack requires constraints between them. "
                             "Consider adding a view-specific container that requires the others."
                         ),
                         fix="Add a container that requires the others, or restructure the view",
@@ -182,7 +183,7 @@ class UnresolvableQueryPerformance(DataModelValidator):
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"View '{view_ref!s}' has poor query performance. "
+                            f"View '{view_ref!s}' is not optimized for querying. "
                             "No valid requires constraint solution was found. "
                             "Consider adding a view-specific container that requires the others."
                         ),
