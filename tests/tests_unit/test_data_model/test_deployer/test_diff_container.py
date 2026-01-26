@@ -9,11 +9,15 @@ from cognite.neat._data_model.deployer._differ_container import (
     IndexDiffer,
 )
 from cognite.neat._data_model.deployer.data_classes import (
+    AddedConstraint,
     AddedField,
+    AddedIndex,
     ChangedField,
     FieldChange,
     FieldChanges,
+    RemovedConstraint,
     RemovedField,
+    RemovedIndex,
     SeverityType,
 )
 from cognite.neat._data_model.models.dms import (
@@ -138,19 +142,15 @@ class TestContainerDiffer:
                             )
                         ],
                     ),
-                    AddedField(
+                    AddedConstraint(
                         field_path="constraints.constraintToAdd",
-                        item_severity=SeverityType.WARNING,
                         # MyPy do not see that we hardcoded the "toAdd" key in the changed_container
                         new_value=changed_container.constraints["constraintToAdd"],  # type: ignore[index]
-                        message="Adding constraints may cause ingestion failures if newly added data violates the constraint",
                     ),
-                    RemovedField(
+                    RemovedConstraint(
                         field_path="constraints.constraintToRemove",
-                        item_severity=SeverityType.WARNING,
                         # See above
                         current_value=cdf_container.constraints["constraintToRemove"],  # type: ignore[index]
-                        message="Removing constraints may affect query performance",
                     ),
                     FieldChanges(
                         field_path=f"constraints.{CONSTRAINTS_TO_MODIFY_ID}",
@@ -163,18 +163,15 @@ class TestContainerDiffer:
                             ),
                         ],
                     ),
-                    AddedField(
+                    AddedIndex(
                         field_path="indexes.indexToAdd",
-                        item_severity=SeverityType.SAFE,
                         # MyPy do not see that we hardcoded the "toAdd" key in the changed_container
                         new_value=changed_container.indexes["indexToAdd"],  # type: ignore[index]
                     ),
-                    RemovedField(
+                    RemovedIndex(
                         field_path="indexes.indexToRemove",
-                        item_severity=SeverityType.WARNING,
                         # See above
                         current_value=cdf_container.indexes["indexToRemove"],  # type: ignore[index]
-                        message="Removing indexes may affect query performance",
                     ),
                     FieldChanges(
                         field_path=f"indexes.{INDEX_TO_MODIFY_ID}",

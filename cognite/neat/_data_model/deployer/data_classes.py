@@ -74,7 +74,6 @@ class PrimitiveField(FieldChange, ABC):
     """Base class for changes to primitive properties."""
 
     item_severity: SeverityType
-    message: str | None = None
 
     @property
     def severity(self) -> SeverityType:
@@ -86,15 +85,10 @@ class PrimitiveField(FieldChange, ABC):
         """Human-readable description of the change."""
         ...
 
-    def _with_message(self, base_description: str) -> str:
-        """Append the message to the description if present."""
-        if self.message:
-            return f"{base_description}. {self.message}"
-        return base_description
-
 
 class AddedField(PrimitiveField):
     new_value: BaseModelObject | str | int | float | bool | None
+    item_severity: SeverityType = SeverityType.SAFE
 
     @property
     def description(self) -> str:
@@ -103,10 +97,51 @@ class AddedField(PrimitiveField):
 
 class RemovedField(PrimitiveField):
     current_value: BaseModelObject | str | int | float | bool | None
+    item_severity: SeverityType = SeverityType.BREAKING
 
     @property
     def description(self) -> str:
         return self._with_message(f"removed (was {self.current_value!r})")
+
+
+class AddedConstraint(AddedField):
+    """Represents a constraint being added to a container."""
+
+    message: str | None = (
+        "Adding constraints may cause ingestion failures if the data being ingested violates the constraint"
+    )
+
+    @property
+    def severity(self) -> SeverityType:
+        return SeverityType.WARNING
+
+
+class RemovedConstraint(RemovedField):
+    """Represents a constraint being removed from a container."""
+
+    message: str | None = "Removing constraints may affect query performance"
+
+    @property
+    def severity(self) -> SeverityType:
+        return SeverityType.WARNING
+
+
+class AddedIndex(AddedField):
+    """Represents an index being added to a container."""
+
+    @property
+    def severity(self) -> SeverityType:
+        return SeverityType.SAFE
+
+
+class RemovedIndex(RemovedField):
+    """Represents an index being removed from a container."""
+
+    message: str | None = "Removing indexes may affect query performance"
+
+    @property
+    def severity(self) -> SeverityType:
+        return SeverityType.WARNING
 
 
 class ChangedField(PrimitiveField):

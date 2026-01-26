@@ -91,8 +91,6 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
                 "properties",
                 current.properties,
                 new.properties,
-                add_severity=SeverityType.SAFE,
-                remove_severity=SeverityType.BREAKING,
                 differ=ViewPropertyDiffer(
                     self._current_container_map, self._new_containe_map, self._get_path("properties")
                 ),

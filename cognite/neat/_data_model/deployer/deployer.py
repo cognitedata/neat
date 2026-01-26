@@ -31,7 +31,8 @@ from ._differ_data_model import DataModelDiffer
 from ._differ_space import SpaceDiffer
 from ._differ_view import ViewDiffer
 from .data_classes import (
-    AddedField,
+    AddedConstraint,
+    AddedIndex,
     AppliedChanges,
     ChangedFieldResult,
     ContainerDeploymentPlan,
@@ -41,7 +42,8 @@ from .data_classes import (
     FieldChanges,
     HTTPChangeResult,
     NoOpChangeResult,
-    RemovedField,
+    RemovedConstraint,
+    RemovedIndex,
     ResourceChange,
     ResourceDeploymentPlan,
     ResourceDeploymentPlanList,
@@ -222,35 +224,33 @@ class SchemaDeployer(OnSuccessResultProducer):
                     raise RuntimeError("Bug in Neat. Malformed field path for constraint/index change.")
                 # Field type is either "constraints" or "indexes"
                 field_type, identifier, *_ = diff.field_path.split(".", maxsplit=2)
-                is_constraint = field_type == "constraints"
-                # Mark for removal (modification requires remove + re-add)
-                remove_message = (
-                    "Removing constraints may affect query performance."
-                    if is_constraint
-                    else "Removing indexes may affect query performance."
-                )
-                modified_diffs.append(
-                    RemovedField(
-                        field_path=f"{field_type}.{identifier}",
-                        item_severity=SeverityType.WARNING,
-                        current_value=getattr(current_resource, field_type)[identifier],
-                        message=remove_message,
+                field_path = f"{field_type}.{identifier}"
+                if field_type == "constraints":
+                    modified_diffs.append(
+                        RemovedConstraint(
+                            field_path=field_path,
+                            current_value=getattr(current_resource, field_type)[identifier],
+                        )
                     )
-                )
-                # Mark for addition - constraints are WARNING, indexes are SAFE
-                add_message = (
-                    "Adding constraints may cause ingestion failures if the data being ingested violates the constraint"
-                    if is_constraint
-                    else None
-                )
-                modified_diffs.append(
-                    AddedField(
-                        field_path=f"{field_type}.{identifier}",
-                        item_severity=SeverityType.WARNING if is_constraint else SeverityType.SAFE,
-                        new_value=getattr(new_resource, field_type)[identifier],
-                        message=add_message,
+                    modified_diffs.append(
+                        AddedConstraint(
+                            field_path=field_path,
+                            new_value=getattr(new_resource, field_type)[identifier],
+                        )
                     )
-                )
+                else:
+                    modified_diffs.append(
+                        RemovedIndex(
+                            field_path=field_path,
+                            current_value=getattr(current_resource, field_type)[identifier],
+                        )
+                    )
+                    modified_diffs.append(
+                        AddedIndex(
+                            field_path=field_path,
+                            new_value=getattr(new_resource, field_type)[identifier],
+                        )
+                    )
             else:
                 modified_diffs.append(diff)
         return modified_diffs

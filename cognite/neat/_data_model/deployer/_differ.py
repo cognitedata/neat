@@ -4,11 +4,15 @@ from typing import Generic
 from cognite.neat._utils.useful_types import T_Item
 
 from .data_classes import (
+    AddedConstraint,
     AddedField,
+    AddedIndex,
     ChangedField,
     FieldChange,
     FieldChanges,
+    RemovedConstraint,
     RemovedField,
+    RemovedIndex,
     SeverityType,
 )
 
@@ -86,26 +90,27 @@ def field_differences(
     parent_path: str,
     current: dict[str, T_Item] | None,
     new: dict[str, T_Item] | None,
-    add_severity: SeverityType,
-    remove_severity: SeverityType,
     differ: ObjectDiffer[T_Item],
-    add_message: str | None = None,
-    remove_message: str | None = None,
+    add_cls: type[AddedField] = AddedField,
+    remove_cls: type[RemovedField] = RemovedField,
 ) -> list[FieldChange]:
     """Diff two containers of items.
 
     A container is for example the properties, constraints, or indexes of a container,
     properties of a space, views of a data model, etc.
 
+    Severities are determined by the add_cls and remove_cls classes:
+    - AddedField defaults to SAFE
+    - RemovedField defaults to BREAKING
+    - Specialized classes (e.g., AddedConstraint, RemovedIndex) override severity via property.
+
     Args:
         parent_path: The JSON path to the container being compared.
         current: The items as they are in CDF.
         new: The items as they are desired to be.
-        add_severity: The severity to assign to added items.
-        remove_severity: The severity to assign to removed items.
         differ: The differ to use for comparing individual items.
-        add_message: Optional message to include with added items.
-        remove_message: Optional message to include with removed items.
+        add_cls: The class to use for added items. Defaults to AddedField (SAFE).
+        remove_cls: The class to use for removed items. Defaults to RemovedField (BREAKING).
 
     """
     changes: list[FieldChange] = []
@@ -117,21 +122,17 @@ def field_differences(
     for key in sorted(new_keys - current_keys):
         item_path = f"{parent_path}.{key}"
         changes.append(
-            AddedField(
-                item_severity=add_severity,
+            add_cls(
                 field_path=item_path,
                 new_value=new_map[key],
-                message=add_message,
             )
         )
 
     for key in sorted(current_keys - new_keys):
         changes.append(
-            RemovedField(
-                item_severity=remove_severity,
+            remove_cls(
                 field_path=f"{parent_path}.{key}",
                 current_value=current_map[key],
-                message=remove_message,
             )
         )
 
@@ -144,3 +145,55 @@ def field_differences(
             changes.append(FieldChanges(field_path=item_path, changes=diffs))
 
     return changes
+
+
+def constraint_differences(
+    current: dict[str, T_Item] | None,
+    new: dict[str, T_Item] | None,
+    differ: ObjectDiffer[T_Item],
+) -> list[FieldChange]:
+    """Diff constraints using AddedConstraint and RemovedConstraint classes.
+
+    Severities are fixed:
+    - AddedConstraint: WARNING
+    - RemovedConstraint: WARNING
+
+    Args:
+        current: The constraints as they are in CDF.
+        new: The constraints as they are desired to be.
+        differ: The differ to use for comparing individual constraints.
+    """
+    return field_differences(
+        parent_path="constraints",
+        current=current,
+        new=new,
+        differ=differ,
+        add_cls=AddedConstraint,
+        remove_cls=RemovedConstraint,
+    )
+
+
+def index_differences(
+    current: dict[str, T_Item] | None,
+    new: dict[str, T_Item] | None,
+    differ: ObjectDiffer[T_Item],
+) -> list[FieldChange]:
+    """Diff indexes using AddedIndex and RemovedIndex classes.
+
+    Severities are fixed:
+    - AddedIndex: SAFE
+    - RemovedIndex: WARNING
+
+    Args:
+        current: The indexes as they are in CDF.
+        new: The indexes as they are desired to be.
+        differ: The differ to use for comparing individual indexes.
+    """
+    return field_differences(
+        parent_path="indexes",
+        current=current,
+        new=new,
+        differ=differ,
+        add_cls=AddedIndex,
+        remove_cls=RemovedIndex,
+    )

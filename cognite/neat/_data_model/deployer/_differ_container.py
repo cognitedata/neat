@@ -15,7 +15,7 @@ from cognite.neat._data_model.models.dms import (
 )
 from cognite.neat._data_model.models.dms._data_types import Unit
 
-from ._differ import ItemDiffer, ObjectDiffer, field_differences
+from ._differ import ItemDiffer, ObjectDiffer, constraint_differences, field_differences, index_differences
 from .data_classes import (
     AddedField,
     ChangedField,
@@ -44,36 +44,13 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
                 "properties",
                 current.properties,
                 new.properties,
-                add_severity=SeverityType.SAFE,
-                remove_severity=SeverityType.BREAKING,
                 differ=ContainerPropertyDiffer("properties"),
             )
         )
-        changes.extend(
-            # MyPy fails to understand that ConstraintDefinition and Constraint are compatible here
-            field_differences(  # type: ignore[misc]
-                "constraints",
-                current.constraints,
-                new.constraints,
-                add_severity=SeverityType.WARNING,
-                remove_severity=SeverityType.WARNING,
-                differ=ConstraintDiffer("constraints"),
-                add_message="Adding constraints may cause ingestion failures if the data being ingested violates the constraint",
-                remove_message="Removing constraints may affect query performance",
-            )
-        )
-        changes.extend(
-            # MyPy fails to understand that IndexDefinition and Index are compatible here
-            field_differences(  # type: ignore[misc]
-                "indexes",
-                current.indexes,
-                new.indexes,
-                add_severity=SeverityType.SAFE,
-                remove_severity=SeverityType.WARNING,
-                differ=IndexDiffer("indexes"),
-                remove_message="Removing indexes may affect query performance",
-            )
-        )
+        # MyPy fails to understand that ConstraintDefinition and Constraint are compatible here
+        changes.extend(constraint_differences(current.constraints, new.constraints, ConstraintDiffer("constraints")))  # type: ignore[misc]
+        # MyPy fails to understand that IndexDefinition and Index are compatible here
+        changes.extend(index_differences(current.indexes, new.indexes, IndexDiffer("indexes")))  # type: ignore[misc]
 
         return changes
 
@@ -350,8 +327,6 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                 self._get_path("values"),
                 current.values,
                 new.values,
-                add_severity=SeverityType.SAFE,
-                remove_severity=SeverityType.BREAKING,
                 differ=EnumValueDiffer(self._get_path("values")),
             )
         )
