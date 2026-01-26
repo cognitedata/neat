@@ -5,7 +5,7 @@ import pytest
 
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
-from cognite.neat._data_model.validation.dms._limits import (
+from cognite.neat._data_model.rules.dms._limits import (
     ContainerPropertyCountIsOutOfLimits,
     ContainerPropertyListSizeIsOutOfLimits,
     DataModelViewCountIsOutOfLimits,
@@ -13,7 +13,7 @@ from cognite.neat._data_model.validation.dms._limits import (
     ViewImplementsCountIsOutOfLimits,
     ViewPropertyCountIsOutOfLimits,
 )
-from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
+from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelValidation
 from cognite.neat._utils.text import NEWLINE as NL
 from tests.data import SNAPSHOT_CATALOG
 from tests.data.snapshots.catalog import CDF_SNAPSHOTS_DIR

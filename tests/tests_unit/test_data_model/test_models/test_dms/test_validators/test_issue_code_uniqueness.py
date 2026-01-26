@@ -1,6 +1,6 @@
 from collections import Counter
 
-from cognite.neat._data_model.validation.dms._base import DataModelValidator
+from cognite.neat._data_model.rules._base import DataModelRule
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 
 
@@ -8,7 +8,7 @@ def test_validator_code_uniqueness() -> None:
     """Test that all DataModelValidator subclasses have unique codes."""
 
     # Recursively get all subclasses
-    all_validators: list[type[DataModelValidator]] = get_concrete_subclasses(DataModelValidator)
+    all_validators: list[type[DataModelRule]] = get_concrete_subclasses(DataModelRule)
 
     # Get all codes
     codes = [validator.code for validator in all_validators]

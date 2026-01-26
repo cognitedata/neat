@@ -8,15 +8,15 @@ from cognite.neat._data_model.models.dms._indexes import BtreeIndex, InvertedInd
 from cognite.neat._data_model.models.dms._view_property import (
     ViewCorePropertyRequest,
 )
-from cognite.neat._data_model.validation.dms._base import (
-    DataModelValidator,
+from cognite.neat._data_model.rules._base import (
+    DataModelRule,
 )
 from cognite.neat._issues import ConsistencyError, Recommendation
 
 BASE_CODE = "NEAT-DMS-LIMITS"
 
 
-class DataModelViewCountIsOutOfLimits(DataModelValidator):
+class DataModelViewCountIsOutOfLimits(DataModelRule):
     """Validates that the data model does not exceed the maximum number of views.
 
     ## What it does
@@ -36,7 +36,7 @@ class DataModelViewCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-DATA-MODEL-001"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         if self.validation_resources.merged_data_model.views is None:
@@ -66,7 +66,7 @@ class DataModelViewCountIsOutOfLimits(DataModelValidator):
 ### View level limits
 
 
-class ViewPropertyCountIsOutOfLimits(DataModelValidator):
+class ViewPropertyCountIsOutOfLimits(DataModelRule):
     """Validates that a view does not exceed the maximum number of properties.
 
     ## What it does
@@ -83,7 +83,7 @@ class ViewPropertyCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-VIEW-001"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         for view_ref in self.validation_resources.merged_data_model.views or []:
@@ -117,7 +117,7 @@ class ViewPropertyCountIsOutOfLimits(DataModelValidator):
         return errors
 
 
-class ViewContainerCountIsOutOfLimits(DataModelValidator):
+class ViewContainerCountIsOutOfLimits(DataModelRule):
     """Validates that a view does not reference too many containers.
 
     ## What it does
@@ -135,7 +135,7 @@ class ViewContainerCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-VIEW-002"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         # Single loop over all views
@@ -166,7 +166,7 @@ class ViewContainerCountIsOutOfLimits(DataModelValidator):
         return recommendations
 
 
-class ViewImplementsCountIsOutOfLimits(DataModelValidator):
+class ViewImplementsCountIsOutOfLimits(DataModelRule):
     """Validates that a view does not implement too many other views.
 
     ## What it does
@@ -183,7 +183,7 @@ class ViewImplementsCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-VIEW-003"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         # Single loop over all views
@@ -206,7 +206,7 @@ class ViewImplementsCountIsOutOfLimits(DataModelValidator):
 ### Container level limits
 
 
-class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
+class ContainerPropertyCountIsOutOfLimits(DataModelRule):
     """Validates that a container does not exceed the maximum number of properties.
 
     ## What it does
@@ -224,7 +224,7 @@ class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-CONTAINER-001"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
         # Single loop over all containers
         for container_ref in self.validation_resources.merged.containers:
@@ -263,7 +263,7 @@ class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
         return errors
 
 
-class ContainerPropertyListSizeIsOutOfLimits(DataModelValidator):
+class ContainerPropertyListSizeIsOutOfLimits(DataModelRule):
     """Validates that container property list sizes do not exceed CDF limits.
 
     ## What it does
@@ -288,7 +288,7 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-CONTAINER-002"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         # Single loop over all containers

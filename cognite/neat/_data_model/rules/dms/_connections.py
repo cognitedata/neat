@@ -9,13 +9,13 @@ from cognite.neat._data_model.models.dms._references import (
     ViewReference,
 )
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
-from cognite.neat._data_model.validation.dms._base import DataModelValidator
+from cognite.neat._data_model.rules._base import DataModelRule
 from cognite.neat._issues import ConsistencyError, Recommendation
 
 BASE_CODE = "NEAT-DMS-CONNECTIONS"
 
 
-class ConnectionValueTypeUnexisting(DataModelValidator):
+class ConnectionValueTypeUnexisting(DataModelRule):
     """Validates that connection value types exist.
 
     ## What it does
@@ -33,7 +33,7 @@ class ConnectionValueTypeUnexisting(DataModelValidator):
     code = f"{BASE_CODE}-001"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         for (view, property_), value_type in self.validation_resources.connection_end_node_types.items():
@@ -57,7 +57,7 @@ class ConnectionValueTypeUnexisting(DataModelValidator):
         return errors
 
 
-class ConnectionValueTypeUndefined(DataModelValidator):
+class ConnectionValueTypeUndefined(DataModelRule):
     """Validates that connection value types are not None, i.e. undefined.
 
     ## What it does
@@ -77,7 +77,7 @@ class ConnectionValueTypeUndefined(DataModelValidator):
     code = f"{BASE_CODE}-002"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for (view, property_), value_type in self.validation_resources.connection_end_node_types.items():
@@ -128,7 +128,7 @@ def _normalize_through_reference(
     return through
 
 
-class ReverseConnectionSourceViewMissing(DataModelValidator):
+class ReverseConnectionSourceViewMissing(DataModelRule):
     """Validates that source view referenced in reverse connection exist.
 
     ## What it does
@@ -146,7 +146,7 @@ class ReverseConnectionSourceViewMissing(DataModelValidator):
     code = f"{BASE_CODE}-REVERSE-001"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         for (target_view_ref, reverse_prop_name), (
@@ -172,7 +172,7 @@ class ReverseConnectionSourceViewMissing(DataModelValidator):
         return errors
 
 
-class ReverseConnectionSourcePropertyMissing(DataModelValidator):
+class ReverseConnectionSourcePropertyMissing(DataModelRule):
     """Validates that source property referenced in reverse connections exist.
 
     ## What it does
@@ -191,7 +191,7 @@ class ReverseConnectionSourcePropertyMissing(DataModelValidator):
     code = f"{BASE_CODE}-REVERSE-002"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         for (target_view_ref, reverse_prop_name), (
@@ -224,7 +224,7 @@ class ReverseConnectionSourcePropertyMissing(DataModelValidator):
         return errors
 
 
-class ReverseConnectionSourcePropertyWrongType(DataModelValidator):
+class ReverseConnectionSourcePropertyWrongType(DataModelRule):
     """Validates that source property for the reverse connections is a direct relation.
 
     ## What it does
@@ -243,7 +243,7 @@ class ReverseConnectionSourcePropertyWrongType(DataModelValidator):
     code = f"{BASE_CODE}-REVERSE-003"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         for (target_view_ref, reverse_prop_name), (
@@ -280,7 +280,7 @@ class ReverseConnectionSourcePropertyWrongType(DataModelValidator):
         return errors
 
 
-class ReverseConnectionContainerMissing(DataModelValidator):
+class ReverseConnectionContainerMissing(DataModelRule):
     """Validates that the container referenced by the reverse connection source properties exist.
 
     ## What it does
@@ -298,7 +298,7 @@ class ReverseConnectionContainerMissing(DataModelValidator):
     code = f"{BASE_CODE}-REVERSE-004"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         for (target_view_ref, reverse_prop_name), (
@@ -344,7 +344,7 @@ class ReverseConnectionContainerMissing(DataModelValidator):
         return errors
 
 
-class ReverseConnectionContainerPropertyMissing(DataModelValidator):
+class ReverseConnectionContainerPropertyMissing(DataModelRule):
     """Validates that container property referenced by the reverse connections exists.
 
     ## What it does
@@ -363,7 +363,7 @@ class ReverseConnectionContainerPropertyMissing(DataModelValidator):
     code = f"{BASE_CODE}-REVERSE-005"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         for (target_view_ref, reverse_prop_name), (
@@ -412,7 +412,7 @@ class ReverseConnectionContainerPropertyMissing(DataModelValidator):
         return errors
 
 
-class ReverseConnectionContainerPropertyWrongType(DataModelValidator):
+class ReverseConnectionContainerPropertyWrongType(DataModelRule):
     """Validates that the container property used in reverse connection is the direct relations.
 
     ## What it does
@@ -431,7 +431,7 @@ class ReverseConnectionContainerPropertyWrongType(DataModelValidator):
     code = f"{BASE_CODE}-REVERSE-006"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         for (target_view_ref, reverse_prop_name), (
@@ -483,7 +483,7 @@ class ReverseConnectionContainerPropertyWrongType(DataModelValidator):
         return errors
 
 
-class ReverseConnectionTargetMissing(DataModelValidator):
+class ReverseConnectionTargetMissing(DataModelRule):
     """Validates that the direct connection in reverse connection pair have target views specified.
 
     ## What it does
@@ -501,7 +501,7 @@ class ReverseConnectionTargetMissing(DataModelValidator):
     code = f"{BASE_CODE}-REVERSE-007"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for (target_view_ref, reverse_prop_name), (
@@ -546,7 +546,7 @@ class ReverseConnectionTargetMissing(DataModelValidator):
         return recommendations
 
 
-class ReverseConnectionPointsToAncestor(DataModelValidator):
+class ReverseConnectionPointsToAncestor(DataModelRule):
     """Validates that direct connections point to specific views rather than ancestors.
 
     ## What it does
@@ -565,7 +565,7 @@ class ReverseConnectionPointsToAncestor(DataModelValidator):
     code = f"{BASE_CODE}-REVERSE-008"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for (target_view_ref, reverse_prop_name), (
@@ -613,7 +613,7 @@ class ReverseConnectionPointsToAncestor(DataModelValidator):
         return recommendations
 
 
-class ReverseConnectionTargetMismatch(DataModelValidator):
+class ReverseConnectionTargetMismatch(DataModelRule):
     """Validates that direct connections point to the correct target views.
 
     ## What it does
@@ -632,7 +632,7 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
     code = f"{BASE_CODE}-REVERSE-009"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for (target_view_ref, reverse_prop_name), (

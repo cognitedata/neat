@@ -5,9 +5,9 @@ import pytest
 from cognite.neat import NeatConfig
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
-from cognite.neat._data_model.validation.dms._base import DataModelValidator  # for identity check
-from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
-from cognite.neat._data_model.validation.dms._views import CyclicImplements
+from cognite.neat._data_model.rules._base import DataModelRule  # for identity check
+from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelValidation
+from cognite.neat._data_model.rules.dms._views import CyclicImplements
 from cognite.neat._issues import ConsistencyError
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from tests.data import SNAPSHOT_CATALOG
@@ -22,7 +22,7 @@ def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> Non
     mode = config.modeling.mode
     can_run_validator = config.validation.can_run_validator
 
-    class TestAlphaValidator(DataModelValidator):
+    class TestAlphaValidator(DataModelRule):
         code = f"{BASE_CODE}-001"
         issue_type = ConsistencyError
         alpha = True
@@ -30,20 +30,20 @@ def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> Non
         def __init__(self, validation_resources: ValidationResources) -> None:
             self.validation_resources = validation_resources
 
-        def run(self) -> list[ConsistencyError]:
+        def validate(self) -> list[ConsistencyError]:
             return [ConsistencyError(message="Testing Alpha Validator", fix="x", code=self.code)]
 
     def patched_get(
-        base_cls: type[DataModelValidator], exclude_direct_abc_inheritance: bool = True
-    ) -> list[type[DataModelValidator]]:
+        base_cls: type[DataModelRule], exclude_direct_abc_inheritance: bool = True
+    ) -> list[type[DataModelRule]]:
         found = get_concrete_subclasses(base_cls, exclude_direct_abc_inheritance)
         # Only modify when caller asks about DataModelValidator
-        if base_cls is DataModelValidator:
+        if base_cls is DataModelRule:
             return [*found, TestAlphaValidator]
         return found
 
     monkeypatch.setattr(
-        "cognite.neat._data_model.validation.dms._orchestrator.get_concrete_subclasses",
+        "cognite.neat._data_model.rules.dms._orchestrator.get_concrete_subclasses",
         patched_get,
     )
 

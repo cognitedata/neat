@@ -1,13 +1,13 @@
 """Validators for checking if data model is AI-ready."""
 
 from cognite.neat._data_model.models.dms._data_types import EnumProperty
-from cognite.neat._data_model.validation.dms._base import DataModelValidator
+from cognite.neat._data_model.rules._base import DataModelRule
 from cognite.neat._issues import Recommendation
 
 BASE_CODE = "NEAT-DMS-AI-READINESS"
 
 
-class DataModelMissingName(DataModelValidator):
+class DataModelMissingName(DataModelRule):
     """Validates that data model has a human-readable name.
 
     ## What it does
@@ -26,7 +26,7 @@ class DataModelMissingName(DataModelValidator):
     code = f"{BASE_CODE}-001"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         if not self.validation_resources.merged_data_model.name:
@@ -41,7 +41,7 @@ class DataModelMissingName(DataModelValidator):
         return recommendations
 
 
-class DataModelMissingDescription(DataModelValidator):
+class DataModelMissingDescription(DataModelRule):
     """Validates that data model has a human-readable description.
 
     ## What it does
@@ -65,7 +65,7 @@ class DataModelMissingDescription(DataModelValidator):
     code = f"{BASE_CODE}-002"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         if not self.validation_resources.merged_data_model.description:
@@ -80,7 +80,7 @@ class DataModelMissingDescription(DataModelValidator):
         return recommendations
 
 
-class ViewMissingName(DataModelValidator):
+class ViewMissingName(DataModelRule):
     """Validates that a View has a human-readable name.
 
     ## What it does
@@ -100,7 +100,7 @@ class ViewMissingName(DataModelValidator):
     code = f"{BASE_CODE}-003"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for view_ref in self.validation_resources.merged_data_model.views or []:
@@ -121,7 +121,7 @@ class ViewMissingName(DataModelValidator):
         return recommendations
 
 
-class ViewMissingDescription(DataModelValidator):
+class ViewMissingDescription(DataModelRule):
     """Validates that a View has a human-readable description.
 
     ## What it does
@@ -151,7 +151,7 @@ class ViewMissingDescription(DataModelValidator):
     code = f"{BASE_CODE}-004"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for view_ref in self.validation_resources.merged_data_model.views or []:
@@ -172,7 +172,7 @@ class ViewMissingDescription(DataModelValidator):
         return recommendations
 
 
-class ViewPropertyMissingName(DataModelValidator):
+class ViewPropertyMissingName(DataModelRule):
     """Validates that a view property has a human-readable name.
 
     ## What it does
@@ -192,7 +192,7 @@ class ViewPropertyMissingName(DataModelValidator):
     code = f"{BASE_CODE}-005"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for view_ref in self.validation_resources.merged_data_model.views or []:
@@ -217,7 +217,7 @@ class ViewPropertyMissingName(DataModelValidator):
         return recommendations
 
 
-class ViewPropertyMissingDescription(DataModelValidator):
+class ViewPropertyMissingDescription(DataModelRule):
     """Validates that a View property has a human-readable description.
 
     ## What it does
@@ -248,7 +248,7 @@ class ViewPropertyMissingDescription(DataModelValidator):
     code = f"{BASE_CODE}-006"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for view_ref in self.validation_resources.merged_data_model.views or []:
@@ -273,7 +273,7 @@ class ViewPropertyMissingDescription(DataModelValidator):
         return recommendations
 
 
-class EnumerationMissingName(DataModelValidator):
+class EnumerationMissingName(DataModelRule):
     """Validates that an enumeration has a human-readable name.
 
     ## What it does
@@ -293,7 +293,7 @@ class EnumerationMissingName(DataModelValidator):
     code = f"{BASE_CODE}-007"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for container_ref in self.validation_resources.merged.containers:
@@ -322,7 +322,7 @@ class EnumerationMissingName(DataModelValidator):
         return recommendations
 
 
-class EnumerationMissingDescription(DataModelValidator):
+class EnumerationMissingDescription(DataModelRule):
     """Validates that an enumeration value has a human-readable description.
 
     ## What it does
@@ -353,7 +353,7 @@ class EnumerationMissingDescription(DataModelValidator):
     code = f"{BASE_CODE}-008"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for container_ref in self.validation_resources.merged.containers:
