@@ -6,10 +6,9 @@ from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._schema import RequestSchema
+from cognite.neat._data_model.rules._base import DataModelRule
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from cognite.neat._utils.useful_types import ModusOperandi
-
-from ._base import DataModelValidator
 
 
 class DmsDataModelValidation(OnSuccessIssuesChecker):
@@ -37,8 +36,8 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         validation_resources = self._gather_validation_resources(request_schema)
 
         # Initialize all validators
-        validators: list[DataModelValidator] = [
-            validator(validation_resources) for validator in get_concrete_subclasses(DataModelValidator)
+        validators: list[DataModelRule] = [
+            validator(validation_resources) for validator in get_concrete_subclasses(DataModelRule)
         ]
 
         # Run validators
@@ -46,7 +45,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             if validator.alpha and not self._enable_alpha_validators:
                 continue
             if self._can_run_validator(validator.code, validator.issue_type):
-                self._issues.extend(validator.run())
+                self._issues.extend(validator.validate())
 
         self._has_run = True
 

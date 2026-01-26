@@ -16,7 +16,7 @@ from cognite.neat._data_model.exporters import (
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookOptions
 from cognite.neat._data_model.importers import DMSAPICreator, DMSAPIImporter, DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
-from cognite.neat._data_model.validation.dms import DmsDataModelValidation
+from cognite.neat._data_model.rules.dms import DmsDataModelValidation
 from cognite.neat._exceptions import UserInputError
 from cognite.neat._state_machine import PhysicalState
 from cognite.neat._store._store import NeatStore

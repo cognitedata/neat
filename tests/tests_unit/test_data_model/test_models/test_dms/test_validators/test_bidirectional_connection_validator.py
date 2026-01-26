@@ -6,7 +6,7 @@ from cognite.neat._config import internal_profiles
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._references import ContainerDirectReference, ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._view_property import SingleReverseDirectRelationPropertyRequest
-from cognite.neat._data_model.validation.dms import (
+from cognite.neat._data_model.rules.dms import (
     DmsDataModelValidation,
     ReverseConnectionContainerMissing,
     ReverseConnectionContainerPropertyMissing,

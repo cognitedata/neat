@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 
-from cognite.neat._data_model.validation.dms._base import DataModelValidator
+from cognite.neat._data_model.rules._base import DataModelRule
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 
 NEAT_DIRECTORY = Path(__file__).parent.resolve(strict=True).parents[2]
@@ -21,19 +21,19 @@ NEWLINE = "\n"
 class Validator:
     module_name: str
     code: str
-    cls: type[DataModelValidator]
+    cls: type[DataModelRule]
 
 
-def get_production_validators() -> list[type[DataModelValidator]]:
+def get_production_validators() -> list[type[DataModelRule]]:
     """Get all production validators, excluding test validators."""
-    return [v for v in get_concrete_subclasses(DataModelValidator) if v.__name__ != "TestAlphaValidator"]
+    return [v for v in get_concrete_subclasses(DataModelRule) if v.__name__ != "TestAlphaValidator"]
 
 
-def generate_validation_markdown_docs(validation: type[DataModelValidator]) -> str:
+def generate_validation_markdown_docs(validation: type[DataModelRule]) -> str:
     return inspect.cleandoc(validation.__doc__ or "")
 
 
-def get_filename(validation: type[DataModelValidator]) -> str:
+def get_filename(validation: type[DataModelRule]) -> str:
     return f"{validation.code.casefold()}.md"
 
 

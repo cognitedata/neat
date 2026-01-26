@@ -1,7 +1,7 @@
 from typing import cast
 
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
-from cognite.neat._data_model.validation.dms import (
+from cognite.neat._data_model.rules.dms import (
     ConnectionValueTypeUndefined,
     ConnectionValueTypeUnexisting,
     DmsDataModelValidation,
@@ -12,8 +12,8 @@ from cognite.neat._data_model.validation.dms import (
     ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
-from cognite.neat._data_model.validation.dms._containers import RequiredContainerDoesNotExist
-from cognite.neat._data_model.validation.dms._limits import ViewPropertyCountIsOutOfLimits
+from cognite.neat._data_model.rules.dms._containers import RequiredContainerDoesNotExist
+from cognite.neat._data_model.rules.dms._limits import ViewPropertyCountIsOutOfLimits
 from cognite.neat._issues import IssueList
 from tests.data import SNAPSHOT_CATALOG
 

@@ -2,13 +2,13 @@
 
 from cognite.neat._data_model._analysis import RequiresChangeStatus
 from cognite.neat._data_model._constants import COGNITE_SPACES
-from cognite.neat._data_model.validation.dms._base import DataModelValidator
+from cognite.neat._data_model.rules._base import DataModelRule
 from cognite.neat._issues import Recommendation
 
 BASE_CODE = "NEAT-DMS-PERFORMANCE"
 
 
-class MissingRequiresConstraint(DataModelValidator):
+class MissingRequiresConstraint(DataModelRule):
     """
     Recommends adding requires constraints to optimize query performance.
 
@@ -31,7 +31,7 @@ class MissingRequiresConstraint(DataModelValidator):
     issue_type = Recommendation
     alpha = True
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for view_ref in self.validation_resources.merged.views:
@@ -75,7 +75,7 @@ class MissingRequiresConstraint(DataModelValidator):
         return recommendations
 
 
-class SuboptimalRequiresConstraint(DataModelValidator):
+class SuboptimalRequiresConstraint(DataModelRule):
     """
     Recommends removing requires constraints that are not optimal.
 
@@ -100,7 +100,7 @@ class SuboptimalRequiresConstraint(DataModelValidator):
     issue_type = Recommendation
     alpha = True
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for view_ref in self.validation_resources.merged.views:
@@ -125,7 +125,7 @@ class SuboptimalRequiresConstraint(DataModelValidator):
         return recommendations
 
 
-class UnresolvableQueryPerformance(DataModelValidator):
+class UnresolvableQueryPerformance(DataModelRule):
     """
     Identifies views with query performance issues that cannot be resolved.
     This is likely to be caused by unintended modeling choices.
@@ -158,7 +158,7 @@ class UnresolvableQueryPerformance(DataModelValidator):
     issue_type = Recommendation
     alpha = True
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         for view_ref in self.validation_resources.merged.views:
