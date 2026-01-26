@@ -1,6 +1,5 @@
+from cognite.neat._data_model.rules.cdf._base import CDFRule
 from cognite.neat._issues import Recommendation
-
-from ._base import CDFRule
 
 BASE_CODE = "NEAT-CDF-SPACES"
 
