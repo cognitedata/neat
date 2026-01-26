@@ -11,8 +11,9 @@ from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from cognite.neat._utils.useful_types import ModusOperandi
 
 
-class DmsDataModelValidation(OnSuccessIssuesChecker):
-    """Placeholder for DMS Quality Assessment functionality."""
+class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
+    """DMS Data Model rules orchestrator, used to execute DMS data model rules on a single data model represented
+    as RequestSchema."""
 
     def __init__(
         self,

@@ -16,7 +16,7 @@ from cognite.neat._data_model.exporters import (
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookOptions
 from cognite.neat._data_model.importers import DMSAPICreator, DMSAPIImporter, DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
-from cognite.neat._data_model.rules.dms import DmsDataModelValidation
+from cognite.neat._data_model.rules.dms import DmsDataModelRulesOrchestrator
 from cognite.neat._exceptions import UserInputError
 from cognite.neat._state_machine import PhysicalState
 from cognite.neat._store._store import NeatStore
@@ -109,7 +109,7 @@ class ReadPhysicalDataModel:
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
-        on_success = DmsDataModelValidation(
+        on_success = DmsDataModelRulesOrchestrator(
             modus_operandi=self._config.modeling.mode,
             cdf_snapshot=self._store.cdf_snapshot,
             limits=self._store.cdf_limits,
@@ -138,7 +138,7 @@ class ReadPhysicalDataModel:
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
-        on_success = DmsDataModelValidation(
+        on_success = DmsDataModelRulesOrchestrator(
             modus_operandi=self._config.modeling.mode,
             cdf_snapshot=self._store.cdf_snapshot,
             limits=self._store.cdf_limits,
@@ -158,7 +158,7 @@ class ReadPhysicalDataModel:
         path = NeatReader.create(io).materialize_path()
         reader = DMSTableImporter.from_excel(path)
 
-        on_success = DmsDataModelValidation(
+        on_success = DmsDataModelRulesOrchestrator(
             modus_operandi=self._config.modeling.mode,
             cdf_snapshot=self._store.cdf_snapshot,
             limits=self._store.cdf_limits,
@@ -181,7 +181,7 @@ class ReadPhysicalDataModel:
             DataModelReference(space=space, external_id=external_id, version=version), self._client
         )
 
-        on_success = DmsDataModelValidation(
+        on_success = DmsDataModelRulesOrchestrator(
             modus_operandi=self._config.modeling.mode,
             cdf_snapshot=self._store.cdf_snapshot,
             limits=self._store.cdf_limits,
@@ -337,7 +337,7 @@ def create(
         cdf_snapshot=self._store.cdf_snapshot,
     )
 
-    on_success = DmsDataModelValidation(
+    on_success = DmsDataModelRulesOrchestrator(
         modus_operandi=self._config.modeling.mode,
         cdf_snapshot=self._store.cdf_snapshot,
         limits=self._store.cdf_limits,

@@ -10,7 +10,7 @@ from ._base import CDFRule
 
 
 class CDFRulesOrchestrator(OnSuccessIssuesChecker):
-    """Placeholder for DMS Quality Assessment functionality."""
+    """CDF rules orchestrator, used to execute CDF rules on an entire CDF snapshot."""
 
     def __init__(
         self,

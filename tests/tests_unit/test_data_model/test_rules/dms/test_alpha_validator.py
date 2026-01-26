@@ -6,7 +6,7 @@ from cognite.neat import NeatConfig
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.rules.dms._base import DataModelRule  # for identity check
-from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelValidation
+from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelRulesOrchestrator
 from cognite.neat._data_model.rules.dms._views import CyclicImplements
 from cognite.neat._issues import ConsistencyError
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
@@ -52,7 +52,7 @@ def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> Non
     )
     data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
 
-    on_success = DmsDataModelValidation(
+    on_success = DmsDataModelRulesOrchestrator(
         cdf_snapshot=cdf_snapshot,
         limits=SchemaLimits(),
         modus_operandi=mode,
