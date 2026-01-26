@@ -4,7 +4,7 @@ import pytest
 
 from cognite.neat._config import internal_profiles
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
-from cognite.neat._data_model.validation.dms._ai_readiness import (
+from cognite.neat._data_model.rules.dms._ai_readiness import (
     DataModelMissingDescription,
     DataModelMissingName,
     EnumerationMissingDescription,
@@ -14,7 +14,7 @@ from cognite.neat._data_model.validation.dms._ai_readiness import (
     ViewPropertyMissingDescription,
     ViewPropertyMissingName,
 )
-from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
+from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelValidation
 from tests.data import SNAPSHOT_CATALOG
 
 PROBLEMS = {

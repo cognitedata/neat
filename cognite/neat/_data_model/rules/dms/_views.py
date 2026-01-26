@@ -1,13 +1,13 @@
 """Validators for checking containers in the data model."""
 
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
-from cognite.neat._data_model.validation.dms._base import DataModelValidator
+from cognite.neat._data_model.rules._base import DataModelRule
 from cognite.neat._issues import ConsistencyError
 
 BASE_CODE = "NEAT-DMS-VIEW"
 
 
-class ViewToContainerMappingNotPossible(DataModelValidator):
+class ViewToContainerMappingNotPossible(DataModelRule):
     """Validates that container and container property referenced by view property exist.
 
     ## What it does
@@ -26,7 +26,7 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
     code = f"{BASE_CODE}-001"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         if not self.validation_resources.merged_data_model.views:
@@ -79,7 +79,7 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
         return errors
 
 
-class ImplementedViewNotExisting(DataModelValidator):
+class ImplementedViewNotExisting(DataModelRule):
     """Validates that implemented (inherited) view exists.
 
     ## What it does
@@ -97,7 +97,7 @@ class ImplementedViewNotExisting(DataModelValidator):
     code = f"{BASE_CODE}-002"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         if not self.validation_resources.merged_data_model.views:
@@ -126,7 +126,7 @@ class ImplementedViewNotExisting(DataModelValidator):
         return errors
 
 
-class CyclicImplements(DataModelValidator):
+class CyclicImplements(DataModelRule):
     """Validates that view implements are not forming a cycle (i.e. cyclic graph of implements)
 
     ## What it does
@@ -146,7 +146,7 @@ class CyclicImplements(DataModelValidator):
     issue_type = ConsistencyError
     alpha = True
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         for cycle in self.validation_resources.implements_cycles:

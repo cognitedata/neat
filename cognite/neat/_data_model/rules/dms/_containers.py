@@ -4,13 +4,13 @@ from pyparsing import cast
 
 from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
-from cognite.neat._data_model.validation.dms._base import DataModelValidator
+from cognite.neat._data_model.rules._base import DataModelRule
 from cognite.neat._issues import ConsistencyError
 
 BASE_CODE = "NEAT-DMS-CONTAINER"
 
 
-class ExternalContainerDoesNotExist(DataModelValidator):
+class ExternalContainerDoesNotExist(DataModelRule):
     """
     Validates that any container referenced by a view property, when the
     referenced container does not belong to the data model's space, exists in CDF.
@@ -33,7 +33,7 @@ class ExternalContainerDoesNotExist(DataModelValidator):
     code = f"{BASE_CODE}-001"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         if not self.validation_resources.merged_data_model.views:
@@ -73,7 +73,7 @@ class ExternalContainerDoesNotExist(DataModelValidator):
         return errors
 
 
-class ExternalContainerPropertyDoesNotExist(DataModelValidator):
+class ExternalContainerPropertyDoesNotExist(DataModelRule):
     """
     Validates that any container property referenced by a view property, when the
     referenced container does not belong to the data model's space, exists in CDF.
@@ -97,7 +97,7 @@ class ExternalContainerPropertyDoesNotExist(DataModelValidator):
     code = f"{BASE_CODE}-002"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         if self.validation_resources.merged_data_model.views:
@@ -144,7 +144,7 @@ class ExternalContainerPropertyDoesNotExist(DataModelValidator):
         return errors
 
 
-class RequiredContainerDoesNotExist(DataModelValidator):
+class RequiredContainerDoesNotExist(DataModelRule):
     """
     Validates that any container required by another container exists in the data model.
 
@@ -165,7 +165,7 @@ class RequiredContainerDoesNotExist(DataModelValidator):
     code = f"{BASE_CODE}-003"
     issue_type = ConsistencyError
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         for container_ref in self.validation_resources.merged.containers:
@@ -199,7 +199,7 @@ class RequiredContainerDoesNotExist(DataModelValidator):
         return errors
 
 
-class RequiresConstraintCycle(DataModelValidator):
+class RequiresConstraintCycle(DataModelRule):
     """
     Validates that requires constraints between containers do not form cycles.
 
@@ -221,7 +221,7 @@ class RequiresConstraintCycle(DataModelValidator):
     issue_type = ConsistencyError
     alpha = True  # Still in development
 
-    def run(self) -> list[ConsistencyError]:
+    def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
         optimal_edges = self.validation_resources.oriented_mst_edges
 

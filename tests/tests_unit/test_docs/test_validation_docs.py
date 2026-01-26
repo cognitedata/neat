@@ -4,7 +4,7 @@ import re
 import pytest
 import yaml
 
-from cognite.neat._data_model.validation.dms._base import DataModelValidator
+from cognite.neat._data_model.rules._base import DataModelRule
 from tests.tests_unit.test_docs import generate_docs
 from tests.tests_unit.test_docs.generate_docs import (
     ENCODING,
@@ -32,7 +32,7 @@ class TestValidationDocs:
         )
 
     @pytest.mark.parametrize("validator_cls", get_production_validators())
-    def test_validation_md_is_up_to_date(self, validator_cls: type[DataModelValidator]) -> None:
+    def test_validation_md_is_up_to_date(self, validator_cls: type[DataModelRule]) -> None:
         expected_content = generate_validation_markdown_docs(validator_cls)
         file_path = VALIDATION_DIRECTORY / get_filename(validator_cls)
         actual_content = file_path.read_text(encoding=ENCODING)

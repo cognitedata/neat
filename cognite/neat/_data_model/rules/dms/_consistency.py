@@ -1,13 +1,13 @@
 """Validators checking for consistency issues in data model."""
 
 from cognite.neat._data_model._constants import COGNITE_SPACES
-from cognite.neat._data_model.validation.dms._base import DataModelValidator
+from cognite.neat._data_model.rules._base import DataModelRule
 from cognite.neat._issues import Recommendation
 
 BASE_CODE = "NEAT-DMS-CONSISTENCY"
 
 
-class ViewSpaceVersionInconsistentWithDataModel(DataModelValidator):
+class ViewSpaceVersionInconsistentWithDataModel(DataModelRule):
     """Validates that views have consistent space and version with the data model.
 
     ## What it does
@@ -25,7 +25,7 @@ class ViewSpaceVersionInconsistentWithDataModel(DataModelValidator):
     code = f"{BASE_CODE}-001"
     issue_type = Recommendation
 
-    def run(self) -> list[Recommendation]:
+    def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
         if not self.validation_resources.merged_data_model.views:
