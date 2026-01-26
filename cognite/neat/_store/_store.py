@@ -94,6 +94,11 @@ class NeatStore:
             # Update CDF snapshot after successful deployment
             self._cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
 
+    def cdf_analyze(self, on_success: OnSuccess) -> None:
+        """Analyze the entity of CDF data models"""
+        change, _ = self._do_activity(lambda: self.cdf_snapshot, on_success)
+        self.provenance.append(change)
+
     def _gather_data_model(self, writer: DMSExporter) -> PhysicalDataModel:
         """Gather the current physical data model from the store
 

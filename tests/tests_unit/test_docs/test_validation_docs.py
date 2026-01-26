@@ -4,7 +4,7 @@ import re
 import pytest
 import yaml
 
-from cognite.neat._data_model.rules._base import DataModelRule
+from cognite.neat._data_model.rules.dms._base import DataModelRule
 from tests.tests_unit.test_docs import generate_docs
 from tests.tests_unit.test_docs.generate_docs import (
     ENCODING,
