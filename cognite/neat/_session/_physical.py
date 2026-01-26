@@ -1,3 +1,4 @@
+from types import MethodType
 from typing import Any, Literal
 
 from cognite.neat._client import NeatClient
@@ -13,7 +14,7 @@ from cognite.neat._data_model.exporters import (
     DMSTableYamlExporter,
 )
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookOptions
-from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter, DMSTableImporter
+from cognite.neat._data_model.importers import DMSAPICreator, DMSAPIImporter, DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
 from cognite.neat._data_model.validation.dms import DmsDataModelValidation
 from cognite.neat._exceptions import UserInputError
@@ -24,6 +25,7 @@ from cognite.neat._utils._reader import NeatReader
 from ._wrappers import session_wrapper
 
 
+@session_wrapper
 class PhysicalDataModel:
     """Read from a data source into NeatSession graph store."""
 
@@ -33,6 +35,10 @@ class PhysicalDataModel:
         self._config = config
         self.read = ReadPhysicalDataModel(self._store, self._client, self._config)
         self.write = WritePhysicalDataModel(self._store, self._client, self._config)
+
+        # attach alpha methods
+        if self._config.alpha.enable_solution_model_creation:
+            self.create = MethodType(create, self)  # type: ignore[attr-defined]
 
     def _repr_html_(self) -> str:
         if not isinstance(self._store.state, PhysicalState):
@@ -292,3 +298,51 @@ class WritePhysicalDataModel:
         )
         on_success = SchemaDeployer(self._client, options)
         return self._store.write_physical(writer, on_success)
+
+
+def create(
+    self: PhysicalDataModel,
+    space: str,
+    external_id: str,
+    version: str,
+    views: list[str],
+    name: str | None = None,
+    description: str | None = None,
+    kind: Literal["solution"] = "solution",
+) -> None:
+    """Create a solution data model in Neat from CDF views.
+
+    Args:
+        space (str): The schema space of the data model.
+        external_id (str): The external id of the data model.
+        version (str): The version of the data model.
+        views (list[str]): List of view external ids to include in the data model in the short string format
+            space:external_id(version=version)
+        name (str | None): The name of the data model. If None, the name will be fetched from CDF.
+        description (str | None): The description of the data model. If None, the description will be fetched from CDF.
+        kind (Literal["solution"]): The kind of the data model. Currently, only "solution" is supported.
+    """
+
+    if not self._store.cdf_snapshot.data_model:
+        raise ValueError("There are no data models in CDF. Cannot create solution model.")
+
+    creator = DMSAPICreator(
+        space=space,
+        external_id=external_id,
+        version=version,
+        views=views,
+        name=name,
+        description=description,
+        kind=kind,
+        cdf_snapshot=self._store.cdf_snapshot,
+    )
+
+    on_success = DmsDataModelValidation(
+        modus_operandi=self._config.modeling.mode,
+        cdf_snapshot=self._store.cdf_snapshot,
+        limits=self._store.cdf_limits,
+        can_run_validator=self._config.validation.can_run_validator,
+        enable_alpha_validators=self._config.alpha.enable_experimental_validators,
+    )
+
+    return self._store.read_physical(creator, on_success)

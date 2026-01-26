@@ -3,10 +3,19 @@ from typing import cast
 import pytest
 from pytest_regressions.data_regression import DataRegressionFixture
 
-from cognite.neat._data_model._analysis import ResourceSource, ValidationResources
+from cognite.neat._data_model._analysis import (
+    RequiresChangesForView,
+    RequiresChangeStatus,
+    ResourceSource,
+    ValidationResources,
+)
+from cognite.neat._data_model._constants import CDF_CDM_SPACE
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms import ViewCorePropertyRequest, ViewReference, ViewRequest
 from cognite.neat._data_model.models.dms._container import ContainerRequest
-from cognite.neat._data_model.models.dms._references import ContainerReference
+from cognite.neat._data_model.models.dms._data_model import DataModelRequest
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
+from cognite.neat._data_model.models.dms._references import ContainerReference, DataModelReference
 from tests.data.snapshots.catalog import Catalog
 
 
@@ -42,11 +51,11 @@ def scenarios() -> dict[str, ValidationResources]:
             include_cdm=True,
             format="validation-resource",
         ),
-        "requires-constraints": catalog.load_scenario(
+        "requires-constraints-rebuild": catalog.load_scenario(
             "requires_constraints",
             cdf_scenario_name="for_validators",
-            modus_operandi="additive",
-            include_cdm=False,
+            modus_operandi="rebuild",
+            include_cdm=True,
             format="validation-resource",
         ),
         "cyclic_implements": catalog.load_scenario(
@@ -611,126 +620,458 @@ class TestValidationResources:
 
 
 class TestValidationResourcesRequiresConstraints:
-    """Tests for requires constraint related methods in ValidationResources."""
+    """Tests for requires constraint recommendations."""
 
-    def test_views_by_container(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test views_by_container returns correct view mappings."""
-        resources = scenarios["requires-constraints"]
-        views_by_container = resources.views_by_container
+    DEFAULT_SPACE = "my_space"
+    DEFAULT_VERSION = "v1"
 
-        # Check a sample container mapping
-        transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
-        assert transitive_middle in views_by_container
-        transitive_views = views_by_container[transitive_middle]
-        assert any(v.external_id == "TransitiveView" for v in transitive_views)
+    def _space_for(self, name: str) -> str:
+        """Return space for a container/view name. 'Cognite*' goes to CDM space."""
+        return CDF_CDM_SPACE if name.startswith("Cognite") else self.DEFAULT_SPACE
 
-    def test_containers_by_view(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test containers_by_view returns correct container mappings."""
-        resources = scenarios["requires-constraints"]
-        containers_by_view = resources.containers_by_view
+    def _container_ref(self, name: str) -> ContainerReference:
+        """Helper to create ContainerReference with default space."""
+        return ContainerReference(space=self._space_for(name), external_id=name)
 
-        # Check a sample view mapping
-        transitive_view = ViewReference(space="my_space", external_id="TransitiveView", version="v1")
-        assert transitive_view in containers_by_view
-        containers = containers_by_view[transitive_view]
-        container_ids = {c.external_id for c in containers}
-        assert container_ids == {"TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"}
+    def _view_ref(self, name: str) -> ViewReference:
+        """Helper to create ViewReference with default space and version."""
+        return ViewReference(space=self._space_for(name), external_id=name, version=self.DEFAULT_VERSION)
+
+    def create_test_scenario(
+        self,
+        mapped_containers_by_view: dict[str, list[str]],
+        requires_graph: dict[str, list[str]],
+    ) -> ValidationResources:
+        """Create a minimal ValidationResources for testing requires constraint logic.
+
+        Args:
+            mapped_containers_by_view: Dict mapping view names to list of container names
+            requires_graph: Dict mapping container name to list of containers it requires.
+                           Use "__auto" suffix to mark constraint as auto-generated.
+                           Container names starting with "Cognite" are placed in CDM space.
+        """
+        # Collect all container names
+        all_container_names = set(requires_graph.keys())
+        for container_names in mapped_containers_by_view.values():
+            all_container_names.update(container_names)
+        for targets in requires_graph.values():
+            all_container_names.update(target.removesuffix("__auto") for target in targets)
+
+        # Build containers
+        containers: dict[ContainerReference, ContainerRequest] = {}
+        for name in all_container_names:
+            ref = self._container_ref(name)
+            targets = requires_graph.get(name, [])
+            constraints = {
+                f"requires_{target}": {
+                    "constraintType": "requires",
+                    "require": {
+                        "space": self._space_for(target.removesuffix("__auto")),
+                        "externalId": target.removesuffix("__auto"),
+                    },
+                }
+                for target in targets
+            } or None
+            containers[ref] = ContainerRequest.model_validate(
+                {"space": ref.space, "externalId": ref.external_id, "properties": {}, "constraints": constraints}
+            )
+
+        # Build views
+        views: dict[ViewReference, ViewRequest] = {}
+        for view_name, container_names in mapped_containers_by_view.items():
+            view_ref = self._view_ref(view_name)
+            props = {
+                f"prop_{c}": {
+                    "container": {"space": self._space_for(c), "externalId": c},
+                    "containerPropertyIdentifier": f"prop_{c}",
+                }
+                for c in container_names
+            }
+            views[view_ref] = ViewRequest.model_validate(
+                {
+                    "space": view_ref.space,
+                    "externalId": view_ref.external_id,
+                    "version": view_ref.version,
+                    "properties": props,
+                }
+            )
+
+        # Build data model
+        dm_ref = DataModelReference(space=self.DEFAULT_SPACE, external_id="test_model", version=self.DEFAULT_VERSION)
+        data_model = {
+            dm_ref: DataModelRequest.model_validate(
+                {
+                    "space": self.DEFAULT_SPACE,
+                    "externalId": "test_model",
+                    "version": self.DEFAULT_VERSION,
+                    "views": [{"space": v.space, "externalId": v.external_id, "version": v.version} for v in views],
+                }
+            )
+        }
+
+        local = SchemaSnapshot(data_model=data_model, views=views, containers=containers)
+        return ValidationResources(modus_operandi="additive", local=local, cdf=SchemaSnapshot(), limits=SchemaLimits())
 
     @pytest.mark.parametrize(
-        "container_ids,expect_found",
+        "mapped_containers_by_view,requires_graph,view_name,expected",
         [
             pytest.param(
-                ["TransitiveParent", "TransitiveMiddle"],
-                {ViewReference(space="my_space", external_id="TransitiveView", version="v1")},
-                id="containers-appear-together",
+                {"SingleContainerView": ["OnlyContainer"]},
+                {},
+                "SingleContainerView",
+                RequiresChangesForView(set(), set(), RequiresChangeStatus.OPTIMAL),
+                id="single-container-view-is-optimal",
             ),
             pytest.param(
-                ["DisconnectedGroupAContainer1", "DisconnectedGroupBContainer1"],
+                {"TagView": ["TagContainer", "AssetContainer"]},
+                {"TagContainer": ["AssetContainer"]},
+                "TagView",
+                RequiresChangesForView(set(), set(), RequiresChangeStatus.OPTIMAL),
+                id="already-optimal",
+            ),
+            pytest.param(
+                {"TagView": ["CustomTag", "CustomAsset"], "AssetView": ["CustomAsset"]},
+                {},
+                "TagView",
+                RequiresChangesForView(
+                    to_add={
+                        (
+                            ContainerReference(space=DEFAULT_SPACE, external_id="CustomTag"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="CustomAsset"),
+                        )
+                    },
+                    to_remove=set(),
+                    status=RequiresChangeStatus.CHANGES_AVAILABLE,
+                ),
+                id="missing-constraint",
+            ),
+            # User container → CDM container (CDM containers are immutable)
+            pytest.param(
+                {"TagView": ["Tag", "CogniteAsset"]},
+                {},
+                "TagView",
+                RequiresChangesForView(
+                    to_add={
+                        (
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Tag"),
+                            ContainerReference(space=CDF_CDM_SPACE, external_id="CogniteAsset"),
+                        )
+                    },
+                    to_remove=set(),
+                    status=RequiresChangeStatus.CHANGES_AVAILABLE,
+                ),
+                id="missing-constraint-to-cdm",
+            ),
+            # Existing auto constraint is preserved and new one is recommended to add
+            pytest.param(
+                {"View1": ["Root", "Leaf"], "View2": ["Root"]},
+                {"Root": ["Leaf__auto"]},  # Existing auto constraint
+                "View1",
+                RequiresChangesForView(
+                    to_add={
+                        (
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Leaf"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Root"),
+                        )
+                    },
+                    to_remove={
+                        (
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Root"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Leaf"),
+                        )
+                    },
+                    status=RequiresChangeStatus.CHANGES_AVAILABLE,
+                ),
+                id="suboptimal-auto-constraint-removed",
+            ),
+            # User-intentional constraint is preserved even though it causes ingestion dependency: View1->View2
+            pytest.param(
+                {"View1": ["Root", "Leaf"], "View2": ["Root"]},
+                {"Leaf": ["Root"]},  # User-intentional (no __auto)
+                "View1",
+                RequiresChangesForView(set(), set(), RequiresChangeStatus.OPTIMAL),
+                id="suboptimal-existing-user-intentional-constraint-preserved",
+            ),
+            # Cycle: auto-constraint in cycle should be removed
+            pytest.param(
+                {"CycleView": ["CycleA", "CycleB"]},
+                {"CycleA": ["CycleB__auto"], "CycleB": ["CycleA__auto"]},  # Bidirectional cycle
+                "CycleView",
+                RequiresChangesForView(
+                    to_add=set(),
+                    to_remove={
+                        (
+                            ContainerReference(space=DEFAULT_SPACE, external_id="CycleB"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="CycleA"),
+                        )
+                    },
+                    status=RequiresChangeStatus.CHANGES_AVAILABLE,
+                ),
+                id="cycle-auto-constraint-removed",
+            ),
+            # Wrong-direction auto constraint removed, user-intentional preserved
+            pytest.param(
+                {"View": ["A", "B", "C"]},
+                {"C": ["B__auto"], "B": ["A"]},  # C→B auto (wrong dir), B→A user-intentional
+                "View",
+                RequiresChangesForView(
+                    to_add={
+                        (
+                            ContainerReference(space=DEFAULT_SPACE, external_id="B"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="C"),
+                        )
+                    },
+                    to_remove={
+                        (
+                            ContainerReference(space=DEFAULT_SPACE, external_id="C"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="B"),
+                        )
+                    },
+                    status=RequiresChangeStatus.CHANGES_AVAILABLE,
+                ),
+                id="wrong-direction-auto-removed-user-intentional-preserved",
+            ),
+            # Star topology: root (1 view) requires leaves (2 views each) - Root selected as root
+            pytest.param(
+                {
+                    "StarView": ["Root", "LeafA", "LeafB", "LeafC"],
+                    "LeafAView": ["LeafA"],  # Extra views make leaves have view_count=2
+                    "LeafBView": ["LeafB"],
+                    "LeafCView": ["LeafC"],
+                },
+                {},
+                "StarView",
+                RequiresChangesForView(
+                    to_add={
+                        (
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Root"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="LeafA"),
+                        ),
+                        (
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Root"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="LeafB"),
+                        ),
+                        (
+                            ContainerReference(space=DEFAULT_SPACE, external_id="Root"),
+                            ContainerReference(space=DEFAULT_SPACE, external_id="LeafC"),
+                        ),
+                    },
+                    to_remove=set(),
+                    status=RequiresChangeStatus.CHANGES_AVAILABLE,
+                ),
+                id="star-topology-root-to-multiple-leaves",
+            ),
+        ],
+    )
+    def test_get_requires_changes_for_view(
+        self,
+        mapped_containers_by_view: dict[str, list[str]],
+        requires_graph: dict[str, list[str]],
+        view_name: str,
+        expected: RequiresChangesForView,
+    ) -> None:
+        """Test get_requires_changes_for_view for isolated scenarios."""
+        resources = self.create_test_scenario(mapped_containers_by_view, requires_graph)
+        result = resources.get_requires_changes_for_view(self._view_ref(view_name))
+
+        assert result.to_add == expected.to_add
+        assert result.to_remove == expected.to_remove
+        assert result.status == expected.status
+
+    def test_views_by_container(self) -> None:
+        """Test views_by_container returns correct view mappings."""
+        resources = self.create_test_scenario(
+            {"ViewA": ["SharedContainer", "OnlyA"], "ViewB": ["SharedContainer", "OnlyB"]},
+            {},
+        )
+
+        # SharedContainer appears in both views
+        shared = self._container_ref("SharedContainer")
+        assert shared in resources.views_by_container
+        view_ids = {v.external_id for v in resources.views_by_container[shared]}
+        assert view_ids == {"ViewA", "ViewB"}
+
+        # OnlyA appears only in ViewA
+        only_a = self._container_ref("OnlyA")
+        assert only_a in resources.views_by_container
+        assert {v.external_id for v in resources.views_by_container[only_a]} == {"ViewA"}
+
+    def test_containers_by_view(self) -> None:
+        """Test containers_by_view returns correct container mappings."""
+        resources = self.create_test_scenario(
+            {"MyView": ["ContainerA", "ContainerB", "ContainerC"]},
+            {},
+        )
+
+        view_ref = self._view_ref("MyView")
+        assert view_ref in resources.containers_by_view
+        container_ids = {c.external_id for c in resources.containers_by_view[view_ref]}
+        assert container_ids == {"ContainerA", "ContainerB", "ContainerC"}
+
+    @pytest.mark.parametrize(
+        "mapped_containers_by_view,query_containers,expected_views",
+        [
+            pytest.param(
+                {"ViewA": ["C1", "C2"], "ViewB": ["C2", "C3"]},
+                ["C1", "C2"],
+                {"ViewA"},
+                id="containers-appear-together-in-one-view",
+            ),
+            pytest.param(
+                {"ViewA": ["C1", "C2"], "ViewB": ["C3", "C4"]},
+                ["C1", "C3"],
                 set(),
                 id="containers-never-together",
+            ),
+            pytest.param(
+                {"ViewA": ["C1", "C2", "C3"], "ViewB": ["C1", "C2", "C3"]},
+                ["C1", "C2"],
+                {"ViewA", "ViewB"},
+                id="containers-appear-together-in-multiple-views",
             ),
         ],
     )
     def test_find_views_mapping_to_containers(
         self,
-        container_ids: list[str],
-        expect_found: set[ViewReference],
-        scenarios: dict[str, ValidationResources],
+        mapped_containers_by_view: dict[str, list[str]],
+        query_containers: list[str],
+        expected_views: set[str],
     ) -> None:
         """Test find_views_mapping_to_containers for various container combinations."""
-        resources = scenarios["requires-constraints"]
-        containers = [ContainerReference(space="my_space", external_id=cid) for cid in container_ids]
+        resources = self.create_test_scenario(mapped_containers_by_view, {})
+        containers = [self._container_ref(c) for c in query_containers]
         shared_views = resources.find_views_mapping_to_containers(containers)
-        assert shared_views == expect_found, f"Containers {container_ids}: expected {expect_found}, got {shared_views}"
+        view_ids = {v.external_id for v in shared_views}
+        assert view_ids == expected_views
 
-    def test_requires_constraint_graph_structure(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test that requires_constraint_graph is built correctly."""
-        resources = scenarios["requires-constraints"]
+    def test_requires_constraint_graph_structure(self) -> None:
+        """Test that requires_constraint_graph is built correctly for existing constraints."""
+        resources = self.create_test_scenario(
+            {"View": ["A", "B", "C"]},
+            {"A": ["B"], "B": ["C"]},
+        )
         graph = resources.requires_constraint_graph
 
-        # Check edges exist
-        transitive_middle = ContainerReference(space="my_space", external_id="TransitiveMiddle")
-        transitive_leaf = ContainerReference(space="my_space", external_id="TransitiveLeaf")
-        assert graph.has_edge(transitive_middle, transitive_leaf)
+        assert graph.has_edge(self._container_ref("A"), self._container_ref("B"))
+        assert graph.has_edge(self._container_ref("B"), self._container_ref("C"))
+        assert not graph.has_edge(self._container_ref("A"), self._container_ref("C"))
 
-        # Check cycle edges
-        cycle_a = ContainerReference(space="my_space", external_id="CycleContainerA")
-        cycle_b = ContainerReference(space="my_space", external_id="CycleContainerB")
-        assert graph.has_edge(cycle_a, cycle_b)
-        assert graph.has_edge(cycle_b, cycle_a)
-
-    def test_implements_cycles(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test cycle detection in requires constraints."""
-        resources = scenarios["cyclic_implements"]
-        cycles = resources.implements_cycles
-
-        assert len(cycles) == 1
-        assert set(cycles[0]) == {
-            ViewReference(space="my_space", external_id="ViewA", version="v1"),
-            ViewReference(space="my_space", external_id="ViewB", version="v1"),
-            ViewReference(space="my_space", external_id="ViewC", version="v1"),
-        }
-
-    def test_requires_constraint_cycles(self, scenarios: dict[str, ValidationResources]) -> None:
-        """Test cycle detection in requires constraints."""
-        resources = scenarios["requires-constraints"]
+    def test_requires_constraint_cycles(self) -> None:
+        """Test cycle detection in existing requires constraints."""
+        resources = self.create_test_scenario(
+            {"View": ["CycleA", "CycleB"]},
+            {"CycleA": ["CycleB"], "CycleB": ["CycleA"]},
+        )
         cycles = resources.requires_constraint_cycles
 
         assert len(cycles) == 1
-        assert set(cycles[0]) == {
-            ContainerReference(space="my_space", external_id="CycleContainerB"),
-            ContainerReference(space="my_space", external_id="CycleContainerA"),
-        }
+        assert set(cycles[0]) == {self._container_ref("CycleA"), self._container_ref("CycleB")}
 
     @pytest.mark.parametrize(
-        "containers,expected_complete",
+        "requires_graph,query_containers,expected_complete",
         [
             pytest.param(
-                ["TransitiveParent", "TransitiveMiddle", "TransitiveLeaf"],
+                {"A": ["B"]},  # A→B only, no path to C
+                ["A", "B", "C"],
                 False,
-                id="incomplete-hierarchy",
+                id="incomplete-no-path-to-c",
             ),
             pytest.param(
-                ["TransitiveParent"],
+                {},
+                ["A"],
                 True,
                 id="single-container-always-complete",
             ),
             pytest.param(
-                ["TagAssetContainer", "TagDescribableContainer"],
+                {"A": ["B"], "B": ["C"]},
+                ["A", "B", "C"],
                 True,
-                id="complete-with-requires",
+                id="complete-chain",
+            ),
+            pytest.param(
+                {"A": ["B", "C"]},  # Star: A→B and A→C
+                ["A", "B", "C"],
+                True,
+                id="complete-star",
             ),
         ],
     )
     def test_forms_directed_path(
         self,
-        containers: list[str],
+        requires_graph: dict[str, list[str]],
+        query_containers: list[str],
         expected_complete: bool,
-        scenarios: dict[str, ValidationResources],
     ) -> None:
         """Test forms_directed_path for various scenarios."""
-        resources = scenarios["requires-constraints"]
-        container_refs = {ContainerReference(space="my_space", external_id=c) for c in containers}
+        all_containers = set(query_containers)
+        for src, targets in requires_graph.items():
+            all_containers.add(src)
+            all_containers.update(targets)
+        resources = self.create_test_scenario(
+            {"View": list(all_containers)},
+            requires_graph,
+        )
+        container_refs = {self._container_ref(c) for c in query_containers}
 
         result = ValidationResources.forms_directed_path(container_refs, resources.requires_constraint_graph)
-        assert result == expected_complete, f"Containers {containers}: expected {expected_complete}, got {result}"
+        assert result == expected_complete
+
+    def test_requires_mst_has_no_spurious_cross_group_edges(self) -> None:
+        """Verify MST doesn't connect containers that don't share a view."""
+        resources = self.create_test_scenario(
+            {
+                "ViewA": ["GroupA_1", "GroupA_2"],
+                "ViewB": ["GroupB_1", "GroupB_2"],
+            },
+            {},
+        )
+
+        group_a = {self._container_ref("GroupA_1"), self._container_ref("GroupA_2")}
+        group_b = {self._container_ref("GroupB_1"), self._container_ref("GroupB_2")}
+
+        cross_edge_groups: list[tuple[ContainerReference, ContainerReference]] = []
+        for edge in resources.oriented_mst_edges:
+            edge_set = set(edge)
+            if edge_set & group_a and edge_set & group_b:
+                cross_edge_groups.append(edge)
+        assert not cross_edge_groups, f"Cross-group edges were formed: {cross_edge_groups}"
+
+    def test_requires_recommendations_baseline(
+        self, scenarios: dict[str, ValidationResources], data_regression: DataRegressionFixture
+    ) -> None:
+        """Regression test for requires constraint recommendations."""
+        resources = scenarios["requires-constraints-rebuild"]
+
+        # Collect all recommendations sorted by view
+        all_recommendations = {}
+
+        for view_ref in sorted(resources.merged.views.keys(), key=lambda v: f"{v.space}:{v.external_id}"):
+            containers = resources.containers_by_view.get(view_ref, set())
+            if len(containers) < 2:
+                continue
+
+            changes = resources.get_requires_changes_for_view(view_ref)
+
+            # Apply recommendations to get final state
+            current = set()
+            for src in containers:
+                if src in resources.requires_constraint_graph:
+                    for dst in resources.requires_constraint_graph.successors(src):
+                        if dst in containers:
+                            current.add((src, dst))
+
+            final = current.copy()
+            for edge in changes.to_add:
+                final.add(edge)
+            for edge in changes.to_remove:
+                final.discard(edge)
+
+            view_key = f"{view_ref.space}:{view_ref.external_id}({view_ref.version})"
+            all_recommendations[view_key] = {
+                "containers": sorted([c.external_id for c in containers]),
+                "to_add": sorted([f"{src.external_id} -> {dst.external_id}" for src, dst in changes.to_add]),
+                "to_remove": sorted([f"{src.external_id} -> {dst.external_id}" for src, dst in changes.to_remove]),
+                "final_constraints": sorted([f"{src.external_id} -> {dst.external_id}" for src, dst in final]),
+            }
+
+        data_regression.check(all_recommendations)

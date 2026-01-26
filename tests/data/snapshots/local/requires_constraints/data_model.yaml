@@ -5,22 +5,62 @@ name: Requires Constraints Test Model
 description: A test data model for validating requires constraint validators
 views:
   - space: my_space
-    externalId: TransitiveView
+    externalId: ValveView
     version: v1
     type: view
   - space: my_space
-    externalId: TagView
+    externalId: TagWithAssetView
     version: v1
     type: view
   - space: my_space
-    externalId: CycleTestView
+    externalId: ImmutableBridgeViewA
     version: v1
     type: view
   - space: my_space
-    externalId: DisconnectedGroupAView
+    externalId: ImmutableBridgeViewB
     version: v1
     type: view
   - space: my_space
-    externalId: DisconnectedGroupBView
+    externalId: ImmutableBridgeCombinedView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: FunctionalLocationView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: SharedTagView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: PumpEquipmentView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: CogniteAssetExtensionView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: CogniteAssetExtensionSolutionModelScenarioView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: EquipmentPumpView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: EquipmentHeatExchangerView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: EquipmentCompressorView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: EquipmentTagView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: EquipmentUnsolvableView
     version: v1
     type: view

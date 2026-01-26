@@ -20,6 +20,7 @@ nav:
       - Consistency (NEAT-DMS-CONSISTENCY): validation/index.html#consistency-neat-dms-consistency
       - Containers (NEAT-DMS-CONTAINER): validation/index.html#containers-neat-dms-container
       - Limits (NEAT-DMS-LIMITS): validation/index.html#limits-neat-dms-limits
+      - Performance (NEAT-DMS-PERFORMANCE): validation/index.html#performance-neat-dms-performance
       - Views (NEAT-DMS-VIEW): validation/index.html#views-neat-dms-view
   - Data Modeling:
       - Principles: data_modeling/principles.md

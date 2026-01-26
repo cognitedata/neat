@@ -46,7 +46,7 @@ class TestYAMLExporter:
 
             component_dir = data_models_dir / dir_name
             assert component_dir.exists(), f"{dir_name} directory not created"
-            for component in components:
+            for component in components:  # type: ignore[attr-defined]
                 component_file = component_dir / f"{component.external_id}.{suffix}.yaml"
                 assert component_file.exists(), f"file for {component.external_id} not created"
 
@@ -76,7 +76,7 @@ class TestYAMLExporter:
             ]
             for dir_name, components, suffix in component_checks:
                 if components:
-                    expected_files.update(f"data_models/{dir_name}/{c.external_id}.{suffix}.yaml" for c in components)
+                    expected_files.update(f"data_models/{dir_name}/{c.external_id}.{suffix}.yaml" for c in components)  # type: ignore[attr-defined]
 
             assert actual_files == expected_files
 

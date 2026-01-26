@@ -15,7 +15,7 @@ from cognite.neat._data_model.exporters._table_exporter.exporter import DMSTable
 from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
-from cognite.neat._exceptions import DataModelImportException
+from cognite.neat._exceptions import DataModelCreateException, DataModelImportException
 from cognite.neat._issues import IssueList
 from cognite.neat._state_machine._states import EmptyState, PhysicalState, State
 from cognite.neat._utils.text import NEWLINE
@@ -177,6 +177,9 @@ class NeatStore:
 
         # we catch import exceptions to capture issues and errors in provenance
         except DataModelImportException as e:
+            errors.extend(e.errors)
+
+        except DataModelCreateException as e:
             errors.extend(e.errors)
 
         # these are all other errors, such as missing file, wrong format, etc.
