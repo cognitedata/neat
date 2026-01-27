@@ -164,25 +164,6 @@ class ChangedField(PrimitiveField):
         return f"changed from {self.current_value!r} to {self.new_value!r}"
 
 
-class ChangedConstraint(ChangedField):
-    item_severity: SeverityType = SeverityType.BREAKING
-
-    @property
-    def description(self) -> str:
-        return (
-            super().description
-            + ". Note: Changing constraints may cause ingestion failures if the data being ingested violates the constraint"
-        )
-
-
-class ChangedIndex(ChangedField):
-    item_severity: SeverityType = SeverityType.BREAKING
-
-    @property
-    def description(self) -> str:
-        return super().description + ". Note: Changing indexes may affect query performance"
-
-
 class FieldChanges(FieldChange):
     """Represents a nested property, i.e., a property that contains other properties."""
 
