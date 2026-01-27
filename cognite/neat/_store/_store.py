@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Any, cast
 
 from cognite.neat._client.client import NeatClient
+from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._config import NeatConfig
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
 from cognite.neat._data_model._snapshot import SchemaSnapshot
@@ -36,6 +37,15 @@ class NeatStore:
         # Placeholder for CDF schema and limit snapshot
         self._cdf_snapshot: SchemaSnapshot | None = None
         self._cdf_limits: SchemaLimits | None = None
+        self._cdf_space_statistics: SpaceStatisticsResponse | None = None
+
+    @property
+    def cdf_space_statistics(self) -> SpaceStatisticsResponse:
+        if self._cdf_space_statistics is None:
+            self._cdf_space_statistics = self._client.statistics.space_statistics(
+                [space.space for space in self.cdf_snapshot.spaces.keys()]
+            )
+        return self._cdf_space_statistics
 
     @property
     def cdf_limits(self) -> SchemaLimits:

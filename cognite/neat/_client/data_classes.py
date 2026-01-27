@@ -2,6 +2,8 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
+from cognite.neat._utils.useful_types import BaseModelObject
+
 T = TypeVar("T", bound=BaseModel)
 
 
@@ -42,3 +44,33 @@ class StatisticsResponse(BaseModel, populate_by_name=True):
     concurrent_read_limit: int = Field(alias="concurrentReadLimit")
     concurrent_write_limit: int = Field(alias="concurrentWriteLimit")
     concurrent_delete_limit: int = Field(alias="concurrentDeleteLimit")
+
+
+class SpaceStatisticsItem(BaseModelObject, populate_by_name=True):
+    """Individual space statistics item."""
+
+    space: str
+    containers: int
+    views: int
+    data_models: int
+    edges: int
+    soft_deleted_edges: int
+    nodes: int
+    soft_deleted_nodes: int
+
+    @property
+    def is_empty(self) -> bool:
+        """Check if the space has zero usage."""
+        return (
+            self.containers == 0 and self.views == 0 and self.data_models == 0 and self.edges == 0 and self.nodes == 0
+        )
+
+
+class SpaceStatisticsResponse(BaseModelObject, populate_by_name=True):
+    """Response model for space statistics endpoint."""
+
+    items: list[SpaceStatisticsItem]
+
+    def empty_spaces(self) -> list[str]:
+        """Get a list of space identifiers that have zero usage."""
+        return [item.space for item in self.items if item.is_empty]
