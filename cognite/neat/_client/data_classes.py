@@ -2,6 +2,8 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
+from cognite.neat._utils.useful_types import BaseModelObject
+
 T = TypeVar("T", bound=BaseModel)
 
 
@@ -44,17 +46,17 @@ class StatisticsResponse(BaseModel, populate_by_name=True):
     concurrent_delete_limit: int = Field(alias="concurrentDeleteLimit")
 
 
-class SpaceStatisticsItem(BaseModel, populate_by_name=True):
+class SpaceStatisticsItem(BaseModelObject, populate_by_name=True):
     """Individual space statistics item."""
 
     space: str
     containers: int
     views: int
-    data_models: int = Field(alias="dataModels")
+    data_models: int
     edges: int
-    soft_deleted_edges: int = Field(alias="softDeletedEdges")
+    soft_deleted_edges: int
     nodes: int
-    soft_deleted_nodes: int = Field(alias="softDeletedNodes")
+    soft_deleted_nodes: int
 
     @property
     def is_empty(self) -> bool:
@@ -64,7 +66,7 @@ class SpaceStatisticsItem(BaseModel, populate_by_name=True):
         )
 
 
-class SpaceStatisticsResponse(BaseModel, populate_by_name=True):
+class SpaceStatisticsResponse(BaseModelObject, populate_by_name=True):
     """Response model for space statistics endpoint."""
 
     items: list[SpaceStatisticsItem]
@@ -72,15 +74,3 @@ class SpaceStatisticsResponse(BaseModel, populate_by_name=True):
     def empty_spaces(self) -> list[str]:
         """Get a list of space identifiers that have zero usage."""
         return [item.space for item in self.items if item.is_empty]
-
-
-class SpaceStatisticsRequestItem(BaseModel):
-    """Request item for space statistics."""
-
-    space: str
-
-
-class SpaceStatisticsRequest(BaseModel):
-    """Request model for space statistics endpoint."""
-
-    items: list[SpaceStatisticsRequestItem]
