@@ -6,7 +6,9 @@ from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._schema import RequestSchema
+from cognite.neat._data_model.rules._fix_actions import FixAction
 from cognite.neat._data_model.rules.dms._base import DataModelRule
+from cognite.neat._issues import Issue
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from cognite.neat._utils.useful_types import ModusOperandi
 
@@ -68,3 +70,149 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
             limits=self._limits,
             modus_operandi=self._modus_operandi,
         )
+
+
+class DmsDataModelFixer(OnSuccessIssuesChecker):
+    """Validates and optionally fixes a DMS data model.
+
+    This class extends the validation functionality to also apply automatic fixes
+    for issues identified by fixable validators. Fixes are applied in priority order
+    (lower priority values first), then re-validated to report remaining issues.
+
+    Attributes:
+        apply_fixes: Whether to apply available fixes to the schema.
+    """
+
+    def __init__(
+        self,
+        cdf_snapshot: SchemaSnapshot,
+        limits: SchemaLimits,
+        modus_operandi: ModusOperandi = "additive",
+        can_run_validator: Callable[[str, type], bool] | None = None,
+        enable_alpha_validators: bool = False,
+        apply_fixes: bool = True,
+    ) -> None:
+        super().__init__()
+        self._cdf_snapshot = cdf_snapshot
+        self._limits = limits
+        self._modus_operandi = modus_operandi
+        self._can_run_validator = can_run_validator or (lambda code, issue_type: True)  # type: ignore
+        self._has_run = False
+        self._enable_alpha_validators = enable_alpha_validators
+        self._apply_fixes = apply_fixes
+        self._applied_fixes: list[FixAction] = []
+
+    @property
+    def applied_fixes(self) -> list[FixAction]:
+        """Return the list of fix actions that were applied."""
+        if not self._has_run:
+            raise RuntimeError(f"{type(self).__name__} has not been run yet.")
+        return list(self._applied_fixes)
+
+    def run(self, request_schema: RequestSchema) -> None:
+        """Run validation and optionally apply fixes to the DMS data model.
+
+        If apply_fixes is True:
+        1. Run validators to collect issues BEFORE fixes
+        2. Collect fix actions from fixable validators
+        3. Deduplicate and sort fix actions by priority
+        4. Apply fixes to the schema (in-place modification)
+        5. Re-run validation to report remaining issues
+        6. Compute fixed issues (issues that existed before but not after)
+
+        Args:
+            request_schema: The schema to validate and optionally fix.
+                Note: If apply_fixes is True, this schema will be modified in-place.
+        """
+        if self._apply_fixes:
+            # First, collect issues BEFORE applying fixes
+            validation_resources = self._gather_validation_resources(request_schema)
+            issues_before = self._run_validators(validation_resources)
+
+            # Collect fix actions from fixable validators
+            all_actions = self._collect_fix_actions(validation_resources)
+            unique_actions = self._deduplicate_actions(all_actions)
+            sorted_actions = sorted(unique_actions, key=lambda a: (a.priority, a.fix_id))
+
+            # Apply fixes to the original schema (not the copy)
+            for action in sorted_actions:
+                action.apply(request_schema)
+                self._applied_fixes.append(action)
+
+            # Re-validate to get remaining issues
+            validation_resources = self._gather_validation_resources(request_schema)
+            issues_after = self._run_validators(validation_resources)
+            self._issues.extend(issues_after)
+
+            # Compute fixed issues: issues that existed before but not after
+            # We compare by (code, message) tuple for reliable comparison
+            after_keys = {(issue.code, issue.message) for issue in issues_after}
+            for issue in issues_before:
+                key = (issue.code, issue.message)
+                if key not in after_keys:
+                    self._fixed_issues.append(issue)
+        else:
+            # No fixes, just validate
+            validation_resources = self._gather_validation_resources(request_schema)
+            self._issues.extend(self._run_validators(validation_resources))
+
+        self._has_run = True
+
+    def _collect_fix_actions(self, validation_resources: ValidationResources) -> list[FixAction]:
+        """Collect fix actions from all fixable validators."""
+        actions: list[FixAction] = []
+        validators: list[DataModelRule] = [
+            validator(validation_resources) for validator in get_concrete_subclasses(DataModelRule)
+        ]
+
+        for validator in validators:
+            if not validator.fixable:
+                continue
+            if validator.alpha and not self._enable_alpha_validators:
+                continue
+            if self._can_run_validator(validator.code, validator.issue_type):
+                actions.extend(validator.fix())
+
+        return actions
+
+    def _run_validators(self, validation_resources: ValidationResources) -> list[Issue]:
+        """Run all validators and return the issues found."""
+        issues: list[Issue] = []
+        validators: list[DataModelRule] = [
+            validator(validation_resources) for validator in get_concrete_subclasses(DataModelRule)
+        ]
+
+        for validator in validators:
+            if validator.alpha and not self._enable_alpha_validators:
+                continue
+            if self._can_run_validator(validator.code, validator.issue_type):
+                issues.extend(validator.validate())
+
+        return issues
+
+    def _gather_validation_resources(self, request_schema: RequestSchema) -> ValidationResources:
+        """Create validation resources from the request schema."""
+        copy = request_schema.model_copy(deep=True)
+        local = SchemaSnapshot(
+            data_model={request_schema.data_model.as_reference(): copy.data_model},
+            views={view.as_reference(): view for view in copy.views},
+            containers={container.as_reference(): container for container in copy.containers},
+            spaces={space.as_reference(): space for space in copy.spaces},
+            node_types={node_type: node_type for node_type in copy.node_types},
+            timestamp=datetime.now(timezone.utc),
+        )
+
+        return ValidationResources(
+            cdf=self._cdf_snapshot,
+            local=local,
+            limits=self._limits,
+            modus_operandi=self._modus_operandi,
+        )
+
+    def _deduplicate_actions(self, actions: list[FixAction]) -> list[FixAction]:
+        """Remove duplicate fix actions (same fix_id)."""
+        seen: dict[str, FixAction] = {}
+        for action in actions:
+            if action.fix_id not in seen:
+                seen[action.fix_id] = action
+        return list(seen.values())

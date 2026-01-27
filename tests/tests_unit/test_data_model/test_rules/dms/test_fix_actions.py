@@ -1,0 +1,357 @@
+"""Tests for the fix action functionality in validators."""
+
+from typing import Any
+
+import pytest
+
+from cognite.neat._data_model._analysis import ValidationResources
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
+from cognite.neat._data_model.models.dms._references import ContainerReference
+from cognite.neat._data_model.rules._fix_actions import FixAction
+from cognite.neat._data_model.rules.dms._containers import RequiresConstraintCycle
+from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelFixer
+from cognite.neat._data_model.rules.dms._performance import (
+    MissingRequiresConstraint,
+    SuboptimalRequiresConstraint,
+)
+from tests.data import SNAPSHOT_CATALOG
+
+
+class TestFixAction:
+    """Tests for the FixAction dataclass."""
+
+    def test_fix_action_equality(self) -> None:
+        """Test that FixAction equality is based on fix_id."""
+
+        def dummy_apply(schema: Any) -> None:
+            pass
+
+        action1 = FixAction(
+            fix_id="test:action:1",
+            description="Test action 1",
+            target_type="container",
+            target_ref=ContainerReference(space="test", external_id="container1"),
+            apply=dummy_apply,
+        )
+        action2 = FixAction(
+            fix_id="test:action:1",
+            description="Different description",
+            target_type="container",
+            target_ref=ContainerReference(space="test", external_id="container1"),
+            apply=dummy_apply,
+        )
+        action3 = FixAction(
+            fix_id="test:action:2",
+            description="Test action 1",
+            target_type="container",
+            target_ref=ContainerReference(space="test", external_id="container1"),
+            apply=dummy_apply,
+        )
+
+        assert action1 == action2
+        assert action1 != action3
+
+    def test_fix_action_hash(self) -> None:
+        """Test that FixAction can be used in sets/dicts."""
+
+        def dummy_apply(schema: Any) -> None:
+            pass
+
+        action1 = FixAction(
+            fix_id="test:action:1",
+            description="Test action 1",
+            target_type="container",
+            target_ref=ContainerReference(space="test", external_id="container1"),
+            apply=dummy_apply,
+        )
+        action2 = FixAction(
+            fix_id="test:action:1",
+            description="Different description",
+            target_type="container",
+            target_ref=ContainerReference(space="test", external_id="container1"),
+            apply=dummy_apply,
+        )
+
+        # Same fix_id should have same hash
+        assert hash(action1) == hash(action2)
+
+        # Can be used in sets
+        actions_set = {action1, action2}
+        assert len(actions_set) == 1
+
+
+class TestMissingRequiresConstraintFix:
+    """Tests for MissingRequiresConstraint validator fix() method."""
+
+    def test_fix_returns_fix_actions_for_missing_constraints(self) -> None:
+        """Test that the fix() method returns FixAction objects."""
+        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+            "requires_constraints",
+            "for_validators",
+            modus_operandi="additive",
+            include_cdm=True,
+            format="snapshots",
+        )
+
+        validation_resources = ValidationResources(
+            modus_operandi="additive",
+            local=local_snapshot,
+            cdf=cdf_snapshot,
+        )
+
+        validator = MissingRequiresConstraint(validation_resources)
+        fix_actions = validator.fix()
+
+        # Should have at least one fix action
+        assert len(fix_actions) > 0
+
+        # Each fix action should have proper structure
+        for action in fix_actions:
+            assert action.fix_id.startswith(MissingRequiresConstraint.code)
+            assert action.target_type == "container"
+            assert callable(action.apply)
+            assert action.priority == MissingRequiresConstraint.fix_priority
+
+    def test_validate_and_fix_are_independent(self) -> None:
+        """Test that validate() returns issues and fix() returns fix actions separately."""
+        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+            "requires_constraints",
+            "for_validators",
+            modus_operandi="additive",
+            include_cdm=True,
+            format="snapshots",
+        )
+
+        validation_resources = ValidationResources(
+            modus_operandi="additive",
+            local=local_snapshot,
+            cdf=cdf_snapshot,
+        )
+
+        validator = MissingRequiresConstraint(validation_resources)
+
+        # validate() should return Recommendation objects
+        issues = validator.validate()
+        assert all(hasattr(issue, "message") for issue in issues)
+
+        # fix() should return FixAction objects
+        fix_actions = validator.fix()
+        assert all(isinstance(action, FixAction) for action in fix_actions)
+
+
+class TestDmsDataModelFixer:
+    """Tests for the DmsDataModelFixer orchestrator."""
+
+    def test_fixer_applies_missing_constraint_fixes(self) -> None:
+        """Test that the fixer adds missing requires constraints."""
+        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+            "requires_constraints",
+            "for_validators",
+            modus_operandi="additive",
+            include_cdm=True,
+            format="snapshots",
+        )
+        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
+
+        # Verify validator has fixes available
+        validation_resources = ValidationResources(
+            modus_operandi="additive",
+            local=local_snapshot,
+            cdf=cdf_snapshot,
+        )
+        validator = MissingRequiresConstraint(validation_resources)
+        available_fixes = validator.fix()
+
+        if not available_fixes:
+            pytest.skip("No fixes available in test data")
+
+        # Run the fixer
+        fixer = DmsDataModelFixer(
+            cdf_snapshot=cdf_snapshot,
+            limits=SchemaLimits(),
+            modus_operandi="additive",
+            enable_alpha_validators=True,
+            apply_fixes=True,
+        )
+        fixer.run(data_model)
+
+        # Check that fixes were applied
+        assert len(fixer.applied_fixes) > 0
+
+        # Verify at least one constraint with __auto suffix was added
+        auto_constraints_found = False
+        for container in data_model.containers:
+            if container.constraints:
+                for constraint_id in container.constraints:
+                    if constraint_id.endswith("__auto"):
+                        auto_constraints_found = True
+                        break
+        assert auto_constraints_found, "Expected at least one __auto constraint to be added"
+
+    def test_fixer_without_apply_does_not_modify(self) -> None:
+        """Test that fixer with apply_fixes=False doesn't modify the schema."""
+        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+            "requires_constraints",
+            "for_validators",
+            modus_operandi="additive",
+            include_cdm=True,
+            format="snapshots",
+        )
+        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
+
+        # Take a snapshot of container constraints before
+        constraints_before = {
+            c.as_reference(): dict(c.constraints) if c.constraints else {} for c in data_model.containers
+        }
+
+        # Run fixer without applying
+        fixer = DmsDataModelFixer(
+            cdf_snapshot=cdf_snapshot,
+            limits=SchemaLimits(),
+            modus_operandi="additive",
+            enable_alpha_validators=True,
+            apply_fixes=False,
+        )
+        fixer.run(data_model)
+
+        # Check that no fixes were applied
+        assert len(fixer.applied_fixes) == 0
+
+        # Verify schema wasn't modified
+        constraints_after = {
+            c.as_reference(): dict(c.constraints) if c.constraints else {} for c in data_model.containers
+        }
+        assert constraints_before == constraints_after
+
+    def test_fixer_orders_fixes_by_priority(self) -> None:
+        """Test that fixes are applied in priority order."""
+        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+            "requires_constraints",
+            "for_validators",
+            modus_operandi="additive",
+            include_cdm=True,
+            format="snapshots",
+        )
+        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
+
+        fixer = DmsDataModelFixer(
+            cdf_snapshot=cdf_snapshot,
+            limits=SchemaLimits(),
+            modus_operandi="additive",
+            enable_alpha_validators=True,
+            apply_fixes=True,
+        )
+        fixer.run(data_model)
+
+        # Check that applied fixes are in priority order
+        if len(fixer.applied_fixes) > 1:
+            for i in range(len(fixer.applied_fixes) - 1):
+                assert fixer.applied_fixes[i].priority <= fixer.applied_fixes[i + 1].priority
+
+
+class TestValidatorFixPriorities:
+    """Tests for validator fix priority ordering."""
+
+    def test_cycle_breaker_has_lowest_priority(self) -> None:
+        """Test that RequiresConstraintCycle has the lowest (first applied) priority."""
+        assert RequiresConstraintCycle.fix_priority < SuboptimalRequiresConstraint.fix_priority
+        assert RequiresConstraintCycle.fix_priority < MissingRequiresConstraint.fix_priority
+
+    def test_removal_before_addition(self) -> None:
+        """Test that SuboptimalRequiresConstraint (removal) runs before MissingRequiresConstraint (addition)."""
+        assert SuboptimalRequiresConstraint.fix_priority < MissingRequiresConstraint.fix_priority
+
+
+class TestConstraintIdGeneration:
+    """Tests for constraint ID generation."""
+
+    def test_auto_constraint_id_within_limit(self) -> None:
+        """Test that generated constraint IDs are within the 43-character limit."""
+        from cognite.neat._data_model.rules.dms._performance import (
+            MAX_CONSTRAINT_ID_LENGTH,
+            _make_auto_constraint_id,
+        )
+
+        # Short external_id should work normally
+        short_ref = ContainerReference(space="test", external_id="ShortName")
+        constraint_id = _make_auto_constraint_id(short_ref)
+        assert constraint_id == "ShortName__auto"
+        assert len(constraint_id) <= MAX_CONSTRAINT_ID_LENGTH
+
+    def test_auto_constraint_id_truncates_long_names_with_hash(self) -> None:
+        """Test that long external_ids are truncated with hash to ensure uniqueness."""
+        from cognite.neat._data_model.rules.dms._performance import (
+            AUTO_SUFFIX,
+            HASH_LENGTH,
+            MAX_CONSTRAINT_ID_LENGTH,
+            _make_auto_constraint_id,
+        )
+
+        # External ID that's too long (50 characters)
+        long_name = "A" * 50
+        long_ref = ContainerReference(space="test", external_id=long_name)
+        constraint_id = _make_auto_constraint_id(long_ref)
+
+        # Should be exactly at the limit
+        assert len(constraint_id) == MAX_CONSTRAINT_ID_LENGTH
+        assert constraint_id.endswith(AUTO_SUFFIX)
+        # Should contain underscore before hash
+        assert "_" in constraint_id
+        # Hash should be included (8 hex characters before __auto)
+        parts = constraint_id.replace(AUTO_SUFFIX, "").rsplit("_", 1)
+        assert len(parts) == 2
+        assert len(parts[1]) == HASH_LENGTH
+
+    def test_auto_constraint_id_hash_ensures_uniqueness(self) -> None:
+        """Test that different long names with same prefix get different hashes."""
+        from cognite.neat._data_model.rules.dms._performance import _make_auto_constraint_id
+
+        # Two containers with same first 28 chars but different endings
+        prefix = "A" * 28
+        ref1 = ContainerReference(space="test", external_id=prefix + "XXXXXXXXXXXXXXX")
+        ref2 = ContainerReference(space="test", external_id=prefix + "YYYYYYYYYYYYYYY")
+
+        constraint_id1 = _make_auto_constraint_id(ref1)
+        constraint_id2 = _make_auto_constraint_id(ref2)
+
+        # Should be different due to different hashes
+        assert constraint_id1 != constraint_id2
+
+    def test_auto_constraint_id_exactly_at_limit_no_hash(self) -> None:
+        """Test external_id that's exactly at the max base length (37 chars) needs no hash."""
+        from cognite.neat._data_model.rules.dms._performance import (
+            AUTO_SUFFIX,
+            MAX_BASE_ID_LENGTH_NO_HASH,
+            MAX_CONSTRAINT_ID_LENGTH,
+            _make_auto_constraint_id,
+        )
+
+        # External ID exactly at MAX_BASE_ID_LENGTH_NO_HASH (37 characters)
+        exact_name = "B" * MAX_BASE_ID_LENGTH_NO_HASH
+        exact_ref = ContainerReference(space="test", external_id=exact_name)
+        constraint_id = _make_auto_constraint_id(exact_ref)
+
+        assert len(constraint_id) == MAX_CONSTRAINT_ID_LENGTH
+        assert constraint_id == exact_name + AUTO_SUFFIX
+
+    def test_auto_constraint_id_one_over_limit_uses_hash(self) -> None:
+        """Test external_id that's 1 char over the limit uses hash."""
+        from cognite.neat._data_model.rules.dms._performance import (
+            AUTO_SUFFIX,
+            HASH_LENGTH,
+            MAX_BASE_ID_LENGTH_NO_HASH,
+            MAX_CONSTRAINT_ID_LENGTH,
+            _make_auto_constraint_id,
+        )
+
+        # External ID 1 character over the limit
+        over_name = "C" * (MAX_BASE_ID_LENGTH_NO_HASH + 1)
+        over_ref = ContainerReference(space="test", external_id=over_name)
+        constraint_id = _make_auto_constraint_id(over_ref)
+
+        assert len(constraint_id) == MAX_CONSTRAINT_ID_LENGTH
+        assert constraint_id.endswith(AUTO_SUFFIX)
+        # Should have hash
+        parts = constraint_id.replace(AUTO_SUFFIX, "").rsplit("_", 1)
+        assert len(parts) == 2
+        assert len(parts[1]) == HASH_LENGTH

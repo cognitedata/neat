@@ -1,11 +1,94 @@
 """Validators for checking performance-related aspects of the data model."""
 
+import hashlib
+from collections.abc import Callable
+
 from cognite.neat._data_model._analysis import RequiresChangeStatus
 from cognite.neat._data_model._constants import COGNITE_SPACES
+from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
+from cognite.neat._data_model.models.dms._references import ContainerReference
+from cognite.neat._data_model.models.dms._schema import RequestSchema
+from cognite.neat._data_model.rules._fix_actions import FixAction
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import Recommendation
 
 BASE_CODE = "NEAT-DMS-PERFORMANCE"
+
+# CDF constraint identifier max length is 43 characters
+MAX_CONSTRAINT_ID_LENGTH = 43
+AUTO_SUFFIX = "__auto"
+HASH_LENGTH = 8  # Short hash to ensure uniqueness when truncating
+# When truncating: base_id + "_" + hash + suffix
+# e.g., "VeryLongContainerName_a1b2c3d4__auto" (max 43 chars)
+MAX_BASE_ID_LENGTH_WITH_HASH = MAX_CONSTRAINT_ID_LENGTH - len(AUTO_SUFFIX) - HASH_LENGTH - 1  # 28 characters
+MAX_BASE_ID_LENGTH_NO_HASH = MAX_CONSTRAINT_ID_LENGTH - len(AUTO_SUFFIX)  # 37 characters
+
+
+def _make_auto_constraint_id(dst: ContainerReference) -> str:
+    """Generate a constraint identifier for auto-generated requires constraints.
+
+    CDF has a 43-character limit on constraint identifiers. This function
+    ensures the ID stays within that limit while maintaining uniqueness.
+
+    For short external_ids (≤37 chars): uses "{external_id}__auto"
+    For long external_ids (>37 chars): uses "{truncated_id}_{hash}__auto"
+        where hash is 8 chars derived from the full external_id
+    """
+    base_id = dst.external_id
+
+    if len(base_id) <= MAX_BASE_ID_LENGTH_NO_HASH:
+        # No truncation needed
+        return f"{base_id}{AUTO_SUFFIX}"
+
+    # Truncation needed - include hash for uniqueness
+    hash_input = f"{dst.space}:{dst.external_id}"
+    hash_suffix = hashlib.sha256(hash_input.encode()).hexdigest()[:HASH_LENGTH]
+    truncated_id = base_id[:MAX_BASE_ID_LENGTH_WITH_HASH]
+    return f"{truncated_id}_{hash_suffix}{AUTO_SUFFIX}"
+
+
+def _make_add_constraint_fn(src: ContainerReference, dst: ContainerReference) -> Callable[[RequestSchema], None]:
+    """Create a closure that adds a requires constraint from src to dst."""
+
+    def apply(schema: RequestSchema) -> None:
+        for container in schema.containers:
+            if container.as_reference() == src:
+                constraint_id = _make_auto_constraint_id(dst)
+                if container.constraints is None:
+                    container.constraints = {}
+                container.constraints[constraint_id] = RequiresConstraintDefinition(require=dst)
+                break
+
+    return apply
+
+
+def _make_remove_constraint_fn(src: ContainerReference, dst: ContainerReference) -> Callable[[RequestSchema], None]:
+    """Create a closure that removes a requires constraint from src to dst.
+
+    Only removes constraints with '__auto' suffix (auto-generated constraints).
+    User-defined constraints are preserved.
+    """
+
+    def apply(schema: RequestSchema) -> None:
+        for container in schema.containers:
+            if container.as_reference() == src and container.constraints:
+                # Find and remove the constraint pointing to dst
+                to_remove: list[str] = []
+                for constraint_id, constraint in container.constraints.items():
+                    if (
+                        isinstance(constraint, RequiresConstraintDefinition)
+                        and constraint.require == dst
+                        and constraint_id.endswith("__auto")
+                    ):
+                        to_remove.append(constraint_id)
+                for constraint_id in to_remove:
+                    del container.constraints[constraint_id]
+                # Clean up empty constraints dict
+                if not container.constraints:
+                    container.constraints = None
+                break
+
+    return apply
 
 
 class MissingRequiresConstraint(DataModelRule):
@@ -30,6 +113,8 @@ class MissingRequiresConstraint(DataModelRule):
     code = f"{BASE_CODE}-001"
     issue_type = Recommendation
     alpha = True
+    fixable = True
+    fix_priority = 50  # Apply after removals (priority 40)
 
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
@@ -67,12 +152,42 @@ class MissingRequiresConstraint(DataModelRule):
                 recommendations.append(
                     Recommendation(
                         message=message,
-                        fix="Add requires constraint between the containers",
+                        fix=f"Add requires constraint from '{src!s}' to '{dst!s}'",
                         code=self.code,
                     )
                 )
 
         return recommendations
+
+    def fix(self) -> list[FixAction]:
+        """Return fix actions to add missing requires constraints."""
+        fix_actions: list[FixAction] = []
+        seen_fix_ids: set[str] = set()
+
+        for view_ref in self.validation_resources.merged.views:
+            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
+
+            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
+                continue
+
+            for src, dst in changes.to_add:
+                fix_id = f"{self.code}:add:{src!s}->{dst!s}"
+                if fix_id in seen_fix_ids:
+                    continue
+                seen_fix_ids.add(fix_id)
+
+                fix_actions.append(
+                    FixAction(
+                        fix_id=fix_id,
+                        description=f"Add requires constraint: {src!s} → {dst!s}",
+                        target_type="container",
+                        target_ref=src,
+                        apply=_make_add_constraint_fn(src, dst),
+                        priority=self.fix_priority,
+                    )
+                )
+
+        return fix_actions
 
 
 class SuboptimalRequiresConstraint(DataModelRule):
@@ -99,6 +214,8 @@ class SuboptimalRequiresConstraint(DataModelRule):
     code = f"{BASE_CODE}-002"
     issue_type = Recommendation
     alpha = True
+    fixable = True
+    fix_priority = 40  # Apply before additions (priority 50)
 
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
@@ -117,12 +234,42 @@ class SuboptimalRequiresConstraint(DataModelRule):
                             f"that has a requires constraint to '{dst!s}'. This constraint is "
                             "not part of the optimal structure. Consider removing it."
                         ),
-                        fix="Remove the unnecessary requires constraint",
+                        fix=f"Remove requires constraint from '{src!s}' to '{dst!s}'",
                         code=self.code,
                     )
                 )
 
         return recommendations
+
+    def fix(self) -> list[FixAction]:
+        """Return fix actions to remove suboptimal requires constraints."""
+        fix_actions: list[FixAction] = []
+        seen_fix_ids: set[str] = set()
+
+        for view_ref in self.validation_resources.merged.views:
+            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
+
+            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
+                continue
+
+            for src, dst in changes.to_remove:
+                fix_id = f"{self.code}:remove:{src!s}->{dst!s}"
+                if fix_id in seen_fix_ids:
+                    continue
+                seen_fix_ids.add(fix_id)
+
+                fix_actions.append(
+                    FixAction(
+                        fix_id=fix_id,
+                        description=f"Remove requires constraint: {src!s} → {dst!s}",
+                        target_type="container",
+                        target_ref=src,
+                        apply=_make_remove_constraint_fn(src, dst),
+                        priority=self.fix_priority,
+                    )
+                )
+
+        return fix_actions
 
 
 class UnresolvableQueryPerformance(DataModelRule):

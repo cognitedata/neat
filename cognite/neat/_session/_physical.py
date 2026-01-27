@@ -16,7 +16,7 @@ from cognite.neat._data_model.exporters import (
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookOptions
 from cognite.neat._data_model.importers import DMSAPICreator, DMSAPIImporter, DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
-from cognite.neat._data_model.rules.dms import DmsDataModelRulesOrchestrator
+from cognite.neat._data_model.rules.dms import DmsDataModelFixer, DmsDataModelRulesOrchestrator
 from cognite.neat._exceptions import UserInputError
 from cognite.neat._state_machine import PhysicalState
 from cognite.neat._store._store import NeatStore
@@ -89,7 +89,26 @@ class ReadPhysicalDataModel:
         self._client = client
         self._config = config
 
-    def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
+    def _create_on_success(self, fix: bool) -> DmsDataModelRulesOrchestrator | DmsDataModelFixer:
+        """Create the appropriate on_success handler based on whether fixes should be applied."""
+        if fix:
+            return DmsDataModelFixer(
+                modus_operandi=self._config.modeling.mode,
+                cdf_snapshot=self._store.cdf_snapshot,
+                limits=self._store.cdf_limits,
+                can_run_validator=self._config.validation.can_run_validator,
+                enable_alpha_validators=self._config.alpha.enable_experimental_validators,
+                apply_fixes=True,
+            )
+        return DmsDataModelRulesOrchestrator(
+            modus_operandi=self._config.modeling.mode,
+            cdf_snapshot=self._store.cdf_snapshot,
+            limits=self._store.cdf_limits,
+            can_run_validator=self._config.validation.can_run_validator,
+            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
+        )
+
+    def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat", fix: bool = False) -> None:
         """Read physical data model from YAML file(s)
 
         Args:
@@ -97,6 +116,7 @@ class ReadPhysicalDataModel:
             format (Literal["neat", "toolkit"]): The format of the input file(s).
                 - "neat": Neat's DMS table format.
                 - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+            fix (bool): If True, automatically apply fixes for fixable issues (e.g., requires constraints).
         """
 
         path = NeatReader.create(io).materialize_path()
@@ -109,16 +129,10 @@ class ReadPhysicalDataModel:
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
-        on_success = DmsDataModelRulesOrchestrator(
-            modus_operandi=self._config.modeling.mode,
-            cdf_snapshot=self._store.cdf_snapshot,
-            limits=self._store.cdf_limits,
-            can_run_validator=self._config.validation.can_run_validator,
-            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
-        )
+        on_success = self._create_on_success(fix)
         return self._store.read_physical(reader, on_success)
 
-    def json(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
+    def json(self, io: Any, format: Literal["neat", "toolkit"] = "neat", fix: bool = False) -> None:
         """Read physical data model from JSON file(s)
 
         Args:
@@ -126,6 +140,7 @@ class ReadPhysicalDataModel:
             format (Literal["neat", "toolkit"]): The format of the input file(s).
                 - "neat": Neat's DMS table format.
                 - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+            fix (bool): If True, automatically apply fixes for fixable issues (e.g., requires constraints).
         """
 
         path = NeatReader.create(io).materialize_path()
@@ -138,57 +153,39 @@ class ReadPhysicalDataModel:
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
-        on_success = DmsDataModelRulesOrchestrator(
-            modus_operandi=self._config.modeling.mode,
-            cdf_snapshot=self._store.cdf_snapshot,
-            limits=self._store.cdf_limits,
-            can_run_validator=self._config.validation.can_run_validator,
-            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
-        )
+        on_success = self._create_on_success(fix)
         return self._store.read_physical(reader, on_success)
 
-    def excel(self, io: Any) -> None:
+    def excel(self, io: Any, fix: bool = False) -> None:
         """Read physical data model from Excel file
 
         Args:
             io (Any): The file path or buffer to read from.
+            fix (bool): If True, automatically apply fixes for fixable issues (e.g., requires constraints).
 
         """
 
         path = NeatReader.create(io).materialize_path()
         reader = DMSTableImporter.from_excel(path)
 
-        on_success = DmsDataModelRulesOrchestrator(
-            modus_operandi=self._config.modeling.mode,
-            cdf_snapshot=self._store.cdf_snapshot,
-            limits=self._store.cdf_limits,
-            can_run_validator=self._config.validation.can_run_validator,
-            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
-        )
-
+        on_success = self._create_on_success(fix)
         return self._store.read_physical(reader, on_success)
 
-    def cdf(self, space: str, external_id: str, version: str) -> None:
+    def cdf(self, space: str, external_id: str, version: str, fix: bool = False) -> None:
         """Read physical data model from CDF
 
         Args:
             space (str): The schema space of the data model.
             external_id (str): The external id of the data model.
             version (str): The version of the data model.
+            fix (bool): If True, automatically apply fixes for fixable issues (e.g., requires constraints).
 
         """
         reader = DMSAPIImporter.from_cdf(
             DataModelReference(space=space, external_id=external_id, version=version), self._client
         )
 
-        on_success = DmsDataModelRulesOrchestrator(
-            modus_operandi=self._config.modeling.mode,
-            cdf_snapshot=self._store.cdf_snapshot,
-            limits=self._store.cdf_limits,
-            can_run_validator=self._config.validation.can_run_validator,
-            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
-        )
-
+        on_success = self._create_on_success(fix)
         return self._store.read_physical(reader, on_success)
 
 
@@ -309,6 +306,7 @@ def create(
     name: str | None = None,
     description: str | None = None,
     kind: Literal["solution"] = "solution",
+    fix: bool = False,
 ) -> None:
     """Create a solution data model in Neat from CDF views.
 
@@ -321,6 +319,7 @@ def create(
         name (str | None): The name of the data model. If None, the name will be fetched from CDF.
         description (str | None): The description of the data model. If None, the description will be fetched from CDF.
         kind (Literal["solution"]): The kind of the data model. Currently, only "solution" is supported.
+        fix (bool): If True, automatically apply fixes for fixable issues (e.g., requires constraints).
     """
 
     if not self._store.cdf_snapshot.data_model:
@@ -337,12 +336,23 @@ def create(
         cdf_snapshot=self._store.cdf_snapshot,
     )
 
-    on_success = DmsDataModelRulesOrchestrator(
-        modus_operandi=self._config.modeling.mode,
-        cdf_snapshot=self._store.cdf_snapshot,
-        limits=self._store.cdf_limits,
-        can_run_validator=self._config.validation.can_run_validator,
-        enable_alpha_validators=self._config.alpha.enable_experimental_validators,
-    )
+    on_success: DmsDataModelRulesOrchestrator | DmsDataModelFixer
+    if fix:
+        on_success = DmsDataModelFixer(
+            modus_operandi=self._config.modeling.mode,
+            cdf_snapshot=self._store.cdf_snapshot,
+            limits=self._store.cdf_limits,
+            can_run_validator=self._config.validation.can_run_validator,
+            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
+            apply_fixes=True,
+        )
+    else:
+        on_success = DmsDataModelRulesOrchestrator(
+            modus_operandi=self._config.modeling.mode,
+            cdf_snapshot=self._store.cdf_snapshot,
+            limits=self._store.cdf_limits,
+            can_run_validator=self._config.validation.can_run_validator,
+            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
+        )
 
     return self._store.read_physical(creator, on_success)
