@@ -18,7 +18,9 @@ from cognite.neat._data_model.models.dms._data_types import Unit
 from ._differ import ItemDiffer, ObjectDiffer, constraint_differences, field_differences, index_differences
 from .data_classes import (
     AddedField,
+    ChangedConstraint,
     ChangedField,
+    ChangedIndex,
     FieldChange,
     FieldChanges,
     RemovedField,
@@ -110,8 +112,7 @@ class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
         changes: list[FieldChange] = []
         if current.constraint_type != new.constraint_type:
             changes.append(
-                ChangedField(
-                    item_severity=SeverityType.BREAKING,
+                ChangedConstraint(
                     field_path=self._get_path(f"{identifier}.constraintType"),
                     current_value=current.constraint_type,
                     new_value=new.constraint_type,
@@ -123,8 +124,7 @@ class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
             and current.require != new.require
         ):
             changes.append(
-                ChangedField(
-                    item_severity=SeverityType.BREAKING,
+                ChangedConstraint(
                     field_path=self._get_path(f"{identifier}.require"),
                     current_value=str(current.require),
                     new_value=str(new.require),
@@ -134,8 +134,7 @@ class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
             # The order of the properties matter.
             if current.properties != new.properties:
                 changes.append(
-                    ChangedField(
-                        item_severity=SeverityType.BREAKING,
+                    ChangedConstraint(
                         field_path=self._get_path(f"{identifier}.properties"),
                         current_value=str(current.properties),
                         new_value=str(new.properties),
@@ -143,8 +142,7 @@ class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
                 )
             if current.by_space != new.by_space:
                 changes.append(
-                    ChangedField(
-                        item_severity=SeverityType.BREAKING,
+                    ChangedConstraint(
                         field_path=self._get_path(f"{identifier}.bySpace"),
                         current_value=current.by_space,
                         new_value=new.by_space,
@@ -159,8 +157,7 @@ class IndexDiffer(ObjectDiffer[IndexDefinition]):
         changes: list[FieldChange] = []
         if current.index_type != new.index_type:
             changes.append(
-                ChangedField(
-                    item_severity=SeverityType.BREAKING,
+                ChangedIndex(
                     field_path=self._get_path(f"{identifier}.indexType"),
                     current_value=current.index_type,
                     new_value=new.index_type,
@@ -169,8 +166,7 @@ class IndexDiffer(ObjectDiffer[IndexDefinition]):
         else:
             if current.properties != new.properties:
                 changes.append(
-                    ChangedField(
-                        item_severity=SeverityType.BREAKING,
+                    ChangedIndex(
                         field_path=self._get_path(f"{identifier}.properties"),
                         current_value=str(current.properties),
                         new_value=str(new.properties),
@@ -179,8 +175,7 @@ class IndexDiffer(ObjectDiffer[IndexDefinition]):
         if isinstance(current, BtreeIndex) and isinstance(new, BtreeIndex):
             if current.cursorable != new.cursorable:
                 changes.append(
-                    ChangedField(
-                        item_severity=SeverityType.BREAKING,
+                    ChangedIndex(
                         field_path=self._get_path(f"{identifier}.cursorable"),
                         current_value=current.cursorable,
                         new_value=new.cursorable,
@@ -188,8 +183,7 @@ class IndexDiffer(ObjectDiffer[IndexDefinition]):
                 )
             if current.by_space != new.by_space:
                 changes.append(
-                    ChangedField(
-                        item_severity=SeverityType.BREAKING,
+                    ChangedIndex(
                         field_path=self._get_path(f"{identifier}.bySpace"),
                         current_value=current.by_space,
                         new_value=new.by_space,

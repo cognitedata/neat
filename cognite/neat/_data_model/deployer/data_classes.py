@@ -164,6 +164,23 @@ class ChangedField(PrimitiveField):
         return f"changed from {self.current_value!r} to {self.new_value!r}"
 
 
+class ChangedConstraint(ChangedField):
+    item_severity: SeverityType = SeverityType.WARNING
+
+    @property
+    def description(self) -> str:
+        return (
+            super().description
+            + ". Note: Changing constraints may cause ingestion failures if the data being ingested violates the constraint"
+        )
+
+
+class ChangedIndex(ChangedField):
+    @property
+    def description(self) -> str:
+        return super().description + ". Note: Changing indexes may affect query performance"
+
+
 class FieldChanges(FieldChange):
     """Represents a nested property, i.e., a property that contains other properties."""
 
@@ -318,14 +335,7 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
                             for change in resource.changes
                             if not isinstance(change, RemovedField)
                             or (isinstance(change, RemovedField) and change.field_path in addition_paths)
-                            # Keep RemovedField for indexes and constraints as they are allowed to be removed
-                            or (
-                                isinstance(change, RemovedField)
-                                and (
-                                    change.field_path.startswith("indexes.")
-                                    or change.field_path.startswith("constraints.")
-                                )
-                            )
+                            or isinstance(change, RemovedConstraint | RemovedIndex)
                         ],
                     }
                 )
