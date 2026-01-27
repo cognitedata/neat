@@ -92,7 +92,7 @@ class AddedField(PrimitiveField):
 
     @property
     def description(self) -> str:
-        return self._with_message(f"added with value {self.new_value!r}")
+        return f"added with value {self.new_value!r}"
 
 
 class RemovedField(PrimitiveField):
@@ -101,29 +101,34 @@ class RemovedField(PrimitiveField):
 
     @property
     def description(self) -> str:
-        return self._with_message(f"removed (was {self.current_value!r})")
+        return f"removed (was {self.current_value!r})"
 
 
 class AddedConstraint(AddedField):
     """Represents a constraint being added to a container."""
 
-    message: str | None = (
-        "Adding constraints may cause ingestion failures if the data being ingested violates the constraint"
-    )
-
     @property
     def severity(self) -> SeverityType:
         return SeverityType.WARNING
+
+    @property
+    def description(self) -> str:
+        return (
+            super().description
+            + f". Note: adding constraints may cause ingestion failures if the data being ingested violates the constraint"
+        )
 
 
 class RemovedConstraint(RemovedField):
     """Represents a constraint being removed from a container."""
 
-    message: str | None = "Removing constraints may affect query performance"
-
     @property
     def severity(self) -> SeverityType:
         return SeverityType.WARNING
+
+    @property
+    def description(self) -> str:
+        return super().description + ". Note: Removing constraints may affect query performance"
 
 
 class AddedIndex(AddedField):
@@ -137,11 +142,13 @@ class AddedIndex(AddedField):
 class RemovedIndex(RemovedField):
     """Represents an index being removed from a container."""
 
-    message: str | None = "Removing indexes may affect query performance"
-
     @property
     def severity(self) -> SeverityType:
         return SeverityType.WARNING
+
+    @property
+    def description(self) -> str:
+        return super().description + ". Note: Removing indexes may affect query performance"
 
 
 class ChangedField(PrimitiveField):
