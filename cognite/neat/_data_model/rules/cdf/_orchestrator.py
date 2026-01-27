@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model._snapshot import SchemaSnapshot
@@ -15,6 +16,7 @@ class CDFRulesOrchestrator(OnSuccessIssuesChecker):
     def __init__(
         self,
         limits: SchemaLimits,
+        space_statistics: SpaceStatisticsResponse,
         can_run_validator: Callable[[str, type], bool] | None = None,
         enable_alpha_validators: bool = False,
     ) -> None:
@@ -23,6 +25,7 @@ class CDFRulesOrchestrator(OnSuccessIssuesChecker):
         self._can_run_validator = can_run_validator or (lambda code, issue_type: True)  # type: ignore
         self._has_run = False
         self._enable_alpha_validators = enable_alpha_validators
+        self._space_statistics = space_statistics
 
     def run(self, cdf_snapshot: SchemaSnapshot) -> None:
         """Run quality assessment on the DMS data model."""
@@ -48,5 +51,6 @@ class CDFRulesOrchestrator(OnSuccessIssuesChecker):
             cdf=cdf_snapshot,
             local=cdf_snapshot,
             limits=self._limits,
+            space_statistics=self._space_statistics,
             modus_operandi="rebuild",
         )

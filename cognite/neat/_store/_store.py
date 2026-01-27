@@ -101,8 +101,11 @@ class NeatStore:
             and isinstance(on_success, SchemaDeployer)
             and not on_success.options.dry_run
         ):
-            # Update CDF snapshot after successful deployment
+            # Update CDF snapshot and space statistics after deployment
             self._cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
+            self._cdf_space_statistics = self._client.statistics.space_statistics(
+                [space.space for space in self.cdf_snapshot.spaces.keys()]
+            )
 
     def cdf_analyze(self, on_success: OnSuccess) -> None:
         """Analyze the entity of CDF data models"""

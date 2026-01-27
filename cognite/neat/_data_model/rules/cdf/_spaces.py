@@ -27,24 +27,13 @@ class EmptySpaces(CDFRule):
     def validate(self) -> list[Recommendation]:
         issues: list[Recommendation] = []
 
-        all_spaces = set([space.space for space in self.validation_resources.cdf.spaces])
-        used_spaces = set()
-
-        for view in self.validation_resources.cdf.views:
-            used_spaces.add(view.space)
-        for container in self.validation_resources.cdf.containers:
-            used_spaces.add(container.space)
-        for data_model in self.validation_resources.cdf.data_model:
-            used_spaces.add(data_model.space)
-
-        if unused_spaces := all_spaces - used_spaces:
-            for space in unused_spaces:
-                issues.append(
-                    Recommendation(
-                        message=f"Space '{space}' is empty and has no associated resources.",
-                        code=self.code,
-                        fix="Consider removing the empty space to maintain a clean CDF environment.",
-                    )
+        for space in self.validation_resources.space_statistics.empty_spaces():
+            issues.append(
+                Recommendation(
+                    message=f"Space '{space}' is empty and has no associated resources.",
+                    code=self.code,
+                    fix="Consider removing the empty space to maintain a clean CDF environment.",
                 )
+            )
 
         return issues
