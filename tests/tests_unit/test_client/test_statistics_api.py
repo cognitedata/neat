@@ -232,3 +232,23 @@ class TestStatisticsAPI:
 
         # Test empty_spaces method
         assert {"empty_space", "deleted_only_space"} == set(stats.empty_spaces())
+
+    def test_space_statistics_empty_request(self, neat_client: NeatClient, respx_mock: respx.MockRouter) -> None:
+        """Test retrieving statistics with empty space list."""
+        client = neat_client
+        config = client.config
+
+        empty_response: dict[str, list] = {"items": []}
+
+        respx_mock.post(
+            config.create_api_url("/models/statistics/spaces/byids"),
+        ).respond(
+            status_code=200,
+            json=empty_response,
+        )
+
+        stats = client.statistics.space_statistics([])
+
+        assert isinstance(stats, SpaceStatisticsResponse)
+        assert len(stats.items) == 0
+        assert stats.empty_spaces() == []

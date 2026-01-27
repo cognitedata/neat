@@ -72,3 +72,15 @@ class SpaceStatisticsResponse(BaseModel, populate_by_name=True):
     def empty_spaces(self) -> list[str]:
         """Get a list of space identifiers that have zero usage."""
         return [item.space for item in self.items if item.is_empty]
+
+
+class SpaceStatisticsRequestItem(BaseModel):
+    """Request item for space statistics."""
+
+    space: str
+
+
+class SpaceStatisticsRequest(BaseModel):
+    """Request model for space statistics endpoint."""
+
+    items: list[SpaceStatisticsRequestItem]

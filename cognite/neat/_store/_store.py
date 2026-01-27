@@ -40,12 +40,11 @@ class NeatStore:
         self._cdf_space_statistics: SpaceStatisticsResponse | None = None
 
     @property
-    def cdf_space_statistics(self) -> SpaceStatisticsResponse | None:
-        if not self._cdf_space_statistics:
-            if self.cdf_snapshot.spaces:
-                self._cdf_space_statistics = self._client.statistics.space_statistics(
-                    [space.space for space in self.cdf_snapshot.spaces.keys()]
-                )
+    def cdf_space_statistics(self) -> SpaceStatisticsResponse:
+        if self._cdf_space_statistics is None:
+            self._cdf_space_statistics = self._client.statistics.space_statistics(
+                [space.space for space in self.cdf_snapshot.spaces.keys()]
+            )
         return self._cdf_space_statistics
 
     @property
