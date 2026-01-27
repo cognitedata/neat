@@ -1,7 +1,10 @@
+import json
+
 from cognite.neat._utils.http_client import HTTPClient, ParametersRequest
+from cognite.neat._utils.http_client._data_classes import SimpleBodyRequest
 
 from .config import NeatClientConfig
-from .data_classes import StatisticsResponse
+from .data_classes import SpaceStatisticsResponse, StatisticsResponse
 
 
 class StatisticsAPI:
@@ -26,4 +29,28 @@ class StatisticsAPI:
 
         result.raise_for_status()
         result = StatisticsResponse.model_validate_json(result.success_response.body)
+        return result
+
+    def space_statistics(self, spaces: list[str]) -> SpaceStatisticsResponse:
+        """Retrieve space-wise usage data and limits.
+
+        Args:
+            spaces: List of space identifiers to retrieve statistics for.
+
+        Returns:
+            SpaceStatisticsResponse object.
+        """
+
+        body = {"items": [{"space": space} for space in spaces]}
+
+        result = self._http_client.request_with_retries(
+            SimpleBodyRequest(
+                endpoint_url=self._config.create_api_url("/models/statistics/spaces/byids"),
+                method="POST",
+                body=json.dumps(body),
+            )
+        )
+
+        result.raise_for_status()
+        result = SpaceStatisticsResponse.model_validate_json(result.success_response.body)
         return result

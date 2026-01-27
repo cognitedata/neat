@@ -5,6 +5,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._client.data_classes import (
     InstancesDetail,
     ResourceLimit,
+    SpaceStatisticsResponse,
     StatisticsResponse,
 )
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
@@ -158,3 +159,96 @@ class TestStatisticsAPI:
         assert container_props() == 100  # Default limit per container
         assert container_props.enums == 32
         assert container_props.total == 25_000
+
+    def test_space_statistics(
+        self, neat_client: NeatClient, respx_mock: respx.MockRouter, example_space_statistics_response: dict
+    ) -> None:
+        """Test retrieving space-wise statistics."""
+        client = neat_client
+        config = client.config
+
+        respx_mock.post(
+            config.create_api_url("/models/statistics/spaces/byids"),
+        ).respond(
+            status_code=200,
+            json=example_space_statistics_response,
+        )
+
+        spaces = ["production_space", "staging_space", "empty_space", "deleted_only_space", "dev_space"]
+        stats = client.statistics.space_statistics(spaces)
+
+        assert isinstance(stats, SpaceStatisticsResponse)
+        assert len(stats.items) == 5
+
+        # Check production space (active with high usage)
+        prod_space = stats.items[0]
+        assert prod_space.space == "production_space"
+        assert prod_space.containers == 25
+        assert prod_space.views == 40
+        assert prod_space.data_models == 5
+        assert prod_space.edges == 15000
+        assert prod_space.soft_deleted_edges == 150
+        assert prod_space.nodes == 8000
+        assert prod_space.soft_deleted_nodes == 80
+        assert not prod_space.is_empty
+
+        # Check staging space (moderate usage)
+        staging_space = stats.items[1]
+        assert staging_space.space == "staging_space"
+        assert staging_space.containers == 10
+        assert staging_space.views == 15
+        assert staging_space.data_models == 2
+        assert not staging_space.is_empty
+
+        # Check empty space (completely empty)
+        empty_space = stats.items[2]
+        assert empty_space.space == "empty_space"
+        assert empty_space.containers == 0
+        assert empty_space.views == 0
+        assert empty_space.data_models == 0
+        assert empty_space.edges == 0
+        assert empty_space.nodes == 0
+        assert empty_space.is_empty
+
+        # Check deleted-only space (only soft-deleted items)
+        deleted_space = stats.items[3]
+        assert deleted_space.space == "deleted_only_space"
+        assert deleted_space.containers == 0
+        assert deleted_space.views == 0
+        assert deleted_space.soft_deleted_edges == 50
+        assert deleted_space.soft_deleted_nodes == 25
+        assert deleted_space.is_empty
+
+        # Check dev space (minimal usage)
+        dev_space = stats.items[4]
+        assert dev_space.space == "dev_space"
+        assert dev_space.containers == 3
+        assert not dev_space.is_empty
+
+    def test_space_statistics_empty_detection(self, example_space_statistics_response: dict) -> None:
+        """Test detecting empty spaces in space statistics."""
+
+        stats = SpaceStatisticsResponse.model_validate(example_space_statistics_response)
+
+        # Test empty_spaces method
+        assert {"empty_space", "deleted_only_space"} == set(stats.empty_spaces())
+
+    def test_space_statistics_empty_request(self, neat_client: NeatClient, respx_mock: respx.MockRouter) -> None:
+        """Test retrieving statistics with empty space list."""
+        client = neat_client
+        config = client.config
+
+        empty_response: dict[str, list] = {"items": []}
+
+        respx_mock.post(
+            config.create_api_url("/models/statistics/spaces/byids"),
+        ).respond(
+            status_code=200,
+            json=empty_response,
+        )
+
+        stats = client.statistics.space_statistics([])
+
+        assert isinstance(stats, SpaceStatisticsResponse)
+        assert len(stats.items) == 0
+        assert stats.empty_spaces() == []

@@ -2,6 +2,65 @@ import pytest
 
 
 @pytest.fixture
+def example_space_statistics_response() -> dict:
+    """Example DMS space statistics API response with diverse scenarios."""
+    return {
+        "items": [
+            {
+                "space": "production_space",
+                "containers": 25,
+                "views": 40,
+                "dataModels": 5,
+                "edges": 15000,
+                "softDeletedEdges": 150,
+                "nodes": 8000,
+                "softDeletedNodes": 80,
+            },
+            {
+                "space": "staging_space",
+                "containers": 10,
+                "views": 15,
+                "dataModels": 2,
+                "edges": 1000,
+                "softDeletedEdges": 10,
+                "nodes": 500,
+                "softDeletedNodes": 5,
+            },
+            {
+                "space": "empty_space",
+                "containers": 0,
+                "views": 0,
+                "dataModels": 0,
+                "edges": 0,
+                "softDeletedEdges": 0,
+                "nodes": 0,
+                "softDeletedNodes": 0,
+            },
+            {
+                "space": "deleted_only_space",
+                "containers": 0,
+                "views": 0,
+                "dataModels": 0,
+                "edges": 0,
+                "softDeletedEdges": 50,
+                "nodes": 0,
+                "softDeletedNodes": 25,
+            },
+            {
+                "space": "dev_space",
+                "containers": 3,
+                "views": 5,
+                "dataModels": 1,
+                "edges": 100,
+                "softDeletedEdges": 2,
+                "nodes": 50,
+                "softDeletedNodes": 1,
+            },
+        ]
+    }
+
+
+@pytest.fixture
 def example_statistics_response() -> dict:
     """Example DMS statistics API response."""
     return {
