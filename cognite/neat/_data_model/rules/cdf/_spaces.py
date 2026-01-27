@@ -11,7 +11,8 @@ class EmptySpaces(CDFRule):
     This rule checks if there are any empty spaces in CDF.
 
     ## Why is this bad?
-    Empty spaces can lead to confusion and mismanagement of resources within the CDF environment.
+    CDF projects typically have limits of 100 spaces, and having empty spaces can waste these valuable resources.
+    Also, empty spaces can lead to confusion and mismanagement of resources within the CDF environment.
     They may indicate incomplete configurations or unused resources that could be cleaned up.
 
     ## Example
