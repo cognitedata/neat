@@ -165,7 +165,7 @@ class ChangedField(PrimitiveField):
 
 
 class ChangedConstraint(ChangedField):
-    item_severity: SeverityType = SeverityType.WARNING
+    item_severity: SeverityType = SeverityType.BREAKING
 
     @property
     def description(self) -> str:
@@ -176,6 +176,8 @@ class ChangedConstraint(ChangedField):
 
 
 class ChangedIndex(ChangedField):
+    item_severity: SeverityType = SeverityType.BREAKING
+
     @property
     def description(self) -> str:
         return super().description + ". Note: Changing indexes may affect query performance"
@@ -266,7 +268,7 @@ class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, Contain
                     items[
                         ref_cls(
                             space=resource_change.resource_id.space,
-                            external_id=resource_change.resource_id.external_id,
+                            container_external_id=resource_change.resource_id.external_id,
                             identifier=identifier,
                         )
                     ] = change

@@ -7,6 +7,7 @@ from ._container import ContainerRequest
 from ._data_model import DataModelRequest
 from ._references import (
     ContainerReference,
+    ContainerSubObjectReference,
     DataModelReference,
     SpaceReference,
     ViewReference,
@@ -18,7 +19,9 @@ DataModelResource: TypeAlias = SpaceRequest | DataModelRequest | ViewRequest | C
 
 T_DataModelResource = TypeVar("T_DataModelResource", bound=DataModelResource)
 
-ResourceId: TypeAlias = SpaceReference | DataModelReference | ViewReference | ContainerReference
+ResourceId: TypeAlias = (
+    SpaceReference | DataModelReference | ViewReference | ContainerReference | ContainerSubObjectReference
+)
 
 T_ResourceId = TypeVar("T_ResourceId", bound=ResourceId)
 

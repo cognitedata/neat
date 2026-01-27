@@ -375,7 +375,7 @@ class TestAppliedChanges:
                         ),
                         ids=[
                             ContainerIndexReference(
-                                space=container.space, external_id=container.external_id, identifier="indexToRemove"
+                                space=container.space, container_external_id=container.external_id, identifier="indexToRemove"
                             )
                         ],
                     ),

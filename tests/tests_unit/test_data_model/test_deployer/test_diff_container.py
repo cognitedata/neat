@@ -12,7 +12,9 @@ from cognite.neat._data_model.deployer.data_classes import (
     AddedConstraint,
     AddedField,
     AddedIndex,
+    ChangedConstraint,
     ChangedField,
+    ChangedIndex,
     FieldChange,
     FieldChanges,
     RemovedConstraint,
@@ -155,9 +157,8 @@ class TestContainerDiffer:
                     FieldChanges(
                         field_path=f"constraints.{CONSTRAINTS_TO_MODIFY_ID}",
                         changes=[
-                            ChangedField(
+                            ChangedConstraint(
                                 field_path=f"constraints.{CONSTRAINTS_TO_MODIFY_ID}.bySpace",
-                                item_severity=SeverityType.BREAKING,
                                 current_value=True,
                                 new_value=False,
                             ),
@@ -176,9 +177,8 @@ class TestContainerDiffer:
                     FieldChanges(
                         field_path=f"indexes.{INDEX_TO_MODIFY_ID}",
                         changes=[
-                            ChangedField(
+                            ChangedIndex(
                                 field_path=f"indexes.{INDEX_TO_MODIFY_ID}.properties",
-                                item_severity=SeverityType.BREAKING,
                                 current_value="['toModify']",
                                 new_value="['toModify', 'toAdd']",
                             ),
@@ -288,15 +288,13 @@ class TestContainerDiffer:
                 UniquenessConstraintDefinition(properties=["name"], bySpace=True),
                 UniquenessConstraintDefinition(properties=["category"], bySpace=False),
                 [
-                    ChangedField(
+                    ChangedConstraint(
                         field_path=f"{CONSTRAINT_ID}.properties",
-                        item_severity=SeverityType.BREAKING,
                         current_value="['name']",
                         new_value="['category']",
                     ),
-                    ChangedField(
+                    ChangedConstraint(
                         field_path=f"{CONSTRAINT_ID}.bySpace",
-                        item_severity=SeverityType.BREAKING,
                         current_value=True,
                         new_value=False,
                     ),
@@ -311,9 +309,8 @@ class TestContainerDiffer:
                     require=ContainerReference(space="new_space", external_id="new_container"),
                 ),
                 [
-                    ChangedField(
+                    ChangedConstraint(
                         field_path=f"{CONSTRAINT_ID}.require",
-                        item_severity=SeverityType.BREAKING,
                         current_value="other_space:other_container",
                         new_value="new_space:new_container",
                     ),
@@ -326,9 +323,8 @@ class TestContainerDiffer:
                 ),
                 UniquenessConstraintDefinition(properties=["id"], bySpace=True),
                 [
-                    ChangedField(
+                    ChangedConstraint(
                         field_path=f"{CONSTRAINT_ID}.constraintType",
-                        item_severity=SeverityType.BREAKING,
                         current_value="requires",
                         new_value="uniqueness",
                     ),
@@ -355,21 +351,18 @@ class TestContainerDiffer:
                 BtreeIndex(properties=["name"], cursorable=True, bySpace=False),
                 BtreeIndex(properties=["category"], cursorable=False, bySpace=True),
                 [
-                    ChangedField(
+                    ChangedIndex(
                         field_path=f"{INDEX_ID}.properties",
-                        item_severity=SeverityType.BREAKING,
                         current_value="['name']",
                         new_value="['category']",
                     ),
-                    ChangedField(
+                    ChangedIndex(
                         field_path=f"{INDEX_ID}.cursorable",
-                        item_severity=SeverityType.BREAKING,
                         current_value=True,
                         new_value=False,
                     ),
-                    ChangedField(
+                    ChangedIndex(
                         field_path=f"{INDEX_ID}.bySpace",
-                        item_severity=SeverityType.BREAKING,
                         current_value=False,
                         new_value=True,
                     ),
@@ -380,9 +373,8 @@ class TestContainerDiffer:
                 InvertedIndex(properties=["description"]),
                 InvertedIndex(properties=["name", "category"]),
                 [
-                    ChangedField(
+                    ChangedIndex(
                         field_path=f"{INDEX_ID}.properties",
-                        item_severity=SeverityType.BREAKING,
                         current_value="['description']",
                         new_value="['name', 'category']",
                     ),
@@ -393,9 +385,8 @@ class TestContainerDiffer:
                 InvertedIndex(properties=["description"]),
                 BtreeIndex(properties=["description"]),
                 [
-                    ChangedField(
+                    ChangedIndex(
                         field_path=f"{INDEX_ID}.indexType",
-                        item_severity=SeverityType.BREAKING,
                         current_value="inverted",
                         new_value="btree",
                     ),

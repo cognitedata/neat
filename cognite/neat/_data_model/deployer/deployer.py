@@ -187,13 +187,9 @@ class SchemaDeployer(OnSuccessResultProducer):
                 continue
             current_resource = current_resources[ref]
             diffs = differ.diff(current_resource, new_resource)
-            if (
-                isinstance(current_resource, ContainerRequest)
-                and isinstance(new_resource, ContainerRequest)
-                and self.options.modus_operandi == "additive"
-            ):
-                # In additive mode, changes to constraints and indexes require removal and re-adding
-                # In rebuild mode, all changes are forced via deletion and re-adding
+            if isinstance(current_resource, ContainerRequest) and isinstance(new_resource, ContainerRequest):
+                # CDF doesn't support in-place modification of constraints/indexes,
+                # so we transform changes to remove + add operations in both modes
                 diffs = self.remove_readd_modified_indexes_and_constraints(diffs, current_resource, new_resource)
             resources.append(
                 ResourceChange(resource_id=ref, new_value=new_resource, current_value=current_resource, changes=diffs)
