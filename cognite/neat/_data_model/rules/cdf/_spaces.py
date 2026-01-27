@@ -27,6 +27,9 @@ class EmptySpaces(CDFRule):
     def validate(self) -> list[Recommendation]:
         issues: list[Recommendation] = []
 
+        if not self.validation_resources.space_statistics:
+            return issues
+
         for space in self.validation_resources.space_statistics.empty_spaces():
             issues.append(
                 Recommendation(
