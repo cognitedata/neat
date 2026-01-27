@@ -4,7 +4,13 @@ from pydantic import BaseModel
 
 
 class Issue(BaseModel):
-    """Base class for all issues"""
+    """Base class for all issues.
+
+    Attributes:
+        message: Human-readable description of the issue.
+        code: Unique code identifying the type of issue (e.g., "NEAT-DMS-PERFORMANCE-001").
+        fix: Human-readable description of how to fix the issue.
+    """
 
     message: str
     code: str | None = None

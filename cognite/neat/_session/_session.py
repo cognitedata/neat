@@ -1,7 +1,6 @@
 import json
 
 from cognite.client import ClientConfig, CogniteClient
-
 from cognite.neat import _version
 from cognite.neat._client import NeatClient
 from cognite.neat._config import NeatConfig, PredefinedProfile
