@@ -182,12 +182,15 @@ class NeatStore:
         errors = IssueList()
         deployment_result: DeploymentResult | None = None
 
+        fixed_issues = IssueList()
+
         try:
             created_data_model = activity(**kwargs)
             if created_data_model and on_success:
                 on_success.run(created_data_model)
                 if isinstance(on_success, OnSuccessIssuesChecker):
                     issues.extend(on_success.issues)
+                    fixed_issues.extend(on_success.fixed_issues)
                 elif isinstance(on_success, OnSuccessResultProducer):
                     deployment_result = on_success.result
                 else:
@@ -213,6 +216,7 @@ class NeatStore:
             agent=type(activity.__self__).__name__ if hasattr(activity, "__self__") else "UnknownAgent",
             issues=issues,
             errors=errors,
+            fixed_issues=fixed_issues,
             result=deployment_result,
             activity=Change.standardize_activity_name(activity.__name__, start, end),
         ), created_data_model

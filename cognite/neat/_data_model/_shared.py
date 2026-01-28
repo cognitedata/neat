@@ -19,6 +19,7 @@ class OnSuccessIssuesChecker(OnSuccess, ABC):
 
     def __init__(self) -> None:
         self._issues = IssueList()
+        self._fixed_issues = IssueList()
         self._has_run = False
 
     @property
@@ -26,6 +27,16 @@ class OnSuccessIssuesChecker(OnSuccess, ABC):
         if not self._has_run:
             raise RuntimeError(f"{type(self).__name__} has not been run yet.")
         return IssueList(self._issues)
+
+    @property
+    def fixed_issues(self) -> IssueList:
+        """Return the list of issues that were automatically fixed.
+
+        For validators that don't perform fixes, this returns an empty list.
+        """
+        if not self._has_run:
+            raise RuntimeError(f"{type(self).__name__} has not been run yet.")
+        return IssueList(self._fixed_issues)
 
 
 class OnSuccessResultProducer(OnSuccess, ABC):

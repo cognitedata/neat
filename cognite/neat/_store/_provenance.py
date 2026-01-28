@@ -22,6 +22,7 @@ class Change:
     target_entity: str | None = field(default="FailedEntity")
     issues: IssueList | None = field(default=None)
     errors: IssueList | None = field(default=None)
+    fixed_issues: IssueList | None = field(default=None)
     # for time being setting to Any, can be refined later
     result: DeploymentResult | None = field(default=None)
     description: str | None = field(default=None)
