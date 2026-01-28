@@ -262,6 +262,65 @@ class TestValidatorFixPriorities:
         assert SuboptimalRequiresConstraint.fix_priority < MissingRequiresConstraint.fix_priority
 
 
+class TestFixedIssuesTracking:
+    """Tests for tracking which issues were fixed by the fixer."""
+
+    def test_fixer_tracks_fixed_issues(self) -> None:
+        """Test that the fixer correctly tracks issues that were fixed."""
+        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+            "requires_constraints",
+            "for_validators",
+            modus_operandi="additive",
+            include_cdm=True,
+            format="snapshots",
+        )
+        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
+
+        # Run the fixer with fixes applied
+        fixer = DmsDataModelFixer(
+            cdf_snapshot=cdf_snapshot,
+            limits=SchemaLimits(),
+            modus_operandi="additive",
+            enable_alpha_validators=True,
+            apply_fixes=True,
+        )
+        fixer.run(data_model)
+
+        # If any fixes were applied, there should be fixed_issues
+        if len(fixer.applied_fixes) > 0:
+            # fixed_issues should contain the issues that were resolved
+            assert len(fixer.fixed_issues) > 0
+
+            # Each fixed issue should have proper structure
+            for issue in fixer.fixed_issues:
+                assert hasattr(issue, "message")
+                assert hasattr(issue, "code")
+
+    def test_fixer_no_fixed_issues_when_not_applying(self) -> None:
+        """Test that fixed_issues is empty when apply_fixes is False."""
+        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+            "requires_constraints",
+            "for_validators",
+            modus_operandi="additive",
+            include_cdm=True,
+            format="snapshots",
+        )
+        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
+
+        # Run fixer without applying
+        fixer = DmsDataModelFixer(
+            cdf_snapshot=cdf_snapshot,
+            limits=SchemaLimits(),
+            modus_operandi="additive",
+            enable_alpha_validators=True,
+            apply_fixes=False,
+        )
+        fixer.run(data_model)
+
+        # No fixes applied means no fixed issues
+        assert len(fixer.fixed_issues) == 0
+
+
 class TestConstraintIdGeneration:
     """Tests for constraint ID generation."""
 

@@ -52,6 +52,11 @@
     color: #1e40af;
 }
 
+.badge-Fixed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
 .dark-mode .badge-ModelSyntaxError {
     background: #7f1d1d;
     color: #fca5a5;
@@ -65,6 +70,26 @@
 .dark-mode .badge-Recommendation {
     background: #1e3a8a;
     color: #93c5fd;
+}
+
+.dark-mode .badge-Fixed {
+    background: #064e3b;
+    color: #6ee7b7;
+}
+
+/* Fixed stat item styling */
+.stat-fixed {
+    background: rgba(16, 185, 129, 0.2) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.stat-fixed:hover {
+    background: rgba(16, 185, 129, 0.3) !important;
+}
+
+.stat-fixed.active {
+    background: rgba(16, 185, 129, 0.4) !important;
+    border-color: rgba(16, 185, 129, 0.5) !important;
 }
 
 .issue-code {

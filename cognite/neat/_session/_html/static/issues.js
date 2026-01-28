@@ -49,12 +49,21 @@ function groupIssues(issuesList) {
 function renderIssues() {
     const listContainer = document.getElementById('issuesList-' + uniqueId);
     const filtered = issues.filter(issue => {
-        const matchesFilter = currentFilter === 'all' || issue.type === currentFilter;
+        // Handle the "Fixed" filter separately
+        if (currentFilter === 'Fixed') {
+            // Show only fixed issues
+            if (!issue.fixed) return false;
+        } else {
+            // For all other filters, exclude fixed issues
+            if (issue.fixed) return false;
+            // Then apply the type filter
+            if (currentFilter !== 'all' && issue.type !== currentFilter) return false;
+        }
         const matchesSearch = !currentSearch ||
             issue.message.toLowerCase().includes(currentSearch.toLowerCase()) ||
             (issue.code && issue.code.toLowerCase().includes(currentSearch.toLowerCase())) ||
             (issue.fix && issue.fix.toLowerCase().includes(currentSearch.toLowerCase()));
-        return matchesFilter && matchesSearch;
+        return matchesSearch;
     });
 
     if (filtered.length === 0) {
@@ -75,10 +84,13 @@ function renderIssues() {
 
         if (count === 1) {
             // Single issue - render normally
+            // For fixed issues, show "Fixed" badge type
+            const badgeType = firstIssue.fixed ? 'Fixed' : firstIssue.type;
+            const badgeLabel = firstIssue.fixed ? 'Fixed' : firstIssue.type;
             html.push(`
                 <div class="issue-item">
                     <div class="issue-header">
-                        <span class="issue-badge badge-${firstIssue.type}">${firstIssue.type}</span>
+                        <span class="issue-badge badge-${badgeType}">${badgeLabel}</span>
                         ${codeLink}
                     </div>
                     <div class="issue-message">${firstIssue.message}</div>
@@ -92,12 +104,15 @@ function renderIssues() {
             `);
         } else {
             // Grouped issues
+            // For fixed issues, show "Fixed" badge type
+            const badgeType = firstIssue.fixed ? 'Fixed' : firstIssue.type;
+            const badgeLabel = firstIssue.fixed ? 'Fixed' : firstIssue.type;
             html.push(`
                 <div class="issue-group ${isExpanded ? 'expanded' : ''}">
                     <div class="issue-group-header" onclick="toggleGroup_${uniqueId}('${key}')">
                         <div class="issue-group-info">
                             <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
-                            <span class="issue-badge badge-${firstIssue.type}">${firstIssue.type}</span>
+                            <span class="issue-badge badge-${badgeType}">${badgeLabel}</span>
                             ${codeLink}
                             <span class="issue-count">${count} issues</span>
                         </div>

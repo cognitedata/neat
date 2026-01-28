@@ -24,6 +24,13 @@ class Issues:
         return issues
 
     @property
+    def _fixed_issues(self) -> IssueList:
+        """Get all fixed issues from the last change in the store."""
+        if change := self._store.provenance.last_change:
+            return change.fixed_issues or IssueList()
+        return IssueList()
+
+    @property
     def _stats(self) -> dict[str, Any]:
         """Compute statistics about issues."""
         by_type: defaultdict[str, int] = defaultdict(int)
@@ -56,25 +63,51 @@ class Issues:
                     "code": issue.code or "",
                     "message": issue.message,
                     "fix": issue.fix or "",
+                    "fixed": False,
+                }
+            )
+        return serialized
+
+    @property
+    def _serialized_fixed_issues(self) -> list[dict[str, Any]]:
+        """Convert fixed issues to JSON-serializable format."""
+        serialized = []
+        for idx, issue in enumerate(self._fixed_issues):
+            serialized.append(
+                {
+                    "id": f"fixed-{idx}",
+                    "type": issue.issue_type(),
+                    "code": issue.code or "",
+                    "message": issue.message,
+                    "fix": issue.fix or "",
+                    "fixed": True,
                 }
             )
         return serialized
 
     def _repr_html_(self) -> str:
         """Generate interactive HTML representation."""
-        if not self._issues:
+        has_issues = len(self._issues) > 0
+        has_fixed = len(self._fixed_issues) > 0
+
+        if not has_issues and not has_fixed:
             return "<b>No issues found.</b>"
+
         stats = self._stats
 
         # Generate unique ID for this render to avoid conflicts in Jupyter
         unique_id = uuid.uuid4().hex[:8]
 
+        # Combine current issues and fixed issues for the JSON data
+        all_serialized = self._serialized_issues + self._serialized_fixed_issues
+
         template_vars = {
-            "JSON": json.dumps(self._serialized_issues),
+            "JSON": json.dumps(all_serialized),
             "total": stats["total"],
             "syntax_errors": stats["by_type"].get("ModelSyntaxError", 0),
             "consistency_errors": stats["by_type"].get("ConsistencyError", 0),
             "recommendations": stats["by_type"].get("Recommendation", 0),
+            "fixed_count": len(self._fixed_issues),
             "unique_id": unique_id,
         }
 
