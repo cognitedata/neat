@@ -36,7 +36,7 @@ from ._limits import (
     ViewImplementsCountIsOutOfLimits,
     ViewPropertyCountIsOutOfLimits,
 )
-from ._orchestrator import DmsDataModelValidation
+from ._orchestrator import DmsDataModelRulesOrchestrator
 from ._performance import (
     MissingRequiresConstraint,
     SuboptimalRequiresConstraint,
@@ -53,7 +53,7 @@ __all__ = [
     "DataModelMissingDescription",
     "DataModelMissingName",
     "DataModelViewCountIsOutOfLimits",
-    "DmsDataModelValidation",
+    "DmsDataModelRulesOrchestrator",
     "EnumerationMissingDescription",
     "EnumerationMissingName",
     "ExternalContainerDoesNotExist",

@@ -56,6 +56,26 @@ def example_space_statistics_response() -> dict:
                 "nodes": 50,
                 "softDeletedNodes": 1,
             },
+            {
+                "space": "cdf_cdm_units",
+                "containers": 0,
+                "views": 0,
+                "dataModels": 0,
+                "edges": 0,
+                "softDeletedEdges": 50,
+                "nodes": 0,
+                "softDeletedNodes": 25,
+            },
+            {
+                "space": "scene",
+                "containers": 0,
+                "views": 0,
+                "dataModels": 0,
+                "edges": 0,
+                "softDeletedEdges": 50,
+                "nodes": 0,
+                "softDeletedNodes": 25,
+            },
         ]
     }
 

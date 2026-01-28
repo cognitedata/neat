@@ -1,6 +1,6 @@
 from collections import Counter
 
-from cognite.neat._data_model.rules._base import DataModelRule
+from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 
 

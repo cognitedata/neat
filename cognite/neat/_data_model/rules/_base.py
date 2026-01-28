@@ -6,7 +6,7 @@ from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._issues import ConsistencyError, Recommendation
 
 
-class DataModelRule(ABC):
+class NeatRule(ABC):
     """Rules for data model principles."""
 
     code: ClassVar[str]
