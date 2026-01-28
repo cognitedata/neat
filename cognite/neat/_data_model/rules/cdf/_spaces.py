@@ -1,3 +1,4 @@
+from cognite.neat._data_model._constants import COGNITE_APP_SPACES, COGNITE_SPACES
 from cognite.neat._data_model.rules.cdf._base import CDFRule
 from cognite.neat._issues import Recommendation
 
@@ -31,7 +32,11 @@ class EmptySpaces(CDFRule):
         if not self.validation_resources.space_statistics:
             return issues
 
-        for space in self.validation_resources.space_statistics.empty_spaces():
+        empty_spaces = set(self.validation_resources.space_statistics.empty_spaces()) - set(
+            COGNITE_APP_SPACES + COGNITE_SPACES
+        )
+
+        for space in empty_spaces:
             issues.append(
                 Recommendation(
                     message=f"Space '{space}' is empty and has no associated resources.",

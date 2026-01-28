@@ -67,7 +67,11 @@ COGNITE_SPACES = (
     "cdf_apm",
     "cdf_apps_shared",
     "cdf_cdm_3d",
+    "cdf_time_series_data",
+    "cdf_cdm_units",
 )
+
+COGNITE_APP_SPACES = ("CommentInstanceSpace", "IndustrialCanvasInstanceSpace", "SolutionTagsInstanceSpace", "scene")
 
 # Defaults from https://docs.cognite.com/cdf/dm/dm_reference/dm_limits_and_restrictions#list-size-limits
 
