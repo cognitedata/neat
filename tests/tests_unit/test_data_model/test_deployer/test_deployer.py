@@ -138,7 +138,7 @@ class TestSchemaDeployer:
             if change.field_path.startswith("indexes.") or change.field_path.startswith("constraints.")
         )
         assert change_types == {
-            # One for index, one for constraint
+            # One removal + one addition for index, one removal + one addition for constraint
             RemovedField: 2,  # type: ignore[dict-item]
             AddedField: 2,
         }
@@ -281,7 +281,7 @@ class TestSchemaDeployer:
         )
         assert removed_index is not None
         assert removed_index.http_message.ids == [
-            ContainerIndexReference(space="space1", external_id="container1", identifier="index1")
+            ContainerIndexReference(space="space1", container_external_id="container1", identifier="index1")
         ]
         removed_constriant = next(
             (
@@ -294,7 +294,7 @@ class TestSchemaDeployer:
         )
         assert removed_constriant is not None
         assert removed_constriant.http_message.ids == [
-            ContainerConstraintReference(space="space1", external_id="container1", identifier="constraint1")
+            ContainerConstraintReference(space="space1", container_external_id="container1", identifier="constraint1")
         ]
 
         # Assert the correct requests were made
@@ -303,13 +303,13 @@ class TestSchemaDeployer:
         assert constraint_request.content.startswith(b"\x1f\x8b"), "Expected gzip compressed content"
         constraint_request = gzip.decompress(constraint_request.content).decode("utf-8")
         assert json.loads(constraint_request) == {
-            "items": [{"space": "space1", "externalId": "container1", "identifier": "constraint1"}]
+            "items": [{"space": "space1", "containerExternalId": "container1", "identifier": "constraint1"}]
         }
         index_request = respx_mock.calls[1].request
         assert index_request.content.startswith(b"\x1f\x8b"), "Expected gzip compressed content"
         index_request = gzip.decompress(index_request.content).decode("utf-8")
         assert json.loads(index_request) == {
-            "items": [{"space": "space1", "externalId": "container1", "identifier": "index1"}]
+            "items": [{"space": "space1", "containerExternalId": "container1", "identifier": "index1"}]
         }
 
         # There should be no created, updated, unchanged, or deleted resources

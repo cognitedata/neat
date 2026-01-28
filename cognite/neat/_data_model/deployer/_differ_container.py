@@ -55,7 +55,7 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
                 "constraints",
                 current.constraints,
                 new.constraints,
-                add_severity=SeverityType.SAFE,
+                add_severity=SeverityType.WARNING,
                 remove_severity=SeverityType.WARNING,
                 differ=ConstraintDiffer("constraints"),
             )
