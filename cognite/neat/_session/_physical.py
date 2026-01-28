@@ -266,7 +266,13 @@ class WritePhysicalDataModel:
 
         return self._store.write_physical(writer, file_path=file_path)
 
-    def cdf(self, dry_run: bool = True, rollback: bool = False, drop_data: bool = False) -> None:
+    def cdf(
+        self,
+        dry_run: bool = True,
+        rollback: bool = False,
+        drop_data: bool = False,
+        allow_deploy_different_space: bool = False,
+    ) -> None:
         """Write physical data model with views, containers, and spaces that are in the same space as the data model
         to CDF.
 
@@ -275,6 +281,13 @@ class WritePhysicalDataModel:
                 report what changes would have been made.
             rollback (bool): If true, all changes will be rolled back if any error occurs.
             drop_data (bool): Only applicable if the session mode is 'rebuild'. If
+                true, containers will be dropped and recreated if there are breaking changes.
+                If false, containers will be treated as 'additive' and will not be dropped
+                or have properties/indexes/constraints removed.
+            allow_deploy_different_space (bool): If true, allows deploying the views and containers
+                that are not in the same space as the data model. By default, Neat only deploys
+                views and containers that are in the same space as the data model to avoid
+                unintentional changes to other spaces.
 
         !!! note "Impact of governance profile"
             This method depends on the session governance profile for data modeling set when creating the NeatSession:
