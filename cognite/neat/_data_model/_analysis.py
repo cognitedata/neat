@@ -8,6 +8,7 @@ from typing import Literal, TypeAlias, TypeVar
 import networkx as nx
 from pyparsing import cached_property
 
+from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
@@ -70,9 +71,11 @@ class ValidationResources:
         local: SchemaSnapshot,
         cdf: SchemaSnapshot,
         limits: SchemaLimits | None = None,
+        space_statistics: SpaceStatisticsResponse | None = None,
     ) -> None:
         self._modus_operandi = modus_operandi
         self.limits = limits or SchemaLimits()
+        self.space_statistics = space_statistics
 
         self.local = local
         self.cdf = cdf

@@ -174,11 +174,19 @@ class TestStatisticsAPI:
             json=example_space_statistics_response,
         )
 
-        spaces = ["production_space", "staging_space", "empty_space", "deleted_only_space", "dev_space"]
+        spaces = [
+            "production_space",
+            "staging_space",
+            "empty_space",
+            "deleted_only_space",
+            "dev_space",
+            "cdf_cdm_units",
+            "scene",
+        ]
         stats = client.statistics.space_statistics(spaces)
 
         assert isinstance(stats, SpaceStatisticsResponse)
-        assert len(stats.items) == 5
+        assert len(stats.items) == 7
 
         # Check production space (active with high usage)
         prod_space = stats.items[0]
@@ -225,13 +233,31 @@ class TestStatisticsAPI:
         assert dev_space.containers == 3
         assert not dev_space.is_empty
 
+        # Check cdf_cdm_units (empty with only soft-deleted items)
+        cdf_cdm_units = stats.items[5]
+        assert cdf_cdm_units.space == "cdf_cdm_units"
+        assert cdf_cdm_units.containers == 0
+        assert cdf_cdm_units.views == 0
+        assert cdf_cdm_units.data_models == 0
+        assert cdf_cdm_units.is_empty
+
+        # Check scene (empty with only soft-deleted items)
+        scene_space = stats.items[6]
+        assert scene_space.space == "scene"
+        assert scene_space.containers == 0
+        assert scene_space.views == 0
+        assert scene_space.data_models == 0
+        assert scene_space.is_empty
+
     def test_space_statistics_empty_detection(self, example_space_statistics_response: dict) -> None:
         """Test detecting empty spaces in space statistics."""
 
         stats = SpaceStatisticsResponse.model_validate(example_space_statistics_response)
 
-        # Test empty_spaces method
-        assert {"empty_space", "deleted_only_space"} == set(stats.empty_spaces())
+        # Test empty_spaces method - should include all spaces with no containers, views, data_models, edges, or nodes
+        empty = set(stats.empty_spaces())
+        expected_empty = {"empty_space", "deleted_only_space", "cdf_cdm_units", "scene"}
+        assert empty == expected_empty
 
     def test_space_statistics_empty_request(self, neat_client: NeatClient, respx_mock: respx.MockRouter) -> None:
         """Test retrieving statistics with empty space list."""

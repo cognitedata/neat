@@ -4,7 +4,7 @@ from pyparsing import cast
 
 from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
-from cognite.neat._data_model.rules._base import DataModelRule
+from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import ConsistencyError
 
 BASE_CODE = "NEAT-DMS-CONTAINER"

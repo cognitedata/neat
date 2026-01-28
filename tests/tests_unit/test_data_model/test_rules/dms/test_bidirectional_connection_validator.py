@@ -7,7 +7,7 @@ from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._references import ContainerDirectReference, ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._view_property import SingleReverseDirectRelationPropertyRequest
 from cognite.neat._data_model.rules.dms import (
-    DmsDataModelValidation,
+    DmsDataModelRulesOrchestrator,
     ReverseConnectionContainerMissing,
     ReverseConnectionContainerPropertyMissing,
     ReverseConnectionContainerPropertyWrongType,
@@ -75,7 +75,7 @@ def test_validation_deep(
     can_run_validator = config.validation.can_run_validator
 
     # Run on success validators
-    on_success = DmsDataModelValidation(
+    on_success = DmsDataModelRulesOrchestrator(
         cdf_snapshot=cdf_snapshot,
         limits=SchemaLimits(),
         modus_operandi=mode,

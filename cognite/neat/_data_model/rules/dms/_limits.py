@@ -8,7 +8,7 @@ from cognite.neat._data_model.models.dms._indexes import BtreeIndex, InvertedInd
 from cognite.neat._data_model.models.dms._view_property import (
     ViewCorePropertyRequest,
 )
-from cognite.neat._data_model.rules._base import (
+from cognite.neat._data_model.rules.dms._base import (
     DataModelRule,
 )
 from cognite.neat._issues import ConsistencyError, Recommendation

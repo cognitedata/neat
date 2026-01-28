@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 
-from cognite.neat._data_model.rules._base import DataModelRule
+from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 
 NEAT_DIRECTORY = Path(__file__).parent.resolve(strict=True).parents[2]

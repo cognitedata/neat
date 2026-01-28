@@ -6,13 +6,14 @@ from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._schema import RequestSchema
-from cognite.neat._data_model.rules._base import DataModelRule
+from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from cognite.neat._utils.useful_types import ModusOperandi
 
 
-class DmsDataModelValidation(OnSuccessIssuesChecker):
-    """Placeholder for DMS Quality Assessment functionality."""
+class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
+    """DMS Data Model rules orchestrator, used to execute DMS data model rules on a single data model represented
+    as RequestSchema."""
 
     def __init__(
         self,
