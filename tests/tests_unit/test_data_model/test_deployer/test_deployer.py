@@ -139,7 +139,7 @@ class TestSchemaDeployer:
         )
         assert change_types == {
             # One removal + one addition for index, one removal + one addition for constraint
-            RemovedField: 2,
+            RemovedField: 2,  # type: ignore[dict-item]
             AddedField: 2,
         }
 

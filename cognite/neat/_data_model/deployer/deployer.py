@@ -203,7 +203,10 @@ class SchemaDeployer(OnSuccessResultProducer):
             if has_removed_constraint_or_index:
                 message = "Removing constraints or indexes may affect query performance."
             if has_added_constraint:
-                message = "Adding constraints may cause ingestion failures if the data being ingested violates the constraint."
+                message = (
+                    "Adding constraints could cause ingestion failures if the data being ingested violates"
+                    "the constraint."
+                )
 
             resources.append(
                 ResourceChange(
