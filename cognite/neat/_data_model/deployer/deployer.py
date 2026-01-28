@@ -191,22 +191,18 @@ class SchemaDeployer(OnSuccessResultProducer):
                 diffs = self.remove_readd_modified_indexes_and_constraints(diffs, current_resource, new_resource)
 
             # Generate warning message for constraint/index changes
-            message: str | None = None
-            has_removed_constraint_or_index = any(
+            warnings: list[str] = []
+            if any(isinstance(diff, AddedField) and diff.field_path.startswith("constraints.") for diff in diffs):
+                warnings.append(
+                    "Adding constraints could cause ingestion failures if the data being ingested violates "
+                    "the constraint."
+                )
+            if any(
                 isinstance(diff, RemovedField)
                 and (diff.field_path.startswith("constraints.") or diff.field_path.startswith("indexes."))
                 for diff in diffs
-            )
-            has_added_constraint = any(
-                isinstance(diff, AddedField) and diff.field_path.startswith("constraints.") for diff in diffs
-            )
-            if has_removed_constraint_or_index:
-                message = "Removing constraints or indexes may affect query performance."
-            if has_added_constraint:
-                message = (
-                    "Adding constraints could cause ingestion failures if the data being ingested violates"
-                    "the constraint."
-                )
+            ):
+                warnings.append("Removing constraints or indexes may affect query performance.")
 
             resources.append(
                 ResourceChange(
@@ -214,7 +210,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                     new_value=new_resource,
                     current_value=current_resource,
                     changes=diffs,
-                    message=message,
+                    message="\n".join(warnings) if warnings else None,
                 )
             )
 
@@ -244,38 +240,21 @@ class SchemaDeployer(OnSuccessResultProducer):
                 # Field type is either "constraints" or "indexes"
                 field_type, identifier, *_ = diff.field_path.split(".", maxsplit=2)
                 field_path = f"{field_type}.{identifier}"
-                if field_type == "constraints":
-                    # Constraints: WARNING severity for both add and remove
-                    modified_diffs.append(
-                        RemovedField(
-                            field_path=field_path,
-                            item_severity=SeverityType.WARNING,
-                            current_value=getattr(current_resource, field_type)[identifier],
-                        )
+                modified_diffs.append(
+                    RemovedField(
+                        field_path=field_path,
+                        item_severity=SeverityType.WARNING,
+                        current_value=getattr(current_resource, field_type)[identifier],
                     )
-                    modified_diffs.append(
-                        AddedField(
-                            field_path=field_path,
-                            item_severity=SeverityType.WARNING,
-                            new_value=getattr(new_resource, field_type)[identifier],
-                        )
+                )
+                add_severity = SeverityType.WARNING if field_type == "constraints" else SeverityType.SAFE
+                modified_diffs.append(
+                    AddedField(
+                        field_path=field_path,
+                        item_severity=add_severity,
+                        new_value=getattr(new_resource, field_type)[identifier],
                     )
-                else:
-                    # Indexes: WARNING severity for remove, SAFE for add
-                    modified_diffs.append(
-                        RemovedField(
-                            field_path=field_path,
-                            item_severity=SeverityType.WARNING,
-                            current_value=getattr(current_resource, field_type)[identifier],
-                        )
-                    )
-                    modified_diffs.append(
-                        AddedField(
-                            field_path=field_path,
-                            item_severity=SeverityType.SAFE,
-                            new_value=getattr(new_resource, field_type)[identifier],
-                        )
-                    )
+                )
             else:
                 modified_diffs.append(diff)
         return modified_diffs
