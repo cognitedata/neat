@@ -11,13 +11,10 @@ from cognite.neat._client import NeatClient
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer.data_classes import (
-    AddedConstraint,
-    AddedIndex,
+    AddedField,
     ChangedField,
     ContainerDeploymentPlan,
-    RemovedConstraint,
     RemovedField,
-    RemovedIndex,
     ResourceChange,
     ResourceDeploymentPlan,
     SeverityType,
@@ -142,10 +139,8 @@ class TestSchemaDeployer:
         )
         assert change_types == {
             # One removal + one addition for index, one removal + one addition for constraint
-            RemovedIndex: 1,  # type: ignore[dict-item]
-            AddedIndex: 1,
-            RemovedConstraint: 1,  # type: ignore[dict-item]
-            AddedConstraint: 1,
+            RemovedField: 2,
+            AddedField: 2,
         }
 
     def test_deploy_dry_run(

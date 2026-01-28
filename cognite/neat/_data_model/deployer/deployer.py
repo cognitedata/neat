@@ -31,8 +31,7 @@ from ._differ_data_model import DataModelDiffer
 from ._differ_space import SpaceDiffer
 from ._differ_view import ViewDiffer
 from .data_classes import (
-    AddedConstraint,
-    AddedIndex,
+    AddedField,
     AppliedChanges,
     ChangedFieldResult,
     ContainerDeploymentPlan,
@@ -42,8 +41,7 @@ from .data_classes import (
     FieldChanges,
     HTTPChangeResult,
     NoOpChangeResult,
-    RemovedConstraint,
-    RemovedIndex,
+    RemovedField,
     ResourceChange,
     ResourceDeploymentPlan,
     ResourceDeploymentPlanList,
@@ -191,11 +189,53 @@ class SchemaDeployer(OnSuccessResultProducer):
                 # CDF doesn't support in-place modification of constraints/indexes,
                 # so we transform changes to remove + add operations in both modes
                 diffs = self.remove_readd_modified_indexes_and_constraints(diffs, current_resource, new_resource)
+            message = self._get_constraint_index_message(diffs)
             resources.append(
-                ResourceChange(resource_id=ref, new_value=new_resource, current_value=current_resource, changes=diffs)
+                ResourceChange(
+                    resource_id=ref,
+                    new_value=new_resource,
+                    current_value=current_resource,
+                    changes=diffs,
+                    message=message,
+                )
             )
 
         return plan_type(endpoint=endpoint, resources=resources)
+
+    @classmethod
+    def _get_constraint_index_message(cls, diffs: list[FieldChange]) -> str | None:
+        """Generate a warning message if there are constraint or index changes.
+
+        Args:
+            diffs: The list of field changes.
+        Returns:
+            A warning message if there are constraint or index changes, otherwise None.
+        """
+        warnings: list[str] = []
+        has_added_constraint = False
+        has_removed_constraint = False
+        has_removed_index = False
+
+        for diff in diffs:
+            if diff.field_path.startswith("constraints."):
+                if isinstance(diff, AddedField):
+                    has_added_constraint = True
+                elif isinstance(diff, RemovedField):
+                    has_removed_constraint = True
+            elif diff.field_path.startswith("indexes."):
+                if isinstance(diff, RemovedField):
+                    has_removed_index = True
+
+        if has_added_constraint:
+            warnings.append(
+                "Adding constraints may cause ingestion failures if the data being ingested violates the constraint."
+            )
+        if has_removed_constraint:
+            warnings.append("Removing constraints may affect query performance.")
+        if has_removed_index:
+            warnings.append("Removing indexes may affect query performance.")
+
+        return " ".join(warnings) if warnings else None
 
     @classmethod
     def remove_readd_modified_indexes_and_constraints(
@@ -222,28 +262,34 @@ class SchemaDeployer(OnSuccessResultProducer):
                 field_type, identifier, *_ = diff.field_path.split(".", maxsplit=2)
                 field_path = f"{field_type}.{identifier}"
                 if field_type == "constraints":
+                    # Constraints: WARNING severity for both add and remove
                     modified_diffs.append(
-                        RemovedConstraint(
+                        RemovedField(
                             field_path=field_path,
+                            item_severity=SeverityType.WARNING,
                             current_value=getattr(current_resource, field_type)[identifier],
                         )
                     )
                     modified_diffs.append(
-                        AddedConstraint(
+                        AddedField(
                             field_path=field_path,
+                            item_severity=SeverityType.WARNING,
                             new_value=getattr(new_resource, field_type)[identifier],
                         )
                     )
                 else:
+                    # Indexes: WARNING severity for remove, SAFE for add
                     modified_diffs.append(
-                        RemovedIndex(
+                        RemovedField(
                             field_path=field_path,
+                            item_severity=SeverityType.WARNING,
                             current_value=getattr(current_resource, field_type)[identifier],
                         )
                     )
                     modified_diffs.append(
-                        AddedIndex(
+                        AddedField(
                             field_path=field_path,
+                            item_severity=SeverityType.SAFE,
                             new_value=getattr(new_resource, field_type)[identifier],
                         )
                     )

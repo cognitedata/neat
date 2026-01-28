@@ -88,7 +88,6 @@ class PrimitiveField(FieldChange, ABC):
 
 class AddedField(PrimitiveField):
     new_value: BaseModelObject | str | int | float | bool | None
-    item_severity: SeverityType = SeverityType.SAFE
 
     @property
     def description(self) -> str:
@@ -97,59 +96,10 @@ class AddedField(PrimitiveField):
 
 class RemovedField(PrimitiveField):
     current_value: BaseModelObject | str | int | float | bool | None
-    item_severity: SeverityType = SeverityType.BREAKING
 
     @property
     def description(self) -> str:
         return f"removed (was {self.current_value!r})"
-
-
-class AddedConstraint(AddedField):
-    """Represents a constraint being added to a container."""
-
-    @property
-    def severity(self) -> SeverityType:
-        return SeverityType.WARNING
-
-    @property
-    def description(self) -> str:
-        return (
-            super().description
-            + ". Note: adding constraints may cause ingestion failures "
-            + "if the data being ingested violates the constraint"
-        )
-
-
-class RemovedConstraint(RemovedField):
-    """Represents a constraint being removed from a container."""
-
-    @property
-    def severity(self) -> SeverityType:
-        return SeverityType.WARNING
-
-    @property
-    def description(self) -> str:
-        return super().description + ". Note: Removing constraints may affect query performance"
-
-
-class AddedIndex(AddedField):
-    """Represents an index being added to a container."""
-
-    @property
-    def severity(self) -> SeverityType:
-        return SeverityType.SAFE
-
-
-class RemovedIndex(RemovedField):
-    """Represents an index being removed from a container."""
-
-    @property
-    def severity(self) -> SeverityType:
-        return SeverityType.WARNING
-
-    @property
-    def description(self) -> str:
-        return super().description + ". Note: Removing indexes may affect query performance"
 
 
 class ChangedField(PrimitiveField):
@@ -302,7 +252,7 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
             updated_resource = resource.model_copy(update={"new_value": resource.current_value})
         elif resource.changes and resource.new_value is not None:
             # Find all field removals and update new_value accordingly.
-            removals = [change for change in resource.changes if isinstance(change, RemovedField)]
+            removals: list[RemovedField] = [change for change in resource.changes if isinstance(change, RemovedField)]
             addition_paths = {change.field_path for change in resource.changes if isinstance(change, AddedField)}
             if removals:
                 if resource.current_value is None:
@@ -319,7 +269,13 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
                             for change in resource.changes
                             if not isinstance(change, RemovedField)
                             or (isinstance(change, RemovedField) and change.field_path in addition_paths)
-                            or isinstance(change, RemovedConstraint | RemovedIndex)
+                            or (
+                                isinstance(change, RemovedField)
+                                and (
+                                    change.field_path.startswith("constraints.")
+                                    or change.field_path.startswith("indexes.")
+                                )
+                            )
                         ],
                     }
                 )

@@ -133,11 +133,8 @@ class ViewDirectReference(ReferenceObject):
         return f"{self.source!s}.{self.identifier}"
 
 
-class ContainerSubObjectReference(ReferenceObject):
-    """Reference to a container sub-object (index or constraint) for deletion API.
-
-    Matches the ContainerSubObjectIdentifier in the CDF API.
-    """
+class ContainerIndexReference(ReferenceObject):
+    """Reference to a container index for deletion API."""
 
     space: str = Field(
         description="Id of the space hosting the container.",
@@ -153,10 +150,26 @@ class ContainerSubObjectReference(ReferenceObject):
         alias="containerExternalId",
     )
     identifier: str = Field(
-        description="Identifier of the index or constraint.",
+        description="Identifier of the index.",
     )
 
 
-# Type aliases for backwards compatibility and semantic clarity
-ContainerIndexReference = ContainerSubObjectReference
-ContainerConstraintReference = ContainerSubObjectReference
+class ContainerConstraintReference(ReferenceObject):
+    """Reference to a container constraint for deletion API."""
+
+    space: str = Field(
+        description="Id of the space hosting the container.",
+        min_length=1,
+        max_length=43,
+        pattern=SPACE_FORMAT_PATTERN,
+    )
+    container_external_id: str = Field(
+        description="External-id of the container.",
+        min_length=1,
+        max_length=255,
+        pattern=DM_EXTERNAL_ID_PATTERN,
+        alias="containerExternalId",
+    )
+    identifier: str = Field(
+        description="Identifier of the constraint.",
+    )

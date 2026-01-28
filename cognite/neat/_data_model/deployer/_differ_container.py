@@ -15,7 +15,7 @@ from cognite.neat._data_model.models.dms import (
 )
 from cognite.neat._data_model.models.dms._data_types import Unit
 
-from ._differ import ItemDiffer, ObjectDiffer, constraint_differences, field_differences, index_differences
+from ._differ import ItemDiffer, ObjectDiffer, field_differences
 from .data_classes import (
     AddedField,
     ChangedField,
@@ -44,13 +44,33 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
                 "properties",
                 current.properties,
                 new.properties,
+                add_severity=SeverityType.SAFE,
+                remove_severity=SeverityType.BREAKING,
                 differ=ContainerPropertyDiffer("properties"),
             )
         )
-        # MyPy fails to understand that ConstraintDefinition and Constraint are compatible here
-        changes.extend(constraint_differences(current.constraints, new.constraints, ConstraintDiffer("constraints")))  # type: ignore[misc]
-        # MyPy fails to understand that IndexDefinition and Index are compatible here
-        changes.extend(index_differences(current.indexes, new.indexes, IndexDiffer("indexes")))  # type: ignore[misc]
+        changes.extend(
+            # MyPy fails to understand that ConstraintDefinition and Constraint are compatible here
+            field_differences(  # type: ignore[misc]
+                "constraints",
+                current.constraints,
+                new.constraints,
+                add_severity=SeverityType.WARNING,
+                remove_severity=SeverityType.WARNING,
+                differ=ConstraintDiffer("constraints"),
+            )
+        )
+        changes.extend(
+            # MyPy fails to understand that IndexDefinition and Index are compatible here
+            field_differences(  # type: ignore[misc]
+                "indexes",
+                current.indexes,
+                new.indexes,
+                add_severity=SeverityType.SAFE,
+                remove_severity=SeverityType.WARNING,
+                differ=IndexDiffer("indexes"),
+            )
+        )
 
         return changes
 
@@ -111,7 +131,7 @@ class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
         if current.constraint_type != new.constraint_type:
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.WARNING,
+                    item_severity=SeverityType.BREAKING,
                     field_path=self._get_path(f"{identifier}.constraintType"),
                     current_value=current.constraint_type,
                     new_value=new.constraint_type,
@@ -124,7 +144,7 @@ class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
         ):
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.WARNING,
+                    item_severity=SeverityType.BREAKING,
                     field_path=self._get_path(f"{identifier}.require"),
                     current_value=str(current.require),
                     new_value=str(new.require),
@@ -135,7 +155,7 @@ class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
             if current.properties != new.properties:
                 changes.append(
                     ChangedField(
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         field_path=self._get_path(f"{identifier}.properties"),
                         current_value=str(current.properties),
                         new_value=str(new.properties),
@@ -144,7 +164,7 @@ class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
             if current.by_space != new.by_space:
                 changes.append(
                     ChangedField(
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         field_path=self._get_path(f"{identifier}.bySpace"),
                         current_value=current.by_space,
                         new_value=new.by_space,
@@ -160,7 +180,7 @@ class IndexDiffer(ObjectDiffer[IndexDefinition]):
         if current.index_type != new.index_type:
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.WARNING,
+                    item_severity=SeverityType.BREAKING,
                     field_path=self._get_path(f"{identifier}.indexType"),
                     current_value=current.index_type,
                     new_value=new.index_type,
@@ -170,7 +190,7 @@ class IndexDiffer(ObjectDiffer[IndexDefinition]):
             if current.properties != new.properties:
                 changes.append(
                     ChangedField(
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         field_path=self._get_path(f"{identifier}.properties"),
                         current_value=str(current.properties),
                         new_value=str(new.properties),
@@ -180,7 +200,7 @@ class IndexDiffer(ObjectDiffer[IndexDefinition]):
             if current.cursorable != new.cursorable:
                 changes.append(
                     ChangedField(
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         field_path=self._get_path(f"{identifier}.cursorable"),
                         current_value=current.cursorable,
                         new_value=new.cursorable,
@@ -189,7 +209,7 @@ class IndexDiffer(ObjectDiffer[IndexDefinition]):
             if current.by_space != new.by_space:
                 changes.append(
                     ChangedField(
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         field_path=self._get_path(f"{identifier}.bySpace"),
                         current_value=current.by_space,
                         new_value=new.by_space,
@@ -327,6 +347,8 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                 self._get_path("values"),
                 current.values,
                 new.values,
+                add_severity=SeverityType.SAFE,
+                remove_severity=SeverityType.BREAKING,
                 differ=EnumValueDiffer(self._get_path("values")),
             )
         )
