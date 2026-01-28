@@ -115,7 +115,8 @@ class AddedConstraint(AddedField):
     def description(self) -> str:
         return (
             super().description
-            + ". Note: adding constraints may cause ingestion failures if the data being ingested violates the constraint"
+            + ". Note: adding constraints may cause ingestion failures "
+            + "if the data being ingested violates the constraint"
         )
 
 

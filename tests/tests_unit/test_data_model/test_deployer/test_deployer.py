@@ -144,7 +144,7 @@ class TestSchemaDeployer:
             # One removal + one addition for index, one removal + one addition for constraint
             RemovedIndex: 1,  # type: ignore[dict-item]
             AddedIndex: 1,
-            RemovedConstraint: 1,
+            RemovedConstraint: 1,  # type: ignore[dict-item]
             AddedConstraint: 1,
         }
 
