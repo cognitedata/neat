@@ -189,7 +189,22 @@ class SchemaDeployer(OnSuccessResultProducer):
                 # CDF doesn't support in-place modification of constraints/indexes,
                 # so we transform changes to remove + add operations in both modes
                 diffs = self.remove_readd_modified_indexes_and_constraints(diffs, current_resource, new_resource)
-            message = self._get_constraint_index_message(diffs)
+
+            # Generate warning message for constraint/index changes
+            message: str | None = None
+            has_removed_constraint_or_index = any(
+                isinstance(diff, RemovedField)
+                and (diff.field_path.startswith("constraints.") or diff.field_path.startswith("indexes."))
+                for diff in diffs
+            )
+            has_added_constraint = any(
+                isinstance(diff, AddedField) and diff.field_path.startswith("constraints.") for diff in diffs
+            )
+            if has_removed_constraint_or_index:
+                message = "Removing constraints or indexes may affect query performance."
+            if has_added_constraint:
+                message = "Adding constraints may cause ingestion failures if the data being ingested violates the constraint."
+
             resources.append(
                 ResourceChange(
                     resource_id=ref,
@@ -201,41 +216,6 @@ class SchemaDeployer(OnSuccessResultProducer):
             )
 
         return plan_type(endpoint=endpoint, resources=resources)
-
-    @classmethod
-    def _get_constraint_index_message(cls, diffs: list[FieldChange]) -> str | None:
-        """Generate a warning message if there are constraint or index changes.
-
-        Args:
-            diffs: The list of field changes.
-        Returns:
-            A warning message if there are constraint or index changes, otherwise None.
-        """
-        warnings: list[str] = []
-        has_added_constraint = False
-        has_removed_constraint = False
-        has_removed_index = False
-
-        for diff in diffs:
-            if diff.field_path.startswith("constraints."):
-                if isinstance(diff, AddedField):
-                    has_added_constraint = True
-                elif isinstance(diff, RemovedField):
-                    has_removed_constraint = True
-            elif diff.field_path.startswith("indexes."):
-                if isinstance(diff, RemovedField):
-                    has_removed_index = True
-
-        if has_added_constraint:
-            warnings.append(
-                "Adding constraints may cause ingestion failures if the data being ingested violates the constraint."
-            )
-        if has_removed_constraint:
-            warnings.append("Removing constraints may affect query performance.")
-        if has_removed_index:
-            warnings.append("Removing indexes may affect query performance.")
-
-        return " ".join(warnings) if warnings else None
 
     @classmethod
     def remove_readd_modified_indexes_and_constraints(
