@@ -210,7 +210,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                     new_value=new_resource,
                     current_value=current_resource,
                     changes=diffs,
-                    message="\n".join(warnings) if warnings else None,
+                    message=" ".join(warnings) if warnings else None,
                 )
             )
 
