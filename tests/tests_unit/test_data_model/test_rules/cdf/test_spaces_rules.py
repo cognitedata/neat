@@ -8,7 +8,6 @@ from tests.data import SNAPSHOT_CATALOG
 
 def test_spaces_rules(example_space_statistics_response: dict) -> None:
     config = NeatConfig.create_predefined()
-    config.alpha.enable_experimental_validators = True
     mode = config.modeling.mode
     can_run_validator = config.validation.can_run_validator
 
@@ -20,7 +19,6 @@ def test_spaces_rules(example_space_statistics_response: dict) -> None:
         limits=SchemaLimits(),
         space_statistics=SpaceStatisticsResponse.model_validate(example_space_statistics_response),
         can_run_validator=can_run_validator,
-        enable_alpha_validators=config.alpha.enable_experimental_validators,
     )
 
     on_success.run(cdf_snapshot=cdf)

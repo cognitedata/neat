@@ -24,7 +24,6 @@ class EmptySpaces(CDFRule):
 
     code = f"{BASE_CODE}-001"
     issue_type = Recommendation
-    alpha = True
 
     def validate(self) -> list[Recommendation]:
         issues: list[Recommendation] = []
