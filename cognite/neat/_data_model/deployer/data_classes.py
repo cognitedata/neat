@@ -191,7 +191,9 @@ class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, Contain
     def constraints_to_remove(self) -> dict[ContainerConstraintReference, RemovedField]:
         return self._get_fields_to_remove("constraints.", ContainerConstraintReference)
 
-    def _get_fields_to_remove(self, field_prefix: str, ref_cls: type) -> dict:
+    def _get_fields_to_remove(
+        self, field_prefix: str, ref_cls: type[ContainerIndexReference] | type[ContainerConstraintReference]
+    ) -> dict:
         items: dict = {}
         for resource_change in self.resources:
             for change in resource_change.changes:

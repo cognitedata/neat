@@ -190,20 +190,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                 # so we transform changes to remove + add operations in both modes
                 diffs = self.remove_readd_modified_indexes_and_constraints(diffs, current_resource, new_resource)
 
-            # Generate warning message for constraint/index changes
-            warnings: list[str] = []
-            if any(isinstance(diff, AddedField) and diff.field_path.startswith("constraints.") for diff in diffs):
-                warnings.append(
-                    "Adding constraints could cause ingestion failures if the data being ingested violates "
-                    "the constraint."
-                )
-            if any(
-                isinstance(diff, RemovedField)
-                and (diff.field_path.startswith("constraints.") or diff.field_path.startswith("indexes."))
-                for diff in diffs
-            ):
-                warnings.append("Removing constraints or indexes may affect query performance.")
-
+            warnings = self._generate_warnings_for_constraint_and_index_changes(diffs)
             resources.append(
                 ResourceChange(
                     resource_id=ref,
@@ -278,6 +265,29 @@ class SchemaDeployer(OnSuccessResultProducer):
                 f" not matching data model space '{model_space}'."
             )
         return None
+
+    @classmethod
+    def _generate_warnings_for_constraint_and_index_changes(cls, diffs: list[FieldChange]) -> list[str]:
+        """Generate warning messages for constraint and index changes.
+
+        Args:
+            diffs: The list of field changes.
+
+        Returns:
+            A list of warning messages for field changes involving constraint and index changes.
+        """
+        warnings: list[str] = []
+        if any(isinstance(diff, AddedField) and diff.field_path.startswith("constraints.") for diff in diffs):
+            warnings.append(
+                "Adding constraints could cause ingestion failures if the data being ingested violates the constraint."
+            )
+        if any(
+            isinstance(diff, RemovedField)
+            and (diff.field_path.startswith("constraints.") or diff.field_path.startswith("indexes."))
+            for diff in diffs
+        ):
+            warnings.append("Removing constraints or indexes may affect query performance.")
+        return warnings
 
     def should_proceed_to_deploy(self, plan: Sequence[ResourceDeploymentPlan]) -> bool:
         max_severity_in_plan = SeverityType.max_severity(
