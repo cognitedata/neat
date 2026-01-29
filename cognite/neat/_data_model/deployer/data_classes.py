@@ -12,7 +12,6 @@ from pydantic.alias_generators import to_camel
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms import (
     BaseModelObject,
-    Constraint,
     ContainerConstraintReference,
     ContainerIndexReference,
     ContainerPropertyDefinition,
@@ -20,7 +19,6 @@ from cognite.neat._data_model.models.dms import (
     ContainerRequest,
     DataModelRequest,
     DataModelResource,
-    Index,
     T_DataModelResource,
     T_ResourceId,
     ViewRequest,
@@ -193,7 +191,9 @@ class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, Contain
     def constraints_to_remove(self) -> dict[ContainerConstraintReference, RemovedField]:
         return self._get_fields_to_remove("constraints.", ContainerConstraintReference)
 
-    def _get_fields_to_remove(self, field_prefix: str, ref_cls: type) -> dict:
+    def _get_fields_to_remove(
+        self, field_prefix: str, ref_cls: type[ContainerIndexReference] | type[ContainerConstraintReference]
+    ) -> dict:
         items: dict = {}
         for resource_change in self.resources:
             for change in resource_change.changes:
@@ -202,7 +202,7 @@ class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, Contain
                     items[
                         ref_cls(
                             space=resource_change.resource_id.space,
-                            external_id=resource_change.resource_id.external_id,
+                            container_external_id=resource_change.resource_id.external_id,
                             identifier=identifier,
                         )
                     ] = change
@@ -254,7 +254,7 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
             updated_resource = resource.model_copy(update={"new_value": resource.current_value})
         elif resource.changes and resource.new_value is not None:
             # Find all field removals and update new_value accordingly.
-            removals = [change for change in resource.changes if isinstance(change, RemovedField)]
+            removals: list[RemovedField] = [change for change in resource.changes if isinstance(change, RemovedField)]
             addition_paths = {change.field_path for change in resource.changes if isinstance(change, AddedField)}
             if removals:
                 if resource.current_value is None:
@@ -271,6 +271,13 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
                             for change in resource.changes
                             if not isinstance(change, RemovedField)
                             or (isinstance(change, RemovedField) and change.field_path in addition_paths)
+                            or (
+                                isinstance(change, RemovedField)
+                                and (
+                                    change.field_path.startswith("constraints.")
+                                    or change.field_path.startswith("indexes.")
+                                )
+                            )
                         ],
                     }
                 )
@@ -320,22 +327,14 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
         resource: ContainerRequest, removals: list[RemovedField], addition_paths: set[str]
     ) -> DataModelResource:
         container_properties = resource.properties.copy()
-        indexes = (resource.indexes or {}).copy()
-        constraints = (resource.constraints or {}).copy()
         for removal in removals:
             if removal.field_path.startswith("properties."):
                 prop_key = removal.field_path.removeprefix("properties.")
                 container_properties[prop_key] = cast(ContainerPropertyDefinition, removal.current_value)
-            elif removal.field_path.startswith("indexes.") and removal.field_path not in addition_paths:
-                # Index was removed and not re-added, so we need to restore it.
-                index_key = removal.field_path.removeprefix("indexes.")
-                indexes[index_key] = cast(Index, removal.current_value)
-            elif removal.field_path.startswith("constraints.") and removal.field_path not in addition_paths:
-                # Constraint was removed and not re-added, so we need to restore it.
-                constraint_key = removal.field_path.removeprefix("constraints.")
-                constraints[constraint_key] = cast(Constraint, removal.current_value)
+            # Note: indexes and constraints are allowed to be removed in additive mode,
+            # so we don't restore them here unlike properties.
         return resource.model_copy(
-            update={"properties": container_properties, "indexes": indexes or None, "constraints": constraints or None},
+            update={"properties": container_properties},
             deep=True,
         )
 

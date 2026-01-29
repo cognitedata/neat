@@ -152,11 +152,24 @@ class TestResourceDeploymentPlanList:
 
         assert len(consolidated_plan) == 3
         for resource_plan in consolidated_plan.data:
-            # All removed properties, constraints, indexes, and views should lead to unchanged resources
-            assert len(resource_plan.unchanged) == 1
-            assert len(resource_plan.to_create) == 0
-            assert len(resource_plan.to_update) == 0
-            assert len(resource_plan.to_delete) == 0
+            if resource_plan.endpoint == "containers":
+                # Containers with index/constraint removals are updated (not unchanged)
+                # because indexes and constraints can be removed in additive mode.
+                # Properties are restored, but index/constraint removals remain as changes.
+                assert len(resource_plan.unchanged) == 0
+                assert len(resource_plan.to_create) == 0
+                assert len(resource_plan.to_update) == 1
+                assert len(resource_plan.to_delete) == 0
+                # Verify the changes contain the index and constraint removals
+                container_change = resource_plan.to_update[0]
+                assert len(container_change.changes) == 2
+                assert all(isinstance(c, RemovedField) for c in container_change.changes)
+            else:
+                # Views and data models with removals should lead to unchanged resources
+                assert len(resource_plan.unchanged) == 1
+                assert len(resource_plan.to_create) == 0
+                assert len(resource_plan.to_update) == 0
+                assert len(resource_plan.to_delete) == 0
 
     def test_consolidate_container_index_modifications(self) -> None:
         current_container = ContainerRequest(
@@ -218,10 +231,11 @@ class TestResourceDeploymentPlanList:
                 assert len(resource_plan.to_update) == 0
                 assert len(resource_plan.to_delete) == 1
             elif resource_plan.endpoint == "containers":
-                # Containers should be unchanged as we do not drop data
-                assert len(resource_plan.unchanged) == 1
+                # Containers with index/constraint removals are updated (not unchanged)
+                # because indexes and constraints can be removed in additive mode.
+                assert len(resource_plan.unchanged) == 0
                 assert len(resource_plan.to_create) == 0
-                assert len(resource_plan.to_update) == 0
+                assert len(resource_plan.to_update) == 1
                 assert len(resource_plan.to_delete) == 0
             else:
                 pytest.fail(f"Unexpected endpoint: {resource_plan.endpoint}")
@@ -361,7 +375,9 @@ class TestAppliedChanges:
                         ),
                         ids=[
                             ContainerIndexReference(
-                                space=container.space, external_id=container.external_id, identifier="indexToRemove"
+                                space=container.space,
+                                container_external_id=container.external_id,
+                                identifier="indexToRemove",
                             )
                         ],
                     ),

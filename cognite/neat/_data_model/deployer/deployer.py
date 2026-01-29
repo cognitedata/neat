@@ -185,16 +185,20 @@ class SchemaDeployer(OnSuccessResultProducer):
                 continue
             current_resource = current_resources[ref]
             diffs = differ.diff(current_resource, new_resource)
-            if (
-                isinstance(current_resource, ContainerRequest)
-                and isinstance(new_resource, ContainerRequest)
-                and self.options.modus_operandi == "additive"
-            ):
-                # In additive mode, changes to constraints and indexes require removal and re-adding
-                # In rebuild mode, all changes are forced via deletion and re-adding
+            if isinstance(current_resource, ContainerRequest) and isinstance(new_resource, ContainerRequest):
+                # CDF doesn't support in-place modification of constraints/indexes,
+                # so we transform changes to remove + add operations in both modes
                 diffs = self.remove_readd_modified_indexes_and_constraints(diffs, current_resource, new_resource)
+
+            warnings = self._generate_warnings_for_constraint_and_index_changes(diffs)
             resources.append(
-                ResourceChange(resource_id=ref, new_value=new_resource, current_value=current_resource, changes=diffs)
+                ResourceChange(
+                    resource_id=ref,
+                    new_value=new_resource,
+                    current_value=current_resource,
+                    changes=diffs,
+                    message=" ".join(warnings) if warnings else None,
+                )
             )
 
         return plan_type(endpoint=endpoint, resources=resources)
@@ -222,19 +226,19 @@ class SchemaDeployer(OnSuccessResultProducer):
                     raise RuntimeError("Bug in Neat. Malformed field path for constraint/index change.")
                 # Field type is either "constraints" or "indexes"
                 field_type, identifier, *_ = diff.field_path.split(".", maxsplit=2)
-                # Mark for removal
+                field_path = f"{field_type}.{identifier}"
                 modified_diffs.append(
                     RemovedField(
-                        field_path=f"{field_type}.{identifier}",
+                        field_path=field_path,
                         item_severity=SeverityType.WARNING,
                         current_value=getattr(current_resource, field_type)[identifier],
                     )
                 )
-                # Mark for addition
+                add_severity = SeverityType.WARNING if field_type == "constraints" else SeverityType.SAFE
                 modified_diffs.append(
                     AddedField(
-                        field_path=f"{field_type}.{identifier}",
-                        item_severity=SeverityType.SAFE,
+                        field_path=field_path,
+                        item_severity=add_severity,
                         new_value=getattr(new_resource, field_type)[identifier],
                     )
                 )
@@ -261,6 +265,29 @@ class SchemaDeployer(OnSuccessResultProducer):
                 f" not matching data model space '{model_space}'."
             )
         return None
+
+    @classmethod
+    def _generate_warnings_for_constraint_and_index_changes(cls, diffs: list[FieldChange]) -> list[str]:
+        """Generate warning messages for constraint and index changes.
+
+        Args:
+            diffs: The list of field changes.
+
+        Returns:
+            A list of warning messages for field changes involving constraint and index changes.
+        """
+        warnings: list[str] = []
+        if any(isinstance(diff, AddedField) and diff.field_path.startswith("constraints.") for diff in diffs):
+            warnings.append(
+                "Adding constraints could cause ingestion failures if the data being ingested violates the constraint."
+            )
+        if any(
+            isinstance(diff, RemovedField)
+            and (diff.field_path.startswith("constraints.") or diff.field_path.startswith("indexes."))
+            for diff in diffs
+        ):
+            warnings.append("Removing constraints or indexes may affect query performance.")
+        return warnings
 
     def should_proceed_to_deploy(self, plan: Sequence[ResourceDeploymentPlan]) -> bool:
         max_severity_in_plan = SeverityType.max_severity(
