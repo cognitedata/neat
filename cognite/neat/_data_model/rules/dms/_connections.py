@@ -377,9 +377,8 @@ class ReverseConnectionContainerPropertyWrongType(DataModelRule):
         errors: list[ConsistencyError] = []
 
         for resolved in self.validation_resources.resolved_reverse_direct_relations:
-            # Skip if container or property couldn't be resolved
             if not resolved.container_property:
-                continue
+                continue  # Handled by ReverseConnectionContainerPropertyMissing
 
             if not isinstance(resolved.container_property.type, DirectNodeRelation):
                 errors.append(
