@@ -435,8 +435,6 @@ class ValidationResources:
 
             # Resolve container - may be None if missing
             container = self.select_container(container_ref, container_property_id)
-            if container and not container.properties:
-                container = None
 
             # Resolve container property - may be None if container missing or property missing
             container_property = None
