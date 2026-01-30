@@ -22,7 +22,7 @@ class OnSuccessIssuesChecker(OnSuccess, ABC):
 
     def __init__(self) -> None:
         self._issues = IssueList()
-        self._applied_fixes: list["FixAction"] = []
+        self._applied_fixes: list[FixAction] = []
         self._has_run = False
 
     @property
