@@ -144,6 +144,89 @@
     color: #a7f3d0;
 }
 
+/* Fixed issues summary layout */
+.fixed-summary {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%);
+    border-left: 4px solid #10b981;
+}
+
+.dark-mode .fixed-summary {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border-left-color: #34d399;
+}
+
+.fixed-message {
+    font-weight: 500;
+    color: #065f46;
+    margin-bottom: 12px;
+}
+
+.dark-mode .fixed-message {
+    color: #6ee7b7;
+}
+
+.fix-count {
+    font-size: 12px;
+    color: #059669;
+    background: rgba(16, 185, 129, 0.15);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+}
+
+.dark-mode .fix-count {
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.2);
+}
+
+.fix-items-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fix-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin: 4px 0;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.dark-mode .fix-item {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.container-name {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(14, 165, 233, 0.25);
+}
+
+.dark-mode .container-name {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.arrow {
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.dark-mode .arrow {
+    color: #9ca3af;
+}
+
 .issue-fix-label {
     font-weight: 600;
     font-size: 12px;
