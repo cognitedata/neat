@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass
 
+from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._references import (
-    ContainerDirectReference,
     ViewDirectReference,
     ViewReference,
 )
@@ -119,15 +119,6 @@ class ReverseConnectionContext:
     source_view_ref: ViewReference
 
 
-def _normalize_through_reference(
-    source_view_ref: ViewReference, through: ContainerDirectReference | ViewDirectReference
-) -> ViewDirectReference:
-    """Normalize through reference to ViewDirectReference for consistent processing."""
-    if isinstance(through, ContainerDirectReference):
-        return ViewDirectReference(source=source_view_ref, identifier=through.identifier)
-    return through
-
-
 class ReverseConnectionSourceViewMissing(DataModelRule):
     """Validates that source view referenced in reverse connection exist.
 
@@ -153,7 +144,7 @@ class ReverseConnectionSourceViewMissing(DataModelRule):
             source_view_ref,
             through,
         ) in self.validation_resources.reverse_to_direct_mapping.items():
-            through = _normalize_through_reference(source_view_ref, through)
+            through = ValidationResources.normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
             if not source_view:
@@ -198,7 +189,7 @@ class ReverseConnectionSourcePropertyMissing(DataModelRule):
             source_view_ref,
             through,
         ) in self.validation_resources.reverse_to_direct_mapping.items():
-            through = _normalize_through_reference(source_view_ref, through)
+            through = ValidationResources.normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
             if not source_view:
@@ -250,7 +241,7 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
             source_view_ref,
             through,
         ) in self.validation_resources.reverse_to_direct_mapping.items():
-            through = _normalize_through_reference(source_view_ref, through)
+            through = ValidationResources.normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
             if not source_view:
@@ -301,40 +292,16 @@ class ReverseConnectionContainerMissing(DataModelRule):
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        for (target_view_ref, reverse_prop_name), (
-            source_view_ref,
-            through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
-            through = _normalize_through_reference(source_view_ref, through)
-            source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
-
-            if not source_view:
-                continue  # Handled by ReverseConnectionSourceViewMissing
-
-            if not (source_view_expanded := self.validation_resources.expand_view_properties(source_view_ref)):
-                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
-
-            if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
-                continue  # Handled by ReverseConnectionSourcePropertyMissing
-
-            source_property = source_view_expanded.properties[through.identifier]
-
-            if not isinstance(source_property, ViewCorePropertyRequest):
-                continue  # Handled by ReverseConnectionSourcePropertyWrongType
-
-            container_ref = source_property.container
-            container_property_id = source_property.container_property_identifier
-
-            source_container = self.validation_resources.select_container(container_ref, container_property_id)
-            if not source_container:
+        for resolved in self.validation_resources.resolved_reverse_direct_relations:
+            if resolved.container is None:
                 errors.append(
                     ConsistencyError(
                         message=(
-                            f"Container {container_ref!s} is missing in both the data model and CDF. "
-                            f"This container is required by view {source_view_ref!s}"
-                            f" property '{through.identifier}', "
-                            f"which configures the reverse connection '{reverse_prop_name}'"
-                            f" in target view {target_view_ref!s}."
+                            f"Container {resolved.container_ref!s} is missing in both the data model and CDF. "
+                            f"This container is required by view {resolved.source_view_ref!s}"
+                            f" property '{resolved.through_property_id}', "
+                            f"which configures the reverse connection '{resolved.reverse_property_id}'"
+                            f" in target view {resolved.target_view_ref!s}."
                         ),
                         fix="Define the missing container",
                         code=self.code,
@@ -366,43 +333,17 @@ class ReverseConnectionContainerPropertyMissing(DataModelRule):
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        for (target_view_ref, reverse_prop_name), (
-            source_view_ref,
-            through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
-            through = _normalize_through_reference(source_view_ref, through)
-            source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
-
-            if not source_view:
-                continue  # Handled by ReverseConnectionSourceViewMissing
-
-            if not (source_view_expanded := self.validation_resources.expand_view_properties(source_view_ref)):
-                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
-
-            if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
-                continue  # Handled by ReverseConnectionSourcePropertyMissing
-
-            source_property = source_view_expanded.properties[through.identifier]
-
-            if not isinstance(source_property, ViewCorePropertyRequest):
-                continue  # Handled by ReverseConnectionSourcePropertyWrongType
-
-            container_ref = source_property.container
-            container_property_id = source_property.container_property_identifier
-
-            source_container = self.validation_resources.select_container(container_ref, container_property_id)
-            if not source_container:
-                continue  # Handled by ReverseConnectionContainerMissing
-
-            if not source_container.properties or container_property_id not in source_container.properties:
+        for resolved in self.validation_resources.resolved_reverse_direct_relations:
+            # Container must exist but property is missing
+            if resolved.container is not None and resolved.container_property is None:
                 errors.append(
                     ConsistencyError(
                         message=(
-                            f"Container {container_ref!s} is missing property '{container_property_id}'. "
-                            f"This property is required by the source view {source_view_ref!s}"
-                            f" property '{through.identifier}', "
-                            f"which configures the reverse connection '{reverse_prop_name}' "
-                            f"in target view {target_view_ref!s}."
+                            f"Container {resolved.container_ref!s} is missing property '{resolved.container_property_id}'. "
+                            f"This property is required by the source view {resolved.source_view_ref!s}"
+                            f" property '{resolved.through_property_id}', "
+                            f"which configures the reverse connection '{resolved.reverse_property_id}' "
+                            f"in target view {resolved.target_view_ref!s}."
                         ),
                         fix="Add the missing property to the container",
                         code=self.code,
@@ -434,46 +375,21 @@ class ReverseConnectionContainerPropertyWrongType(DataModelRule):
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        for (target_view_ref, reverse_prop_name), (
-            source_view_ref,
-            through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
-            through = _normalize_through_reference(source_view_ref, through)
-            source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
+        for resolved in self.validation_resources.resolved_reverse_direct_relations:
+            # Skip if container or property couldn't be resolved
+            if not resolved.container_property:
+                continue
 
-            if not source_view:
-                continue  # Handled by ReverseConnectionSourceViewMissing
-
-            if not (source_view_expanded := self.validation_resources.expand_view_properties(source_view_ref)):
-                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
-
-            if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
-                continue  # Handled by ReverseConnectionSourcePropertyMissing
-
-            source_property = source_view_expanded.properties[through.identifier]
-
-            if not isinstance(source_property, ViewCorePropertyRequest):
-                continue  # Handled by ReverseConnectionSourcePropertyWrongType
-
-            container_ref = source_property.container
-            container_property_id = source_property.container_property_identifier
-
-            source_container = self.validation_resources.select_container(container_ref, container_property_id)
-            if not source_container or not source_container.properties:
-                continue  # Handled by other validators
-
-            container_property = source_container.properties.get(container_property_id)
-            if not container_property:
-                continue  # Handled by ReverseConnectionContainerPropertyMissing
-
-            if not isinstance(container_property.type, DirectNodeRelation):
+            if not isinstance(resolved.container_property.type, DirectNodeRelation):
                 errors.append(
                     ConsistencyError(
                         message=(
-                            f"Container property '{container_property_id}' in container {container_ref!s} "
-                            f"must be a direct connection, but found type '{container_property.type!s}'. "
-                            f"This property is used by source view {source_view_ref!s} property '{through.identifier}' "
-                            f"to configure reverse connection '{reverse_prop_name}' in target view {target_view_ref!s}."
+                            f"Container property '{resolved.container_property_id}' in container {resolved.container_ref!s} "
+                            f"must be a direct connection, but found type '{resolved.container_property.type!s}'. "
+                            f"This property is used by source view {resolved.source_view_ref!s} "
+                            f"property '{resolved.through_property_id}' "
+                            f"to configure reverse connection '{resolved.reverse_property_id}' "
+                            f"in target view {resolved.target_view_ref!s}."
                         ),
                         fix="Change container property type to be a direct connection",
                         code=self.code,
@@ -504,39 +420,17 @@ class ReverseConnectionTargetMissing(DataModelRule):
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for (target_view_ref, reverse_prop_name), (
-            source_view_ref,
-            through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
-            through = _normalize_through_reference(source_view_ref, through)
-            source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
-
-            if not source_view:
-                continue  # Handled by ReverseConnectionSourceViewMissing
-
-            if not (source_view_expanded := self.validation_resources.expand_view_properties(source_view_ref)):
-                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
-
-            if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
-                continue  # Handled by ReverseConnectionSourcePropertyMissing
-
-            source_property = source_view_expanded.properties[through.identifier]
-
-            if not isinstance(source_property, ViewCorePropertyRequest):
-                continue  # Handled by ReverseConnectionSourcePropertyWrongType
-
-            actual_target_view = source_property.source
-
-            if not actual_target_view:
+        for resolved in self.validation_resources.resolved_reverse_direct_relations:
+            if not resolved.source_property.source:
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"Source view {source_view_ref!s} property '{through.identifier}' "
+                            f"Source view {resolved.source_view_ref!s} property '{resolved.through_property_id}' "
                             f"has no target view specified (value type is None). "
-                            f"This property is used for reverse connection '{reverse_prop_name}' "
-                            f"in target view {target_view_ref!s}. "
+                            f"This property is used for reverse connection '{resolved.reverse_property_id}' "
+                            f"in target view {resolved.target_view_ref!s}. "
                             f"While this works as a hack for multi-value relations in CDF Search, "
-                            f"it's recommended to explicitly define the target view as {target_view_ref!s}."
+                            f"it's recommended to explicitly define the target view as {resolved.target_view_ref!s}."
                         ),
                         fix="Set the property's value type to the target view for better clarity",
                         code=self.code,
@@ -568,41 +462,24 @@ class ReverseConnectionPointsToAncestor(DataModelRule):
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for (target_view_ref, reverse_prop_name), (
-            source_view_ref,
-            through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
-            through = _normalize_through_reference(source_view_ref, through)
-            source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
-
-            if not source_view:
-                continue  # Handled by ReverseConnectionSourceViewMissing
-
-            if not (source_view_expanded := self.validation_resources.expand_view_properties(source_view_ref)):
-                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
-
-            if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
-                continue  # Handled by ReverseConnectionSourcePropertyMissing
-
-            source_property = source_view_expanded.properties[through.identifier]
-
-            if not isinstance(source_property, ViewCorePropertyRequest):
-                continue  # Handled by other validators
-
-            actual_target_view = source_property.source
+        for resolved in self.validation_resources.resolved_reverse_direct_relations:
+            actual_target_view = resolved.source_property.source
 
             if not actual_target_view:
                 continue  # Handled by ReverseConnectionTargetMissing
 
-            if self.validation_resources.is_ancestor(target_view_ref, actual_target_view):
+            if self.validation_resources.is_ancestor(resolved.target_view_ref, actual_target_view):
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"The direct connection property '{through.identifier}' in view {source_view_ref!s} "
-                            f"configures the reverse connection '{reverse_prop_name}' in {target_view_ref!s}. "
-                            f"Therefore, it is expected that '{through.identifier}' points to {target_view_ref!s}. "
+                            f"The direct connection property '{resolved.through_property_id}' "
+                            f"in view {resolved.source_view_ref!s} "
+                            f"configures the reverse connection '{resolved.reverse_property_id}' "
+                            f"in {resolved.target_view_ref!s}. "
+                            f"Therefore, it is expected that '{resolved.through_property_id}' "
+                            f"points to {resolved.target_view_ref!s}. "
                             f"However, it currently points to {actual_target_view!s}, which is an ancestor of "
-                            f"{target_view_ref!s}. "
+                            f"{resolved.target_view_ref!s}. "
                             "While this will allow for model to be valid, it can be a source of confusion and mistakes."
                         ),
                         fix="Update the direct connection property to point to the target view instead of its ancestor",
@@ -635,42 +512,23 @@ class ReverseConnectionTargetMismatch(DataModelRule):
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for (target_view_ref, reverse_prop_name), (
-            source_view_ref,
-            through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
-            through = _normalize_through_reference(source_view_ref, through)
-            source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
-
-            if not source_view:
-                continue  # Handled by ReverseConnectionSourceViewMissing
-
-            if not (source_view_expanded := self.validation_resources.expand_view_properties(source_view_ref)):
-                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
-
-            if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
-                continue  # Handled by ReverseConnectionSourcePropertyMissing
-
-            source_property = source_view_expanded.properties[through.identifier]
-
-            if not isinstance(source_property, ViewCorePropertyRequest):
-                continue  # Handled by other validators
-
-            actual_target_view = source_property.source
+        for resolved in self.validation_resources.resolved_reverse_direct_relations:
+            actual_target_view = resolved.source_property.source
 
             if not actual_target_view:
                 continue  # Handled by ReverseConnectionTargetMissing
 
-            if self.validation_resources.is_ancestor(target_view_ref, actual_target_view):
-                continue  # Handled by ReverseConnectionTargetAncestor
+            if self.validation_resources.is_ancestor(resolved.target_view_ref, actual_target_view):
+                continue  # Handled by ReverseConnectionPointsToAncestor
 
-            if actual_target_view != target_view_ref:
+            if actual_target_view != resolved.target_view_ref:
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"The reverse connection '{reverse_prop_name}' in view {target_view_ref!s} "
-                            f"expects its corresponding direct connection in view {source_view_ref!s} "
-                            f"(property '{through.identifier}') to point back to {target_view_ref!s}, "
+                            f"The reverse connection '{resolved.reverse_property_id}' "
+                            f"in view {resolved.target_view_ref!s} "
+                            f"expects its corresponding direct connection in view {resolved.source_view_ref!s} "
+                            f"(property '{resolved.through_property_id}') to point back to {resolved.target_view_ref!s}, "
                             f"but it actually points to {actual_target_view!s}."
                         ),
                         fix="Update the direct connection property to point back to the correct target view",

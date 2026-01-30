@@ -12,7 +12,7 @@ from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
-from cognite.neat._data_model.models.dms._container import ContainerRequest
+from cognite.neat._data_model.models.dms._container import ContainerPropertyDefinition, ContainerRequest
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._references import (
@@ -53,6 +53,21 @@ class RequiresChangeStatus(Enum):
     CHANGES_AVAILABLE = "changes_available"  # Recommendations available
     UNSOLVABLE = "unsolvable"  # Structural issue - can't create connected hierarchy
     NO_MODIFIABLE_CONTAINERS = "no_modifiable_containers"  # All containers are immutable
+
+
+@dataclass
+class ResolvedReverseDirectRelation:
+    """Resolved context for a reverse direct relation, including container-level information."""
+
+    target_view_ref: ViewReference
+    reverse_property_id: str
+    source_view_ref: ViewReference
+    through_property_id: str
+    source_property: "ViewCorePropertyRequest"
+    container_ref: ContainerReference
+    container_property_id: str
+    container: ContainerRequest | None
+    container_property: ContainerPropertyDefinition | None
 
 
 @dataclass
@@ -364,6 +379,85 @@ class ValidationResources:
                         )
 
         return bidirectional_connections
+
+    @staticmethod
+    def normalize_through_reference(
+        source_view_ref: ViewReference, through: ContainerDirectReference | ViewDirectReference
+    ) -> ViewDirectReference:
+        """Normalize through reference to ViewDirectReference for consistent processing.
+
+        When a reverse direct relation uses a ContainerDirectReference, we convert it to
+        a ViewDirectReference using the source view. This enables consistent handling
+        in validators regardless of how the 'through' was originally specified.
+        """
+        if isinstance(through, ContainerDirectReference):
+            return ViewDirectReference(source=source_view_ref, identifier=through.identifier)
+        return through
+
+    @cached_property
+    def resolved_reverse_direct_relations(self) -> list[ResolvedReverseDirectRelation]:
+        """Get all reverse direct relations with their resolved context.
+
+        This property traverses from reverse direct relation → source view → container,
+        resolving all references along the way.
+
+        Includes reverse direct relations where view-level resolution succeeded:
+        - The source view exists and can be expanded
+        - The through property exists in the source view
+        - The through property is a ViewCorePropertyRequest (direct relation)
+
+        Container-level fields may be None if resolution failed at that level.
+        """
+        result: list[ResolvedReverseDirectRelation] = []
+
+        for (target_view_ref, reverse_prop_id), (
+            source_view_ref,
+            through,
+        ) in self.reverse_to_direct_mapping.items():
+            through_normalized = self.normalize_through_reference(source_view_ref, through)
+
+            # Get expanded source view to include inherited properties
+            source_view_expanded = self.expand_view_properties(source_view_ref)
+            if not source_view_expanded or not source_view_expanded.properties:
+                continue
+
+            if through_normalized.identifier not in source_view_expanded.properties:
+                continue
+
+            source_property = source_view_expanded.properties[through_normalized.identifier]
+
+            # Must be a core property (direct relation)
+            if not isinstance(source_property, ViewCorePropertyRequest):
+                continue
+
+            container_ref = source_property.container
+            container_property_id = source_property.container_property_identifier
+
+            # Resolve container - may be None if missing
+            container = self.select_container(container_ref, container_property_id)
+            if container and not container.properties:
+                container = None
+
+            # Resolve container property - may be None if container missing or property missing
+            container_property = None
+            if container and container.properties:
+                container_property = container.properties.get(container_property_id)
+
+            result.append(
+                ResolvedReverseDirectRelation(
+                    target_view_ref=target_view_ref,
+                    reverse_property_id=reverse_prop_id,
+                    source_view_ref=source_view_ref,
+                    through_property_id=through_normalized.identifier,
+                    source_property=source_property,
+                    container_ref=container_ref,
+                    container_property_id=container_property_id,
+                    container=container,
+                    container_property=container_property,
+                )
+            )
+
+        return result
 
     @property
     def connection_end_node_types(self) -> dict[tuple[ViewReference, str], ViewReference | None]:

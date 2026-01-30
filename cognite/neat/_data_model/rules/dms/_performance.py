@@ -2,6 +2,8 @@
 
 from cognite.neat._data_model._analysis import RequiresChangeStatus
 from cognite.neat._data_model._constants import COGNITE_SPACES
+from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
+from cognite.neat._data_model.models.dms._indexes import BtreeIndex
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import Recommendation
 
@@ -191,5 +193,76 @@ class UnresolvableQueryPerformance(DataModelRule):
                         code=self.code,
                     )
                 )
+
+        return recommendations
+
+
+class MissingReverseDirectRelationTargetIndex(DataModelRule):
+    """
+    Recommends adding a cursorable index on direct relation properties that are
+    targets of reverse direct relations for query performance.
+
+    ## What it does
+    Identifies direct relation properties that are referenced by reverse direct relations
+    but lack a cursorable B-tree index. When querying through a reverse direct relation,
+    CDF needs to look up nodes that have the direct relation pointing to the
+    source nodes. Without an index, this requires scanning many nodes inefficiently.
+
+    ## Why is this important?
+    Traversing a reverse direct relation (inwards direction) requires an index on the
+    target direct relation property. Without this index, queries will be inefficient,
+    potentially leading to timeouts over time, as they won't scale well with data volume.
+
+    The exception is when the target direct relation is a list property. In that case,
+    this validator will not flag them, as reverse direct relations targeting lists of
+    direct relations needs to be traversed using the `instances/search` endpoint instead,
+    which does not directly benefit from adding indexes to container properties.
+
+    ## Example
+    View `WindFarm` has a reverse property `turbines` through `WindTurbine.windFarm`.
+    Container `WindTurbine` should have a cursorable B-tree index on the `windFarm`
+    property to enable efficient traversal from WindFarm to its turbines.
+    """
+
+    code = f"{BASE_CODE}-004"
+    issue_type = Recommendation
+    alpha = True
+
+    def validate(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
+
+        for resolved in self.validation_resources.resolved_reverse_direct_relations:
+            # Skip if container or container property couldn't be resolved
+            if not resolved.container or not resolved.container_property:
+                continue
+
+            # Must be a DirectNodeRelation type (other types handled by ReverseConnectionContainerPropertyWrongType)
+            if not isinstance(resolved.container_property.type, DirectNodeRelation):
+                continue
+
+            # Skip if this is a list direct relation - indexes are not supported for list properties
+            if resolved.container_property.type.list:
+                continue
+
+            # Skip if there's already a cursorable B-tree index on this property
+            if resolved.container.indexes and any(
+                isinstance(index, BtreeIndex)
+                and index.cursorable
+                and resolved.container_property_id in index.properties
+                for index in resolved.container.indexes.values()
+            ):
+                continue
+
+            recommendations.append(
+                Recommendation(
+                    message=(
+                        f"View '{resolved.target_view_ref!s}' has a reverse direct relation '{resolved.reverse_property_id}' "
+                        f"that points to container '{resolved.container_ref!s}' property '{resolved.container_property_id}'. "
+                        f"Add a cursorable B-tree index on this target container property to enable efficient query traversal."
+                    ),
+                    fix="Add a cursorable B-tree index on the direct relation property used as target of the reverse direct relation",
+                    code=self.code,
+                )
+            )
 
         return recommendations
