@@ -42,6 +42,12 @@ ALPHA_PROBLEMS = {
     MissingReverseDirectRelationTargetIndex: {"reverseSourceToAnotheViewConnection", "innerReflection"},
 }
 
+# Reverse connections that should NOT be flagged (correctly configured)
+ALPHA_NOT_FLAGGED = {
+    # Has cursorable B-tree index on target direct relation
+    MissingReverseDirectRelationTargetIndex: {"reverseToIndexedDirectTarget", "reverseToListDirectTarget"},
+}
+
 
 @pytest.mark.parametrize("profile", ["deep-additive", "legacy-additive"])
 def test_validation_deep(
@@ -151,3 +157,11 @@ def test_alpha_validators(
                     break
 
     assert found_problematic_reversals == actual_problematic_reversal
+
+    # Verify that correctly configured reverse connections are NOT flagged
+    for class_, valid_reverse_connections in ALPHA_NOT_FLAGGED.items():
+        if not can_run_validator(class_.code, class_.issue_type):
+            continue
+        for valid_reverse in valid_reverse_connections:
+            for issue in by_code.get(class_.code, []):
+                assert valid_reverse not in issue.message, f"Should not flag '{valid_reverse}'"
