@@ -217,14 +217,120 @@
     border-color: rgba(56, 189, 248, 0.3);
 }
 
-.arrow {
+/* Constraint arrow section: source – constraint_id → dest */
+.constraint-arrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+}
+
+.constraint-dash {
+    color: #9ca3af;
+    font-weight: 400;
+}
+
+.constraint-id {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 11px;
     color: #6b7280;
-    font-size: 14px;
+    background: rgba(107, 114, 128, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dark-mode .constraint-id {
+    color: #9ca3af;
+    background: rgba(156, 163, 175, 0.15);
+}
+
+.constraint-arrow-symbol {
     font-weight: 500;
 }
 
-.dark-mode .arrow {
-    color: #9ca3af;
+.constraint-arrow-add .constraint-arrow-symbol {
+    color: #059669;
+}
+
+.dark-mode .constraint-arrow-add .constraint-arrow-symbol {
+    color: #34d399;
+}
+
+.constraint-arrow-remove .constraint-arrow-symbol {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    color: #dc2626;
+}
+
+.dark-mode .constraint-arrow-remove .constraint-arrow-symbol {
+    color: #f87171;
+}
+
+.constraint-arrow-remove .constraint-id {
+    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.1);
+    text-decoration: line-through;
+}
+
+.dark-mode .constraint-arrow-remove .constraint-id {
+    color: #fca5a5;
+    background: rgba(248, 113, 113, 0.1);
+}
+
+.arrow-line {
+    opacity: 0.5;
+}
+
+.arrow-cross {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+/* Add action item styling */
+.fix-item-add {
+    border-left: 3px solid #10b981;
+}
+
+.fix-item-add .container-name {
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-color: rgba(14, 165, 233, 0.25);
+}
+
+.dark-mode .fix-item-add .container-name {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* Remove action item styling */
+.fix-item-remove {
+    border-left: 3px solid #f87171;
+    background: rgba(254, 202, 202, 0.3);
+}
+
+.dark-mode .fix-item-remove {
+    background: rgba(127, 29, 29, 0.3);
+}
+
+.fix-item-remove .container-name {
+    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+.dark-mode .fix-item-remove .container-name {
+    color: #fca5a5;
+    background: rgba(248, 113, 113, 0.15);
+    border-color: rgba(248, 113, 113, 0.3);
 }
 
 .issue-fix-label {

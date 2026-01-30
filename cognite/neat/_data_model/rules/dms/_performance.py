@@ -176,6 +176,7 @@ class MissingRequiresConstraint(DataModelRule):
                     continue
                 seen_fix_ids.add(fix_id)
 
+                constraint_id = _make_auto_constraint_id(dst)
                 fix_actions.append(
                     FixAction(
                         fix_id=fix_id,
@@ -185,6 +186,10 @@ class MissingRequiresConstraint(DataModelRule):
                         target_ref=src,
                         apply=_make_add_constraint_fn(src, dst),
                         priority=self.fix_priority,
+                        action_type="add",
+                        source_name=src.external_id,
+                        dest_name=dst.external_id,
+                        constraint_id=constraint_id,
                     )
                 )
 
@@ -242,6 +247,15 @@ class SuboptimalRequiresConstraint(DataModelRule):
 
         return recommendations
 
+    def _find_constraint_id(self, src: ContainerReference, dst: ContainerReference) -> str | None:
+        """Find the constraint ID for a src->dst requires constraint."""
+        container = self.validation_resources.merged.containers.get(src)
+        if container and container.constraints:
+            for constraint_id, constraint in container.constraints.items():
+                if isinstance(constraint, RequiresConstraintDefinition) and constraint.require == dst:
+                    return constraint_id
+        return None
+
     def fix(self) -> list[FixAction]:
         """Return fix actions to remove suboptimal requires constraints."""
         fix_actions: list[FixAction] = []
@@ -259,6 +273,7 @@ class SuboptimalRequiresConstraint(DataModelRule):
                     continue
                 seen_fix_ids.add(fix_id)
 
+                constraint_id = self._find_constraint_id(src, dst)
                 fix_actions.append(
                     FixAction(
                         fix_id=fix_id,
@@ -268,6 +283,10 @@ class SuboptimalRequiresConstraint(DataModelRule):
                         target_ref=src,
                         apply=_make_remove_constraint_fn(src, dst),
                         priority=self.fix_priority,
+                        action_type="remove",
+                        source_name=src.external_id,
+                        dest_name=dst.external_id,
+                        constraint_id=constraint_id,
                     )
                 )
 

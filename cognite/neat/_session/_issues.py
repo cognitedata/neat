@@ -71,35 +71,6 @@ class Issues:
             )
         return serialized
 
-    def _extract_relationship(self, fix_action: "FixAction") -> tuple[str, str] | None:
-        """Extract source and destination from a fix action's target_ref and fix_id.
-
-        Returns a tuple of (source_name, dest_name) or None if not a relationship fix.
-        """
-        # Parse the fix_id which has format like "CODE:action:space:src->space:dst"
-        fix_id = fix_action.fix_id
-        if "->" in fix_id:
-            # Extract the arrow part: "space:src->space:dst"
-            arrow_part = fix_id.split(":")[-1]  # Get last part after splitting
-            # Actually the format is more like "CODE:add:space:Source->space:Dest"
-            # Let's find the arrow and extract around it
-            arrow_idx = fix_id.find("->")
-            if arrow_idx != -1:
-                # Find the last colon before arrow for source
-                before_arrow = fix_id[:arrow_idx]
-                after_arrow = fix_id[arrow_idx + 2 :]
-
-                # Source is after the last colon before arrow
-                src_parts = before_arrow.rsplit(":", 1)
-                src_name = src_parts[-1] if src_parts else before_arrow
-
-                # Dest might have "space:" prefix
-                dst_parts = after_arrow.split(":", 1)
-                dst_name = dst_parts[-1] if len(dst_parts) > 1 else after_arrow
-
-                return (src_name, dst_name)
-        return None
-
     @property
     def _serialized_applied_fixes(self) -> list[dict[str, Any]]:
         """Convert applied fixes to JSON-serializable format for the Fixed tab.
@@ -111,11 +82,12 @@ class Issues:
         grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
         for fix_action in self._applied_fixes:
-            relationship = self._extract_relationship(fix_action)
             item = {
                 "description": fix_action.description,
-                "source": relationship[0] if relationship else None,
-                "dest": relationship[1] if relationship else None,
+                "source": fix_action.source_name,
+                "dest": fix_action.dest_name,
+                "action": fix_action.action_type or "add",
+                "constraint_id": fix_action.constraint_id,
             }
             grouped[fix_action.message].append(item)
 

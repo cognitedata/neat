@@ -117,6 +117,33 @@ class TestMissingRequiresConstraintFix:
             assert callable(action.apply)
             assert action.priority == MissingRequiresConstraint.fix_priority
 
+    def test_fix_actions_have_ui_fields_populated(self) -> None:
+        """Test that fix actions have UI display fields populated."""
+        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+            "requires_constraints",
+            "for_validators",
+            modus_operandi="additive",
+            include_cdm=True,
+            format="snapshots",
+        )
+
+        validation_resources = ValidationResources(
+            modus_operandi="additive",
+            local=local_snapshot,
+            cdf=cdf_snapshot,
+        )
+
+        validator = MissingRequiresConstraint(validation_resources)
+        fix_actions = validator.fix()
+
+        # Each fix action should have UI fields populated for add actions
+        for action in fix_actions:
+            assert action.action_type == "add"
+            assert action.source_name is not None
+            assert action.dest_name is not None
+            assert action.constraint_id is not None
+            assert action.constraint_id.endswith("__auto")
+
     def test_validate_and_fix_are_independent(self) -> None:
         """Test that validate() returns issues and fix() returns fix actions separately."""
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(

@@ -53,14 +53,38 @@ function renderFixedIssue(issue) {
     
     let itemsHtml = '';
     if (hasRelationships) {
-        // Render as relationship list with highlighted container names
+        // Render as relationship list with highlighted container names and constraint IDs
         itemsHtml = `
             <ul class="fix-items-list">
                 ${items.map(item => {
                     if (item.source && item.dest) {
-                        return `<li class="fix-item">
+                        const isRemove = item.action === 'remove';
+                        const itemClass = isRemove ? 'fix-item fix-item-remove' : 'fix-item fix-item-add';
+                        const constraintId = item.constraint_id || '';
+                        
+                        // Build the arrow section with constraint ID
+                        let arrowSection;
+                        if (isRemove) {
+                            arrowSection = `
+                                <span class="constraint-arrow constraint-arrow-remove">
+                                    <span class="constraint-dash">–</span>
+                                    <span class="constraint-id">${constraintId}</span>
+                                    <span class="constraint-arrow-symbol"><span class="arrow-line">→</span><span class="arrow-cross">✕</span></span>
+                                </span>
+                            `;
+                        } else {
+                            arrowSection = `
+                                <span class="constraint-arrow constraint-arrow-add">
+                                    <span class="constraint-dash">–</span>
+                                    <span class="constraint-id">${constraintId}</span>
+                                    <span class="constraint-arrow-symbol">→</span>
+                                </span>
+                            `;
+                        }
+                        
+                        return `<li class="${itemClass}">
                             <span class="container-name">${item.source}</span>
-                            <span class="arrow">→</span>
+                            ${arrowSection}
                             <span class="container-name">${item.dest}</span>
                         </li>`;
                     } else {

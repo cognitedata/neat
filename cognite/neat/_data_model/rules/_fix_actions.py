@@ -34,6 +34,10 @@ class FixAction:
             - 40: Constraint removal
             - 50: Constraint addition
         depends_on: Optional list of fix_ids that must be applied before this one.
+        action_type: Type of action ("add" or "remove") for UI display.
+        source_name: Name of the source container (for constraint actions).
+        dest_name: Name of the destination container (for constraint actions).
+        constraint_id: The constraint identifier being added/removed.
     """
 
     fix_id: str
@@ -44,6 +48,11 @@ class FixAction:
     apply: Callable[["RequestSchema"], None]
     priority: int = 100
     depends_on: Sequence[str] = field(default_factory=list)
+    # Optional fields for UI display of constraint actions
+    action_type: Literal["add", "remove"] | None = None
+    source_name: str | None = None
+    dest_name: str | None = None
+    constraint_id: str | None = None
 
     def __hash__(self) -> int:
         return hash(self.fix_id)
