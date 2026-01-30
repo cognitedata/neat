@@ -115,6 +115,35 @@
     border-radius: 4px;
 }
 
+.issue-fix-applied {
+    margin-top: 12px;
+    padding: 12px;
+    background: #d1fae5;
+    border-left: 3px solid #10b981;
+    border-radius: 4px;
+}
+
+.dark-mode .issue-fix-applied {
+    background: #064e3b;
+    border-left-color: #34d399;
+}
+
+.issue-fix-applied .issue-fix-label {
+    color: #065f46;
+}
+
+.dark-mode .issue-fix-applied .issue-fix-label {
+    color: #6ee7b7;
+}
+
+.issue-fix-applied .issue-fix-content {
+    color: #047857;
+}
+
+.dark-mode .issue-fix-applied .issue-fix-content {
+    color: #a7f3d0;
+}
+
 .issue-fix-label {
     font-weight: 600;
     font-size: 12px;

@@ -305,7 +305,8 @@ class RequiresConstraintCycle(DataModelRule):
                     fix_actions.append(
                         FixAction(
                             fix_id=fix_id,
-                            description=f"Remove requires constraint: {src!s} → {dst!s}",
+                            description=f"Removed requires constraint: {src!s} → {dst!s}",
+                            message="Removed requires constraints to break cycle",
                             target_type="container",
                             target_ref=src,
                             apply=_make_remove_constraint_fn(src, dst),

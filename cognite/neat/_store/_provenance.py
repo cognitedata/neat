@@ -2,11 +2,14 @@ import itertools
 from collections import UserList
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError
 from cognite.neat._state_machine import State
+
+if TYPE_CHECKING:
+    from cognite.neat._data_model.rules._fix_actions import FixAction
 
 
 @dataclass
@@ -22,7 +25,7 @@ class Change:
     target_entity: str | None = field(default="FailedEntity")
     issues: IssueList | None = field(default=None)
     errors: IssueList | None = field(default=None)
-    fixed_issues: IssueList | None = field(default=None)
+    applied_fixes: list["FixAction"] | None = field(default=None)
     # for time being setting to Any, can be refined later
     result: DeploymentResult | None = field(default=None)
     description: str | None = field(default=None)

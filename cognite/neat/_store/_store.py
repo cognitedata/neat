@@ -176,13 +176,14 @@ class NeatStore:
         self, activity: Callable, on_success: OnSuccess | None = None, **kwargs: Any
     ) -> tuple[Change, PhysicalDataModel | None]:
         """Execute activity and capture timing, results, and issues"""
+        from cognite.neat._data_model.rules._fix_actions import FixAction
+
         start = datetime.now(timezone.utc)
         created_data_model: PhysicalDataModel | None = None
         issues = IssueList()
         errors = IssueList()
         deployment_result: DeploymentResult | None = None
-
-        fixed_issues = IssueList()
+        applied_fixes: list[FixAction] = []
 
         try:
             created_data_model = activity(**kwargs)
@@ -190,7 +191,7 @@ class NeatStore:
                 on_success.run(created_data_model)
                 if isinstance(on_success, OnSuccessIssuesChecker):
                     issues.extend(on_success.issues)
-                    fixed_issues.extend(on_success.fixed_issues)
+                    applied_fixes.extend(on_success.applied_fixes)
                 elif isinstance(on_success, OnSuccessResultProducer):
                     deployment_result = on_success.result
                 else:
@@ -216,7 +217,7 @@ class NeatStore:
             agent=type(activity.__self__).__name__ if hasattr(activity, "__self__") else "UnknownAgent",
             issues=issues,
             errors=errors,
-            fixed_issues=fixed_issues,
+            applied_fixes=applied_fixes,
             result=deployment_result,
             activity=Change.standardize_activity_name(activity.__name__, start, end),
         ), created_data_model

@@ -1,11 +1,14 @@
 import json
 import uuid
 from collections import defaultdict
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError, Recommendation
 from cognite.neat._session._html._render import render
 from cognite.neat._store import NeatStore
+
+if TYPE_CHECKING:
+    from cognite.neat._data_model.rules._fix_actions import FixAction
 
 
 class Issues:
@@ -24,11 +27,11 @@ class Issues:
         return issues
 
     @property
-    def _fixed_issues(self) -> IssueList:
-        """Get all fixed issues from the last change in the store."""
+    def _applied_fixes(self) -> list["FixAction"]:
+        """Get all applied fixes from the last change in the store."""
         if change := self._store.provenance.last_change:
-            return change.fixed_issues or IssueList()
-        return IssueList()
+            return change.applied_fixes or []
+        return []
 
     @property
     def _stats(self) -> dict[str, Any]:
@@ -69,17 +72,22 @@ class Issues:
         return serialized
 
     @property
-    def _serialized_fixed_issues(self) -> list[dict[str, Any]]:
-        """Convert fixed issues to JSON-serializable format."""
+    def _serialized_applied_fixes(self) -> list[dict[str, Any]]:
+        """Convert applied fixes to JSON-serializable format for the Fixed tab.
+
+        Each entry shows:
+        - message: The specific action taken (FixAction.description)
+        - fix: The generic fix category (FixAction.message)
+        """
         serialized = []
-        for idx, issue in enumerate(self._fixed_issues):
+        for idx, fix_action in enumerate(self._applied_fixes):
             serialized.append(
                 {
                     "id": f"fixed-{idx}",
-                    "type": issue.issue_type(),
-                    "code": issue.code or "",
-                    "message": issue.message,
-                    "fix": issue.fix or "",
+                    "type": "Fixed",
+                    "code": fix_action.fix_id.split(":")[0] if ":" in fix_action.fix_id else "",
+                    "message": fix_action.description,
+                    "fix": fix_action.message,
                     "fixed": True,
                 }
             )
@@ -88,7 +96,7 @@ class Issues:
     def _repr_html_(self) -> str:
         """Generate interactive HTML representation."""
         has_issues = len(self._issues) > 0
-        has_fixed = len(self._fixed_issues) > 0
+        has_fixed = len(self._applied_fixes) > 0
 
         if not has_issues and not has_fixed:
             return "<b>No issues found.</b>"
@@ -98,8 +106,8 @@ class Issues:
         # Generate unique ID for this render to avoid conflicts in Jupyter
         unique_id = uuid.uuid4().hex[:8]
 
-        # Combine current issues and fixed issues for the JSON data
-        all_serialized = self._serialized_issues + self._serialized_fixed_issues
+        # Combine current issues and applied fixes for the JSON data
+        all_serialized = self._serialized_issues + self._serialized_applied_fixes
 
         template_vars = {
             "JSON": json.dumps(all_serialized),
@@ -107,7 +115,7 @@ class Issues:
             "syntax_errors": stats["by_type"].get("ModelSyntaxError", 0),
             "consistency_errors": stats["by_type"].get("ConsistencyError", 0),
             "recommendations": stats["by_type"].get("Recommendation", 0),
-            "fixed_count": len(self._fixed_issues),
+            "fixed_count": len(self._applied_fixes),
             "unique_id": unique_id,
         }
 

@@ -100,36 +100,23 @@ class DmsDataModelFixer(OnSuccessIssuesChecker):
         self._has_run = False
         self._enable_alpha_validators = enable_alpha_validators
         self._apply_fixes = apply_fixes
-        self._applied_fixes: list[FixAction] = []
-
-    @property
-    def applied_fixes(self) -> list[FixAction]:
-        """Return the list of fix actions that were applied."""
-        if not self._has_run:
-            raise RuntimeError(f"{type(self).__name__} has not been run yet.")
-        return list(self._applied_fixes)
 
     def run(self, request_schema: RequestSchema) -> None:
         """Run validation and optionally apply fixes to the DMS data model.
 
         If apply_fixes is True:
-        1. Run validators to collect issues BEFORE fixes
-        2. Collect fix actions from fixable validators
-        3. Deduplicate and sort fix actions by priority
-        4. Apply fixes to the schema (in-place modification)
-        5. Re-run validation to report remaining issues
-        6. Compute fixed issues (issues that existed before but not after)
+        1. Collect fix actions from fixable validators
+        2. Deduplicate and sort fix actions by priority
+        3. Apply fixes to the schema (in-place modification)
+        4. Re-run validation to report remaining issues
 
         Args:
             request_schema: The schema to validate and optionally fix.
                 Note: If apply_fixes is True, this schema will be modified in-place.
         """
         if self._apply_fixes:
-            # First, collect issues BEFORE applying fixes
-            validation_resources = self._gather_validation_resources(request_schema)
-            issues_before = self._run_validators(validation_resources)
-
             # Collect fix actions from fixable validators
+            validation_resources = self._gather_validation_resources(request_schema)
             all_actions = self._collect_fix_actions(validation_resources)
             unique_actions = self._deduplicate_actions(all_actions)
             sorted_actions = sorted(unique_actions, key=lambda a: (a.priority, a.fix_id))
@@ -141,16 +128,7 @@ class DmsDataModelFixer(OnSuccessIssuesChecker):
 
             # Re-validate to get remaining issues
             validation_resources = self._gather_validation_resources(request_schema)
-            issues_after = self._run_validators(validation_resources)
-            self._issues.extend(issues_after)
-
-            # Compute fixed issues: issues that existed before but not after
-            # We compare by (code, message) tuple for reliable comparison
-            after_keys = {(issue.code, issue.message) for issue in issues_after}
-            for issue in issues_before:
-                key = (issue.code, issue.message)
-                if key not in after_keys:
-                    self._fixed_issues.append(issue)
+            self._issues.extend(self._run_validators(validation_resources))
         else:
             # No fixes, just validate
             validation_resources = self._gather_validation_resources(request_schema)

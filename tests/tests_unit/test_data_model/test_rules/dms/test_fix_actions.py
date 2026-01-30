@@ -29,6 +29,7 @@ class TestFixAction:
         action1 = FixAction(
             fix_id="test:action:1",
             description="Test action 1",
+            message="Generic fix message",
             target_type="container",
             target_ref=ContainerReference(space="test", external_id="container1"),
             apply=dummy_apply,
@@ -36,6 +37,7 @@ class TestFixAction:
         action2 = FixAction(
             fix_id="test:action:1",
             description="Different description",
+            message="Generic fix message",
             target_type="container",
             target_ref=ContainerReference(space="test", external_id="container1"),
             apply=dummy_apply,
@@ -43,6 +45,7 @@ class TestFixAction:
         action3 = FixAction(
             fix_id="test:action:2",
             description="Test action 1",
+            message="Generic fix message",
             target_type="container",
             target_ref=ContainerReference(space="test", external_id="container1"),
             apply=dummy_apply,
@@ -60,6 +63,7 @@ class TestFixAction:
         action1 = FixAction(
             fix_id="test:action:1",
             description="Test action 1",
+            message="Generic fix message",
             target_type="container",
             target_ref=ContainerReference(space="test", external_id="container1"),
             apply=dummy_apply,
@@ -67,6 +71,7 @@ class TestFixAction:
         action2 = FixAction(
             fix_id="test:action:1",
             description="Different description",
+            message="Generic fix message",
             target_type="container",
             target_ref=ContainerReference(space="test", external_id="container1"),
             apply=dummy_apply,
@@ -262,11 +267,11 @@ class TestValidatorFixPriorities:
         assert SuboptimalRequiresConstraint.fix_priority < MissingRequiresConstraint.fix_priority
 
 
-class TestFixedIssuesTracking:
-    """Tests for tracking which issues were fixed by the fixer."""
+class TestAppliedFixesTracking:
+    """Tests for tracking which fixes were applied by the fixer."""
 
-    def test_fixer_tracks_fixed_issues(self) -> None:
-        """Test that the fixer correctly tracks issues that were fixed."""
+    def test_fixer_tracks_applied_fixes(self) -> None:
+        """Test that the fixer correctly tracks applied fix actions."""
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
             "requires_constraints",
             "for_validators",
@@ -286,18 +291,17 @@ class TestFixedIssuesTracking:
         )
         fixer.run(data_model)
 
-        # If any fixes were applied, there should be fixed_issues
+        # If any fixes were applied, check their structure
         if len(fixer.applied_fixes) > 0:
-            # fixed_issues should contain the issues that were resolved
-            assert len(fixer.fixed_issues) > 0
+            # Each applied fix should be a FixAction with proper structure
+            for fix_action in fixer.applied_fixes:
+                assert isinstance(fix_action, FixAction)
+                assert fix_action.description  # Specific action description
+                assert fix_action.message  # Generic fix message
+                assert fix_action.fix_id
 
-            # Each fixed issue should have proper structure
-            for issue in fixer.fixed_issues:
-                assert hasattr(issue, "message")
-                assert hasattr(issue, "code")
-
-    def test_fixer_no_fixed_issues_when_not_applying(self) -> None:
-        """Test that fixed_issues is empty when apply_fixes is False."""
+    def test_fixer_no_applied_fixes_when_not_applying(self) -> None:
+        """Test that applied_fixes is empty when apply_fixes is False."""
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
             "requires_constraints",
             "for_validators",
@@ -317,8 +321,8 @@ class TestFixedIssuesTracking:
         )
         fixer.run(data_model)
 
-        # No fixes applied means no fixed issues
-        assert len(fixer.fixed_issues) == 0
+        # No fixes applied
+        assert len(fixer.applied_fixes) == 0
 
 
 class TestConstraintIdGeneration:

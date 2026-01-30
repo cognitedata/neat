@@ -152,7 +152,7 @@ class MissingRequiresConstraint(DataModelRule):
                 recommendations.append(
                     Recommendation(
                         message=message,
-                        fix=f"Add requires constraint from '{src!s}' to '{dst!s}'",
+                        fix="Add the recommended requires constraints to optimize query performance",
                         code=self.code,
                     )
                 )
@@ -179,7 +179,8 @@ class MissingRequiresConstraint(DataModelRule):
                 fix_actions.append(
                     FixAction(
                         fix_id=fix_id,
-                        description=f"Add requires constraint: {src!s} → {dst!s}",
+                        description=f"Added requires constraint on container {src!s} to container {dst!s}",
+                        message="Added missing requires constraints",
                         target_type="container",
                         target_ref=src,
                         apply=_make_add_constraint_fn(src, dst),
@@ -234,7 +235,7 @@ class SuboptimalRequiresConstraint(DataModelRule):
                             f"that has a requires constraint to '{dst!s}'. This constraint is "
                             "not part of the optimal structure. Consider removing it."
                         ),
-                        fix=f"Remove requires constraint from '{src!s}' to '{dst!s}'",
+                        fix="Remove suboptimal requires constraints",
                         code=self.code,
                     )
                 )
@@ -261,7 +262,8 @@ class SuboptimalRequiresConstraint(DataModelRule):
                 fix_actions.append(
                     FixAction(
                         fix_id=fix_id,
-                        description=f"Remove requires constraint: {src!s} → {dst!s}",
+                        description=f"Removed requires constraint on container {src!s} to container {dst!s}",
+                        message="Removed suboptimal requires constraints",
                         target_type="container",
                         target_ref=src,
                         apply=_make_remove_constraint_fn(src, dst),

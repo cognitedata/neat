@@ -23,7 +23,8 @@ class FixAction:
     Attributes:
         fix_id: Unique identifier for this fix action. Used for filtering and deduplication.
             Convention: "{validator_code}:{action}:{target}" e.g., "NEAT-DMS-PERFORMANCE-001:add:space:A->space:B"
-        description: Human-readable description of what this fix does.
+        description: Human-readable description of what this fix does (specific action).
+        message: Generic description of the fix category (shown in the info box).
         target_type: The type of resource being modified ("container", "view", or "data_model").
         target_ref: Reference to the specific resource being modified.
         apply: Callable that applies the fix to a RequestSchema in-place.
@@ -37,6 +38,7 @@ class FixAction:
 
     fix_id: str
     description: str
+    message: str
     target_type: Literal["container", "view", "data_model"]
     target_ref: "ContainerReference | ViewReference"
     apply: Callable[["RequestSchema"], None]

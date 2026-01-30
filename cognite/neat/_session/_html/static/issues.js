@@ -87,6 +87,8 @@ function renderIssues() {
             // For fixed issues, show "Fixed" badge type
             const badgeType = firstIssue.fixed ? 'Fixed' : firstIssue.type;
             const badgeLabel = firstIssue.fixed ? 'Fixed' : firstIssue.type;
+            const fixBoxClass = firstIssue.fixed ? 'issue-fix-applied' : 'issue-fix';
+            const fixLabel = firstIssue.fixed ? '✓ Applied Fix' : '💡 Suggested Fix';
             html.push(`
                 <div class="issue-item">
                     <div class="issue-header">
@@ -95,8 +97,8 @@ function renderIssues() {
                     </div>
                     <div class="issue-message">${firstIssue.message}</div>
                     ${firstIssue.fix ? `
-                        <div class="issue-fix">
-                            <div class="issue-fix-label">💡 Suggested Fix</div>
+                        <div class="${fixBoxClass}">
+                            <div class="issue-fix-label">${fixLabel}</div>
                             <div class="issue-fix-content">${firstIssue.fix}</div>
                         </div>
                     ` : ''}
@@ -107,6 +109,8 @@ function renderIssues() {
             // For fixed issues, show "Fixed" badge type
             const badgeType = firstIssue.fixed ? 'Fixed' : firstIssue.type;
             const badgeLabel = firstIssue.fixed ? 'Fixed' : firstIssue.type;
+            const fixBoxClass = firstIssue.fixed ? 'issue-fix-applied' : 'issue-fix';
+            const fixLabel = firstIssue.fixed ? '✓ Applied Fix' : '💡 Suggested Fix';
             html.push(`
                 <div class="issue-group ${isExpanded ? 'expanded' : ''}">
                     <div class="issue-group-header" onclick="toggleGroup_${uniqueId}('${key}')">
@@ -114,7 +118,7 @@ function renderIssues() {
                             <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
                             <span class="issue-badge badge-${badgeType}">${badgeLabel}</span>
                             ${codeLink}
-                            <span class="issue-count">${count} issues</span>
+                            <span class="issue-count">${count} fixes</span>
                         </div>
                     </div>
                     <div class="issue-group-items">
@@ -125,8 +129,8 @@ function renderIssues() {
                             </div>
                         `).join('')}
                         ${firstIssue.fix ? `
-                            <div class="issue-fix grouped">
-                                <div class="issue-fix-label">💡 Suggested Fix</div>
+                            <div class="${fixBoxClass} grouped">
+                                <div class="issue-fix-label">${fixLabel}</div>
                                 <div class="issue-fix-content">${firstIssue.fix}</div>
                             </div>
                         ` : ''}
