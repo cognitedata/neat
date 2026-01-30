@@ -339,7 +339,8 @@ class ReverseConnectionContainerPropertyMissing(DataModelRule):
                 errors.append(
                     ConsistencyError(
                         message=(
-                            f"Container {resolved.container_ref!s} is missing property '{resolved.container_property_id}'. "
+                            f"Container {resolved.container_ref!s} is missing "
+                            f"property '{resolved.container_property_id}'. "
                             f"This property is required by the source view {resolved.source_view_ref!s}"
                             f" property '{resolved.through_property_id}', "
                             f"which configures the reverse connection '{resolved.reverse_property_id}' "
@@ -384,7 +385,8 @@ class ReverseConnectionContainerPropertyWrongType(DataModelRule):
                 errors.append(
                     ConsistencyError(
                         message=(
-                            f"Container property '{resolved.container_property_id}' in container {resolved.container_ref!s} "
+                            f"Container property '{resolved.container_property_id}' "
+                            f"in container {resolved.container_ref!s} "
                             f"must be a direct connection, but found type '{resolved.container_property.type!s}'. "
                             f"This property is used by source view {resolved.source_view_ref!s} "
                             f"property '{resolved.through_property_id}' "
@@ -528,7 +530,8 @@ class ReverseConnectionTargetMismatch(DataModelRule):
                             f"The reverse connection '{resolved.reverse_property_id}' "
                             f"in view {resolved.target_view_ref!s} "
                             f"expects its corresponding direct connection in view {resolved.source_view_ref!s} "
-                            f"(property '{resolved.through_property_id}') to point back to {resolved.target_view_ref!s}, "
+                            f"(property '{resolved.through_property_id}') "
+                            f"to point back to {resolved.target_view_ref!s}, "
                             f"but it actually points to {actual_target_view!s}."
                         ),
                         fix="Update the direct connection property to point back to the correct target view",

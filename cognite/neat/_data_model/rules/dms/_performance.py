@@ -256,11 +256,13 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
             recommendations.append(
                 Recommendation(
                     message=(
-                        f"View '{resolved.target_view_ref!s}' has a reverse direct relation '{resolved.reverse_property_id}' "
-                        f"that points to container '{resolved.container_ref!s}' property '{resolved.container_property_id}'. "
-                        f"Add a cursorable B-tree index on this target container property to enable efficient query traversal."
+                        f"View '{resolved.target_view_ref!s}' has a reverse direct relation "
+                        f"'{resolved.reverse_property_id}' that points to container "
+                        f"'{resolved.container_ref!s}' property '{resolved.container_property_id}'. "
+                        f"Add a cursorable B-tree index on this target container property "
+                        f"to enable efficient query traversal."
                     ),
-                    fix="Add a cursorable B-tree index on the direct relation property used as target of the reverse direct relation",
+                    fix="Add a cursorable B-tree index on the target direct relation property",
                     code=self.code,
                 )
             )
