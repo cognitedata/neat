@@ -51,6 +51,9 @@ class NeatRule(ABC):
         Each FixAction represents an atomic change that can be applied to the schema.
 
         Returns:
-            List of FixAction objects. Empty list if no fixes available.
+            List of FixAction objects.
+
+        Raises:
+            NotImplementedError: If the validator does not implement fix().
         """
-        return []
+        raise NotImplementedError(f"{type(self).__name__} does not implement fix()")
