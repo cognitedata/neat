@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
+from cognite.neat._data_model.rules._fix_actions import FixAction
 from cognite.neat._issues import IssueList
-
-if TYPE_CHECKING:
-    from cognite.neat._data_model.rules._fix_actions import FixAction
 
 
 class OnSuccess(ABC):
@@ -32,7 +30,7 @@ class OnSuccessIssuesChecker(OnSuccess, ABC):
         return IssueList(self._issues)
 
     @property
-    def applied_fixes(self) -> list["FixAction"]:
+    def applied_fixes(self) -> list[FixAction]:
         """Return the list of fix actions that were applied.
 
         For validators that don't perform fixes, this returns an empty list.

@@ -16,6 +16,7 @@ from cognite.neat._data_model.exporters._table_exporter.exporter import DMSTable
 from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
+from cognite.neat._data_model.rules._fix_actions import FixAction
 from cognite.neat._exceptions import DataModelCreateException, DataModelImportException
 from cognite.neat._issues import IssueList
 from cognite.neat._state_machine._states import EmptyState, PhysicalState, State
@@ -176,8 +177,6 @@ class NeatStore:
         self, activity: Callable, on_success: OnSuccess | None = None, **kwargs: Any
     ) -> tuple[Change, PhysicalDataModel | None]:
         """Execute activity and capture timing, results, and issues"""
-        from cognite.neat._data_model.rules._fix_actions import FixAction
-
         start = datetime.now(timezone.utc)
         created_data_model: PhysicalDataModel | None = None
         issues = IssueList()

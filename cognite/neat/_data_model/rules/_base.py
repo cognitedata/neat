@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from cognite.neat._data_model._analysis import ValidationResources
+from cognite.neat._data_model.rules._fix_actions import FixAction
 from cognite.neat._issues import ConsistencyError, Recommendation
-
-if TYPE_CHECKING:
-    from cognite.neat._data_model.rules._fix_actions import FixAction
 
 
 class NeatRule(ABC):
@@ -54,7 +52,7 @@ class NeatRule(ABC):
         """
         ...
 
-    def fix(self) -> list["FixAction"]:
+    def fix(self) -> list[FixAction]:
         """Return fix actions for issues identified by this validator.
 
         Override this method in fixable validators to provide automatic fixes.

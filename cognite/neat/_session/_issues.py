@@ -1,14 +1,12 @@
 import json
 import uuid
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
+from cognite.neat._data_model.rules._fix_actions import FixAction
 from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError, Recommendation
 from cognite.neat._session._html._render import render
 from cognite.neat._store import NeatStore
-
-if TYPE_CHECKING:
-    from cognite.neat._data_model.rules._fix_actions import FixAction
 
 
 class Issues:
@@ -27,7 +25,7 @@ class Issues:
         return issues
 
     @property
-    def _applied_fixes(self) -> list["FixAction"]:
+    def _applied_fixes(self) -> list[FixAction]:
         """Get all applied fixes from the last change in the store."""
         if change := self._store.provenance.last_change:
             return change.applied_fixes or []
