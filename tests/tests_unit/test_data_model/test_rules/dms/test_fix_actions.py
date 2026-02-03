@@ -6,6 +6,13 @@ import pytest
 
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model._fix_actions import FixAction
+from cognite.neat._data_model._fix_helpers import (
+    AUTO_SUFFIX,
+    HASH_LENGTH,
+    MAX_BASE_ID_LENGTH_NO_HASH,
+    MAX_CONSTRAINT_ID_LENGTH,
+    make_auto_constraint_id,
+)
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.rules.dms._containers import RequiresConstraintCycle
@@ -17,22 +24,23 @@ from cognite.neat._data_model.rules.dms._performance import (
 from tests.data import SNAPSHOT_CATALOG
 
 
+def _dummy_apply(schema: Any) -> None:
+    """Dummy apply function for testing FixAction."""
+    pass
+
+
 class TestFixAction:
     """Tests for the FixAction dataclass."""
 
     def test_fix_action_equality(self) -> None:
         """Test that FixAction equality is based on fix_id."""
-
-        def dummy_apply(schema: Any) -> None:
-            pass
-
         action1 = FixAction(
             fix_id="test:action:1",
             description="Test action 1",
             message="Generic fix message",
             target_type="container",
             target_ref=ContainerReference(space="test", external_id="container1"),
-            apply=dummy_apply,
+            apply=_dummy_apply,
         )
         action2 = FixAction(
             fix_id="test:action:1",
@@ -40,7 +48,7 @@ class TestFixAction:
             message="Generic fix message",
             target_type="container",
             target_ref=ContainerReference(space="test", external_id="container1"),
-            apply=dummy_apply,
+            apply=_dummy_apply,
         )
         action3 = FixAction(
             fix_id="test:action:2",
@@ -48,7 +56,7 @@ class TestFixAction:
             message="Generic fix message",
             target_type="container",
             target_ref=ContainerReference(space="test", external_id="container1"),
-            apply=dummy_apply,
+            apply=_dummy_apply,
         )
 
         assert action1 == action2
@@ -56,17 +64,13 @@ class TestFixAction:
 
     def test_fix_action_hash(self) -> None:
         """Test that FixAction can be used in sets/dicts."""
-
-        def dummy_apply(schema: Any) -> None:
-            pass
-
         action1 = FixAction(
             fix_id="test:action:1",
             description="Test action 1",
             message="Generic fix message",
             target_type="container",
             target_ref=ContainerReference(space="test", external_id="container1"),
-            apply=dummy_apply,
+            apply=_dummy_apply,
         )
         action2 = FixAction(
             fix_id="test:action:1",
@@ -74,7 +78,7 @@ class TestFixAction:
             message="Generic fix message",
             target_type="container",
             target_ref=ContainerReference(space="test", external_id="container1"),
-            apply=dummy_apply,
+            apply=_dummy_apply,
         )
 
         # Same fix_id should have same hash
@@ -357,11 +361,6 @@ class TestConstraintIdGeneration:
 
     def test_auto_constraint_id_within_limit(self) -> None:
         """Test that generated constraint IDs are within the 43-character limit."""
-        from cognite.neat._data_model._fix_helpers import (
-            MAX_CONSTRAINT_ID_LENGTH,
-            make_auto_constraint_id,
-        )
-
         # Short external_id should work normally
         short_ref = ContainerReference(space="test", external_id="ShortName")
         constraint_id = make_auto_constraint_id(short_ref)
@@ -370,13 +369,6 @@ class TestConstraintIdGeneration:
 
     def test_auto_constraint_id_truncates_long_names_with_hash(self) -> None:
         """Test that long external_ids are truncated with hash to ensure uniqueness."""
-        from cognite.neat._data_model._fix_helpers import (
-            AUTO_SUFFIX,
-            HASH_LENGTH,
-            MAX_CONSTRAINT_ID_LENGTH,
-            make_auto_constraint_id,
-        )
-
         # External ID that's too long (50 characters)
         long_name = "A" * 50
         long_ref = ContainerReference(space="test", external_id=long_name)
@@ -394,8 +386,6 @@ class TestConstraintIdGeneration:
 
     def test_auto_constraint_id_hash_ensures_uniqueness(self) -> None:
         """Test that different long names with same prefix get different hashes."""
-        from cognite.neat._data_model._fix_helpers import make_auto_constraint_id
-
         # Two containers with same first 28 chars but different endings
         prefix = "A" * 28
         ref1 = ContainerReference(space="test", external_id=prefix + "XXXXXXXXXXXXXXX")
@@ -409,13 +399,6 @@ class TestConstraintIdGeneration:
 
     def test_auto_constraint_id_exactly_at_limit_no_hash(self) -> None:
         """Test external_id that's exactly at the max base length (37 chars) needs no hash."""
-        from cognite.neat._data_model._fix_helpers import (
-            AUTO_SUFFIX,
-            MAX_BASE_ID_LENGTH_NO_HASH,
-            MAX_CONSTRAINT_ID_LENGTH,
-            make_auto_constraint_id,
-        )
-
         # External ID exactly at MAX_BASE_ID_LENGTH_NO_HASH (37 characters)
         exact_name = "B" * MAX_BASE_ID_LENGTH_NO_HASH
         exact_ref = ContainerReference(space="test", external_id=exact_name)
@@ -426,14 +409,6 @@ class TestConstraintIdGeneration:
 
     def test_auto_constraint_id_one_over_limit_uses_hash(self) -> None:
         """Test external_id that's 1 char over the limit uses hash."""
-        from cognite.neat._data_model._fix_helpers import (
-            AUTO_SUFFIX,
-            HASH_LENGTH,
-            MAX_BASE_ID_LENGTH_NO_HASH,
-            MAX_CONSTRAINT_ID_LENGTH,
-            make_auto_constraint_id,
-        )
-
         # External ID 1 character over the limit
         over_name = "C" * (MAX_BASE_ID_LENGTH_NO_HASH + 1)
         over_ref = ContainerReference(space="test", external_id=over_name)

@@ -1,9 +1,10 @@
 """Helper functions for creating fix actions on DMS schemas."""
 
 import hashlib
-from collections.abc import Callable
+from dataclasses import dataclass
 
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
+from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 
@@ -40,27 +41,28 @@ def make_auto_constraint_id(dst: ContainerReference) -> str:
     return f"{truncated_id}_{hash_suffix}{AUTO_SUFFIX}"
 
 
-def make_add_constraint_fn(src: ContainerReference, dst: ContainerReference) -> Callable[[RequestSchema], None]:
-    """Create a closure that adds a requires constraint from src to dst."""
+@dataclass
+class AddConstraintAction:
+    """Callable that adds a requires constraint from src to dst container."""
 
-    def apply(schema: RequestSchema) -> None:
+    src: ContainerReference
+    dst: ContainerReference
+
+    def __call__(self, schema: RequestSchema) -> None:
         for container in schema.containers:
-            if container.as_reference() == src:
-                constraint_id = make_auto_constraint_id(dst)
+            if container.as_reference() == self.src:
+                constraint_id = make_auto_constraint_id(self.dst)
                 if container.constraints is None:
                     container.constraints = {}
-                container.constraints[constraint_id] = RequiresConstraintDefinition(require=dst)
+                container.constraints[constraint_id] = RequiresConstraintDefinition(require=self.dst)
                 break
 
-    return apply
 
+@dataclass
+class RemoveConstraintAction:
+    """Callable that removes a requires constraint from src to dst container.
 
-def make_remove_constraint_fn(
-    src: ContainerReference, dst: ContainerReference, *, auto_only: bool = True
-) -> Callable[[RequestSchema], None]:
-    """Create a closure that removes a requires constraint from src to dst.
-
-    Args:
+    Attributes:
         src: Source container reference.
         dst: Destination container reference (the required container).
         auto_only: If True (default), only removes constraints with '__auto' suffix
@@ -69,13 +71,17 @@ def make_remove_constraint_fn(
             constraints may also need removal.
     """
 
-    def apply(schema: RequestSchema) -> None:
+    src: ContainerReference
+    dst: ContainerReference
+    auto_only: bool = True
+
+    def __call__(self, schema: RequestSchema) -> None:
         for container in schema.containers:
-            if container.as_reference() == src and container.constraints:
+            if container.as_reference() == self.src and container.constraints:
                 to_remove: list[str] = []
                 for constraint_id, constraint in container.constraints.items():
-                    if isinstance(constraint, RequiresConstraintDefinition) and constraint.require == dst:
-                        if not auto_only or constraint_id.endswith(AUTO_SUFFIX):
+                    if isinstance(constraint, RequiresConstraintDefinition) and constraint.require == self.dst:
+                        if not self.auto_only or constraint_id.endswith(AUTO_SUFFIX):
                             to_remove.append(constraint_id)
                 for constraint_id in to_remove:
                     del container.constraints[constraint_id]
@@ -84,4 +90,25 @@ def make_remove_constraint_fn(
                     container.constraints = None
                 break
 
-    return apply
+
+def find_requires_constraint_id(
+    src: ContainerReference,
+    dst: ContainerReference,
+    containers: dict[ContainerReference, ContainerRequest],
+) -> str | None:
+    """Find the constraint ID for a requires constraint from src to dst.
+
+    Args:
+        src: Source container reference.
+        dst: Destination container reference (the required container).
+        containers: Dict mapping container references to their definitions.
+
+    Returns:
+        The constraint ID if found, None otherwise.
+    """
+    container = containers.get(src)
+    if container and container.constraints:
+        for constraint_id, constraint in container.constraints.items():
+            if isinstance(constraint, RequiresConstraintDefinition) and constraint.require == dst:
+                return constraint_id
+    return None

@@ -4,14 +4,13 @@ from cognite.neat._data_model._analysis import RequiresChangeStatus
 from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model._fix_actions import FixAction
 from cognite.neat._data_model._fix_helpers import (
-    make_add_constraint_fn,
+    AddConstraintAction,
+    RemoveConstraintAction,
+    find_requires_constraint_id,
     make_auto_constraint_id,
-    make_remove_constraint_fn,
 )
-from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
-from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import Recommendation
 
@@ -111,7 +110,7 @@ class MissingRequiresConstraint(DataModelRule):
                         message="Added missing requires constraints",
                         target_type="container",
                         target_ref=src,
-                        apply=make_add_constraint_fn(src, dst),
+                        apply=AddConstraintAction(src, dst),
                         priority=self.fix_priority,
                         action_type="add",
                         source_name=src.external_id,
@@ -174,19 +173,11 @@ class SuboptimalRequiresConstraint(DataModelRule):
 
         return recommendations
 
-    def _find_constraint_id(self, src: ContainerReference, dst: ContainerReference) -> str | None:
-        """Find the constraint ID for a src->dst requires constraint."""
-        container = self.validation_resources.merged.containers.get(src)
-        if container and container.constraints:
-            for constraint_id, constraint in container.constraints.items():
-                if isinstance(constraint, RequiresConstraintDefinition) and constraint.require == dst:
-                    return constraint_id
-        return None
-
     def fix(self) -> list[FixAction]:
         """Return fix actions to remove suboptimal requires constraints."""
         fix_actions: list[FixAction] = []
         seen_fix_ids: set[str] = set()
+        containers = self.validation_resources.merged.containers
 
         for view_ref in self.validation_resources.merged.views:
             changes = self.validation_resources.get_requires_changes_for_view(view_ref)
@@ -200,7 +191,7 @@ class SuboptimalRequiresConstraint(DataModelRule):
                     continue
                 seen_fix_ids.add(fix_id)
 
-                constraint_id = self._find_constraint_id(src, dst)
+                constraint_id = find_requires_constraint_id(src, dst, containers)
                 fix_actions.append(
                     FixAction(
                         fix_id=fix_id,
@@ -208,7 +199,7 @@ class SuboptimalRequiresConstraint(DataModelRule):
                         message="Removed suboptimal requires constraints",
                         target_type="container",
                         target_ref=src,
-                        apply=make_remove_constraint_fn(src, dst),
+                        apply=RemoveConstraintAction(src, dst),
                         priority=self.fix_priority,
                         action_type="remove",
                         source_name=src.external_id,

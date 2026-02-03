@@ -3,9 +3,8 @@
 from pyparsing import cast
 
 from cognite.neat._data_model._fix_actions import FixAction
-from cognite.neat._data_model._fix_helpers import make_remove_constraint_fn
+from cognite.neat._data_model._fix_helpers import RemoveConstraintAction, find_requires_constraint_id
 from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
-from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import ConsistencyError
@@ -255,20 +254,12 @@ class RequiresConstraintCycle(DataModelRule):
 
         return errors
 
-    def _find_constraint_id(self, src: ContainerReference, dst: ContainerReference) -> str | None:
-        """Find the constraint ID for a src->dst requires constraint."""
-        container = self.validation_resources.merged.containers.get(src)
-        if container and container.constraints:
-            for constraint_id, constraint in container.constraints.items():
-                if isinstance(constraint, RequiresConstraintDefinition) and constraint.require == dst:
-                    return constraint_id
-        return None
-
     def fix(self) -> list[FixAction]:
         """Return fix actions to break requires constraint cycles."""
         fix_actions: list[FixAction] = []
         seen_fix_ids: set[str] = set()
         optimal_edges = self.validation_resources.oriented_mst_edges
+        containers = self.validation_resources.merged.containers
 
         for cycle in self.validation_resources.requires_constraint_cycles:
             # Find edges in cycle that are NOT in optimal structure (these should be removed)
@@ -282,7 +273,7 @@ class RequiresConstraintCycle(DataModelRule):
                         continue
                     seen_fix_ids.add(fix_id)
 
-                    constraint_id = self._find_constraint_id(src, dst)
+                    constraint_id = find_requires_constraint_id(src, dst, containers)
                     fix_actions.append(
                         FixAction(
                             fix_id=fix_id,
@@ -290,7 +281,7 @@ class RequiresConstraintCycle(DataModelRule):
                             message="Removed requires constraints to break cycle",
                             target_type="container",
                             target_ref=src,
-                            apply=make_remove_constraint_fn(src, dst, auto_only=False),
+                            apply=RemoveConstraintAction(src, dst, auto_only=False),
                             priority=self.fix_priority,
                             action_type="remove",
                             source_name=src.external_id,
