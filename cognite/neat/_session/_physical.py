@@ -336,23 +336,5 @@ def create(
         cdf_snapshot=self._store.cdf_snapshot,
     )
 
-    on_success: DmsDataModelRulesOrchestrator | DmsDataModelFixer
-    if fix:
-        on_success = DmsDataModelFixer(
-            modus_operandi=self._config.modeling.mode,
-            cdf_snapshot=self._store.cdf_snapshot,
-            limits=self._store.cdf_limits,
-            can_run_validator=self._config.validation.can_run_validator,
-            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
-            apply_fixes=True,
-        )
-    else:
-        on_success = DmsDataModelRulesOrchestrator(
-            modus_operandi=self._config.modeling.mode,
-            cdf_snapshot=self._store.cdf_snapshot,
-            limits=self._store.cdf_limits,
-            can_run_validator=self._config.validation.can_run_validator,
-            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
-        )
-
+    on_success = self.read._create_on_success(fix)
     return self._store.read_physical(creator, on_success)

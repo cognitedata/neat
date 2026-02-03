@@ -78,8 +78,8 @@ class Issues:
         Groups fixes by their generic message and provides structured data for
         a summary-style display.
         """
-        # Group fixes by their generic message
-        grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        # Group fixes by their generic message, keeping reference to the fix actions
+        grouped: dict[str, list[tuple["FixAction", dict[str, Any]]]] = defaultdict(list)
 
         for fix_action in self._applied_fixes:
             item = {
@@ -89,14 +89,21 @@ class Issues:
                 "action": fix_action.action_type or "add",
                 "constraint_id": fix_action.constraint_id,
             }
-            grouped[fix_action.message].append(item)
+            grouped[fix_action.message].append((fix_action, item))
 
         # Convert to serialized format - one entry per group
         serialized = []
-        for idx, (message, items) in enumerate(grouped.items()):
-            # Extract code from first item's fix_id if available
-            first_fix = self._applied_fixes[0] if self._applied_fixes else None
-            code = first_fix.fix_id.split(":")[0] if first_fix and ":" in first_fix.fix_id else ""
+        for idx, (message, fix_items) in enumerate(grouped.items()):
+            # Extract code from first fix action in THIS group (not the global first)
+            first_fix_in_group = fix_items[0][0] if fix_items else None
+            code = (
+                first_fix_in_group.fix_id.split(":")[0]
+                if first_fix_in_group and ":" in first_fix_in_group.fix_id
+                else ""
+            )
+
+            # Extract just the item dicts for the serialized output
+            items = [item for _, item in fix_items]
 
             serialized.append(
                 {
