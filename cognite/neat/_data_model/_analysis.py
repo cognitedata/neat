@@ -59,11 +59,11 @@ class RequiresChangeStatus(Enum):
 class ResolvedReverseDirectRelation:
     """Resolved context for a reverse direct relation, including container-level information."""
 
-    target_view_ref: ViewReference
+    reverse_view_ref: ViewReference
     reverse_property_id: str
-    source_view_ref: ViewReference
+    direct_view_ref: ViewReference
     through_property_id: str
-    source_property: "ViewCorePropertyRequest"
+    direct_property: ViewCorePropertyRequest
     container_ref: ContainerReference
     container_property_id: str
     container: ContainerRequest | None
@@ -443,11 +443,11 @@ class ValidationResources:
 
             result.append(
                 ResolvedReverseDirectRelation(
-                    target_view_ref=target_view_ref,
+                    reverse_view_ref=target_view_ref,
                     reverse_property_id=reverse_prop_id,
-                    source_view_ref=source_view_ref,
+                    direct_view_ref=source_view_ref,
                     through_property_id=through_normalized.identifier,
-                    source_property=source_property,
+                    direct_property=source_property,
                     container_ref=container_ref,
                     container_property_id=container_property_id,
                     container=container,

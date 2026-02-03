@@ -116,7 +116,7 @@ def test_validation_deep(
 
 
 @pytest.mark.parametrize("profile", ["deep-additive", "legacy-additive"])
-def test_alpha_validators(
+def test_missing_reverse_direct_relation_target_index(
     profile: Literal["deep-additive", "legacy-additive"],
 ) -> None:
     config = internal_profiles()[profile]
