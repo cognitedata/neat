@@ -79,7 +79,7 @@ class Issues:
         a summary-style display.
         """
         # Group fixes by their generic message, keeping reference to the fix actions
-        grouped: dict[str, list[tuple["FixAction", dict[str, Any]]]] = defaultdict(list)
+        grouped: dict[str, list[tuple[FixAction, dict[str, Any]]]] = defaultdict(list)
 
         for fix_action in self._applied_fixes:
             item = {
