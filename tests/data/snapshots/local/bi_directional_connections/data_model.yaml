@@ -1,7 +1,7 @@
-  space: my_space
-  externalId: TestModel
-  version: v1
-  views:
+space: my_space
+externalId: TestModel
+version: v1
+views:
   - space: my_space
     externalId: SourceView
     version: v1
@@ -24,5 +24,21 @@
     type: view
   - space: my_space
     externalId: DescendantView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: IndexedDirectView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: ListDirectView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: ReverseToIndexedDirectView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: ReverseToListDirectView
     version: v1
     type: view
