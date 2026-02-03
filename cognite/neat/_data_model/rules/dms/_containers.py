@@ -234,17 +234,16 @@ class RequiresConstraintCycle(DataModelRule):
             cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
 
             # Find edges in cycle that are NOT in optimal structure (these should be removed)
-            edges_to_remove: list[tuple[ContainerReference, ContainerReference]] = []
+            edges_to_remove = []
             for i, container in enumerate(cycle):
                 next_container = cycle[(i + 1) % len(cycle)]
                 edge = (container, next_container)
                 if edge not in optimal_edges:
-                    edges_to_remove.append(edge)
+                    edges_to_remove.append(f"{container} -> {next_container}")
 
-            edges_to_remove_str = [f"{src} -> {dst}" for src, dst in edges_to_remove]
             message = f"Requires constraints form a cycle: {cycle_str}"
-            if edges_to_remove_str:
-                message += f". Recommended removal: {', '.join(edges_to_remove_str)} (not in optimal structure)"
+            if edges_to_remove:
+                message += f". Recommended removal: {', '.join(edges_to_remove)} (not in optimal structure)"
 
             errors.append(
                 ConsistencyError(
