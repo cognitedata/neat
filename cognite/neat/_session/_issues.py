@@ -3,7 +3,12 @@ import uuid
 from collections import defaultdict
 from typing import Any
 
-from cognite.neat._data_model._fix_actions import FixAction
+from cognite.neat._data_model._fix_actions import (
+    AddConstraintAction,
+    AddIndexAction,
+    FixAction,
+    RemoveConstraintAction,
+)
 from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError, Recommendation
 from cognite.neat._session._html._render import render
 from cognite.neat._store import NeatStore
@@ -73,48 +78,34 @@ class Issues:
     def _serialized_applied_fixes(self) -> list[dict[str, Any]]:
         """Convert applied fixes to JSON-serializable format for the Fixed tab.
 
-        Groups fixes by their generic message and provides structured data for
-        a summary-style display.
+        Each fix is displayed individually, like issues. Subclass-specific fields
+        are included for fancy UI rendering.
         """
-        # Group fixes by their generic message, keeping reference to the fix actions
-        grouped: dict[str, list[tuple[FixAction, dict[str, Any]]]] = defaultdict(list)
-
-        for fix_action in self._applied_fixes:
-            item = {
-                "description": fix_action.description,
-                "source": fix_action.source_name,
-                "dest": fix_action.dest_name,
-                "action": fix_action.action_type or "add",
-                "constraint_id": fix_action.constraint_id,
-            }
-            grouped[fix_action.message].append((fix_action, item))
-
-        # Convert to serialized format - one entry per group
         serialized = []
-        for idx, (message, fix_items) in enumerate(grouped.items()):
-            # Extract code from first fix action in THIS group (not the global first)
-            first_fix_in_group = fix_items[0][0] if fix_items else None
-            code = (
-                first_fix_in_group.fix_id.split(":")[0]
-                if first_fix_in_group and ":" in first_fix_in_group.fix_id
-                else ""
-            )
+        for idx, fix_action in enumerate(self._applied_fixes):
+            item: dict[str, Any] = {
+                "id": f"fixed-{idx}",
+                "type": "Fixed",
+                "code": fix_action.code,
+                "message": fix_action.message,
+                "fix": "",
+                "fixed": True,
+            }
 
-            # Extract just the item dicts for the serialized output
-            items = [item for _, item in fix_items]
+            # Add subclass-specific fields for fancy UI rendering
+            if isinstance(fix_action, (AddConstraintAction, RemoveConstraintAction)):
+                item["fix_type"] = "constraint"
+                item["source_name"] = fix_action.source_name
+                item["dest_name"] = fix_action.dest_name
+                item["action_type"] = fix_action.action_type
+                item["constraint_id"] = fix_action.constraint_id
+            elif isinstance(fix_action, AddIndexAction):
+                item["fix_type"] = "index"
+                item["container_name"] = fix_action.container_name
+                item["property_id"] = fix_action.property_id
+                item["index_id"] = fix_action.index_id
 
-            serialized.append(
-                {
-                    "id": f"fixed-{idx}",
-                    "type": "Fixed",
-                    "code": code,
-                    "message": message,  # Generic message as the main text
-                    "fix": "",  # No additional fix text needed
-                    "fixed": True,
-                    "items": items,  # List of specific changes
-                    "count": len(items),
-                }
-            )
+            serialized.append(item)
         return serialized
 
     def _repr_html_(self) -> str:

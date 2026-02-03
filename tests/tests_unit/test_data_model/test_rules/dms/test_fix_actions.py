@@ -1,32 +1,32 @@
 """Tests for the fix action functionality in validators."""
 
-from typing import Any
+from dataclasses import dataclass
 
 import pytest
 
 from cognite.neat._data_model._analysis import ValidationResources
-from cognite.neat._data_model._fix_actions import FixAction
+from cognite.neat._data_model._fix_actions import AddConstraintAction, FixAction
 from cognite.neat._data_model._fix_helpers import (
     AUTO_SUFFIX,
     HASH_LENGTH,
-    MAX_BASE_ID_LENGTH_NO_HASH,
-    MAX_CONSTRAINT_ID_LENGTH,
+    MAX_BASE_LENGTH_NO_HASH,
+    MAX_IDENTIFIER_LENGTH,
     make_auto_constraint_id,
 )
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._references import ContainerReference
-from cognite.neat._data_model.rules.dms._containers import RequiresConstraintCycle
+from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelFixer
-from cognite.neat._data_model.rules.dms._performance import (
-    MissingRequiresConstraint,
-    SuboptimalRequiresConstraint,
-)
+from cognite.neat._data_model.rules.dms._performance import MissingRequiresConstraint
 from tests.data import SNAPSHOT_CATALOG
 
 
-def _dummy_apply(schema: Any) -> None:
-    """Dummy apply function for testing FixAction."""
-    pass
+@dataclass(eq=False)
+class DummyFixAction(FixAction):
+    """A concrete FixAction for testing."""
+
+    def __call__(self, schema: RequestSchema) -> None:
+        pass
 
 
 class TestFixAction:
@@ -34,29 +34,20 @@ class TestFixAction:
 
     def test_fix_action_equality(self) -> None:
         """Test that FixAction equality is based on fix_id."""
-        action1 = FixAction(
+        action1 = DummyFixAction(
             fix_id="test:action:1",
-            description="Test action 1",
-            message="Generic fix message",
-            target_type="container",
-            target_ref=ContainerReference(space="test", external_id="container1"),
-            apply=_dummy_apply,
+            message="Test action 1",
+            code="TEST-001",
         )
-        action2 = FixAction(
+        action2 = DummyFixAction(
             fix_id="test:action:1",
-            description="Different description",
-            message="Generic fix message",
-            target_type="container",
-            target_ref=ContainerReference(space="test", external_id="container1"),
-            apply=_dummy_apply,
+            message="Different message",
+            code="TEST-001",
         )
-        action3 = FixAction(
+        action3 = DummyFixAction(
             fix_id="test:action:2",
-            description="Test action 1",
-            message="Generic fix message",
-            target_type="container",
-            target_ref=ContainerReference(space="test", external_id="container1"),
-            apply=_dummy_apply,
+            message="Test action 1",
+            code="TEST-001",
         )
 
         assert action1 == action2
@@ -64,21 +55,15 @@ class TestFixAction:
 
     def test_fix_action_hash(self) -> None:
         """Test that FixAction can be used in sets/dicts."""
-        action1 = FixAction(
+        action1 = DummyFixAction(
             fix_id="test:action:1",
-            description="Test action 1",
-            message="Generic fix message",
-            target_type="container",
-            target_ref=ContainerReference(space="test", external_id="container1"),
-            apply=_dummy_apply,
+            message="Test action 1",
+            code="TEST-001",
         )
-        action2 = FixAction(
+        action2 = DummyFixAction(
             fix_id="test:action:1",
-            description="Different description",
-            message="Generic fix message",
-            target_type="container",
-            target_ref=ContainerReference(space="test", external_id="container1"),
-            apply=_dummy_apply,
+            message="Different message",
+            code="TEST-001",
         )
 
         # Same fix_id should have same hash
@@ -117,9 +102,8 @@ class TestMissingRequiresConstraintFix:
         # Each fix action should have proper structure
         for action in fix_actions:
             assert action.fix_id.startswith(MissingRequiresConstraint.code)
-            assert action.target_type == "container"
-            assert callable(action.apply)
-            assert action.priority == MissingRequiresConstraint.fix_priority
+            assert action.code == MissingRequiresConstraint.code
+            assert callable(action)  # Action itself is callable
 
     def test_fix_actions_have_ui_fields_populated(self) -> None:
         """Test that fix actions have UI display fields populated."""
@@ -140,12 +124,12 @@ class TestMissingRequiresConstraintFix:
         validator = MissingRequiresConstraint(validation_resources)
         fix_actions = validator.fix()
 
-        # Each fix action should have UI fields populated for add actions
+        # Each fix action should be an AddConstraintAction with UI fields populated
         for action in fix_actions:
-            assert action.action_type == "add"
-            assert action.source_name is not None
-            assert action.dest_name is not None
-            assert action.constraint_id is not None
+            assert isinstance(action, AddConstraintAction)
+            assert action.action_type == "add"  # Property returns "add"
+            assert action.source_name  # Derived from source.external_id
+            assert action.dest_name  # Derived from dest.external_id
             assert action.constraint_id.endswith("__auto")
 
     def test_validate_and_fix_are_independent(self) -> None:
@@ -259,8 +243,8 @@ class TestDmsDataModelFixer:
         }
         assert constraints_before == constraints_after
 
-    def test_fixer_orders_fixes_by_priority(self) -> None:
-        """Test that fixes are applied in priority order."""
+    def test_fixer_orders_fixes_by_fix_id(self) -> None:
+        """Test that fixes are applied in a deterministic order (by fix_id)."""
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
             "requires_constraints",
             "for_validators",
@@ -279,23 +263,10 @@ class TestDmsDataModelFixer:
         )
         fixer.run(data_model)
 
-        # Check that applied fixes are in priority order
+        # Check that applied fixes are in fix_id order
         if len(fixer.applied_fixes) > 1:
             for i in range(len(fixer.applied_fixes) - 1):
-                assert fixer.applied_fixes[i].priority <= fixer.applied_fixes[i + 1].priority
-
-
-class TestValidatorFixPriorities:
-    """Tests for validator fix priority ordering."""
-
-    def test_cycle_breaker_has_lowest_priority(self) -> None:
-        """Test that RequiresConstraintCycle has the lowest (first applied) priority."""
-        assert RequiresConstraintCycle.fix_priority < SuboptimalRequiresConstraint.fix_priority
-        assert RequiresConstraintCycle.fix_priority < MissingRequiresConstraint.fix_priority
-
-    def test_removal_before_addition(self) -> None:
-        """Test that SuboptimalRequiresConstraint (removal) runs before MissingRequiresConstraint (addition)."""
-        assert SuboptimalRequiresConstraint.fix_priority < MissingRequiresConstraint.fix_priority
+                assert fixer.applied_fixes[i].fix_id <= fixer.applied_fixes[i + 1].fix_id
 
 
 class TestAppliedFixesTracking:
@@ -327,8 +298,7 @@ class TestAppliedFixesTracking:
             # Each applied fix should be a FixAction with proper structure
             for fix_action in fixer.applied_fixes:
                 assert isinstance(fix_action, FixAction)
-                assert fix_action.description  # Specific action description
-                assert fix_action.message  # Generic fix message
+                assert fix_action.message  # Specific action description
                 assert fix_action.fix_id
 
     def test_fixer_no_applied_fixes_when_not_applying(self) -> None:
@@ -365,7 +335,7 @@ class TestConstraintIdGeneration:
         short_ref = ContainerReference(space="test", external_id="ShortName")
         constraint_id = make_auto_constraint_id(short_ref)
         assert constraint_id == "ShortName__auto"
-        assert len(constraint_id) <= MAX_CONSTRAINT_ID_LENGTH
+        assert len(constraint_id) <= MAX_IDENTIFIER_LENGTH
 
     def test_auto_constraint_id_truncates_long_names_with_hash(self) -> None:
         """Test that long external_ids are truncated with hash to ensure uniqueness."""
@@ -375,7 +345,7 @@ class TestConstraintIdGeneration:
         constraint_id = make_auto_constraint_id(long_ref)
 
         # Should be exactly at the limit
-        assert len(constraint_id) == MAX_CONSTRAINT_ID_LENGTH
+        assert len(constraint_id) == MAX_IDENTIFIER_LENGTH
         assert constraint_id.endswith(AUTO_SUFFIX)
         # Should contain underscore before hash
         assert "_" in constraint_id
@@ -399,22 +369,22 @@ class TestConstraintIdGeneration:
 
     def test_auto_constraint_id_exactly_at_limit_no_hash(self) -> None:
         """Test external_id that's exactly at the max base length (37 chars) needs no hash."""
-        # External ID exactly at MAX_BASE_ID_LENGTH_NO_HASH (37 characters)
-        exact_name = "B" * MAX_BASE_ID_LENGTH_NO_HASH
+        # External ID exactly at MAX_BASE_LENGTH_NO_HASH (37 characters)
+        exact_name = "B" * MAX_BASE_LENGTH_NO_HASH
         exact_ref = ContainerReference(space="test", external_id=exact_name)
         constraint_id = make_auto_constraint_id(exact_ref)
 
-        assert len(constraint_id) == MAX_CONSTRAINT_ID_LENGTH
+        assert len(constraint_id) == MAX_IDENTIFIER_LENGTH
         assert constraint_id == exact_name + AUTO_SUFFIX
 
     def test_auto_constraint_id_one_over_limit_uses_hash(self) -> None:
         """Test external_id that's 1 char over the limit uses hash."""
         # External ID 1 character over the limit
-        over_name = "C" * (MAX_BASE_ID_LENGTH_NO_HASH + 1)
+        over_name = "C" * (MAX_BASE_LENGTH_NO_HASH + 1)
         over_ref = ContainerReference(space="test", external_id=over_name)
         constraint_id = make_auto_constraint_id(over_ref)
 
-        assert len(constraint_id) == MAX_CONSTRAINT_ID_LENGTH
+        assert len(constraint_id) == MAX_IDENTIFIER_LENGTH
         assert constraint_id.endswith(AUTO_SUFFIX)
         # Should have hash
         parts = constraint_id.replace(AUTO_SUFFIX, "").rsplit("_", 1)

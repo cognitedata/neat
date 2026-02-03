@@ -119,11 +119,11 @@ class DmsDataModelFixer(OnSuccessIssuesChecker):
             validation_resources = self._gather_validation_resources(request_schema)
             all_actions = self._collect_fix_actions(validation_resources)
             unique_actions = self._deduplicate_actions(all_actions)
-            sorted_actions = sorted(unique_actions, key=lambda a: (a.priority, a.fix_id))
+            sorted_actions = sorted(unique_actions, key=lambda a: a.fix_id)
 
             # Apply fixes to the original schema (not the copy)
             for action in sorted_actions:
-                action.apply(request_schema)
+                action(request_schema)
                 self._applied_fixes.append(action)
 
             # Re-validate to get remaining issues

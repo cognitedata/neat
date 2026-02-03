@@ -1,10 +1,12 @@
 """Validators for checking containers in the data model."""
 
+from collections.abc import Iterable
+
 from pyparsing import cast
 
-from cognite.neat._data_model._fix_actions import FixAction
-from cognite.neat._data_model._fix_helpers import RemoveConstraintAction, find_requires_constraint_id
+from cognite.neat._data_model._fix_actions import FixAction, RemoveConstraintAction
 from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
+from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import ConsistencyError
@@ -223,22 +225,34 @@ class RequiresConstraintCycle(DataModelRule):
     issue_type = ConsistencyError
     alpha = True  # Still in development
     fixable = True
-    fix_priority = 30  # Apply first (cycles must be broken before other fixes)
 
-    def validate(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
+    def _get_cycle_edges_to_remove(
+        self,
+    ) -> Iterable[tuple[list[ContainerReference], ContainerReference, ContainerReference]]:
+        """Yields (cycle, src, dst) for edges in cycles that should be removed."""
         optimal_edges = self.validation_resources.oriented_mst_edges
 
         for cycle in self.validation_resources.requires_constraint_cycles:
-            cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
-
-            # Find edges in cycle that are NOT in optimal structure (these should be removed)
-            edges_to_remove = []
             for i, container in enumerate(cycle):
                 next_container = cycle[(i + 1) % len(cycle)]
                 edge = (container, next_container)
                 if edge not in optimal_edges:
-                    edges_to_remove.append(f"{container} -> {next_container}")
+                    yield cycle, container, next_container
+
+    def validate(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+        reported_cycles: set[tuple[ContainerReference, ...]] = set()
+
+        for cycle, src, dst in self._get_cycle_edges_to_remove():
+            cycle_key = tuple(cycle)
+            if cycle_key in reported_cycles:
+                continue
+            reported_cycles.add(cycle_key)
+
+            cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
+
+            # Collect all edges to remove for this cycle
+            edges_to_remove = [f"{s} -> {d}" for c, s, d in self._get_cycle_edges_to_remove() if tuple(c) == cycle_key]
 
             message = f"Requires constraints form a cycle: {cycle_str}"
             if edges_to_remove:
@@ -258,36 +272,22 @@ class RequiresConstraintCycle(DataModelRule):
         """Return fix actions to break requires constraint cycles."""
         fix_actions: list[FixAction] = []
         seen_fix_ids: set[str] = set()
-        optimal_edges = self.validation_resources.oriented_mst_edges
-        containers = self.validation_resources.merged.containers
 
-        for cycle in self.validation_resources.requires_constraint_cycles:
-            # Find edges in cycle that are NOT in optimal structure (these should be removed)
-            for i, container in enumerate(cycle):
-                next_container = cycle[(i + 1) % len(cycle)]
-                edge = (container, next_container)
-                if edge not in optimal_edges:
-                    src, dst = edge
-                    fix_id = f"{self.code}:remove:{src!s}->{dst!s}"
-                    if fix_id in seen_fix_ids:
-                        continue
-                    seen_fix_ids.add(fix_id)
+        for _, src, dst in self._get_cycle_edges_to_remove():
+            fix_id = f"{self.code}:remove:{src!s}->{dst!s}"
+            if fix_id in seen_fix_ids:
+                continue
+            seen_fix_ids.add(fix_id)
 
-                    constraint_id = find_requires_constraint_id(src, dst, containers)
-                    fix_actions.append(
-                        FixAction(
-                            fix_id=fix_id,
-                            description=f"Removed requires constraint: {src!s} → {dst!s}",
-                            message="Removed requires constraints to break cycle",
-                            target_type="container",
-                            target_ref=src,
-                            apply=RemoveConstraintAction(src, dst, auto_only=False),
-                            priority=self.fix_priority,
-                            action_type="remove",
-                            source_name=src.external_id,
-                            dest_name=dst.external_id,
-                            constraint_id=constraint_id,
-                        )
-                    )
+            fix_actions.append(
+                RemoveConstraintAction(
+                    fix_id=fix_id,
+                    message=f"Removed requires constraint: {src!s} → {dst!s}",
+                    code=self.code,
+                    source=src,
+                    dest=dst,
+                    auto_only=False,
+                )
+            )
 
         return fix_actions

@@ -1,16 +1,13 @@
 """Validators for checking performance-related aspects of the data model."""
 
-from cognite.neat._data_model._analysis import RequiresChangeStatus
+from collections.abc import Iterable
+
+from cognite.neat._data_model._analysis import RequiresChangeStatus, ResolvedReverseDirectRelation
 from cognite.neat._data_model._constants import COGNITE_SPACES
-from cognite.neat._data_model._fix_actions import FixAction
-from cognite.neat._data_model._fix_helpers import (
-    AddConstraintAction,
-    RemoveConstraintAction,
-    find_requires_constraint_id,
-    make_auto_constraint_id,
-)
+from cognite.neat._data_model._fix_actions import AddConstraintAction, AddIndexAction, FixAction, RemoveConstraintAction
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
+from cognite.neat._data_model.models.dms._references import ContainerReference, ViewReference
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import Recommendation
 
@@ -40,48 +37,50 @@ class MissingRequiresConstraint(DataModelRule):
     issue_type = Recommendation
     alpha = True
     fixable = True
-    fix_priority = 50  # Apply after removals (priority 40)
+
+    def _get_missing_constraints(self) -> Iterable[tuple[ViewReference, ContainerReference, ContainerReference]]:
+        """Yields (view_ref, src, dst) for missing requires constraints."""
+        for view_ref in self.validation_resources.merged.views:
+            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
+            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
+                continue
+            for src, dst in changes.to_add:
+                yield view_ref, src, dst
 
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.validation_resources.merged.views:
-            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
+        for view_ref, src, dst in self._get_missing_constraints():
+            src_views = self.validation_resources.views_by_container.get(src, set())
+            other_views_with_src = src_views - {view_ref}
+            views_impacted_by_change = self.validation_resources.find_views_mapping_to_containers([src, dst])
 
-            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
-                continue
+            # Check if this is a "safe" recommendation (no cross-view dependencies)
+            is_safe = not other_views_with_src or view_ref in views_impacted_by_change
 
-            for src, dst in changes.to_add:
-                src_views = self.validation_resources.views_by_container.get(src, set())
-                other_views_with_src = src_views - {view_ref}
-                views_impacted_by_change = self.validation_resources.find_views_mapping_to_containers([src, dst])
-
-                # Check if this is a "safe" recommendation (no cross-view dependencies)
-                is_safe = not other_views_with_src or view_ref in views_impacted_by_change
-
-                message = (
-                    f"View '{view_ref!s}' is not optimized for querying. "
-                    f"Add a 'requires' constraint from the container '{src!s}' to '{dst!s}'."
+            message = (
+                f"View '{view_ref!s}' is not optimized for querying. "
+                f"Add a 'requires' constraint from the container '{src!s}' to '{dst!s}'."
+            )
+            if not is_safe:
+                # Find a superset view to suggest for ingestion
+                merged_views = set(self.validation_resources.merged.views)
+                superset_views = views_impacted_by_change & merged_views
+                view_example = min(superset_views, key=str) if superset_views else None
+                message += (
+                    " Note: this causes an ingestion dependency for this view, "
+                    " if you will be using this view to ingest instances, you will "
+                    f"need to populate these instances into '{dst!s}' first"
+                    + (f", for example through view '{view_example!s}'." if view_example else ".")
                 )
-                if not is_safe:
-                    # Find a superset view to suggest for ingestion
-                    merged_views = set(self.validation_resources.merged.views)
-                    superset_views = views_impacted_by_change & merged_views
-                    view_example = min(superset_views, key=str) if superset_views else None
-                    message += (
-                        " Note: this causes an ingestion dependency for this view, "
-                        " if you will be using this view to ingest instances, you will "
-                        f"need to populate these instances into '{dst!s}' first"
-                        + (f", for example through view '{view_example!s}'." if view_example else ".")
-                    )
 
-                recommendations.append(
-                    Recommendation(
-                        message=message,
-                        fix="Add the recommended requires constraints to optimize query performance",
-                        code=self.code,
-                    )
+            recommendations.append(
+                Recommendation(
+                    message=message,
+                    fix="Add the recommended requires constraints to optimize query performance",
+                    code=self.code,
                 )
+            )
 
         return recommendations
 
@@ -90,34 +89,21 @@ class MissingRequiresConstraint(DataModelRule):
         fix_actions: list[FixAction] = []
         seen_fix_ids: set[str] = set()
 
-        for view_ref in self.validation_resources.merged.views:
-            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
-
-            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
+        for _, src, dst in self._get_missing_constraints():
+            fix_id = f"{self.code}:add:{src!s}->{dst!s}"
+            if fix_id in seen_fix_ids:
                 continue
+            seen_fix_ids.add(fix_id)
 
-            for src, dst in changes.to_add:
-                fix_id = f"{self.code}:add:{src!s}->{dst!s}"
-                if fix_id in seen_fix_ids:
-                    continue
-                seen_fix_ids.add(fix_id)
-
-                constraint_id = make_auto_constraint_id(dst)
-                fix_actions.append(
-                    FixAction(
-                        fix_id=fix_id,
-                        description=f"Added requires constraint on container {src!s} to container {dst!s}",
-                        message="Added missing requires constraints",
-                        target_type="container",
-                        target_ref=src,
-                        apply=AddConstraintAction(src, dst),
-                        priority=self.fix_priority,
-                        action_type="add",
-                        source_name=src.external_id,
-                        dest_name=dst.external_id,
-                        constraint_id=constraint_id,
-                    )
+            fix_actions.append(
+                AddConstraintAction(
+                    fix_id=fix_id,
+                    message=f"Added requires constraint on container {src!s} to container {dst!s}",
+                    code=self.code,
+                    source=src,
+                    dest=dst,
                 )
+            )
 
         return fix_actions
 
@@ -147,29 +133,31 @@ class SuboptimalRequiresConstraint(DataModelRule):
     issue_type = Recommendation
     alpha = True
     fixable = True
-    fix_priority = 40  # Apply before additions (priority 50)
+
+    def _get_suboptimal_constraints(self) -> Iterable[tuple[ViewReference, ContainerReference, ContainerReference]]:
+        """Yields (view_ref, src, dst) for suboptimal requires constraints to remove."""
+        for view_ref in self.validation_resources.merged.views:
+            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
+            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
+                continue
+            for src, dst in changes.to_remove:
+                yield view_ref, src, dst
 
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.validation_resources.merged.views:
-            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
-
-            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
-                continue
-
-            for src, dst in changes.to_remove:
-                recommendations.append(
-                    Recommendation(
-                        message=(
-                            f"View '{view_ref!s}' is mapping to container '{src!s}' "
-                            f"that has a requires constraint to '{dst!s}'. This constraint is "
-                            "not part of the optimal structure. Consider removing it."
-                        ),
-                        fix="Remove suboptimal requires constraints",
-                        code=self.code,
-                    )
+        for view_ref, src, dst in self._get_suboptimal_constraints():
+            recommendations.append(
+                Recommendation(
+                    message=(
+                        f"View '{view_ref!s}' is mapping to container '{src!s}' "
+                        f"that has a requires constraint to '{dst!s}'. This constraint is "
+                        "not part of the optimal structure. Consider removing it."
+                    ),
+                    fix="Remove suboptimal requires constraints",
+                    code=self.code,
                 )
+            )
 
         return recommendations
 
@@ -177,36 +165,22 @@ class SuboptimalRequiresConstraint(DataModelRule):
         """Return fix actions to remove suboptimal requires constraints."""
         fix_actions: list[FixAction] = []
         seen_fix_ids: set[str] = set()
-        containers = self.validation_resources.merged.containers
 
-        for view_ref in self.validation_resources.merged.views:
-            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
-
-            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
+        for _, src, dst in self._get_suboptimal_constraints():
+            fix_id = f"{self.code}:remove:{src!s}->{dst!s}"
+            if fix_id in seen_fix_ids:
                 continue
+            seen_fix_ids.add(fix_id)
 
-            for src, dst in changes.to_remove:
-                fix_id = f"{self.code}:remove:{src!s}->{dst!s}"
-                if fix_id in seen_fix_ids:
-                    continue
-                seen_fix_ids.add(fix_id)
-
-                constraint_id = find_requires_constraint_id(src, dst, containers)
-                fix_actions.append(
-                    FixAction(
-                        fix_id=fix_id,
-                        description=f"Removed requires constraint on container {src!s} to container {dst!s}",
-                        message="Removed suboptimal requires constraints",
-                        target_type="container",
-                        target_ref=src,
-                        apply=RemoveConstraintAction(src, dst),
-                        priority=self.fix_priority,
-                        action_type="remove",
-                        source_name=src.external_id,
-                        dest_name=dst.external_id,
-                        constraint_id=constraint_id,
-                    )
+            fix_actions.append(
+                RemoveConstraintAction(
+                    fix_id=fix_id,
+                    message=f"Removed requires constraint on container {src!s} to container {dst!s}",
+                    code=self.code,
+                    source=src,
+                    dest=dst,
                 )
+            )
 
         return fix_actions
 
@@ -311,9 +285,57 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
     code = f"{BASE_CODE}-004"
     issue_type = Recommendation
     alpha = True
+    fixable = True
 
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
+
+        for resolved in self._get_missing_index_targets():
+            recommendations.append(
+                Recommendation(
+                    message=(
+                        f"View '{resolved.reverse_view_ref!s}' has a reverse direct relation "
+                        f"'{resolved.reverse_property_id}' that points to container "
+                        f"'{resolved.container_ref!s}' property '{resolved.container_property_id}'. "
+                        f"Add a cursorable B-tree index on this target container property "
+                        f"to enable efficient query traversal."
+                    ),
+                    fix="Add a cursorable B-tree index on the target direct relation property",
+                    code=self.code,
+                )
+            )
+
+        return recommendations
+
+    def fix(self) -> list[FixAction]:
+        """Return fix actions to add missing indexes."""
+        fix_actions: list[FixAction] = []
+        seen_fix_ids: set[str] = set()
+
+        for resolved in self._get_missing_index_targets():
+            fix_id = f"{self.code}:add:{resolved.container_ref!s}:{resolved.container_property_id}"
+            if fix_id in seen_fix_ids:
+                continue
+            seen_fix_ids.add(fix_id)
+
+            fix_actions.append(
+                AddIndexAction(
+                    fix_id=fix_id,
+                    message=(
+                        f"Added cursorable B-tree index on container "
+                        f"{resolved.container_ref!s} property '{resolved.container_property_id}'"
+                    ),
+                    code=self.code,
+                    container=resolved.container_ref,
+                    property_id=resolved.container_property_id,
+                )
+            )
+
+        return fix_actions
+
+    def _get_missing_index_targets(self) -> list[ResolvedReverseDirectRelation]:
+        """Get resolved reverse direct relations that are missing cursorable indexes."""
+        targets = []
 
         for resolved in self.validation_resources.resolved_reverse_direct_relations:
             # Skip if container or container property couldn't be resolved
@@ -337,18 +359,6 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
             ):
                 continue
 
-            recommendations.append(
-                Recommendation(
-                    message=(
-                        f"View '{resolved.reverse_view_ref!s}' has a reverse direct relation "
-                        f"'{resolved.reverse_property_id}' that points to container "
-                        f"'{resolved.container_ref!s}' property '{resolved.container_property_id}'. "
-                        f"Add a cursorable B-tree index on this target container property "
-                        f"to enable efficient query traversal."
-                    ),
-                    fix="Add a cursorable B-tree index on the target direct relation property",
-                    code=self.code,
-                )
-            )
+            targets.append(resolved)
 
-        return recommendations
+        return targets

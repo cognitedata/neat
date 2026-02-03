@@ -46,72 +46,74 @@ function groupIssues(issuesList) {
     return grouped;
 }
 
-function renderFixedIssue(issue) {
-    // Render a fixed issue with its list of specific changes
-    const items = issue.items || [];
-    const hasRelationships = items.some(item => item.source && item.dest);
-    
-    let itemsHtml = '';
-    if (hasRelationships) {
-        // Render as relationship list with highlighted container names and constraint IDs
-        itemsHtml = `
-            <ul class="fix-items-list">
-                ${items.map(item => {
-                    if (item.source && item.dest) {
-                        const isRemove = item.action === 'remove';
-                        const itemClass = isRemove ? 'fix-item fix-item-remove' : 'fix-item fix-item-add';
-                        const constraintId = item.constraint_id || '';
-                        
-                        // Build the arrow section with constraint ID
-                        let arrowSection;
-                        if (isRemove) {
-                            arrowSection = `
-                                <span class="constraint-arrow constraint-arrow-remove">
-                                    <span class="constraint-dash">–</span>
-                                    <span class="constraint-id">${constraintId}</span>
-                                    <span class="constraint-arrow-symbol"><span class="arrow-line">→</span><span class="arrow-cross">✕</span></span>
-                                </span>
-                            `;
-                        } else {
-                            arrowSection = `
-                                <span class="constraint-arrow constraint-arrow-add">
-                                    <span class="constraint-dash">–</span>
-                                    <span class="constraint-id">${constraintId}</span>
-                                    <span class="constraint-arrow-symbol">→</span>
-                                </span>
-                            `;
-                        }
-                        
-                        return `<li class="${itemClass}">
-                            <span class="container-name">${item.source}</span>
-                            ${arrowSection}
-                            <span class="container-name">${item.dest}</span>
-                        </li>`;
-                    } else {
-                        return `<li class="fix-item">${item.description}</li>`;
-                    }
-                }).join('')}
-            </ul>
+function renderFixedIssueContent(issue) {
+    // Render just the content part of a fixed issue (for use in grouped items)
+    if (issue.fix_type === 'constraint' && issue.source_name && issue.dest_name) {
+        // Fancy rendering for constraint fixes
+        const isRemove = issue.action_type === 'remove';
+        const itemClass = isRemove ? 'fix-item fix-item-remove' : 'fix-item fix-item-add';
+        const constraintId = issue.constraint_id || '';
+        
+        let arrowSection;
+        if (isRemove) {
+            arrowSection = `
+                <span class="constraint-arrow constraint-arrow-remove">
+                    <span class="constraint-dash">–</span>
+                    <span class="constraint-id">${constraintId}</span>
+                    <span class="constraint-arrow-symbol"><span class="arrow-line">→</span><span class="arrow-cross">✕</span></span>
+                </span>
+            `;
+        } else {
+            arrowSection = `
+                <span class="constraint-arrow constraint-arrow-add">
+                    <span class="constraint-dash">–</span>
+                    <span class="constraint-id">${constraintId}</span>
+                    <span class="constraint-arrow-symbol">→</span>
+                </span>
+            `;
+        }
+        
+        return `
+            <div class="${itemClass}">
+                <span class="container-name">${issue.source_name}</span>
+                ${arrowSection}
+                <span class="container-name">${issue.dest_name}</span>
+            </div>
+        `;
+    } else if (issue.fix_type === 'index' && issue.container_name && issue.property_id) {
+        // Fancy rendering for index fixes
+        return `
+            <div class="fix-item fix-item-add">
+                <span class="container-name">${issue.container_name}</span>
+                <span class="constraint-arrow constraint-arrow-add">
+                    <span class="constraint-dash">.</span>
+                    <span class="constraint-id">${issue.property_id}</span>
+                    <span class="constraint-arrow-symbol">📇</span>
+                </span>
+                <span class="index-id">${issue.index_id}</span>
+            </div>
         `;
     } else {
-        // Render as simple list of descriptions
-        itemsHtml = `
-            <ul class="fix-items-list">
-                ${items.map(item => `<li class="fix-item">${item.description}</li>`).join('')}
-            </ul>
-        `;
+        // Default: just show message
+        return `<div class="issue-message">${issue.message}</div>`;
     }
+}
+
+function renderFixedIssue(issue) {
+    // Render a fixed issue with fancy UI for specific fix types
+    const codeLink = issue.code
+        ? `<span class="issue-code-link" onclick="event.stopPropagation(); window.open('https://cognite-neat.readthedocs-hosted.com/en/latest/validation/${issue.code.toLowerCase()}.html', '_blank')">${issue.code}</span>`
+        : '';
     
-    const countLabel = items.length === 1 ? '1 change' : `${items.length} changes`;
+    const contentHtml = renderFixedIssueContent(issue);
     
     return `
-        <div class="issue-item fixed-summary">
+        <div class="issue-item">
             <div class="issue-header">
                 <span class="issue-badge badge-Fixed">Fixed</span>
-                <span class="fix-count">${countLabel}</span>
+                ${codeLink}
             </div>
-            <div class="issue-message fixed-message">${issue.message}</div>
-            ${itemsHtml}
+            ${contentHtml}
         </div>
     `;
 }
@@ -141,9 +143,50 @@ function renderIssues() {
         return;
     }
 
-    // Check if we're showing fixed issues (they have special rendering)
+    // Check if we're showing fixed issues (they use same grouping as regular issues)
     if (currentFilter === 'Fixed') {
-        const html = filtered.map(issue => renderFixedIssue(issue));
+        const grouped = groupIssues(filtered);
+        const html = [];
+        
+        grouped.forEach((groupIssues, key) => {
+            const firstIssue = groupIssues[0];
+            const count = groupIssues.length;
+            const isExpanded = expandedGroups.has(key);
+            const codeLink = firstIssue.code
+                ? `<span class="issue-code-link" onclick="event.stopPropagation(); window.open('https://cognite-neat.readthedocs-hosted.com/en/latest/validation/${firstIssue.code.toLowerCase()}.html', '_blank')">${firstIssue.code}</span>`
+                : '';
+
+            if (count === 1) {
+                // Single fix - render with fancy UI
+                html.push(renderFixedIssue(firstIssue));
+            } else {
+                // Grouped fixes
+                html.push(`
+                    <div class="issue-group ${isExpanded ? 'expanded' : ''}">
+                        <div class="issue-group-header" onclick="toggleGroup_${uniqueId}('${key}')">
+                            <div class="issue-group-info">
+                                <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
+                                <span class="issue-badge badge-Fixed">Fixed</span>
+                                ${codeLink}
+                                <span class="issue-count">${count} fixes</span>
+                            </div>
+                        </div>
+                        <div class="issue-group-items">
+                            ${groupIssues.map((issue, idx) => {
+                                const content = renderFixedIssueContent(issue);
+                                return `
+                                    <div class="issue-item grouped">
+                                        <div class="issue-number">#${idx + 1}</div>
+                                        ${content}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `);
+            }
+        });
+        
         listContainer.innerHTML = html.join('');
         return;
     }
