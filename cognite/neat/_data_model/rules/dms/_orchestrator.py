@@ -2,11 +2,11 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 
 from cognite.neat._data_model._analysis import ValidationResources
+from cognite.neat._data_model._fix_actions import FixAction
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._schema import RequestSchema
-from cognite.neat._data_model.rules._fix_actions import FixAction
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import Issue
 from cognite.neat._utils.auxiliary import get_concrete_subclasses

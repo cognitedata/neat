@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from cognite.neat._data_model._fix_actions import FixAction
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
-from cognite.neat._data_model.rules._fix_actions import FixAction
 from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError
 from cognite.neat._state_machine import State
 

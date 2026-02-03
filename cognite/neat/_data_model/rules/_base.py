@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import ClassVar
 
 from cognite.neat._data_model._analysis import ValidationResources
-from cognite.neat._data_model.rules._fix_actions import FixAction
+from cognite.neat._data_model._fix_actions import FixAction
 from cognite.neat._issues import ConsistencyError, Recommendation
 
 

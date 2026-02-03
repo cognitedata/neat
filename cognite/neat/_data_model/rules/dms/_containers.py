@@ -1,44 +1,16 @@
 """Validators for checking containers in the data model."""
 
-from collections.abc import Callable
-
 from pyparsing import cast
 
+from cognite.neat._data_model._fix_actions import FixAction
+from cognite.neat._data_model._fix_helpers import make_remove_constraint_fn
 from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._references import ContainerReference
-from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
-from cognite.neat._data_model.rules._fix_actions import FixAction
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import ConsistencyError
 
 BASE_CODE = "NEAT-DMS-CONTAINER"
-
-
-def _make_remove_constraint_fn(src: ContainerReference, dst: ContainerReference) -> Callable[[RequestSchema], None]:
-    """Create a closure that removes a requires constraint from src to dst.
-
-    Removes ALL requires constraints pointing from src to dst, regardless of
-    whether they have __auto suffix or not. This is used for cycle breaking
-    where the constraint must be removed to fix the error.
-    """
-
-    def apply(schema: RequestSchema) -> None:
-        for container in schema.containers:
-            if container.as_reference() == src and container.constraints:
-                # Find and remove ALL constraints pointing to dst
-                to_remove: list[str] = []
-                for constraint_id, constraint in container.constraints.items():
-                    if isinstance(constraint, RequiresConstraintDefinition) and constraint.require == dst:
-                        to_remove.append(constraint_id)
-                for constraint_id in to_remove:
-                    del container.constraints[constraint_id]
-                # Clean up empty constraints dict
-                if not container.constraints:
-                    container.constraints = None
-                break
-
-    return apply
 
 
 class ExternalContainerDoesNotExist(DataModelRule):
@@ -319,7 +291,7 @@ class RequiresConstraintCycle(DataModelRule):
                             message="Removed requires constraints to break cycle",
                             target_type="container",
                             target_ref=src,
-                            apply=_make_remove_constraint_fn(src, dst),
+                            apply=make_remove_constraint_fn(src, dst, auto_only=False),
                             priority=self.fix_priority,
                             action_type="remove",
                             source_name=src.external_id,

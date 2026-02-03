@@ -3,7 +3,7 @@ import uuid
 from collections import defaultdict
 from typing import Any
 
-from cognite.neat._data_model.rules._fix_actions import FixAction
+from cognite.neat._data_model._fix_actions import FixAction
 from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError, Recommendation
 from cognite.neat._session._html._render import render
 from cognite.neat._store import NeatStore

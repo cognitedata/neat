@@ -5,9 +5,9 @@ from typing import Any
 import pytest
 
 from cognite.neat._data_model._analysis import ValidationResources
+from cognite.neat._data_model._fix_actions import FixAction
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._references import ContainerReference
-from cognite.neat._data_model.rules._fix_actions import FixAction
 from cognite.neat._data_model.rules.dms._containers import RequiresConstraintCycle
 from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelFixer
 from cognite.neat._data_model.rules.dms._performance import (
@@ -357,30 +357,30 @@ class TestConstraintIdGeneration:
 
     def test_auto_constraint_id_within_limit(self) -> None:
         """Test that generated constraint IDs are within the 43-character limit."""
-        from cognite.neat._data_model.rules.dms._performance import (
+        from cognite.neat._data_model._fix_helpers import (
             MAX_CONSTRAINT_ID_LENGTH,
-            _make_auto_constraint_id,
+            make_auto_constraint_id,
         )
 
         # Short external_id should work normally
         short_ref = ContainerReference(space="test", external_id="ShortName")
-        constraint_id = _make_auto_constraint_id(short_ref)
+        constraint_id = make_auto_constraint_id(short_ref)
         assert constraint_id == "ShortName__auto"
         assert len(constraint_id) <= MAX_CONSTRAINT_ID_LENGTH
 
     def test_auto_constraint_id_truncates_long_names_with_hash(self) -> None:
         """Test that long external_ids are truncated with hash to ensure uniqueness."""
-        from cognite.neat._data_model.rules.dms._performance import (
+        from cognite.neat._data_model._fix_helpers import (
             AUTO_SUFFIX,
             HASH_LENGTH,
             MAX_CONSTRAINT_ID_LENGTH,
-            _make_auto_constraint_id,
+            make_auto_constraint_id,
         )
 
         # External ID that's too long (50 characters)
         long_name = "A" * 50
         long_ref = ContainerReference(space="test", external_id=long_name)
-        constraint_id = _make_auto_constraint_id(long_ref)
+        constraint_id = make_auto_constraint_id(long_ref)
 
         # Should be exactly at the limit
         assert len(constraint_id) == MAX_CONSTRAINT_ID_LENGTH
@@ -394,50 +394,50 @@ class TestConstraintIdGeneration:
 
     def test_auto_constraint_id_hash_ensures_uniqueness(self) -> None:
         """Test that different long names with same prefix get different hashes."""
-        from cognite.neat._data_model.rules.dms._performance import _make_auto_constraint_id
+        from cognite.neat._data_model._fix_helpers import make_auto_constraint_id
 
         # Two containers with same first 28 chars but different endings
         prefix = "A" * 28
         ref1 = ContainerReference(space="test", external_id=prefix + "XXXXXXXXXXXXXXX")
         ref2 = ContainerReference(space="test", external_id=prefix + "YYYYYYYYYYYYYYY")
 
-        constraint_id1 = _make_auto_constraint_id(ref1)
-        constraint_id2 = _make_auto_constraint_id(ref2)
+        constraint_id1 = make_auto_constraint_id(ref1)
+        constraint_id2 = make_auto_constraint_id(ref2)
 
         # Should be different due to different hashes
         assert constraint_id1 != constraint_id2
 
     def test_auto_constraint_id_exactly_at_limit_no_hash(self) -> None:
         """Test external_id that's exactly at the max base length (37 chars) needs no hash."""
-        from cognite.neat._data_model.rules.dms._performance import (
+        from cognite.neat._data_model._fix_helpers import (
             AUTO_SUFFIX,
             MAX_BASE_ID_LENGTH_NO_HASH,
             MAX_CONSTRAINT_ID_LENGTH,
-            _make_auto_constraint_id,
+            make_auto_constraint_id,
         )
 
         # External ID exactly at MAX_BASE_ID_LENGTH_NO_HASH (37 characters)
         exact_name = "B" * MAX_BASE_ID_LENGTH_NO_HASH
         exact_ref = ContainerReference(space="test", external_id=exact_name)
-        constraint_id = _make_auto_constraint_id(exact_ref)
+        constraint_id = make_auto_constraint_id(exact_ref)
 
         assert len(constraint_id) == MAX_CONSTRAINT_ID_LENGTH
         assert constraint_id == exact_name + AUTO_SUFFIX
 
     def test_auto_constraint_id_one_over_limit_uses_hash(self) -> None:
         """Test external_id that's 1 char over the limit uses hash."""
-        from cognite.neat._data_model.rules.dms._performance import (
+        from cognite.neat._data_model._fix_helpers import (
             AUTO_SUFFIX,
             HASH_LENGTH,
             MAX_BASE_ID_LENGTH_NO_HASH,
             MAX_CONSTRAINT_ID_LENGTH,
-            _make_auto_constraint_id,
+            make_auto_constraint_id,
         )
 
         # External ID 1 character over the limit
         over_name = "C" * (MAX_BASE_ID_LENGTH_NO_HASH + 1)
         over_ref = ContainerReference(space="test", external_id=over_name)
-        constraint_id = _make_auto_constraint_id(over_ref)
+        constraint_id = make_auto_constraint_id(over_ref)
 
         assert len(constraint_id) == MAX_CONSTRAINT_ID_LENGTH
         assert constraint_id.endswith(AUTO_SUFFIX)

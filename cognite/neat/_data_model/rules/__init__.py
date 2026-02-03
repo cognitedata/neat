@@ -1,5 +1,6 @@
+from cognite.neat._data_model._fix_actions import FixAction
+
 from ._base import NeatRule
-from ._fix_actions import FixAction
 
 __all__ = [
     "FixAction",
