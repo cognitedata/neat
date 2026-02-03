@@ -39,6 +39,7 @@ from ._limits import (
 from ._orchestrator import DmsDataModelRulesOrchestrator
 from ._performance import (
     MissingRequiresConstraint,
+    MissingReverseDirectRelationTargetIndex,
     SuboptimalRequiresConstraint,
     UnresolvableQueryPerformance,
 )
@@ -60,6 +61,7 @@ __all__ = [
     "ExternalContainerPropertyDoesNotExist",
     "ImplementedViewNotExisting",
     "MissingRequiresConstraint",
+    "MissingReverseDirectRelationTargetIndex",
     "RequiredContainerDoesNotExist",
     "RequiresConstraintCycle",
     "ReverseConnectionContainerMissing",

@@ -8,6 +8,7 @@ from cognite.neat._data_model.models.dms._references import ContainerDirectRefer
 from cognite.neat._data_model.models.dms._view_property import SingleReverseDirectRelationPropertyRequest
 from cognite.neat._data_model.rules.dms import (
     DmsDataModelRulesOrchestrator,
+    MissingReverseDirectRelationTargetIndex,
     ReverseConnectionContainerMissing,
     ReverseConnectionContainerPropertyMissing,
     ReverseConnectionContainerPropertyWrongType,
@@ -34,6 +35,17 @@ PROBLEMS = {
     ReverseConnectionTargetMissing: {"reverseToAttribute", "reverseToDirectWithoutTyping"},
     ReverseConnectionPointsToAncestor: {"innerReflection"},
     ReverseConnectionTargetMismatch: {"reverseSourceToTargetViewConnection"},
+}
+
+# Alpha validators tested separately since they require enable_alpha_validators=True
+ALPHA_PROBLEMS = {
+    MissingReverseDirectRelationTargetIndex: {"reverseSourceToAnotheViewConnection", "innerReflection"},
+}
+
+# Reverse connections that should NOT be flagged (correctly configured)
+ALPHA_NOT_FLAGGED = {
+    # Has cursorable B-tree index on target direct relation
+    MissingReverseDirectRelationTargetIndex: {"reverseToIndexedDirectTarget", "reverseToListDirectTarget"},
 }
 
 
@@ -101,3 +113,55 @@ def test_validation_deep(
                     break
 
     assert found_problematic_reversals == actual_problematic_reversal
+
+
+@pytest.mark.parametrize("profile", ["deep-additive", "legacy-additive"])
+def test_missing_reverse_direct_relation_target_index(
+    profile: Literal["deep-additive", "legacy-additive"],
+) -> None:
+    config = internal_profiles()[profile]
+    mode = config.modeling.mode
+    can_run_validator = config.validation.can_run_validator
+
+    local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+        "bi_directional_connections", "for_validators", modus_operandi=mode, include_cdm=False, format="snapshots"
+    )
+    data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
+
+    on_success = DmsDataModelRulesOrchestrator(
+        cdf_snapshot=cdf_snapshot,
+        limits=SchemaLimits(),
+        modus_operandi=mode,
+        can_run_validator=can_run_validator,
+        enable_alpha_validators=True,
+    )
+    on_success.run(data_model)
+    by_code = on_success.issues.by_code()
+
+    subset_problematic = {
+        class_: ALPHA_PROBLEMS[class_]
+        for class_ in ALPHA_PROBLEMS.keys()
+        if can_run_validator(class_.code, class_.issue_type)
+    }
+    assert set(class_.code for class_ in subset_problematic.keys()) - set(by_code.keys()) == set()
+
+    # here we check that all expected problematic reversals are found
+    found_problematic_reversals = set()
+    actual_problematic_reversal = set()
+    for class_, ill_reverse_connections in subset_problematic.items():
+        for ill_reverse in ill_reverse_connections:
+            actual_problematic_reversal.add(ill_reverse)
+            for issue in by_code[class_.code]:
+                if ill_reverse in issue.message:
+                    found_problematic_reversals.add(ill_reverse)
+                    break
+
+    assert found_problematic_reversals == actual_problematic_reversal
+
+    # Verify that correctly configured reverse connections are NOT flagged
+    for class_, valid_reverse_connections in ALPHA_NOT_FLAGGED.items():
+        if not can_run_validator(class_.code, class_.issue_type):
+            continue
+        for valid_reverse in valid_reverse_connections:
+            for issue in by_code.get(class_.code, []):
+                assert valid_reverse not in issue.message, f"Should not flag '{valid_reverse}'"

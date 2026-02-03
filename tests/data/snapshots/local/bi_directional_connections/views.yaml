@@ -260,10 +260,10 @@
   externalId: DescendantView
   version: v1
   implements:
-  - space: my_space
-    externalId: AncestorView
-    version: v1
-    type: view
+    - space: my_space
+      externalId: AncestorView
+      version: v1
+      type: view
   properties:
     innerReflection:
       connectionType: single_reverse_direct_relation
@@ -279,3 +279,69 @@
           version: v1
           type: view
         identifier: outerReflection
+- space: my_space
+  externalId: IndexedDirectView
+  version: v1
+  properties:
+    indexedDirectRelationTarget:
+      container:
+        space: my_space
+        externalId: IndexedDirectContainer
+        type: container
+      containerPropertyIdentifier: indexedDirectRelationTarget
+      source:
+        space: my_space
+        externalId: TargetView
+        version: v1
+        type: view
+- space: my_space
+  externalId: ListDirectView
+  version: v1
+  properties:
+    listDirectRelationTarget:
+      container:
+        space: my_space
+        externalId: ListDirectContainer
+        type: container
+      containerPropertyIdentifier: listDirectRelationTarget
+      source:
+        space: my_space
+        externalId: TargetView
+        version: v1
+        type: view
+- space: my_space
+  externalId: ReverseToIndexedDirectView
+  version: v1
+  properties:
+    reverseToIndexedDirectTarget:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: IndexedDirectView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: IndexedDirectView
+          version: v1
+          type: view
+        identifier: indexedDirectRelationTarget
+- space: my_space
+  externalId: ReverseToListDirectView
+  version: v1
+  properties:
+    reverseToListDirectTarget:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: ListDirectView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: ListDirectView
+          version: v1
+          type: view
+        identifier: listDirectRelationTarget
