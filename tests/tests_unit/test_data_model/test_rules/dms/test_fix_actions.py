@@ -23,7 +23,7 @@ from tests.data import SNAPSHOT_CATALOG
 class TestFixAction:
     """Tests for the FixAction class."""
 
-W    def test_fix_action_is_frozen(self) -> None:
+    def test_fix_action_is_frozen(self) -> None:
         """Test that FixAction is frozen (immutable)."""
         source = ContainerReference(space="test", external_id="SourceContainer")
         dest = ContainerReference(space="test", external_id="DestContainer")
@@ -284,6 +284,7 @@ class TestDmsDataModelFixer:
             c.as_reference(): dict(c.constraints) if c.constraints else {} for c in data_model.containers
         }
         assert constraints_before == constraints_after
+
 
 class TestAppliedFixesTracking:
     """Tests for tracking which fixes were applied by the fixer."""
