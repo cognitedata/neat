@@ -236,6 +236,10 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
             if not resolved.container or not resolved.container_property:
                 continue
 
+            # Skip CDM containers - we can't modify these
+            if resolved.container_ref.space in COGNITE_SPACES:
+                continue
+
             # Must be a DirectNodeRelation type (other types handled by ReverseConnectionContainerPropertyWrongType)
             if not isinstance(resolved.container_property.type, DirectNodeRelation):
                 continue
@@ -257,10 +261,9 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
                 Recommendation(
                     message=(
                         f"View '{resolved.reverse_view_ref!s}' has a reverse direct relation "
-                        f"'{resolved.reverse_property_id}' that points to container "
-                        f"'{resolved.container_ref!s}' property '{resolved.container_property_id}'. "
-                        f"Add a cursorable B-tree index on this target container property "
-                        f"to enable efficient query traversal."
+                        f"'{resolved.reverse_property_id}' that cannot be efficently traversed through queries, "
+                        f"since it points to container {resolved.container_ref!s}' "
+                        f"property '{resolved.container_property_id}' that is unindexed. "
                     ),
                     fix="Add a cursorable B-tree index on the target direct relation property",
                     code=self.code,
