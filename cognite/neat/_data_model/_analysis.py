@@ -628,6 +628,29 @@ class ValidationResources:
 
         return self.graph_cycles(self.implements_graph)
 
+    def get_requires_constraints(
+        self, container: ContainerRequest, auto_only: bool = False
+    ) -> list[tuple[str, RequiresConstraintDefinition]]:
+        """Iterate over requires constraints in a container.
+
+        Args:
+            container: The container to iterate over.
+            auto_only: If True, only return auto-generated constraints (ending with __auto).
+
+        Returns:
+            List of (constraint_id, constraint_definition) tuples.
+        """
+        if not container.constraints:
+            return []
+        result: list[tuple[str, RequiresConstraintDefinition]] = []
+        for constraint_id, constraint in container.constraints.items():
+            if not isinstance(constraint, RequiresConstraintDefinition):
+                continue
+            if auto_only and not constraint_id.endswith("__auto"):
+                continue
+            result.append((constraint_id, constraint))
+        return result
+
     @cached_property
     def requires_constraint_graph(self) -> nx.DiGraph:
         """Build a directed graph of container requires constraints.
@@ -647,11 +670,9 @@ class ValidationResources:
         # Add edges for requires constraints from all known containers
         for container_ref in list(graph.nodes()):
             container = self.select_container(container_ref)
-            if not container or not container.constraints:
+            if not container:
                 continue
-            for constraint_id, constraint in container.constraints.items():
-                if not isinstance(constraint, RequiresConstraintDefinition):
-                    continue
+            for constraint_id, constraint in self.get_requires_constraints(container):
                 is_auto = constraint_id.endswith("__auto")
                 graph.add_edge(container_ref, constraint.require, is_auto=is_auto)
 
