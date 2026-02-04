@@ -1,8 +1,8 @@
+from collections.abc import Iterator
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
-from pyparsing import Iterator
 
 from cognite.neat._config import (
     ModelingConfig,

@@ -2,11 +2,11 @@ import math
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
+from functools import cached_property
 from itertools import chain, combinations
 from typing import Literal, TypeAlias, TypeVar
 
 import networkx as nx
-from pyparsing import cached_property
 
 from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._data_model._constants import COGNITE_SPACES
