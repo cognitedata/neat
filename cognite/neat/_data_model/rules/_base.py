@@ -7,22 +7,7 @@ from cognite.neat._issues import ConsistencyError, Recommendation
 
 
 class NeatRule(ABC):
-    """Base class for data model validation rules.
-
-    Validators check data models for issues and can optionally provide fix actions.
-    Each validator must define:
-    - code: Unique identifier for this validation rule (e.g., "NEAT-DMS-PERFORMANCE-001")
-    - issue_type: The type of issue this validator produces (ConsistencyError or Recommendation)
-    - validate(): Method that returns a list of issues found
-
-    For fixable validators, set `fixable = True` and implement the `fix()` method.
-
-    Attributes:
-        code: Unique code identifying this validator.
-        issue_type: Type of issue this validator produces.
-        alpha: Whether this validator is still in alpha/development.
-        fixable: Whether this validator can produce fix actions.
-    """
+    """Rules for data model principles."""
 
     code: ClassVar[str]
     issue_type: ClassVar[type[ConsistencyError] | type[Recommendation]]
@@ -37,23 +22,10 @@ class NeatRule(ABC):
 
     @abstractmethod
     def validate(self) -> list[ConsistencyError] | list[Recommendation] | list[ConsistencyError | Recommendation]:
-        """Execute rule validation.
-
-        Returns:
-            List of issues found during validation.
-        """
+        """Execute rule validation."""
         ...
 
     def fix(self) -> list[FixAction]:
-        """Return fix actions for issues identified by this validator.
+        """Fix the issues found by the validator producing a fixed object."""
 
-        Override this method in fixable validators to provide automatic fixes.
-        Each FixAction represents an atomic change that can be applied to the schema.
-
-        Returns:
-            List of FixAction objects.
-
-        Raises:
-            NotImplementedError: If the validator does not implement fix().
-        """
-        raise NotImplementedError(f"{type(self).__name__} does not implement fix()")
+        raise NotImplementedError("This rule does not implement fix()")

@@ -23,7 +23,7 @@ from tests.data import SNAPSHOT_CATALOG
 class TestFixAction:
     """Tests for the FixAction class."""
 
-    def test_fix_action_is_frozen(self) -> None:
+W    def test_fix_action_is_frozen(self) -> None:
         """Test that FixAction is frozen (immutable)."""
         source = ContainerReference(space="test", external_id="SourceContainer")
         dest = ContainerReference(space="test", external_id="DestContainer")
