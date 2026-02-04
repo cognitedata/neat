@@ -1,3 +1,4 @@
+import warnings
 from types import MethodType
 from typing import Any, Literal
 
@@ -16,7 +17,7 @@ from cognite.neat._data_model.exporters import (
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookOptions
 from cognite.neat._data_model.importers import DMSAPICreator, DMSAPIImporter, DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
-from cognite.neat._data_model.rules.dms import DmsDataModelFixer, DmsDataModelRulesOrchestrator
+from cognite.neat._data_model.rules.dms import DmsDataModelRulesOrchestrator
 from cognite.neat._exceptions import UserInputError
 from cognite.neat._state_machine import PhysicalState
 from cognite.neat._store._store import NeatStore
@@ -89,18 +90,19 @@ class ReadPhysicalDataModel:
         self._client = client
         self._config = config
 
-    def _create_on_success(self, fix: bool) -> DmsDataModelRulesOrchestrator | DmsDataModelFixer:
+    def _create_on_success(self, fix: bool) -> DmsDataModelRulesOrchestrator:
         """Create the appropriate on_success handler based on whether fixes should be applied."""
-        if fix:
-            return DmsDataModelFixer(
-                modus_operandi=self._config.modeling.mode,
-                cdf_snapshot=self._store.cdf_snapshot,
-                limits=self._store.cdf_limits,
-                can_run_validator=self._config.validation.can_run_validator,
-                enable_alpha_validators=self._config.alpha.enable_experimental_validators,
-                apply_fixes=True,
+        # Only apply fixes if both fix=True and the alpha flag is enabled
+        apply_fixes = fix and self._config.alpha.fix_validation_issues
+        if fix and not self._config.alpha.fix_validation_issues:
+            warnings.warn(
+                "fix=True has no effect without enabling alpha.fix_validation_issues. "
+                "Set neat.config.alpha.fix_validation_issues = True to enable automatic fixes.",
+                UserWarning,
+                stacklevel=3,
             )
         return DmsDataModelRulesOrchestrator(
+            apply_fixes=apply_fixes,
             modus_operandi=self._config.modeling.mode,
             cdf_snapshot=self._store.cdf_snapshot,
             limits=self._store.cdf_limits,

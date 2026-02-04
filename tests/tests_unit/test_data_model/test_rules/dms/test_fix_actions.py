@@ -15,7 +15,7 @@ from cognite.neat._data_model.deployer.data_classes import AddedField, SeverityT
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._references import ContainerReference
-from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelFixer
+from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelRulesOrchestrator
 from cognite.neat._data_model.rules.dms._performance import MissingRequiresConstraint
 from tests.data import SNAPSHOT_CATALOG
 
@@ -201,11 +201,11 @@ class TestMissingRequiresConstraintFix:
         assert all(isinstance(action, FixAction) for action in fix_actions)
 
 
-class TestDmsDataModelFixer:
-    """Tests for the DmsDataModelFixer orchestrator."""
+class TestOrchestratorWithFixes:
+    """Tests for the orchestrator with apply_fixes enabled."""
 
-    def test_fixer_applies_missing_constraint_fixes(self) -> None:
-        """Test that the fixer adds missing requires constraints."""
+    def test_orchestrator_applies_missing_constraint_fixes(self) -> None:
+        """Test that the orchestrator adds missing requires constraints when apply_fixes=True."""
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
             "requires_constraints",
             "for_validators",
@@ -227,18 +227,18 @@ class TestDmsDataModelFixer:
         if not available_fixes:
             pytest.skip("No fixes available in test data")
 
-        # Run the fixer
-        fixer = DmsDataModelFixer(
+        # Run the orchestrator with fixes
+        orchestrator = DmsDataModelRulesOrchestrator(
             cdf_snapshot=cdf_snapshot,
             limits=SchemaLimits(),
             modus_operandi="additive",
             enable_alpha_validators=True,
             apply_fixes=True,
         )
-        fixer.run(data_model)
+        orchestrator.run(data_model)
 
         # Check that fixes were applied
-        assert len(fixer.applied_fixes) > 0
+        assert len(orchestrator.applied_fixes) > 0
 
         # Verify at least one constraint with __auto suffix was added
         auto_constraints_found = False
@@ -250,8 +250,8 @@ class TestDmsDataModelFixer:
                         break
         assert auto_constraints_found, "Expected at least one __auto constraint to be added"
 
-    def test_fixer_without_apply_does_not_modify(self) -> None:
-        """Test that fixer with apply_fixes=False doesn't modify the schema."""
+    def test_orchestrator_without_apply_does_not_modify(self) -> None:
+        """Test that orchestrator with apply_fixes=False doesn't modify the schema."""
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
             "requires_constraints",
             "for_validators",
@@ -266,18 +266,18 @@ class TestDmsDataModelFixer:
             c.as_reference(): dict(c.constraints) if c.constraints else {} for c in data_model.containers
         }
 
-        # Run fixer without applying
-        fixer = DmsDataModelFixer(
+        # Run orchestrator without applying fixes
+        orchestrator = DmsDataModelRulesOrchestrator(
             cdf_snapshot=cdf_snapshot,
             limits=SchemaLimits(),
             modus_operandi="additive",
             enable_alpha_validators=True,
             apply_fixes=False,
         )
-        fixer.run(data_model)
+        orchestrator.run(data_model)
 
         # Check that no fixes were applied
-        assert len(fixer.applied_fixes) == 0
+        assert len(orchestrator.applied_fixes) == 0
 
         # Verify schema wasn't modified
         constraints_after = {
@@ -287,10 +287,10 @@ class TestDmsDataModelFixer:
 
 
 class TestAppliedFixesTracking:
-    """Tests for tracking which fixes were applied by the fixer."""
+    """Tests for tracking which fixes were applied by the orchestrator."""
 
-    def test_fixer_tracks_applied_fixes(self) -> None:
-        """Test that the fixer correctly tracks applied fix actions."""
+    def test_orchestrator_tracks_applied_fixes(self) -> None:
+        """Test that the orchestrator correctly tracks applied fix actions."""
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
             "requires_constraints",
             "for_validators",
@@ -300,25 +300,25 @@ class TestAppliedFixesTracking:
         )
         data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
 
-        # Run the fixer with fixes applied
-        fixer = DmsDataModelFixer(
+        # Run the orchestrator with fixes applied
+        orchestrator = DmsDataModelRulesOrchestrator(
             cdf_snapshot=cdf_snapshot,
             limits=SchemaLimits(),
             modus_operandi="additive",
             enable_alpha_validators=True,
             apply_fixes=True,
         )
-        fixer.run(data_model)
+        orchestrator.run(data_model)
 
         # If any fixes were applied, check their structure
-        if len(fixer.applied_fixes) > 0:
+        if len(orchestrator.applied_fixes) > 0:
             # Each applied fix should be a FixAction with proper structure
-            for fix_action in fixer.applied_fixes:
+            for fix_action in orchestrator.applied_fixes:
                 assert isinstance(fix_action, FixAction)
                 assert fix_action.message  # Specific action description
                 assert fix_action.code  # Validator code for grouping
 
-    def test_fixer_no_applied_fixes_when_not_applying(self) -> None:
+    def test_orchestrator_no_applied_fixes_when_not_applying(self) -> None:
         """Test that applied_fixes is empty when apply_fixes is False."""
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
             "requires_constraints",
@@ -329,18 +329,18 @@ class TestAppliedFixesTracking:
         )
         data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
 
-        # Run fixer without applying
-        fixer = DmsDataModelFixer(
+        # Run orchestrator without applying fixes
+        orchestrator = DmsDataModelRulesOrchestrator(
             cdf_snapshot=cdf_snapshot,
             limits=SchemaLimits(),
             modus_operandi="additive",
             enable_alpha_validators=True,
             apply_fixes=False,
         )
-        fixer.run(data_model)
+        orchestrator.run(data_model)
 
         # No fixes applied
-        assert len(fixer.applied_fixes) == 0
+        assert len(orchestrator.applied_fixes) == 0
 
 
 class TestConstraintIdGeneration:

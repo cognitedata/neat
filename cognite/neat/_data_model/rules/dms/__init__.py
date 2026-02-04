@@ -36,7 +36,7 @@ from ._limits import (
     ViewImplementsCountIsOutOfLimits,
     ViewPropertyCountIsOutOfLimits,
 )
-from ._orchestrator import DmsDataModelFixer, DmsDataModelRulesOrchestrator
+from ._orchestrator import DmsDataModelRulesOrchestrator
 from ._performance import (
     MissingRequiresConstraint,
     MissingReverseDirectRelationTargetIndex,
@@ -54,7 +54,6 @@ __all__ = [
     "DataModelMissingDescription",
     "DataModelMissingName",
     "DataModelViewCountIsOutOfLimits",
-    "DmsDataModelFixer",
     "DmsDataModelRulesOrchestrator",
     "EnumerationMissingDescription",
     "EnumerationMissingName",
