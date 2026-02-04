@@ -110,7 +110,7 @@ class MissingRequiresConstraint(DataModelRule):
                             item_severity=SeverityType.WARNING,
                         )
                     ],
-                    message=f"Added requires constraint on container {src!s} to container {dst!s}",
+                    message="Added requires constraint to optimize query performance",
                 )
             )
 
@@ -201,7 +201,7 @@ class SuboptimalRequiresConstraint(DataModelRule):
                                 item_severity=SeverityType.WARNING,
                             )
                         ],
-                        message=f"Removed requires constraint on container {src!s} to container {dst!s}",
+                        message="Removed suboptimal requires constraint",
                     )
                 )
 
@@ -353,7 +353,7 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
                             item_severity=SeverityType.SAFE,
                         )
                     ],
-                    message=f"Added cursorable index on container {resolved.container_ref!s} property '{resolved.container_property_id}'",
+                    message="Added index to enable efficient querying through reverse direct relations",
                 )
             )
 

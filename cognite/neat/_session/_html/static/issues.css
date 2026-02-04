@@ -117,6 +117,7 @@
 
 .issue-fix-applied {
     margin-top: 12px;
+    margin-bottom: 8px;
     padding: 12px;
     background: #d1fae5;
     border-left: 3px solid #10b981;
@@ -189,16 +190,46 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
-    margin: 4px 0;
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 0;
     font-size: 13px;
 }
 
-.dark-mode .fix-item {
-    background: rgba(0, 0, 0, 0.2);
+/* When inside grouped items, use left border accent on the row */
+.issue-item.grouped {
+    margin: 4px 16px 4px 48px;
+    padding: 16px 20px;
+    border-left: 3px solid var(--border-color);
 }
+
+/* Fixed issue styling - green for add, red for remove */
+.issue-item.grouped.fix-add {
+    border-left-color: #10b981;
+}
+
+.issue-item.grouped.fix-remove {
+    border-left-color: #dc2626;
+}
+
+.dark-mode .issue-item.grouped.fix-add {
+    border-left-color: #34d399;
+}
+
+.dark-mode .issue-item.grouped.fix-remove {
+    border-left-color: #f87171;
+}
+
+.issue-item.grouped .fix-item,
+.issue-item.grouped .fix-item-add,
+.issue-item.grouped .fix-item-remove {
+    width: 100%;
+    background: none;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    border-left: none !important;
+}
+
 
 .container-name {
     font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
@@ -217,85 +248,101 @@
     border-color: rgba(56, 189, 248, 0.3);
 }
 
-/* Constraint arrow section: source – constraint_id → dest */
-.constraint-arrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+.constraint-arrow-symbol {
+    font-weight: 600;
+    font-size: 16px;
+    color: #059669;
+}
+
+.dark-mode .constraint-arrow-symbol {
+    color: #34d399;
+}
+
+.fix-item-remove .constraint-arrow-symbol {
+    color: #dc2626;
+}
+
+.dark-mode .fix-item-remove .constraint-arrow-symbol {
+    color: #f87171;
+}
+
+.fix-action-icon {
+    font-size: 14px;
+    font-weight: 700;
+    width: 20px;
+    text-align: center;
+}
+
+.fix-item-add .fix-action-icon {
+    color: #059669;
+}
+
+.dark-mode .fix-item-add .fix-action-icon {
+    color: #34d399;
+}
+
+.fix-item-remove .fix-action-icon {
+    color: #dc2626;
+}
+
+.dark-mode .fix-item-remove .fix-action-icon {
+    color: #f87171;
+}
+
+.property-dot {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.property-name {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
     font-size: 13px;
+    font-weight: 600;
+    color: #7c3aed;
+    background: rgba(124, 58, 237, 0.12);
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(124, 58, 237, 0.25);
 }
 
-.constraint-dash {
-    color: #9ca3af;
-    font-weight: 400;
+.dark-mode .property-name {
+    color: #a78bfa;
+    background: rgba(167, 139, 250, 0.15);
+    border-color: rgba(167, 139, 250, 0.3);
 }
 
-.constraint-id {
+.index-icon {
+    font-size: 14px;
+    color: #f59e0b;
+}
+
+.fix-identifier {
     font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
     font-size: 11px;
     color: #6b7280;
     background: rgba(107, 114, 128, 0.1);
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 3px;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    margin-left: auto;
 }
 
-.dark-mode .constraint-id {
+/* Compensate for padding in non-grouped items */
+.issue-item:not(.grouped) .fix-identifier {
+    margin-right: -20px;
+}
+
+/* Compensate for padding in grouped items */
+.issue-item.grouped .fix-identifier {
+    margin-right: -12px;
+}
+
+.dark-mode .fix-identifier {
     color: #9ca3af;
     background: rgba(156, 163, 175, 0.15);
 }
 
-.constraint-arrow-symbol {
-    font-weight: 500;
-}
-
-.constraint-arrow-add .constraint-arrow-symbol {
-    color: #059669;
-}
-
-.dark-mode .constraint-arrow-add .constraint-arrow-symbol {
-    color: #34d399;
-}
-
-.constraint-arrow-remove .constraint-arrow-symbol {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    color: #dc2626;
-}
-
-.dark-mode .constraint-arrow-remove .constraint-arrow-symbol {
-    color: #f87171;
-}
-
-.constraint-arrow-remove .constraint-id {
-    color: #b91c1c;
-    background: rgba(239, 68, 68, 0.1);
-    text-decoration: line-through;
-}
-
-.dark-mode .constraint-arrow-remove .constraint-id {
-    color: #fca5a5;
-    background: rgba(248, 113, 113, 0.1);
-}
-
-.arrow-line {
-    opacity: 0.5;
-}
-
-.arrow-cross {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 10px;
-    font-weight: 700;
-}
-
-/* Add action item styling */
-.fix-item-add {
+/* Add action item styling (for non-grouped single items) */
+.issue-item:not(.grouped) .fix-item-add {
     border-left: 3px solid #10b981;
 }
 
@@ -311,26 +358,27 @@
     border-color: rgba(56, 189, 248, 0.3);
 }
 
-/* Remove action item styling */
-.fix-item-remove {
-    border-left: 3px solid #f87171;
-    background: rgba(254, 202, 202, 0.3);
-}
-
-.dark-mode .fix-item-remove {
-    background: rgba(127, 29, 29, 0.3);
+/* Remove action item styling (for non-grouped single items) */
+.issue-item:not(.grouped) .fix-item-remove {
+    border-left: 3px solid #dc2626;
 }
 
 .fix-item-remove .container-name {
-    color: #b91c1c;
-    background: rgba(239, 68, 68, 0.12);
-    border-color: rgba(239, 68, 68, 0.25);
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.12);
+    border-color: rgba(220, 38, 38, 0.25);
 }
 
 .dark-mode .fix-item-remove .container-name {
     color: #fca5a5;
     background: rgba(248, 113, 113, 0.15);
     border-color: rgba(248, 113, 113, 0.3);
+}
+
+/* Strikethrough for removed constraint destination and identifier */
+.fix-item-remove .constraint-arrow-symbol ~ .container-name,
+.fix-item-remove .fix-identifier {
+    text-decoration: line-through;
 }
 
 .issue-fix-label {
@@ -407,12 +455,6 @@
     transform: rotate(0deg);
 }
 
-.issue-item.grouped {
-    margin: 4px 16px 4px 48px;
-    padding: 12px;
-    border-left: 3px solid var(--border-color);
-}
-
 .issue-number {
     display: inline-block;
     background: var(--bg-tertiary);
@@ -426,6 +468,10 @@
 
 .issue-fix.grouped {
     margin: 12px 16px 8px 48px;
+}
+
+.issue-fix-applied.grouped {
+    margin: 12px 20px 8px 48px;
 }
 
 .issue-code-link {
@@ -451,4 +497,38 @@
 .dark-mode .issue-code-link:hover {
     background: #1e3a8a;
     color: #93c5fd;
+}
+
+/* Empty state styling */
+.no-issues {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    min-height: 300px;
+}
+
+/* Info box styling */
+.info-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.6;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.info-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    opacity: 0.8;
 }

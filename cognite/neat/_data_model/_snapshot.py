@@ -76,7 +76,8 @@ class SchemaSnapshot(BaseModel, extra="ignore"):
         for container_ref, container in merged.containers.items():
             if cdf_container := cdf.containers.get(container_ref):
                 container.properties = {**cdf_container.properties, **container.properties}
-                container.constraints = {**(cdf_container.constraints or {}), **(container.constraints or {})} or None
+                # For constraints and indexes, local is the source of truth (not union with CDF)
+                # This allows removing constraints/indexes in additive mode by not including them locally
 
         return merged
 

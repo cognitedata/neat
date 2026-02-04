@@ -52,45 +52,31 @@ function renderFixedIssueContent(issue) {
         // Fancy rendering for constraint fixes
         const isRemove = issue.action_type === 'remove';
         const itemClass = isRemove ? 'fix-item fix-item-remove' : 'fix-item fix-item-add';
+        const actionIcon = isRemove ? '✕' : '✓';
+        const arrowSymbol = '→';
         const constraintId = issue.constraint_id || '';
-        
-        let arrowSection;
-        if (isRemove) {
-            arrowSection = `
-                <span class="constraint-arrow constraint-arrow-remove">
-                    <span class="constraint-dash">–</span>
-                    <span class="constraint-id">${constraintId}</span>
-                    <span class="constraint-arrow-symbol"><span class="arrow-line">→</span><span class="arrow-cross">✕</span></span>
-                </span>
-            `;
-        } else {
-            arrowSection = `
-                <span class="constraint-arrow constraint-arrow-add">
-                    <span class="constraint-dash">–</span>
-                    <span class="constraint-id">${constraintId}</span>
-                    <span class="constraint-arrow-symbol">→</span>
-                </span>
-            `;
-        }
-        
+        const fullPath = constraintId ? `${issue.source_name}.constraints.${constraintId}` : '';
+
         return `
             <div class="${itemClass}">
+                <span class="fix-action-icon">${actionIcon}</span>
                 <span class="container-name">${issue.source_name}</span>
-                ${arrowSection}
+                <span class="constraint-arrow-symbol">${arrowSymbol}</span>
                 <span class="container-name">${issue.dest_name}</span>
+                <span class="fix-identifier">${fullPath}</span>
             </div>
         `;
     } else if (issue.fix_type === 'index' && issue.container_name && issue.property_id) {
         // Fancy rendering for index fixes
+        const indexId = issue.index_id || '';
+        const fullPath = indexId ? `${issue.container_name}.indexes.${indexId}` : '';
         return `
             <div class="fix-item fix-item-add">
+                <span class="fix-action-icon">✓</span>
                 <span class="container-name">${issue.container_name}</span>
-                <span class="constraint-arrow constraint-arrow-add">
-                    <span class="constraint-dash">.</span>
-                    <span class="constraint-id">${issue.property_id}</span>
-                    <span class="constraint-arrow-symbol">📇</span>
-                </span>
-                <span class="index-id">${issue.index_id}</span>
+                <span class="property-dot">.</span>
+                <span class="property-name">${issue.property_id}</span>
+                <span class="fix-identifier">${fullPath}</span>
             </div>
         `;
     } else {
@@ -120,7 +106,15 @@ function renderIssues() {
     });
 
     if (filtered.length === 0) {
-        listContainer.innerHTML = '<div class="no-issues">No issues match your filters</div>';
+        if (currentFilter === 'Fixed') {
+            if (fixableCount > 0) {
+                listContainer.innerHTML = `<div class="no-issues"><div style="margin-bottom: 16px; text-align: center;">No fixes have been applied yet. <strong>${fixableCount} issue${fixableCount === 1 ? '' : 's'} can be automatically fixed.</strong></div><div class="info-box"><span class="info-icon">💡</span><div><strong>Tip:</strong> Read your data model with <code style="background: rgba(128, 128, 128, 0.15); padding: 2px 6px; border-radius: 3px; font-family: monospace; color: var(--text-primary);">fix=True</code> to automatically fix common issues.</div></div></div>`;
+            } else {
+                listContainer.innerHTML = '<div class="no-issues">No issues can be automatically fixed.</div>';
+            }
+        } else {
+            listContainer.innerHTML = '<div class="no-issues">No issues match your filters</div>';
+        }
         return;
     }
 
@@ -128,7 +122,7 @@ function renderIssues() {
     if (currentFilter === 'Fixed') {
         const grouped = groupIssues(filtered);
         const html = [];
-        
+
         grouped.forEach((groupIssues, key) => {
             const firstIssue = groupIssues[0];
             const count = groupIssues.length;
@@ -145,7 +139,10 @@ function renderIssues() {
                             <span class="issue-badge badge-Fixed">Fixed</span>
                             ${codeLink}
                         </div>
-                        <div class="issue-message">${firstIssue.message}</div>
+                        <div class="issue-fix-applied">
+                            <div class="issue-fix-label">✓ Applied Fix</div>
+                            <div class="issue-fix-content">${firstIssue.message}</div>
+                        </div>
                         ${renderFixedIssueContent(firstIssue)}
                     </div>
                 `);
@@ -162,12 +159,15 @@ function renderIssues() {
                             </div>
                         </div>
                         <div class="issue-group-items">
-                            <div class="issue-message grouped">${firstIssue.message}</div>
-                            ${groupIssues.map((issue, idx) => {
+                            <div class="issue-fix-applied grouped">
+                                <div class="issue-fix-label">✓ Applied Fix</div>
+                                <div class="issue-fix-content">${firstIssue.message}</div>
+                            </div>
+                            ${groupIssues.map((issue) => {
                                 const content = renderFixedIssueContent(issue);
+                                const fixClass = issue.action_type === 'remove' ? ' fix-remove' : ' fix-add';
                                 return `
-                                    <div class="issue-item grouped">
-                                        <div class="issue-number">#${idx + 1}</div>
+                                    <div class="issue-item grouped${fixClass}">
                                         ${content}
                                     </div>
                                 `;
@@ -177,7 +177,7 @@ function renderIssues() {
                 `);
             }
         });
-        
+
         listContainer.innerHTML = html.join('');
         return;
     }

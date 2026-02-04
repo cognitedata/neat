@@ -289,7 +289,7 @@ class RequiresConstraintCycle(DataModelRule):
                                 item_severity=SeverityType.WARNING,
                             )
                         ],
-                        message=f"Removed requires constraint: {src!s} → {dst!s}",
+                        message="Removed requires constraint to break cycle",
                     )
                 )
 
