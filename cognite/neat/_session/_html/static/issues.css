@@ -297,8 +297,13 @@
 }
 
 .property-dot {
-    color: #6b7280;
-    font-weight: 500;
+    color: #374151;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.dark-mode .property-dot {
+    color: #9ca3af;
 }
 
 .property-name {
