@@ -176,7 +176,7 @@ class Issues:
         fixed_count = len(self._applied_fixes)
         if self._config.alpha.fix_validation_issues:
             fixed_tab_html = f"""<div class="stat-item stat-fixed" data-filter="Fixed">
-                <span class="stat-number">{fixed_count}</span> Fixed
+                <span class="stat-number">{fixed_count}</span> Fixes
             </div>"""
         else:
             fixed_tab_html = ""

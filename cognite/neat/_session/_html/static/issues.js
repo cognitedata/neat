@@ -52,7 +52,7 @@ function renderFixedIssueContent(issue) {
         // Fancy rendering for constraint fixes
         const isRemove = issue.action_type === 'remove';
         const itemClass = isRemove ? 'fix-item fix-item-remove' : 'fix-item fix-item-add';
-        const actionIcon = isRemove ? '✕' : '✓';
+        const actionIcon = isRemove ? '×' : '✓';
         const arrowSymbol = '→';
         const constraintId = issue.constraint_id || '';
         const fullPath = constraintId ? `${issue.source_name}.constraints.${constraintId}` : '';

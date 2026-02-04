@@ -208,7 +208,7 @@
 }
 
 .issue-item.grouped.fix-remove {
-    border-left-color: #dc2626;
+    border-left-color: #ea580c;
 }
 
 .dark-mode .issue-item.grouped.fix-add {
@@ -216,7 +216,7 @@
 }
 
 .dark-mode .issue-item.grouped.fix-remove {
-    border-left-color: #f87171;
+    border-left-color: #fb923c;
 }
 
 .issue-item.grouped .fix-item,
@@ -259,11 +259,11 @@
 }
 
 .fix-item-remove .constraint-arrow-symbol {
-    color: #dc2626;
+    color: #ea580c;
 }
 
 .dark-mode .fix-item-remove .constraint-arrow-symbol {
-    color: #f87171;
+    color: #fb923c;
 }
 
 .fix-action-icon {
@@ -271,6 +271,13 @@
     font-weight: 700;
     width: 20px;
     text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fix-item-remove .fix-action-icon {
+    font-size: 16px;
 }
 
 .fix-item-add .fix-action-icon {
@@ -282,11 +289,11 @@
 }
 
 .fix-item-remove .fix-action-icon {
-    color: #dc2626;
+    color: #ea580c;
 }
 
 .dark-mode .fix-item-remove .fix-action-icon {
-    color: #f87171;
+    color: #fb923c;
 }
 
 .property-dot {
@@ -360,19 +367,19 @@
 
 /* Remove action item styling (for non-grouped single items) */
 .issue-item:not(.grouped) .fix-item-remove {
-    border-left: 3px solid #dc2626;
+    border-left: 3px solid #ea580c;
 }
 
 .fix-item-remove .container-name {
-    color: #dc2626;
-    background: rgba(220, 38, 38, 0.12);
-    border-color: rgba(220, 38, 38, 0.25);
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-color: rgba(14, 165, 233, 0.25);
 }
 
 .dark-mode .fix-item-remove .container-name {
-    color: #fca5a5;
-    background: rgba(248, 113, 113, 0.15);
-    border-color: rgba(248, 113, 113, 0.3);
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.3);
 }
 
 /* Strikethrough for removed constraint destination and identifier */
