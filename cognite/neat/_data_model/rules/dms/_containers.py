@@ -1,6 +1,7 @@
 """Validators for checking containers in the data model."""
 
-from typing import Iterable, cast
+from collections.abc import Iterable
+from typing import cast
 
 from cognite.neat._data_model._fix_actions import FixAction
 from cognite.neat._data_model._fix_helpers import find_requires_constraints
