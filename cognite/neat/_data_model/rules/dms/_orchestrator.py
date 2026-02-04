@@ -8,7 +8,6 @@ from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.rules.dms._base import DataModelRule
-from cognite.neat._issues import Issue
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from cognite.neat._utils.useful_types import ModusOperandi
 
@@ -36,29 +35,28 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
         self._apply_fixes = apply_fixes
 
     def run(self, request_schema: RequestSchema) -> None:
-        """Run quality assessment on the DMS data model.
-
-        If apply_fixes is True:
-        1. Collect fix actions from fixable validators
-        2. Deduplicate fix actions
-        3. Apply fixes to the schema (in-place modification)
-        4. Re-run validation to report remaining issues
-        """
+        """Run quality assessment on the DMS data model."""
         if self._apply_fixes:
             validation_resources = self._gather_validation_resources(request_schema)
-            all_actions = self._collect_fix_actions(validation_resources)
-            unique_actions = self._deduplicate_actions(all_actions)
+            fix_actions = self._collect_fix_actions(validation_resources)
 
-            for action in unique_actions:
+            for action in fix_actions:
                 action(request_schema)
                 self._applied_fixes.append(action)
 
-            # Re-validate to get remaining issues
-            validation_resources = self._gather_validation_resources(request_schema)
-            self._issues.extend(self._run_validators(validation_resources))
-        else:
-            validation_resources = self._gather_validation_resources(request_schema)
-            self._issues.extend(self._run_validators(validation_resources))
+        validation_resources = self._gather_validation_resources(request_schema)
+
+        # Initialize all validators
+        validators: list[DataModelRule] = [
+            validator(validation_resources) for validator in get_concrete_subclasses(DataModelRule)
+        ]
+
+        # Run validators
+        for validator in validators:
+            if validator.alpha and not self._enable_alpha_validators:
+                continue
+            if self._can_run_validator(validator.code, validator.issue_type):
+                self._issues.extend(validator.validate())
 
         self._has_run = True
 
@@ -81,21 +79,6 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
             modus_operandi=self._modus_operandi,
         )
 
-    def _run_validators(self, validation_resources: ValidationResources) -> list[Issue]:
-        """Run all validators and return the issues found."""
-        issues: list[Issue] = []
-        validators: list[DataModelRule] = [
-            validator(validation_resources) for validator in get_concrete_subclasses(DataModelRule)
-        ]
-
-        for validator in validators:
-            if validator.alpha and not self._enable_alpha_validators:
-                continue
-            if self._can_run_validator(validator.code, validator.issue_type):
-                issues.extend(validator.validate())
-
-        return issues
-
     def _collect_fix_actions(self, validation_resources: ValidationResources) -> list[FixAction]:
         """Collect fix actions from all fixable validators."""
         actions: list[FixAction] = []
@@ -112,12 +95,3 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
                 actions.extend(validator.fix())
 
         return actions
-
-    def _deduplicate_actions(self, actions: list[FixAction]) -> list[FixAction]:
-        """Remove duplicate fix actions based on code, resource_id, and field paths."""
-        seen: dict[tuple, FixAction] = {}
-        for action in actions:
-            key = (action.code, action.resource_id, tuple(sorted(c.field_path for c in action.changes)))
-            if key not in seen:
-                seen[key] = action
-        return list(seen.values())
