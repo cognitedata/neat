@@ -94,28 +94,9 @@ function renderFixedIssueContent(issue) {
             </div>
         `;
     } else {
-        // Default: just show message
-        return `<div class="issue-message">${issue.message}</div>`;
+        // No fancy rendering available - content is empty (message shown separately)
+        return '';
     }
-}
-
-function renderFixedIssue(issue) {
-    // Render a fixed issue with fancy UI for specific fix types
-    const codeLink = issue.code
-        ? `<span class="issue-code-link" onclick="event.stopPropagation(); window.open('https://cognite-neat.readthedocs-hosted.com/en/latest/validation/${issue.code.toLowerCase()}.html', '_blank')">${issue.code}</span>`
-        : '';
-    
-    const contentHtml = renderFixedIssueContent(issue);
-    
-    return `
-        <div class="issue-item">
-            <div class="issue-header">
-                <span class="issue-badge badge-Fixed">Fixed</span>
-                ${codeLink}
-            </div>
-            ${contentHtml}
-        </div>
-    `;
 }
 
 function renderIssues() {
@@ -157,10 +138,19 @@ function renderIssues() {
                 : '';
 
             if (count === 1) {
-                // Single fix - render with fancy UI
-                html.push(renderFixedIssue(firstIssue));
+                // Single fix - render with message and fancy UI
+                html.push(`
+                    <div class="issue-item">
+                        <div class="issue-header">
+                            <span class="issue-badge badge-Fixed">Fixed</span>
+                            ${codeLink}
+                        </div>
+                        <div class="issue-message">${firstIssue.message}</div>
+                        ${renderFixedIssueContent(firstIssue)}
+                    </div>
+                `);
             } else {
-                // Grouped fixes
+                // Grouped fixes - show message once at top
                 html.push(`
                     <div class="issue-group ${isExpanded ? 'expanded' : ''}">
                         <div class="issue-group-header" onclick="toggleGroup_${uniqueId}('${key}')">
@@ -172,6 +162,7 @@ function renderIssues() {
                             </div>
                         </div>
                         <div class="issue-group-items">
+                            <div class="issue-message grouped">${firstIssue.message}</div>
                             ${groupIssues.map((issue, idx) => {
                                 const content = renderFixedIssueContent(issue);
                                 return `

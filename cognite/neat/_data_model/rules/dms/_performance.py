@@ -4,7 +4,10 @@ from collections.abc import Iterable
 
 from cognite.neat._data_model._analysis import RequiresChangeStatus, ResolvedReverseDirectRelation
 from cognite.neat._data_model._constants import COGNITE_SPACES
-from cognite.neat._data_model._fix_actions import AddConstraintAction, AddIndexAction, FixAction, RemoveConstraintAction
+from cognite.neat._data_model._fix_actions import FixAction
+from cognite.neat._data_model._fix_helpers import find_requires_constraints, make_auto_constraint_id, make_auto_index_id
+from cognite.neat._data_model.deployer.data_classes import AddedField, RemovedField, SeverityType
+from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
 from cognite.neat._data_model.models.dms._references import ContainerReference, ViewReference
@@ -87,21 +90,27 @@ class MissingRequiresConstraint(DataModelRule):
     def fix(self) -> list[FixAction]:
         """Return fix actions to add missing requires constraints."""
         fix_actions: list[FixAction] = []
-        seen_fix_ids: set[str] = set()
+        seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
         for _, src, dst in self._get_missing_constraints():
-            fix_id = f"{self.code}:add:{src!s}->{dst!s}"
-            if fix_id in seen_fix_ids:
+            if (src, dst) in seen:
                 continue
-            seen_fix_ids.add(fix_id)
+            seen.add((src, dst))
 
+            constraint_id = make_auto_constraint_id(dst)
             fix_actions.append(
-                AddConstraintAction(
-                    fix_id=fix_id,
-                    message=f"Added requires constraint on container {src!s} to container {dst!s}",
+                FixAction(
                     code=self.code,
-                    source=src,
-                    dest=dst,
+                    resource_id=src,
+                    new_value=None,
+                    changes=[
+                        AddedField(
+                            field_path=f"constraints.{constraint_id}",
+                            new_value=RequiresConstraintDefinition(require=dst),
+                            item_severity=SeverityType.WARNING,
+                        )
+                    ],
+                    message=f"Added requires constraint on container {src!s} to container {dst!s}",
                 )
             )
 
@@ -164,23 +173,31 @@ class SuboptimalRequiresConstraint(DataModelRule):
     def fix(self) -> list[FixAction]:
         """Return fix actions to remove suboptimal requires constraints."""
         fix_actions: list[FixAction] = []
-        seen_fix_ids: set[str] = set()
+        seen: set[tuple[ContainerReference, ContainerReference]] = set()
+        containers = self.validation_resources.merged.containers
 
         for _, src, dst in self._get_suboptimal_constraints():
-            fix_id = f"{self.code}:remove:{src!s}->{dst!s}"
-            if fix_id in seen_fix_ids:
+            if (src, dst) in seen:
                 continue
-            seen_fix_ids.add(fix_id)
+            seen.add((src, dst))
 
-            fix_actions.append(
-                RemoveConstraintAction(
-                    fix_id=fix_id,
-                    message=f"Removed requires constraint on container {src!s} to container {dst!s}",
-                    code=self.code,
-                    source=src,
-                    dest=dst,
+            # Find auto-generated constraints to remove
+            for constraint_id, constraint_def in find_requires_constraints(src, dst, containers, auto_only=True):
+                fix_actions.append(
+                    FixAction(
+                        code=self.code,
+                        resource_id=src,
+                        new_value=None,
+                        changes=[
+                            RemovedField(
+                                field_path=f"constraints.{constraint_id}",
+                                current_value=constraint_def,
+                                item_severity=SeverityType.WARNING,
+                            )
+                        ],
+                        message=f"Removed requires constraint on container {src!s} to container {dst!s}",
+                    )
                 )
-            )
 
         return fix_actions
 
@@ -310,24 +327,28 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
     def fix(self) -> list[FixAction]:
         """Return fix actions to add missing indexes."""
         fix_actions: list[FixAction] = []
-        seen_fix_ids: set[str] = set()
+        seen: set[tuple[ContainerReference, str]] = set()
 
         for resolved in self._get_missing_index_targets():
-            fix_id = f"{self.code}:add:{resolved.container_ref!s}:{resolved.container_property_id}"
-            if fix_id in seen_fix_ids:
+            key = (resolved.container_ref, resolved.container_property_id)
+            if key in seen:
                 continue
-            seen_fix_ids.add(fix_id)
+            seen.add(key)
 
+            index_id = make_auto_index_id(resolved.container_ref, resolved.container_property_id)
             fix_actions.append(
-                AddIndexAction(
-                    fix_id=fix_id,
-                    message=(
-                        f"Added cursorable B-tree index on container "
-                        f"{resolved.container_ref!s} property '{resolved.container_property_id}'"
-                    ),
+                FixAction(
                     code=self.code,
-                    container=resolved.container_ref,
-                    property_id=resolved.container_property_id,
+                    resource_id=resolved.container_ref,
+                    new_value=None,
+                    changes=[
+                        AddedField(
+                            field_path=f"indexes.{index_id}",
+                            new_value=BtreeIndex(properties=[resolved.container_property_id], cursorable=True),
+                            item_severity=SeverityType.SAFE,
+                        )
+                    ],
+                    message=f"Added cursorable index on container {resolved.container_ref!s} property '{resolved.container_property_id}'",
                 )
             )
 

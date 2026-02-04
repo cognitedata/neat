@@ -3,12 +3,9 @@ import uuid
 from collections import defaultdict
 from typing import Any
 
-from cognite.neat._data_model._fix_actions import (
-    AddConstraintAction,
-    AddIndexAction,
-    FixAction,
-    RemoveConstraintAction,
-)
+from cognite.neat._data_model._fix_actions import FixAction
+from cognite.neat._data_model.deployer.data_classes import AddedField, RemovedField
+from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError, Recommendation
 from cognite.neat._session._html._render import render
 from cognite.neat._store import NeatStore
@@ -78,7 +75,7 @@ class Issues:
     def _serialized_applied_fixes(self) -> list[dict[str, Any]]:
         """Convert applied fixes to JSON-serializable format for the Fixed tab.
 
-        Each fix is displayed individually, like issues. Subclass-specific fields
+        Each fix is displayed individually, like issues. Field change details
         are included for fancy UI rendering.
         """
         serialized = []
@@ -87,26 +84,59 @@ class Issues:
                 "id": f"fixed-{idx}",
                 "type": "Fixed",
                 "code": fix_action.code,
-                "message": fix_action.message,
+                "message": fix_action.message or "",
                 "fix": "",
                 "fixed": True,
             }
 
-            # Add subclass-specific fields for fancy UI rendering
-            if isinstance(fix_action, (AddConstraintAction, RemoveConstraintAction)):
-                item["fix_type"] = "constraint"
-                item["source_name"] = fix_action.source_name
-                item["dest_name"] = fix_action.dest_name
-                item["action_type"] = fix_action.action_type
-                item["constraint_id"] = fix_action.constraint_id
-            elif isinstance(fix_action, AddIndexAction):
-                item["fix_type"] = "index"
-                item["container_name"] = fix_action.container_name
-                item["property_id"] = fix_action.property_id
-                item["index_id"] = fix_action.index_id
+            # Add fields for fancy UI rendering based on the field changes
+            self._add_fix_ui_fields(fix_action, item)
 
             serialized.append(item)
         return serialized
+
+    def _add_fix_ui_fields(self, fix_action: FixAction, item: dict[str, Any]) -> None:
+        """Add UI rendering fields based on the fix action's field changes."""
+        if not fix_action.changes:
+            return
+
+        # Get container name from resource_id
+        container_name = ""
+        if isinstance(fix_action.resource_id, ContainerReference):
+            container_name = fix_action.resource_id.external_id
+
+        # Check the first change to determine the fix type
+        change = fix_action.changes[0]
+        field_path = change.field_path
+
+        if field_path.startswith("constraints."):
+            constraint_id = field_path.split(".", 1)[1]
+            item["fix_type"] = "constraint"
+            item["source_name"] = container_name
+            item["constraint_id"] = constraint_id
+
+            if isinstance(change, AddedField):
+                item["action_type"] = "add"
+                # Get dest from the constraint definition
+                if hasattr(change.new_value, "require"):
+                    item["dest_name"] = change.new_value.require.external_id
+            elif isinstance(change, RemovedField):
+                item["action_type"] = "remove"
+                # Get dest from the constraint definition
+                if hasattr(change.current_value, "require"):
+                    item["dest_name"] = change.current_value.require.external_id
+
+        elif field_path.startswith("indexes."):
+            index_id = field_path.split(".", 1)[1]
+            item["fix_type"] = "index"
+            item["container_name"] = container_name
+            item["index_id"] = index_id
+
+            # Get property_id from the index definition
+            if isinstance(change, AddedField) and hasattr(change.new_value, "properties"):
+                properties = change.new_value.properties
+                if properties:
+                    item["property_id"] = properties[0]
 
     def _repr_html_(self) -> str:
         """Generate interactive HTML representation."""

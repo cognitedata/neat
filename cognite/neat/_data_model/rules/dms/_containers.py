@@ -4,7 +4,9 @@ from collections.abc import Iterable
 
 from pyparsing import cast
 
-from cognite.neat._data_model._fix_actions import FixAction, RemoveConstraintAction
+from cognite.neat._data_model._fix_actions import FixAction
+from cognite.neat._data_model._fix_helpers import find_requires_constraints
+from cognite.neat._data_model.deployer.data_classes import RemovedField, SeverityType
 from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
@@ -271,23 +273,30 @@ class RequiresConstraintCycle(DataModelRule):
     def fix(self) -> list[FixAction]:
         """Return fix actions to break requires constraint cycles."""
         fix_actions: list[FixAction] = []
-        seen_fix_ids: set[str] = set()
+        seen: set[tuple[ContainerReference, ContainerReference]] = set()
+        containers = self.validation_resources.merged.containers
 
         for _, src, dst in self._get_cycle_edges_to_remove():
-            fix_id = f"{self.code}:remove:{src!s}->{dst!s}"
-            if fix_id in seen_fix_ids:
+            if (src, dst) in seen:
                 continue
-            seen_fix_ids.add(fix_id)
+            seen.add((src, dst))
 
-            fix_actions.append(
-                RemoveConstraintAction(
-                    fix_id=fix_id,
-                    message=f"Removed requires constraint: {src!s} → {dst!s}",
-                    code=self.code,
-                    source=src,
-                    dest=dst,
-                    auto_only=False,
+            # Find ALL matching constraints (not just auto-generated) for cycle breaking
+            for constraint_id, constraint_def in find_requires_constraints(src, dst, containers, auto_only=False):
+                fix_actions.append(
+                    FixAction(
+                        code=self.code,
+                        resource_id=src,
+                        new_value=None,
+                        changes=[
+                            RemovedField(
+                                field_path=f"constraints.{constraint_id}",
+                                current_value=constraint_def,
+                                item_severity=SeverityType.WARNING,
+                            )
+                        ],
+                        message=f"Removed requires constraint: {src!s} → {dst!s}",
+                    )
                 )
-            )
 
         return fix_actions

@@ -62,6 +62,34 @@ def find_requires_constraint_id(
     return None
 
 
+def find_requires_constraints(
+    src: ContainerReference,
+    dst: ContainerReference,
+    containers: dict[ContainerReference, ContainerRequest],
+    auto_only: bool = True,
+) -> list[tuple[str, RequiresConstraintDefinition]]:
+    """Find all requires constraints from src to dst.
+
+    Args:
+        src: Source container reference.
+        dst: Destination container reference (the required container).
+        containers: Dict mapping container references to their definitions.
+        auto_only: If True, only return auto-generated constraints (ending with __auto).
+            If False, return all matching constraints.
+
+    Returns:
+        List of (constraint_id, constraint_definition) tuples.
+    """
+    result: list[tuple[str, RequiresConstraintDefinition]] = []
+    container = containers.get(src)
+    if container and container.constraints:
+        for constraint_id, constraint in container.constraints.items():
+            if isinstance(constraint, RequiresConstraintDefinition) and constraint.require == dst:
+                if not auto_only or constraint_id.endswith(AUTO_SUFFIX):
+                    result.append((constraint_id, constraint))
+    return result
+
+
 def make_auto_index_id(container_ref: ContainerReference, property_id: str) -> str:
     """Generate an index identifier for auto-generated indexes.
 
