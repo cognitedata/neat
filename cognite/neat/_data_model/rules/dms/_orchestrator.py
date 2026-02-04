@@ -106,7 +106,7 @@ class DmsDataModelFixer(OnSuccessIssuesChecker):
 
         If apply_fixes is True:
         1. Collect fix actions from fixable validators
-        2. Deduplicate and sort fix actions by priority
+        2. Deduplicate fix actions
         3. Apply fixes to the schema (in-place modification)
         4. Re-run validation to report remaining issues
 
@@ -119,10 +119,9 @@ class DmsDataModelFixer(OnSuccessIssuesChecker):
             validation_resources = self._gather_validation_resources(request_schema)
             all_actions = self._collect_fix_actions(validation_resources)
             unique_actions = self._deduplicate_actions(all_actions)
-            sorted_actions = sorted(unique_actions, key=lambda a: a.fix_id)
 
             # Apply fixes to the original schema (not the copy)
-            for action in sorted_actions:
+            for action in unique_actions:
                 action(request_schema)
                 self._applied_fixes.append(action)
 
@@ -188,9 +187,10 @@ class DmsDataModelFixer(OnSuccessIssuesChecker):
         )
 
     def _deduplicate_actions(self, actions: list[FixAction]) -> list[FixAction]:
-        """Remove duplicate fix actions (same fix_id)."""
-        seen: dict[str, FixAction] = {}
+        """Remove duplicate fix actions based on code, resource_id, and field paths."""
+        seen: dict[tuple, FixAction] = {}
         for action in actions:
-            if action.fix_id not in seen:
-                seen[action.fix_id] = action
+            key = (action.code, action.resource_id, tuple(sorted(c.field_path for c in action.changes)))
+            if key not in seen:
+                seen[key] = action
         return list(seen.values())

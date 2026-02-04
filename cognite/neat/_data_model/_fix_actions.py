@@ -2,6 +2,8 @@
 
 from typing import Any
 
+from pydantic import ConfigDict
+
 from cognite.neat._data_model.deployer.data_classes import (
     AddedField,
     FieldChange,
@@ -26,6 +28,7 @@ class FixAction(ResourceChange[T_ResourceId, T_DataModelResource]):
         code: The validator code (e.g., "NEAT-DMS-PERFORMANCE-001") for grouping in UI.
     """
 
+    model_config = ConfigDict(frozen=True)
     code: str
 
     def __call__(self, schema: RequestSchema) -> None:
@@ -64,9 +67,3 @@ class FixAction(ResourceChange[T_ResourceId, T_DataModelResource]):
                 # Clean up empty collections
                 if not collection:
                     setattr(resource, field_type, None)
-
-    @property
-    def fix_id(self) -> str:
-        """Generate a unique ID from resource_id and field paths for sorting/deduplication."""
-        field_paths = ",".join(sorted(c.field_path for c in self.changes))
-        return f"{self.code}:{self.resource_id!s}:{field_paths}"

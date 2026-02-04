@@ -23,8 +23,67 @@ from tests.data import SNAPSHOT_CATALOG
 class TestFixAction:
     """Tests for the FixAction class."""
 
+    def test_fix_action_is_frozen(self) -> None:
+        """Test that FixAction is frozen (immutable)."""
+        source = ContainerReference(space="test", external_id="SourceContainer")
+        dest = ContainerReference(space="test", external_id="DestContainer")
+
+        action = FixAction(
+            code="TEST-001",
+            resource_id=source,
+            new_value=None,
+            changes=[
+                AddedField(
+                    field_path="constraints.dest__auto",
+                    new_value=RequiresConstraintDefinition(require=dest),
+                    item_severity=SeverityType.WARNING,
+                )
+            ],
+            message="Test action",
+        )
+
+        # Verify model is frozen (immutable)
+        import pytest
+
+        with pytest.raises(Exception):  # ValidationError for frozen model
+            action.code = "MODIFIED"
+
     def test_fix_action_equality(self) -> None:
-        """Test that FixAction equality is based on resource_id and changes."""
+        """Test that identical FixActions are equal."""
+        source = ContainerReference(space="test", external_id="SourceContainer")
+        dest = ContainerReference(space="test", external_id="DestContainer")
+
+        action1 = FixAction(
+            code="TEST-001",
+            resource_id=source,
+            new_value=None,
+            changes=[
+                AddedField(
+                    field_path="constraints.dest__auto",
+                    new_value=RequiresConstraintDefinition(require=dest),
+                    item_severity=SeverityType.WARNING,
+                )
+            ],
+            message="Test action",
+        )
+        action2 = FixAction(
+            code="TEST-001",
+            resource_id=source,
+            new_value=None,
+            changes=[
+                AddedField(
+                    field_path="constraints.dest__auto",
+                    new_value=RequiresConstraintDefinition(require=dest),
+                    item_severity=SeverityType.WARNING,
+                )
+            ],
+            message="Test action",
+        )
+
+        assert action1 == action2
+
+    def test_fix_action_different_fields_not_equal(self) -> None:
+        """Test that actions with different fields are not equal."""
         source = ContainerReference(space="test", external_id="SourceContainer")
         dest = ContainerReference(space="test", external_id="DestContainer")
         other_dest = ContainerReference(space="test", external_id="OtherContainer")
@@ -40,22 +99,8 @@ class TestFixAction:
                     item_severity=SeverityType.WARNING,
                 )
             ],
-            message="Test action 1",
         )
         action2 = FixAction(
-            code="TEST-001",
-            resource_id=source,
-            new_value=None,
-            changes=[
-                AddedField(
-                    field_path="constraints.dest__auto",
-                    new_value=RequiresConstraintDefinition(require=dest),
-                    item_severity=SeverityType.WARNING,
-                )
-            ],
-            message="Different message",
-        )
-        action3 = FixAction(
             code="TEST-001",
             resource_id=source,
             new_value=None,
@@ -68,68 +113,7 @@ class TestFixAction:
             ],
         )
 
-        assert action1 == action2  # Same resource_id and changes
-        assert action1 != action3  # Different changes
-
-    def test_fix_action_hash(self) -> None:
-        """Test that FixAction can be used in sets/dicts."""
-        source = ContainerReference(space="test", external_id="SourceContainer")
-        dest = ContainerReference(space="test", external_id="DestContainer")
-
-        action1 = FixAction(
-            code="TEST-001",
-            resource_id=source,
-            new_value=None,
-            changes=[
-                AddedField(
-                    field_path="constraints.dest__auto",
-                    new_value=RequiresConstraintDefinition(require=dest),
-                    item_severity=SeverityType.WARNING,
-                )
-            ],
-        )
-        action2 = FixAction(
-            code="TEST-001",
-            resource_id=source,
-            new_value=None,
-            changes=[
-                AddedField(
-                    field_path="constraints.dest__auto",
-                    new_value=RequiresConstraintDefinition(require=dest),
-                    item_severity=SeverityType.WARNING,
-                )
-            ],
-            message="Different message",
-        )
-
-        # Same resource_id and changes should have same hash
-        assert hash(action1) == hash(action2)
-
-        # Can be used in sets
-        actions_set = {action1, action2}
-        assert len(actions_set) == 1
-
-    def test_fix_id_property(self) -> None:
-        """Test that fix_id is generated from code, resource_id and field paths."""
-        source = ContainerReference(space="test", external_id="SourceContainer")
-        dest = ContainerReference(space="test", external_id="DestContainer")
-
-        action = FixAction(
-            code="TEST-001",
-            resource_id=source,
-            new_value=None,
-            changes=[
-                AddedField(
-                    field_path="constraints.dest__auto",
-                    new_value=RequiresConstraintDefinition(require=dest),
-                    item_severity=SeverityType.WARNING,
-                )
-            ],
-        )
-
-        # fix_id should contain code, resource_id, and field path
-        assert "TEST-001" in action.fix_id
-        assert "constraints.dest__auto" in action.fix_id
+        assert action1 != action2
 
 
 class TestMissingRequiresConstraintFix:
@@ -159,7 +143,6 @@ class TestMissingRequiresConstraintFix:
 
         # Each fix action should have proper structure
         for action in fix_actions:
-            assert action.fix_id.startswith(MissingRequiresConstraint.code)
             assert action.code == MissingRequiresConstraint.code
             assert callable(action)  # Action itself is callable
 
@@ -302,32 +285,6 @@ class TestDmsDataModelFixer:
         }
         assert constraints_before == constraints_after
 
-    def test_fixer_orders_fixes_by_fix_id(self) -> None:
-        """Test that fixes are applied in a deterministic order (by fix_id)."""
-        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
-            "requires_constraints",
-            "for_validators",
-            modus_operandi="additive",
-            include_cdm=True,
-            format="snapshots",
-        )
-        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
-
-        fixer = DmsDataModelFixer(
-            cdf_snapshot=cdf_snapshot,
-            limits=SchemaLimits(),
-            modus_operandi="additive",
-            enable_alpha_validators=True,
-            apply_fixes=True,
-        )
-        fixer.run(data_model)
-
-        # Check that applied fixes are in fix_id order
-        if len(fixer.applied_fixes) > 1:
-            for i in range(len(fixer.applied_fixes) - 1):
-                assert fixer.applied_fixes[i].fix_id <= fixer.applied_fixes[i + 1].fix_id
-
-
 class TestAppliedFixesTracking:
     """Tests for tracking which fixes were applied by the fixer."""
 
@@ -358,7 +315,7 @@ class TestAppliedFixesTracking:
             for fix_action in fixer.applied_fixes:
                 assert isinstance(fix_action, FixAction)
                 assert fix_action.message  # Specific action description
-                assert fix_action.fix_id
+                assert fix_action.code  # Validator code for grouping
 
     def test_fixer_no_applied_fixes_when_not_applying(self) -> None:
         """Test that applied_fixes is empty when apply_fixes is False."""
