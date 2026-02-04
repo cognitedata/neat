@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from cognite.neat._data_model._analysis import RequiresChangeStatus, ResolvedReverseDirectRelation
 from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model._fix_actions import FixAction
-from cognite.neat._data_model._fix_helpers import find_requires_constraints, make_auto_constraint_id, make_auto_index_id
+from cognite.neat._data_model._fix_helpers import make_auto_constraint_id, make_auto_index_id
 from cognite.neat._data_model.deployer.data_classes import AddedField, RemovedField, SeverityType
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
@@ -174,7 +174,6 @@ class SuboptimalRequiresConstraint(DataModelRule):
         """Return fix actions to remove suboptimal requires constraints."""
         fix_actions: list[FixAction] = []
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
-        containers = self.validation_resources.merged.containers
 
         for _, src, dst in self._get_suboptimal_constraints():
             if (src, dst) in seen:
@@ -182,7 +181,14 @@ class SuboptimalRequiresConstraint(DataModelRule):
             seen.add((src, dst))
 
             # Find auto-generated constraints to remove
-            for constraint_id, constraint_def in find_requires_constraints(src, dst, containers, auto_only=True):
+            container = self.validation_resources.select_container(src)
+            if not container:
+                continue
+            for constraint_id, constraint_def in self.validation_resources.iter_requires_constraints(
+                container, auto_only=True
+            ):
+                if constraint_def.require != dst:
+                    continue
                 fix_actions.append(
                     FixAction(
                         code=self.code,
@@ -334,7 +340,7 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
                 continue
             seen.add(key)
 
-            index_id = make_auto_index_id(resolved.container_ref, resolved.container_property_id)
+            index_id = make_auto_index_id(resolved.container_property_id)
             fix_actions.append(
                 FixAction(
                     code=self.code,

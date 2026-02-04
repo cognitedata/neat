@@ -1,12 +1,9 @@
 """Validators for checking containers in the data model."""
 
 from collections.abc import Iterable
-from typing import cast
 
 from cognite.neat._data_model._fix_actions import FixAction
-from cognite.neat._data_model._fix_helpers import find_requires_constraints
 from cognite.neat._data_model.deployer.data_classes import RemovedField, SeverityType
-from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.rules.dms._base import DataModelRule
@@ -182,13 +179,7 @@ class RequiredContainerDoesNotExist(DataModelRule):
                     "not found in local resources. This is a bug in NEAT."
                 )
 
-            if not container.constraints:
-                continue
-
-            for constraint_ref, constraint in cast(dict[str, Constraint], container.constraints).items():
-                if not isinstance(constraint, RequiresConstraintDefinition):
-                    continue
-
+            for constraint_ref, constraint in self.validation_resources.iter_requires_constraints(container):
                 if not self.validation_resources.select_container(constraint.require):
                     errors.append(
                         ConsistencyError(
@@ -273,7 +264,6 @@ class RequiresConstraintCycle(DataModelRule):
         """Return fix actions to break requires constraint cycles."""
         fix_actions: list[FixAction] = []
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
-        containers = self.validation_resources.merged.containers
 
         for _, src, dst in self._get_cycle_edges_to_remove():
             if (src, dst) in seen:
@@ -281,7 +271,12 @@ class RequiresConstraintCycle(DataModelRule):
             seen.add((src, dst))
 
             # Find ALL matching constraints (not just auto-generated) for cycle breaking
-            for constraint_id, constraint_def in find_requires_constraints(src, dst, containers, auto_only=False):
+            container = self.validation_resources.select_container(src)
+            if not container:
+                continue
+            for constraint_id, constraint_def in self.validation_resources.iter_requires_constraints(container):
+                if constraint_def.require != dst:
+                    continue
                 fix_actions.append(
                     FixAction(
                         code=self.code,
