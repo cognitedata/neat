@@ -49,7 +49,7 @@ class NeatSession:
         self._client = NeatClient(client)
         self._store = NeatStore(config=self._config, client=self._client)
         self.physical_data_model = PhysicalDataModel(self._store, self._client, self._config)
-        self.issues = Issues(self._store)
+        self.issues = Issues(self._store, self._config)
         self.result = Result(self._store)
 
         if self._config.alpha.enable_cdf_analysis:

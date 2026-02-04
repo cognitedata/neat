@@ -52,6 +52,11 @@
     color: #1e40af;
 }
 
+.badge-Fixed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
 .dark-mode .badge-ModelSyntaxError {
     background: #7f1d1d;
     color: #fca5a5;
@@ -65,6 +70,26 @@
 .dark-mode .badge-Recommendation {
     background: #1e3a8a;
     color: #93c5fd;
+}
+
+.dark-mode .badge-Fixed {
+    background: #064e3b;
+    color: #6ee7b7;
+}
+
+/* Fixed stat item styling */
+.stat-fixed {
+    background: rgba(16, 185, 129, 0.2) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.stat-fixed:hover {
+    background: rgba(16, 185, 129, 0.3) !important;
+}
+
+.stat-fixed.active {
+    background: rgba(16, 185, 129, 0.4) !important;
+    border-color: rgba(16, 185, 129, 0.5) !important;
 }
 
 .issue-code {
@@ -88,6 +113,284 @@
     background: var(--fix-bg);
     border-left: 3px solid var(--fix-border);
     border-radius: 4px;
+}
+
+.issue-fix-applied {
+    margin-top: 12px;
+    margin-bottom: 8px;
+    padding: 12px;
+    background: #d1fae5;
+    border-left: 3px solid #10b981;
+    border-radius: 4px;
+}
+
+.dark-mode .issue-fix-applied {
+    background: #064e3b;
+    border-left-color: #34d399;
+}
+
+.issue-fix-applied .issue-fix-label {
+    color: #065f46;
+}
+
+.dark-mode .issue-fix-applied .issue-fix-label {
+    color: #6ee7b7;
+}
+
+.issue-fix-applied .issue-fix-content {
+    color: #047857;
+}
+
+.dark-mode .issue-fix-applied .issue-fix-content {
+    color: #a7f3d0;
+}
+
+/* Fixed issues summary layout */
+.fixed-summary {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%);
+    border-left: 4px solid #10b981;
+}
+
+.dark-mode .fixed-summary {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border-left-color: #34d399;
+}
+
+.fixed-message {
+    font-weight: 500;
+    color: #065f46;
+    margin-bottom: 12px;
+}
+
+.dark-mode .fixed-message {
+    color: #6ee7b7;
+}
+
+.fix-count {
+    font-size: 12px;
+    color: #059669;
+    background: rgba(16, 185, 129, 0.15);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+}
+
+.dark-mode .fix-count {
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.2);
+}
+
+.fix-items-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fix-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 20px;
+    margin: 0;
+    font-size: 13px;
+}
+
+/* When inside grouped items, use left border accent on the row */
+.issue-item.grouped {
+    margin: 4px 16px 4px 48px;
+    padding: 16px 20px;
+    border-left: 3px solid var(--border-color);
+}
+
+/* Fixed issue styling - green for add, red for remove */
+.issue-item.grouped.fix-add {
+    border-left-color: #10b981;
+}
+
+.issue-item.grouped.fix-remove {
+    border-left-color: #ea580c;
+}
+
+.dark-mode .issue-item.grouped.fix-add {
+    border-left-color: #34d399;
+}
+
+.dark-mode .issue-item.grouped.fix-remove {
+    border-left-color: #fb923c;
+}
+
+.issue-item.grouped .fix-item,
+.issue-item.grouped .fix-item-add,
+.issue-item.grouped .fix-item-remove {
+    width: 100%;
+    background: none;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    border-left: none !important;
+}
+
+
+.container-name {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(14, 165, 233, 0.25);
+}
+
+.dark-mode .container-name {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.constraint-arrow-symbol {
+    font-weight: 600;
+    font-size: 16px;
+    color: #059669;
+}
+
+.dark-mode .constraint-arrow-symbol {
+    color: #34d399;
+}
+
+.fix-item-remove .constraint-arrow-symbol {
+    color: #ea580c;
+}
+
+.dark-mode .fix-item-remove .constraint-arrow-symbol {
+    color: #fb923c;
+}
+
+.fix-action-icon {
+    font-size: 14px;
+    font-weight: 700;
+    width: 20px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fix-item-remove .fix-action-icon {
+    font-size: 16px;
+}
+
+.fix-item-add .fix-action-icon {
+    color: #059669;
+}
+
+.dark-mode .fix-item-add .fix-action-icon {
+    color: #34d399;
+}
+
+.fix-item-remove .fix-action-icon {
+    color: #ea580c;
+}
+
+.dark-mode .fix-item-remove .fix-action-icon {
+    color: #fb923c;
+}
+
+.property-dot {
+    color: #374151;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.dark-mode .property-dot {
+    color: #9ca3af;
+}
+
+.property-name {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7c3aed;
+    background: rgba(124, 58, 237, 0.12);
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(124, 58, 237, 0.25);
+}
+
+.dark-mode .property-name {
+    color: #a78bfa;
+    background: rgba(167, 139, 250, 0.15);
+    border-color: rgba(167, 139, 250, 0.3);
+}
+
+.index-icon {
+    font-size: 14px;
+    color: #f59e0b;
+}
+
+.fix-identifier {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 11px;
+    color: #6b7280;
+    background: rgba(107, 114, 128, 0.1);
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-left: auto;
+}
+
+/* Compensate for padding in non-grouped items */
+.issue-item:not(.grouped) .fix-identifier {
+    margin-right: -20px;
+}
+
+/* Compensate for padding in grouped items */
+.issue-item.grouped .fix-identifier {
+    margin-right: -12px;
+}
+
+.dark-mode .fix-identifier {
+    color: #9ca3af;
+    background: rgba(156, 163, 175, 0.15);
+}
+
+/* Add action item styling (for non-grouped single items) */
+.issue-item:not(.grouped) .fix-item-add {
+    border-left: 3px solid #10b981;
+}
+
+.fix-item-add .container-name {
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-color: rgba(14, 165, 233, 0.25);
+}
+
+.dark-mode .fix-item-add .container-name {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* Remove action item styling (for non-grouped single items) */
+.issue-item:not(.grouped) .fix-item-remove {
+    border-left: 3px solid #ea580c;
+}
+
+.fix-item-remove .container-name {
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-color: rgba(14, 165, 233, 0.25);
+}
+
+.dark-mode .fix-item-remove .container-name {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* Strikethrough for removed constraint destination and identifier */
+.fix-item-remove .constraint-arrow-symbol ~ .container-name,
+.fix-item-remove .fix-identifier {
+    text-decoration: line-through;
 }
 
 .issue-fix-label {
@@ -164,12 +467,6 @@
     transform: rotate(0deg);
 }
 
-.issue-item.grouped {
-    margin: 4px 16px 4px 48px;
-    padding: 12px;
-    border-left: 3px solid var(--border-color);
-}
-
 .issue-number {
     display: inline-block;
     background: var(--bg-tertiary);
@@ -183,6 +480,10 @@
 
 .issue-fix.grouped {
     margin: 12px 16px 8px 48px;
+}
+
+.issue-fix-applied.grouped {
+    margin: 12px 20px 8px 48px;
 }
 
 .issue-code-link {
@@ -208,4 +509,38 @@
 .dark-mode .issue-code-link:hover {
     background: #1e3a8a;
     color: #93c5fd;
+}
+
+/* Empty state styling */
+.no-issues {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    min-height: 300px;
+}
+
+/* Info box styling */
+.info-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.6;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.info-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    opacity: 0.8;
 }
