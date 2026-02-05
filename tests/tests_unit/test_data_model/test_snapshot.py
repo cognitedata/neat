@@ -223,9 +223,9 @@ def merge_schema_test_cases() -> Iterator[tuple]:
         ),
         SchemaSnapshot(
             timestamp=now,
-            containers={container_with_constraints.as_reference(): container_with_constraints},
+            containers={container_no_constraints.as_reference(): container_no_constraints},
         ),
-        id="CDF container constraints are preserved when local omits them",
+        id="Local container constraints take precedence over CDF",
     )
 
 
