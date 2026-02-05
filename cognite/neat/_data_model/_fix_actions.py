@@ -8,7 +8,13 @@ from cognite.neat._data_model.deployer.data_classes import (
     FieldChange,
     RemovedField,
 )
-from cognite.neat._data_model.models.dms import ContainerReference, DataModelReference, SchemaResourceId, SpaceReference, ViewReference
+from cognite.neat._data_model.models.dms import (
+    ContainerReference,
+    DataModelReference,
+    SchemaResourceId,
+    SpaceReference,
+    ViewReference,
+)
 
 
 class FixAction(BaseModel):
