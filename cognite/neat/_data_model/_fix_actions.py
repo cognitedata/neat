@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import (
     AddedField,
+    ChangedField,
     FieldChange,
     RemovedField,
 )
@@ -76,6 +77,12 @@ class FixAction(BaseModel):
             if collection is None:
                 collection = {}
                 setattr(resource, field_type, collection)
+            collection[identifier] = change.new_value
+        elif isinstance(change, ChangedField):
+            if collection is None:
+                raise ValueError(f"Cannot change field {change.field_path}: collection does not exist")
+            if identifier not in collection:
+                raise ValueError(f"Cannot change field {change.field_path}: identifier not found")
             collection[identifier] = change.new_value
         elif isinstance(change, RemovedField):
             if collection is not None and identifier in collection:
