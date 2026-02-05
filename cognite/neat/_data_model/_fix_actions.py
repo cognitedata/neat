@@ -45,6 +45,7 @@ class FixAction(BaseModel):
             self._apply_field_change(resource, change)
 
     def _get_resource(self, snapshot: SchemaSnapshot) -> DataModelResource:
+        resource: DataModelResource | None = None
         if isinstance(self.resource_id, SpaceReference):
             resource = snapshot.spaces.get(self.resource_id)
         elif isinstance(self.resource_id, DataModelReference):
