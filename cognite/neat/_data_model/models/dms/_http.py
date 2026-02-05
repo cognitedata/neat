@@ -20,14 +20,11 @@ DataModelResource: TypeAlias = SpaceRequest | DataModelRequest | ViewRequest | C
 
 T_DataModelResource = TypeVar("T_DataModelResource", bound=DataModelResource)
 
-ResourceId: TypeAlias = (
-    SpaceReference
-    | DataModelReference
-    | ViewReference
-    | ContainerReference
-    | ContainerIndexReference
-    | ContainerConstraintReference
-)
+# Top-level schema resources (spaces, data models, views, containers)
+SchemaResourceId: TypeAlias = SpaceReference | DataModelReference | ViewReference | ContainerReference
+
+# All resource IDs including nested refs (used by deployer for API responses)
+ResourceId: TypeAlias = SchemaResourceId | ContainerIndexReference | ContainerConstraintReference
 
 T_ResourceId = TypeVar("T_ResourceId", bound=ResourceId)
 

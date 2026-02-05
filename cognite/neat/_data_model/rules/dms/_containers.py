@@ -1,5 +1,10 @@
 """Validators for checking containers in the data model."""
 
+from collections.abc import Iterable
+
+from cognite.neat._data_model._fix_actions import FixAction
+from cognite.neat._data_model.deployer.data_classes import RemovedField, SeverityType
+from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import ConsistencyError
@@ -211,21 +216,38 @@ class RequiresConstraintCycle(DataModelRule):
     code = f"{BASE_CODE}-005"
     issue_type = ConsistencyError
     alpha = True  # Still in development
+    fixable = True
 
-    def validate(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
+    def _get_cycle_edges_to_remove(
+        self,
+    ) -> Iterable[tuple[list[ContainerReference], ContainerReference, ContainerReference]]:
+        """Yields (cycle, src, dst) for edges in cycles that should be removed."""
         optimal_edges = self.validation_resources.oriented_mst_edges
 
         for cycle in self.validation_resources.requires_constraint_cycles:
-            cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
-
-            # Find edges in cycle that are NOT in optimal structure (these should be removed)
-            edges_to_remove = []
             for i, container in enumerate(cycle):
                 next_container = cycle[(i + 1) % len(cycle)]
                 edge = (container, next_container)
                 if edge not in optimal_edges:
-                    edges_to_remove.append(f"{container} -> {next_container}")
+                    yield cycle, container, next_container
+
+    def validate(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+        reported_cycles: set[tuple[ContainerReference, ...]] = set()
+
+        # Collect once to avoid re-evaluating the generator
+        all_cycle_edges = list(self._get_cycle_edges_to_remove())
+
+        for cycle, _, _ in all_cycle_edges:
+            cycle_key = tuple(cycle)
+            if cycle_key in reported_cycles:
+                continue
+            reported_cycles.add(cycle_key)
+
+            cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
+
+            # Collect all edges to remove for this cycle
+            edges_to_remove = [f"{s} -> {d}" for c, s, d in all_cycle_edges if tuple(c) == cycle_key]
 
             message = f"Requires constraints form a cycle: {cycle_str}"
             if edges_to_remove:
@@ -240,3 +262,37 @@ class RequiresConstraintCycle(DataModelRule):
             )
 
         return errors
+
+    def fix(self) -> list[FixAction]:
+        """Return fix actions to break requires constraint cycles."""
+        fix_actions: list[FixAction] = []
+        seen: set[tuple[ContainerReference, ContainerReference]] = set()
+
+        for _, src, dst in self._get_cycle_edges_to_remove():
+            if (src, dst) in seen:
+                continue
+            seen.add((src, dst))
+
+            # Find ALL matching constraints (not just auto-generated) for cycle breaking
+            container = self.validation_resources.select_container(src)
+            if not container:
+                continue
+            for constraint_id, constraint_def in self.validation_resources.get_requires_constraints(container):
+                if constraint_def.require != dst:
+                    continue
+                fix_actions.append(
+                    FixAction(
+                        code=self.code,
+                        resource_id=src,
+                        changes=[
+                            RemovedField(
+                                field_path=f"constraints.{constraint_id}",
+                                current_value=constraint_def,
+                                item_severity=SeverityType.WARNING,
+                            )
+                        ],
+                        message="Removed requires constraint to break cycle",
+                    )
+                )
+
+        return fix_actions
