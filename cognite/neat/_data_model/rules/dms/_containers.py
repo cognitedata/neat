@@ -1,8 +1,5 @@
 """Validators for checking containers in the data model."""
 
-from typing import cast
-
-from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import ConsistencyError
@@ -177,13 +174,7 @@ class RequiredContainerDoesNotExist(DataModelRule):
                     "not found in local resources. This is a bug in NEAT."
                 )
 
-            if not container.constraints:
-                continue
-
-            for constraint_ref, constraint in cast(dict[str, Constraint], container.constraints).items():
-                if not isinstance(constraint, RequiresConstraintDefinition):
-                    continue
-
+            for constraint_ref, constraint in self.validation_resources.get_requires_constraints(container):
                 if not self.validation_resources.select_container(constraint.require):
                     errors.append(
                         ConsistencyError(
