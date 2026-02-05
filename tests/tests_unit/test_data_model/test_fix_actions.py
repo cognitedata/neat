@@ -241,16 +241,16 @@ class TestConstraintIdGeneration:
 
     def test_deterministic_and_valid_id_generation(self) -> None:
         """Same input produces same output and is within the limit."""
-        ref = ContainerReference(space="s", external_id="VeryLongContainerNameThatRequiresHashing")
+        ref = ContainerReference(space="s", external_id="VeryLongContainerNameThatRequiresApplyingHashing")
         assert make_auto_constraint_id(ref) == make_auto_constraint_id(ref)
         assert len(make_auto_constraint_id(ref)) <= 43
 
     def test_different_inputs_produce_different_ids(self) -> None:
         """Different containers produce different IDs."""
         id1 = make_auto_constraint_id(
-            ContainerReference(space="s", external_id="VeryLongContainerNameThatRequiresHashing1")
+            ContainerReference(space="s", external_id="VeryLongContainerNameThatRequiresApplyingHashing1")
         )
         id2 = make_auto_constraint_id(
-            ContainerReference(space="s", external_id="VeryLongContainerNameThatRequiresHashing2")
+            ContainerReference(space="s", external_id="VeryLongContainerNameThatRequiresApplyingHashing2")
         )
         assert id1 != id2
