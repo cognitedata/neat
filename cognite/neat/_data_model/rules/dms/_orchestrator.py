@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from datetime import datetime, timezone
 
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model._fix_actions import FixAction
@@ -40,8 +39,10 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
             validation_resources = self._gather_validation_resources(request_schema)
             fix_actions = self._collect_fix_actions(validation_resources)
 
+            # Create thin snapshot for O(1) lookup - mutations flow through to request_schema
+            fix_snapshot = SchemaSnapshot.from_request_schema(request_schema, deep_copy=False)
             for action in fix_actions:
-                action(request_schema)
+                action(fix_snapshot)
                 self._applied_fixes.append(action)
 
         validation_resources = self._gather_validation_resources(request_schema)
@@ -61,16 +62,8 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
         self._has_run = True
 
     def _gather_validation_resources(self, request_schema: RequestSchema) -> ValidationResources:
-        # we do not want to modify the original request schema during validation
-        copy = request_schema.model_copy(deep=True)
-        local = SchemaSnapshot(
-            data_model={request_schema.data_model.as_reference(): copy.data_model},
-            views={view.as_reference(): view for view in copy.views},
-            containers={container.as_reference(): container for container in copy.containers},
-            spaces={space.as_reference(): space for space in copy.spaces},
-            node_types={node_type: node_type for node_type in copy.node_types},
-            timestamp=datetime.now(timezone.utc),
-        )
+        # Deep copy for validation - we don't want to modify the original during merge/analysis
+        local = SchemaSnapshot.from_request_schema(request_schema, deep_copy=True)
 
         return ValidationResources(
             cdf=self._cdf_snapshot,

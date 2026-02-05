@@ -42,6 +42,29 @@ class SchemaSnapshot(BaseModel, extra="ignore"):
             output[str(key)] = dumped_value
         return output
 
+    @classmethod
+    def from_request_schema(cls, schema: RequestSchema, deep_copy: bool = True) -> Self:
+        """Create a SchemaSnapshot from a RequestSchema.
+
+        Args:
+            schema: The RequestSchema to convert.
+            deep_copy: If True, creates a deep copy of all resources. If False, the snapshot
+                      references the same objects as the original schema, so mutations will
+                      flow through.
+
+        Returns:
+            A SchemaSnapshot containing the schema's resources.
+        """
+        source = schema.model_copy(deep=True) if deep_copy else schema
+        return cls(
+            data_model={schema.data_model.as_reference(): source.data_model},
+            views={view.as_reference(): view for view in source.views},
+            containers={container.as_reference(): container for container in source.containers},
+            spaces={space.as_reference(): space for space in source.spaces},
+            node_types={node_type: node_type for node_type in source.node_types},
+            timestamp=datetime.now(timezone.utc),
+        )
+
     def merge(self, cdf: Self) -> Self:
         """Merge another SchemaSnapshot into this one, prioritizing this snapshot's data."""
         merged = self.model_copy(deep=True)

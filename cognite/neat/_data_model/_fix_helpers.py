@@ -1,5 +1,3 @@
-"""Helper functions for creating fix actions on DMS schemas."""
-
 import hashlib
 
 from cognite.neat._data_model.models.dms._references import ContainerReference
