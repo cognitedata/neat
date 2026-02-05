@@ -145,47 +145,6 @@
     color: #a7f3d0;
 }
 
-/* Fixed issues summary layout */
-.fixed-summary {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%);
-    border-left: 4px solid #10b981;
-}
-
-.dark-mode .fixed-summary {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
-    border-left-color: #34d399;
-}
-
-.fixed-message {
-    font-weight: 500;
-    color: #065f46;
-    margin-bottom: 12px;
-}
-
-.dark-mode .fixed-message {
-    color: #6ee7b7;
-}
-
-.fix-count {
-    font-size: 12px;
-    color: #059669;
-    background: rgba(16, 185, 129, 0.15);
-    padding: 2px 8px;
-    border-radius: 10px;
-    margin-left: 8px;
-}
-
-.dark-mode .fix-count {
-    color: #34d399;
-    background: rgba(52, 211, 153, 0.2);
-}
-
-.fix-items-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
 .fix-item {
     display: flex;
     align-items: center;
@@ -323,11 +282,6 @@
     border-color: rgba(167, 139, 250, 0.3);
 }
 
-.index-icon {
-    font-size: 14px;
-    color: #f59e0b;
-}
-
 .fix-identifier {
     font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
     font-size: 11px;
@@ -353,38 +307,13 @@
     background: rgba(156, 163, 175, 0.15);
 }
 
-/* Add action item styling (for non-grouped single items) */
+/* Add/Remove action item styling (for non-grouped single items) */
 .issue-item:not(.grouped) .fix-item-add {
     border-left: 3px solid #10b981;
 }
 
-.fix-item-add .container-name {
-    color: #0369a1;
-    background: rgba(14, 165, 233, 0.12);
-    border-color: rgba(14, 165, 233, 0.25);
-}
-
-.dark-mode .fix-item-add .container-name {
-    color: #38bdf8;
-    background: rgba(56, 189, 248, 0.15);
-    border-color: rgba(56, 189, 248, 0.3);
-}
-
-/* Remove action item styling (for non-grouped single items) */
 .issue-item:not(.grouped) .fix-item-remove {
     border-left: 3px solid #ea580c;
-}
-
-.fix-item-remove .container-name {
-    color: #0369a1;
-    background: rgba(14, 165, 233, 0.12);
-    border-color: rgba(14, 165, 233, 0.25);
-}
-
-.dark-mode .fix-item-remove .container-name {
-    color: #38bdf8;
-    background: rgba(56, 189, 248, 0.15);
-    border-color: rgba(56, 189, 248, 0.3);
 }
 
 /* Strikethrough for removed constraint destination and identifier */
@@ -517,10 +446,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 20px;
+    padding: 32px 20px;
     text-align: center;
     color: var(--text-secondary);
-    min-height: 300px;
+    min-height: 180px;
 }
 
 /* Info box styling */

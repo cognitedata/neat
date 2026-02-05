@@ -98,16 +98,28 @@ function renderIssues() {
             // Then apply the type filter
             if (currentFilter !== 'all' && issue.type !== currentFilter) return false;
         }
+        const searchLower = currentSearch.toLowerCase();
         const matchesSearch = !currentSearch ||
-            issue.message.toLowerCase().includes(currentSearch.toLowerCase()) ||
-            (issue.code && issue.code.toLowerCase().includes(currentSearch.toLowerCase())) ||
-            (issue.fix && issue.fix.toLowerCase().includes(currentSearch.toLowerCase()));
+            issue.message.toLowerCase().includes(searchLower) ||
+            (issue.code && issue.code.toLowerCase().includes(searchLower)) ||
+            (issue.fix && issue.fix.toLowerCase().includes(searchLower)) ||
+            // Fix-specific fields for searching
+            (issue.source_name && issue.source_name.toLowerCase().includes(searchLower)) ||
+            (issue.dest_name && issue.dest_name.toLowerCase().includes(searchLower)) ||
+            (issue.container_name && issue.container_name.toLowerCase().includes(searchLower)) ||
+            (issue.property_id && issue.property_id.toLowerCase().includes(searchLower)) ||
+            (issue.constraint_id && issue.constraint_id.toLowerCase().includes(searchLower)) ||
+            (issue.index_id && issue.index_id.toLowerCase().includes(searchLower));
         return matchesSearch;
     });
 
     if (filtered.length === 0) {
         if (currentFilter === 'Fixed') {
-            if (fixableCount > 0) {
+            // Check if there are any fixes at all (search just didn't match)
+            const hasAnyFixes = issues.some(i => i.fixed);
+            if (hasAnyFixes && currentSearch) {
+                listContainer.innerHTML = '<div class="no-issues">No fixes match your filters</div>';
+            } else if (fixableCount > 0) {
                 listContainer.innerHTML = `<div class="no-issues"><div style="margin-bottom: 16px; text-align: center;">No fixes have been applied yet. <strong>${fixableCount} issue${fixableCount === 1 ? '' : 's'} can be automatically fixed.</strong></div><div class="info-box"><span class="info-icon">💡</span><div><strong>Tip:</strong> Read your data model with <code style="background: rgba(128, 128, 128, 0.15); padding: 2px 6px; border-radius: 3px; font-family: monospace; color: var(--text-primary);">fix=True</code> to automatically fix common issues.</div></div></div>`;
             } else {
                 listContainer.innerHTML = '<div class="no-issues">No issues can be automatically fixed.</div>';

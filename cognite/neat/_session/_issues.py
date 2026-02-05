@@ -6,6 +6,8 @@ from typing import Any
 from cognite.neat._config import NeatConfig
 from cognite.neat._data_model._fix_actions import FixAction
 from cognite.neat._data_model.deployer.data_classes import AddedField, RemovedField
+from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
+from cognite.neat._data_model.models.dms._indexes import BtreeIndex
 from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError, Recommendation
@@ -133,12 +135,12 @@ class Issues:
             if isinstance(change, AddedField):
                 item["action_type"] = "add"
                 # Get dest from the constraint definition
-                if hasattr(change.new_value, "require"):
+                if isinstance(change.new_value, RequiresConstraintDefinition):
                     item["dest_name"] = change.new_value.require.external_id
             elif isinstance(change, RemovedField):
                 item["action_type"] = "remove"
                 # Get dest from the constraint definition
-                if hasattr(change.current_value, "require"):
+                if isinstance(change.current_value, RequiresConstraintDefinition):
                     item["dest_name"] = change.current_value.require.external_id
 
         elif field_path.startswith("indexes."):
@@ -148,7 +150,7 @@ class Issues:
             item["index_id"] = index_id
 
             # Get property_id from the index definition
-            if isinstance(change, AddedField) and hasattr(change.new_value, "properties"):
+            if isinstance(change, AddedField) and isinstance(change.new_value, BtreeIndex):
                 properties = change.new_value.properties
                 if properties:
                     item["property_id"] = properties[0]
