@@ -5,7 +5,7 @@ from typing import Any
 
 from cognite.neat._config import NeatConfig
 from cognite.neat._data_model._fix_actions import FixAction
-from cognite.neat._data_model.deployer.data_classes import AddedField, RemovedField
+from cognite.neat._data_model.deployer.data_classes import AddedField, ChangedField, RemovedField
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
 from cognite.neat._data_model.models.dms._references import ContainerReference
@@ -117,43 +117,48 @@ class Issues:
         if not fix_action.changes:
             return
 
-        # Get container name from resource_id
         container_name = ""
         if isinstance(fix_action.resource_id, ContainerReference):
             container_name = fix_action.resource_id.external_id
 
-        # Check the first change to determine the fix type
         change = fix_action.changes[0]
         field_path = change.field_path
 
         if field_path.startswith("constraints."):
             constraint_id = field_path.split(".", 1)[1]
-            item["fix_type"] = "constraint"
-            item["source_name"] = container_name
-            item["constraint_id"] = constraint_id
-
-            if isinstance(change, AddedField):
+            item.update(
+                {
+                    "fix_type": "constraint",
+                    "source_name": container_name,
+                    "constraint_id": constraint_id,
+                }
+            )
+            if isinstance(change, AddedField) and isinstance(change.new_value, RequiresConstraintDefinition):
                 item["action_type"] = "add"
-                # Get dest from the constraint definition
-                if isinstance(change.new_value, RequiresConstraintDefinition):
-                    item["dest_name"] = change.new_value.require.external_id
-            elif isinstance(change, RemovedField):
+                item["dest_name"] = change.new_value.require.external_id
+            elif isinstance(change, RemovedField) and isinstance(change.current_value, RequiresConstraintDefinition):
                 item["action_type"] = "remove"
-                # Get dest from the constraint definition
-                if isinstance(change.current_value, RequiresConstraintDefinition):
-                    item["dest_name"] = change.current_value.require.external_id
+                item["dest_name"] = change.current_value.require.external_id
 
         elif field_path.startswith("indexes."):
             index_id = field_path.split(".", 1)[1]
-            item["fix_type"] = "index"
-            item["container_name"] = container_name
-            item["index_id"] = index_id
+            item.update(
+                {
+                    "fix_type": "index",
+                    "container_name": container_name,
+                    "index_id": index_id,
+                }
+            )
+            # Extract property_id from the index definition (AddedField or ChangedField)
+            index_value = None
+            if isinstance(change, AddedField):
+                index_value = change.new_value
+            elif isinstance(change, ChangedField):
+                index_value = change.new_value
+                item["action_type"] = "change"
 
-            # Get property_id from the index definition
-            if isinstance(change, AddedField) and isinstance(change.new_value, BtreeIndex):
-                properties = change.new_value.properties
-                if properties:
-                    item["property_id"] = properties[0]
+            if isinstance(index_value, BtreeIndex) and index_value.properties:
+                item["property_id"] = index_value.properties[0]
 
     def _repr_html_(self) -> str:
         """Generate interactive HTML representation."""

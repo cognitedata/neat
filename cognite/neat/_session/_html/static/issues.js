@@ -70,12 +70,15 @@ function renderFixedIssueContent(issue) {
         // Fancy rendering for index fixes
         const indexId = issue.index_id || '';
         const fullPath = indexId ? `${issue.container_name}.indexes.${indexId}` : '';
+        const isChange = issue.action_type === 'change';
+        const modifiedTag = isChange ? '<span class="modified-tag">(modified existing)</span>' : '';
         return `
             <div class="fix-item fix-item-add">
                 <span class="fix-action-icon">✓</span>
                 <span class="container-name">${issue.container_name}</span>
                 <span class="property-dot">.</span>
                 <span class="property-name">${issue.property_id}</span>
+                ${modifiedTag}
                 <span class="fix-identifier">${fullPath}</span>
             </div>
         `;

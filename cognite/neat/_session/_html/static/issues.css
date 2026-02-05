@@ -282,6 +282,16 @@
     border-color: rgba(167, 139, 250, 0.3);
 }
 
+.modified-tag {
+    font-size: 11px;
+    color: #6b7280;
+    font-style: italic;
+}
+
+.dark-mode .modified-tag {
+    color: #9ca3af;
+}
+
 .fix-identifier {
     font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
     font-size: 11px;
