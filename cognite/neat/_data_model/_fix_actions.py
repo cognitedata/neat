@@ -1,5 +1,3 @@
-from typing import Any
-
 from pydantic import BaseModel, ConfigDict, Field
 
 from cognite.neat._data_model._snapshot import SchemaSnapshot
@@ -12,6 +10,7 @@ from cognite.neat._data_model.deployer.data_classes import (
 from cognite.neat._data_model.models.dms import (
     ContainerReference,
     DataModelReference,
+    DataModelResource,
     SchemaResourceId,
     SpaceReference,
     ViewReference,
@@ -39,16 +38,13 @@ class FixAction(BaseModel):
         """Apply this fix to the snapshot in-place.
 
         Args:
-            snapshot: A SchemaSnapshot to apply fixes to. Use SchemaSnapshot.from_request_schema()
-                     with deep_copy=False to create a thin snapshot that references the original
-                     RequestSchema objects, so mutations flow through.
+            snapshot: A SchemaSnapshot to apply fixes to.
         """
         resource = self._get_resource(snapshot)
         for change in self.changes:
             self._apply_field_change(resource, change)
 
-    def _get_resource(self, snapshot: SchemaSnapshot) -> Any:
-        """Get the resource from the snapshot based on resource_id type (O(1) lookup)."""
+    def _get_resource(self, snapshot: SchemaSnapshot) -> DataModelResource:
         if isinstance(self.resource_id, SpaceReference):
             resource = snapshot.spaces.get(self.resource_id)
         elif isinstance(self.resource_id, DataModelReference):
@@ -64,13 +60,10 @@ class FixAction(BaseModel):
             raise ValueError(f"Resource {self.resource_id} not found in snapshot")
         return resource
 
-    def _apply_field_change(self, resource: Any, change: FieldChange) -> None:
-        """Apply a single field change to a resource."""
-        parts = change.field_path.split(".", 1)
-        if len(parts) != 2:
+    def _apply_field_change(self, resource: DataModelResource, change: FieldChange) -> None:
+        if "." not in change.field_path:
             raise ValueError(f"Invalid field_path: {change.field_path}")
-
-        field_type, identifier = parts
+        field_type, identifier, *_ = change.field_path.split(".", maxsplit=2)
         collection = getattr(resource, field_type, None)
 
         if isinstance(change, AddedField):

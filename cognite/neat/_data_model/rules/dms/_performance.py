@@ -6,7 +6,7 @@ from cognite.neat._data_model._analysis import RequiresChangeStatus, ResolvedRev
 from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model._fix_actions import FixAction
 from cognite.neat._data_model._fix_helpers import make_auto_constraint_id, make_auto_index_id
-from cognite.neat._data_model.deployer.data_classes import AddedField, RemovedField, SeverityType
+from cognite.neat._data_model.deployer.data_classes import AddedField, ChangedField, RemovedField, SeverityType
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
@@ -311,7 +311,7 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for resolved in self._get_missing_index_targets():
+        for resolved, _ in self._get_missing_index_targets():
             recommendations.append(
                 Recommendation(
                     message=(
@@ -328,37 +328,64 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
         return recommendations
 
     def fix(self) -> list[FixAction]:
-        """Return fix actions to add missing indexes."""
+        """Return fix actions to add or update indexes."""
         fix_actions: list[FixAction] = []
         seen: set[tuple[ContainerReference, str]] = set()
 
-        for resolved in self._get_missing_index_targets():
+        for resolved, existing_index in self._get_missing_index_targets():
             key = (resolved.container_ref, resolved.container_property_id)
             if key in seen:
                 continue
             seen.add(key)
 
-            index_id = make_auto_index_id(resolved.container_property_id)
-            fix_actions.append(
-                FixAction(
-                    code=self.code,
-                    resource_id=resolved.container_ref,
-                    changes=[
-                        AddedField(
-                            field_path=f"indexes.{index_id}",
-                            new_value=BtreeIndex(properties=[resolved.container_property_id], cursorable=True),
-                            item_severity=SeverityType.SAFE,
-                        )
-                    ],
-                    message="Added index to enable efficient querying through reverse direct relations",
+            if existing_index:
+                index_id, current_index = existing_index
+                updated_index = BtreeIndex(
+                    properties=current_index.properties, by_space=current_index.by_space, cursorable=True
                 )
-            )
+                fix_actions.append(
+                    FixAction(
+                        code=self.code,
+                        resource_id=resolved.container_ref,
+                        changes=[
+                            ChangedField(
+                                field_path=f"indexes.{index_id}",
+                                current_value=current_index,
+                                new_value=updated_index,
+                                item_severity=SeverityType.SAFE,
+                            )
+                        ],
+                        message="Updated index to be cursorable for efficient reverse relation queries",
+                    )
+                )
+            else:
+                index_id = make_auto_index_id(resolved.container_property_id)
+                fix_actions.append(
+                    FixAction(
+                        code=self.code,
+                        resource_id=resolved.container_ref,
+                        changes=[
+                            AddedField(
+                                field_path=f"indexes.{index_id}",
+                                new_value=BtreeIndex(properties=[resolved.container_property_id], cursorable=True),
+                                item_severity=SeverityType.SAFE,
+                            )
+                        ],
+                        message="Added index to enable efficient querying through reverse direct relations",
+                    )
+                )
 
         return fix_actions
 
-    def _get_missing_index_targets(self) -> list[ResolvedReverseDirectRelation]:
-        """Get resolved reverse direct relations that are missing cursorable indexes."""
-        targets = []
+    def _get_missing_index_targets(
+        self,
+    ) -> list[tuple[ResolvedReverseDirectRelation, tuple[str, BtreeIndex] | None]]:
+        """Get resolved reverse direct relations that are missing cursorable indexes.
+
+        Returns:
+            List of tuples: (resolved_relation, existing_non_cursorable_index or None)
+        """
+        targets: list[tuple[ResolvedReverseDirectRelation, tuple[str, BtreeIndex] | None]] = []
 
         for resolved in self.validation_resources.resolved_reverse_direct_relations:
             # Skip if container or container property couldn't be resolved
@@ -373,19 +400,29 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
             if not isinstance(resolved.container_property.type, DirectNodeRelation):
                 continue
 
-            # Skip if this is a list direct relation - indexes are not supported for list properties
+            # Skip if this is a list direct relation - indexes are not useful for list properties
             if resolved.container_property.type.list:
                 continue
 
-            # Skip if there's already a cursorable B-tree index on this property
-            if resolved.container.indexes and any(
-                isinstance(index, BtreeIndex)
-                and index.cursorable
-                and resolved.container_property_id in index.properties
-                for index in resolved.container.indexes.values()
-            ):
-                continue
-
-            targets.append(resolved)
+            # Check if there any of the existing indexes on the target container should be changed.
+            # We assume non-composite b-tree indexes have been set for the purpose of RDR traversal,
+            # and recommend "upgrading" them to cursorable if they are not already.
+            for index_id, index in (resolved.container.indexes or {}).items():
+                if not isinstance(index, BtreeIndex):
+                    continue
+                if len(index.properties) != 1:
+                    # Skip composite indexes as we don't consider them for RDR traversal
+                    continue
+                if resolved.container_property_id not in index.properties:
+                    continue
+                if index.cursorable:
+                    # Already has a cursorable index - skip entirely
+                    break
+                # Found a non-composite, non-cursorable index to update
+                targets.append((resolved, (index_id, index)))
+                break
+            else:
+                # No non-composite, non-cursorable index found - include in targets
+                targets.append((resolved, None))
 
         return targets
