@@ -235,7 +235,10 @@ class RequiresConstraintCycle(DataModelRule):
         errors: list[ConsistencyError] = []
         reported_cycles: set[tuple[ContainerReference, ...]] = set()
 
-        for cycle, src, dst in self._get_cycle_edges_to_remove():
+        # Collect once to avoid re-evaluating the generator
+        all_cycle_edges = list(self._get_cycle_edges_to_remove())
+
+        for cycle, _, _ in all_cycle_edges:
             cycle_key = tuple(cycle)
             if cycle_key in reported_cycles:
                 continue
@@ -244,7 +247,7 @@ class RequiresConstraintCycle(DataModelRule):
             cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
 
             # Collect all edges to remove for this cycle
-            edges_to_remove = [f"{s} -> {d}" for c, s, d in self._get_cycle_edges_to_remove() if tuple(c) == cycle_key]
+            edges_to_remove = [f"{s} -> {d}" for c, s, d in all_cycle_edges if tuple(c) == cycle_key]
 
             message = f"Requires constraints form a cycle: {cycle_str}"
             if edges_to_remove:

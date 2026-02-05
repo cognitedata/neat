@@ -308,6 +308,56 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
     alpha = True
     fixable = True
 
+    def _get_missing_index_targets(
+        self,
+    ) -> list[tuple[ResolvedReverseDirectRelation, tuple[str, BtreeIndex] | None]]:
+        """Get resolved reverse direct relations that are missing cursorable indexes.
+
+        Returns:
+            List of tuples: (resolved_relation, existing_non_cursorable_index or None)
+        """
+        targets: list[tuple[ResolvedReverseDirectRelation, tuple[str, BtreeIndex] | None]] = []
+
+        for resolved in self.validation_resources.resolved_reverse_direct_relations:
+            # Skip if container or container property couldn't be resolved
+            if not resolved.container or not resolved.container_property:
+                continue
+
+            # Skip CDM containers - we can't modify these
+            if resolved.container_ref.space in COGNITE_SPACES:
+                continue
+
+            # Must be a DirectNodeRelation type (other types handled by ReverseConnectionContainerPropertyWrongType)
+            if not isinstance(resolved.container_property.type, DirectNodeRelation):
+                continue
+
+            # Skip if this is a list direct relation - indexes are not useful for list properties
+            if resolved.container_property.type.list:
+                continue
+
+            # Check if there any of the existing indexes on the target container should be changed.
+            # We assume non-composite b-tree indexes have been set for the purpose of RDR traversal,
+            # and recommend "upgrading" them to cursorable if they are not already.
+            for index_id, index in (resolved.container.indexes or {}).items():
+                if not isinstance(index, BtreeIndex):
+                    continue
+                if len(index.properties) != 1:
+                    # Skip composite indexes as we don't consider them for RDR traversal
+                    continue
+                if resolved.container_property_id not in index.properties:
+                    continue
+                if index.cursorable:
+                    # Already has a cursorable index - skip entirely
+                    break
+                # Found a non-composite, non-cursorable index to update
+                targets.append((resolved, (index_id, index)))
+                break
+            else:
+                # No non-composite, non-cursorable index found - include in targets
+                targets.append((resolved, None))
+
+        return targets
+
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
@@ -376,53 +426,3 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
                 )
 
         return fix_actions
-
-    def _get_missing_index_targets(
-        self,
-    ) -> list[tuple[ResolvedReverseDirectRelation, tuple[str, BtreeIndex] | None]]:
-        """Get resolved reverse direct relations that are missing cursorable indexes.
-
-        Returns:
-            List of tuples: (resolved_relation, existing_non_cursorable_index or None)
-        """
-        targets: list[tuple[ResolvedReverseDirectRelation, tuple[str, BtreeIndex] | None]] = []
-
-        for resolved in self.validation_resources.resolved_reverse_direct_relations:
-            # Skip if container or container property couldn't be resolved
-            if not resolved.container or not resolved.container_property:
-                continue
-
-            # Skip CDM containers - we can't modify these
-            if resolved.container_ref.space in COGNITE_SPACES:
-                continue
-
-            # Must be a DirectNodeRelation type (other types handled by ReverseConnectionContainerPropertyWrongType)
-            if not isinstance(resolved.container_property.type, DirectNodeRelation):
-                continue
-
-            # Skip if this is a list direct relation - indexes are not useful for list properties
-            if resolved.container_property.type.list:
-                continue
-
-            # Check if there any of the existing indexes on the target container should be changed.
-            # We assume non-composite b-tree indexes have been set for the purpose of RDR traversal,
-            # and recommend "upgrading" them to cursorable if they are not already.
-            for index_id, index in (resolved.container.indexes or {}).items():
-                if not isinstance(index, BtreeIndex):
-                    continue
-                if len(index.properties) != 1:
-                    # Skip composite indexes as we don't consider them for RDR traversal
-                    continue
-                if resolved.container_property_id not in index.properties:
-                    continue
-                if index.cursorable:
-                    # Already has a cursorable index - skip entirely
-                    break
-                # Found a non-composite, non-cursorable index to update
-                targets.append((resolved, (index_id, index)))
-                break
-            else:
-                # No non-composite, non-cursorable index found - include in targets
-                targets.append((resolved, None))
-
-        return targets

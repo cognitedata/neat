@@ -82,7 +82,9 @@ class TestFixActionApply:
 
         assert minimal_container.constraints is not None
         assert "my_constraint" in minimal_container.constraints
-        assert minimal_container.constraints["my_constraint"].require == target_ref
+        added_constraint = minimal_container.constraints["my_constraint"]
+        assert isinstance(added_constraint, RequiresConstraintDefinition)
+        assert added_constraint.require == target_ref
 
     def test_add_index_to_empty_indexes(
         self, minimal_container: ContainerRequest, snapshot_with_container: SchemaSnapshot
@@ -128,7 +130,9 @@ class TestFixActionApply:
 
         fix(snapshot_with_container)
 
-        assert minimal_container.indexes["existing_idx"].cursorable is True
+        updated_index = minimal_container.indexes["existing_idx"]
+        assert isinstance(updated_index, BtreeIndex)
+        assert updated_index.cursorable is True
 
     def test_remove_constraint(
         self, minimal_container: ContainerRequest, snapshot_with_container: SchemaSnapshot
@@ -209,7 +213,11 @@ class TestFixWorkflow:
     ) -> None:
         """Applying fixes from a validator should resolve all validation issues it identified."""
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
-            scenario, cdf_scenario, modus_operandi="additive", include_cdm=include_cdm, format="snapshots"
+            scenario,
+            cdf_scenario,
+            modus_operandi="additive",
+            include_cdm=include_cdm,
+            format="snapshots",  # type: ignore[call-overload]
         )
         resources = ValidationResources(modus_operandi="additive", local=local_snapshot, cdf=cdf_snapshot)
         validator = validator_class(resources)
