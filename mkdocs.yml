@@ -43,7 +43,6 @@ nav:
   - About:
     - History: history.md
     - Authors: authors.md
-    - Roadmap: roadmap.md
     - Changelog: https://github.com/cognitedata/neat/releases
 
 
