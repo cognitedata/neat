@@ -22,8 +22,8 @@ class FixAction(BaseModel):
     """An atomic, individually-applicable fix for a schema issue.
 
     Attributes:
-        resource_id: Reference to the resource being modified (e.g., ContainerReference, ViewReference).
-        changes: List of field-level changes (AddedField, RemovedField).
+        resource_id: Reference to the resource being modified.
+        changes: List of field-level changes.
         message: Human-readable description of what this fix does.
         code: The validator code (e.g., "NEAT-DMS-PERFORMANCE-001") for grouping in UI.
     """
@@ -90,3 +90,5 @@ class FixAction(BaseModel):
                 # Clean up empty collections
                 if not collection:
                     setattr(resource, field_type, None)
+        else:
+            raise ValueError(f"Unsupported field change type: {type(change)}")
