@@ -6,7 +6,12 @@ from cognite.neat._data_model._analysis import RequiresChangeStatus, ResolvedRev
 from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model._fix_actions import FixAction
 from cognite.neat._data_model._fix_helpers import make_auto_constraint_id, make_auto_index_id
-from cognite.neat._data_model.deployer.data_classes import AddedField, ChangedField, RemovedField, SeverityType
+from cognite.neat._data_model.deployer.data_classes import (
+    AddedField,
+    ChangedField,
+    RemovedField,
+    SeverityType,
+)
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
@@ -389,40 +394,27 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
             seen.add(key)
 
             if existing_index:
+                # Update existing index if it exists
                 index_id, current_index = existing_index
-                updated_index = BtreeIndex(
-                    properties=current_index.properties, by_space=current_index.by_space, cursorable=True
-                )
-                fix_actions.append(
-                    FixAction(
-                        code=self.code,
-                        resource_id=resolved.container_ref,
-                        changes=[
-                            ChangedField(
-                                field_path=f"indexes.{index_id}",
-                                current_value=current_index,
-                                new_value=updated_index,
-                                item_severity=SeverityType.SAFE,
-                            )
-                        ],
-                        message="Updated index to be cursorable for efficient reverse relation queries",
-                    )
+                index_change = ChangedField(
+                    field_path=f"indexes.{index_id}",
+                    current_value=current_index,
+                    new_value=BtreeIndex(properties=[resolved.container_property_id], cursorable=True),
+                    item_severity=SeverityType.SAFE,
                 )
             else:
-                index_id = make_auto_index_id(resolved.container_property_id)
-                fix_actions.append(
-                    FixAction(
-                        code=self.code,
-                        resource_id=resolved.container_ref,
-                        changes=[
-                            AddedField(
-                                field_path=f"indexes.{index_id}",
-                                new_value=BtreeIndex(properties=[resolved.container_property_id], cursorable=True),
-                                item_severity=SeverityType.SAFE,
-                            )
-                        ],
-                        message="Added index to enable efficient querying through reverse direct relations",
-                    )
+                index_change = AddedField(
+                    field_path=f"indexes.{make_auto_index_id(resolved.container_property_id)}",
+                    new_value=BtreeIndex(properties=[resolved.container_property_id], cursorable=True),
+                    item_severity=SeverityType.SAFE,
                 )
+            fix_actions.append(
+                FixAction(
+                    code=self.code,
+                    resource_id=resolved.container_ref,
+                    changes=[index_change],
+                    message="Added index to enable efficient querying through reverse direct relations",
+                )
+            )
 
         return fix_actions
