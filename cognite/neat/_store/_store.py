@@ -6,7 +6,7 @@ from typing import Any, cast
 from cognite.neat._client.client import NeatClient
 from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._config import NeatConfig
-from cognite.neat._data_model._fix_actions import FixAction
+from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
