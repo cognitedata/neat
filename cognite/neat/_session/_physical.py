@@ -107,15 +107,17 @@ class ReadPhysicalDataModel:
         Step 2: If fixes found, apply them and re-validate (records fix + post-fix issues in provenance)
         """
         # Step 1: Read + validate
-        checker = self._create_on_success()
-        self._store.read_physical(reader, checker)
+        on_success = self._create_on_success()
+        self._store.read_physical(reader, on_success)
 
         # Step 2: Apply fixes if enabled and present
-        if self._config.alpha.fix_validation_issues and checker.pending_fixes:
-            applicator = FixApplicator(self._store.physical_data_model[-1], checker.pending_fixes)
-            post_fix_checker = self._create_on_success()
-            change = self._store.transform_physical(applicator.apply_fixes, post_fix_checker)
-            change.applied_fixes = checker.pending_fixes
+        if self._config.alpha.fix_validation_issues and on_success.pending_fixes:
+            applicator = FixApplicator(
+                self._store.physical_data_model[-1].model_copy(deep=True), on_success.pending_fixes
+            )
+            post_fix_on_success = self._create_on_success()
+            change = self._store.transform_physical(applicator.apply_fixes, post_fix_on_success)
+            change.applied_fixes = post_fix_on_success.pending_fixes
 
     def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
         """Read physical data model from YAML file(s)

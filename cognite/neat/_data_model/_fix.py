@@ -1,10 +1,8 @@
 import hashlib
 from collections import defaultdict
-from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import (
     AddedField,
     ChangedField,
@@ -45,34 +43,9 @@ class FixAction(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     resource_id: SchemaResourceId
-    changes: list[FieldChange] = Field(default_factory=list)
+    changes: tuple[FieldChange, ...] = Field(default_factory=tuple)
     message: str | None = None
     code: str
-
-    def as_resource_update(self, current_resource: DataModelResource) -> DataModelResource:
-        """Apply this action's changes to the resource, returning an updated copy via model_copy."""
-        resource_update: dict[str, Any] = {}
-        for change in self.changes:
-            if not isinstance(change, PrimitiveField):
-                raise ValueError(f"Only primitive field changes are supported, got {type(change).__name__}")
-            if "." not in change.field_path:
-                raise ValueError(f"Invalid field_path (expected 'collection.identifier' format): {change.field_path}")
-            top_level, identifier = change.field_path.split(".", maxsplit=1)
-
-            if top_level not in resource_update:
-                existing = getattr(current_resource, top_level, None)
-                resource_update[top_level] = dict(existing) if existing else {}
-
-            if isinstance(change, RemovedField):
-                resource_update[top_level].pop(identifier, None)
-            elif isinstance(change, (AddedField, ChangedField)):
-                resource_update[top_level][identifier] = change.new_value
-
-        for key in resource_update:
-            if not resource_update[key]:
-                resource_update[key] = None
-
-        return current_resource.model_copy(update=resource_update)
 
 
 class FixApplicator:
@@ -81,14 +54,13 @@ class FixApplicator:
     def __init__(self, request_schema: RequestSchema, fix_actions: list[FixAction]) -> None:
         self._request_schema = request_schema
         self._fix_actions = fix_actions
+        self._seen_field_paths: set[str] = set()
 
     def apply_fixes(self) -> RequestSchema:
         """Apply fix actions to the schema and return the fixed schema.
 
-        This does not mutate the input schema.
-
-        Returns:
-            A new RequestSchema with the fixes applied.
+        Note: This mutates the RequestSchema passed to the constructor.
+        The caller is responsible for passing a deep copy if needed.
         """
         if not self._fix_actions:
             return self._request_schema
@@ -97,25 +69,63 @@ class FixApplicator:
         for action in self._fix_actions:
             fix_by_resource_id[action.resource_id].append(action)
 
-        fix_snapshot = SchemaSnapshot.from_request_schema(self._request_schema, deep_copy=False)
+        resources_list_lookup: dict[type, dict[SchemaResourceId, DataModelResource]] = {
+            ViewReference: {view.as_reference(): view for view in self._request_schema.views},
+            ContainerReference: {container.as_reference(): container for container in self._request_schema.containers},
+            SpaceReference: {space.as_reference(): space for space in self._request_schema.spaces},
+            DataModelReference: {self._request_schema.data_model.as_reference(): self._request_schema.data_model},
+        }
 
-        snapshot_update: dict[str, dict] = {}
         for resource_id, actions in fix_by_resource_id.items():
-            _check_no_field_path_conflicts(actions)
+            resource_lookup = resources_list_lookup.get(type(resource_id))
+            if resource_lookup is None:
+                raise RuntimeError(
+                    f"FixApplicator: Unsupported resource type {type(resource_id)}. This is a bug in NEAT."
+                )
+            resource = resource_lookup.get(resource_id)
+            if resource is None:
+                raise RuntimeError(f"FixApplicator: Resource {resource_id} not found in schema. This is a bug in NEAT.")
 
-            resource_key = _snapshot_key_for_resource(resource_id)
-            if resource_key not in snapshot_update:
-                snapshot_update[resource_key] = dict(getattr(fix_snapshot, resource_key))
+            all_changes_for_resource = [change for action in actions for change in action.changes]
+            self._check_no_field_path_conflicts(all_changes_for_resource)
+            self._apply_changes_to_resource(resource, all_changes_for_resource)
 
-            current_resource = snapshot_update[resource_key].get(resource_id)
-            if current_resource is None:
-                raise ValueError(f"Resource {resource_id} not found in snapshot")
-            for action in actions:
-                current_resource = action.as_resource_update(current_resource)
-            snapshot_update[resource_key][resource_id] = current_resource
+        return self._request_schema
 
-        fixed_snapshot = fix_snapshot.model_copy(update=snapshot_update)
-        return fixed_snapshot.to_request_schema()
+    def _apply_changes_to_resource(self, resource: DataModelResource, changes: list[FieldChange]) -> None:
+        """Apply field changes to the resource in place."""
+        for change in changes:
+            if not isinstance(change, PrimitiveField):
+                raise RuntimeError(
+                    f"FixApplicator: Only primitive field changes are supported, "
+                    f"got {type(change).__name__}. This is a bug in NEAT."
+                )
+            if "." not in change.field_path:
+                raise RuntimeError(
+                    f"FixApplicator: Invalid field_path '{change.field_path}' "
+                    "(expected 'field_name.identifier' format). This is a bug in NEAT."
+                )
+            field_name, identifier = change.field_path.split(".", maxsplit=1)
+            field_map = getattr(resource, field_name, None)
+            if field_map is None:
+                field_map = {}
+                setattr(resource, field_name, field_map)
+            if isinstance(change, RemovedField):
+                field_map.pop(identifier, None)
+            elif isinstance(change, (AddedField, ChangedField)):
+                field_map[identifier] = change.new_value
+            if not field_map:
+                setattr(resource, field_name, None)
+
+    def _check_no_field_path_conflicts(self, changes: list[FieldChange]) -> None:
+        """Raise if any changes touch a field_path already modified by a previous change."""
+        for change in changes:
+            if change.field_path in self._seen_field_paths:
+                raise RuntimeError(
+                    f"FixApplicator: Conflicting fixes — multiple changes to '{change.field_path}'. "
+                    "This is a bug in NEAT."
+                )
+            self._seen_field_paths.add(change.field_path)
 
 
 def make_auto_id(base_id: str) -> str:
@@ -147,26 +157,3 @@ def make_auto_constraint_id(dst: ContainerReference) -> str:
 def make_auto_index_id(property_id: str) -> str:
     """Generate an index identifier for auto-generated indexes."""
     return make_auto_id(property_id)
-
-
-def _snapshot_key_for_resource(resource_id: SchemaResourceId) -> str:
-    """Map a resource reference to its SchemaSnapshot field name."""
-    if isinstance(resource_id, SpaceReference):
-        return "spaces"
-    elif isinstance(resource_id, DataModelReference):
-        return "data_model"
-    elif isinstance(resource_id, ViewReference):
-        return "views"
-    elif isinstance(resource_id, ContainerReference):
-        return "containers"
-    raise ValueError(f"Unsupported resource type: {type(resource_id)}")
-
-
-def _check_no_field_path_conflicts(actions: list[FixAction]) -> None:
-    """Raise if multiple actions touch the same field_path on the same resource."""
-    seen_paths: set[str] = set()
-    for action in actions:
-        for change in action.changes:
-            if change.field_path in seen_paths:
-                raise ValueError(f"Conflicting fixes: multiple changes to '{change.field_path}'")
-            seen_paths.add(change.field_path)

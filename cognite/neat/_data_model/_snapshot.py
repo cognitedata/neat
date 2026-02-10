@@ -65,21 +65,6 @@ class SchemaSnapshot(BaseModel, extra="ignore"):
             timestamp=datetime.now(timezone.utc),
         )
 
-    def to_request_schema(self) -> RequestSchema:
-        """Convert this snapshot back to a RequestSchema.
-
-        Assumes exactly one data model entry exists in the snapshot.
-        """
-        if len(self.data_model) != 1:
-            raise ValueError(f"Expected exactly one data model, got {len(self.data_model)}")
-        return RequestSchema(
-            data_model=next(iter(self.data_model.values())),
-            views=list(self.views.values()),
-            containers=list(self.containers.values()),
-            spaces=list(self.spaces.values()),
-            node_types=list(self.node_types.values()),
-        )
-
     def merge(self, cdf: Self) -> Self:
         """Merge another SchemaSnapshot into this one, prioritizing this snapshot's data."""
         merged = self.model_copy(deep=True)
