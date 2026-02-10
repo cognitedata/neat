@@ -27,19 +27,20 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
         self._limits = limits
         self._modus_operandi = modus_operandi
         self._can_run_validator = can_run_validator or (lambda code, issue_type: True)  # type: ignore
+        self._has_run = False
         self._enable_alpha_validators = enable_alpha_validators
 
     def run(self, request_schema: RequestSchema) -> None:
-        """Validate the schema: run all validators and collect fix actions from fixable ones.
+        """Run quality assessment on the DMS data model."""
 
-        After calling this, self.issues contains the validation issues and
-        self.pending_fixes contains any available fix actions.
-        """
         validation_resources = self._gather_validation_resources(request_schema)
+
+        # Initialize all validators
         validators: list[DataModelRule] = [
             validator(validation_resources) for validator in get_concrete_subclasses(DataModelRule)
         ]
 
+        # Run validators
         for validator in validators:
             if validator.alpha and not self._enable_alpha_validators:
                 continue

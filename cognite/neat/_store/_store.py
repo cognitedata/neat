@@ -61,11 +61,7 @@ class NeatStore:
         return self._cdf_snapshot
 
     def read_physical(self, reader: DMSImporter, on_success: OnSuccessIssuesChecker | None = None) -> None:
-        """Read and validate a physical data model.
-
-        Imports the data model via the reader, optionally validates it via on_success,
-        and records both the import and validation issues in provenance.
-        """
+        """Read object from the store"""
         self._can_agent_do_activity(reader)
 
         import_change, data_model = self._do_activity(reader.to_data_model)
@@ -98,9 +94,7 @@ class NeatStore:
 
         self.provenance.append(change)
 
-    def write_physical(
-        self, writer: DMSExporter, on_success: OnSuccessResultProducer | None = None, **kwargs: Any
-    ) -> None:
+    def write_physical(self, writer: DMSExporter, on_success: OnSuccess | None = None, **kwargs: Any) -> None:
         """Write object into the store"""
         self._can_agent_do_activity(writer)
 
@@ -134,13 +128,9 @@ class NeatStore:
                 [space.space for space in self.cdf_snapshot.spaces.keys()]
             )
 
-    def cdf_analyze(self, on_success: OnSuccessIssuesChecker) -> None:
+    def cdf_analyze(self, on_success: OnSuccess) -> None:
         """Analyze the entity of CDF data models"""
-
-        def analyze() -> SchemaSnapshot:
-            return self.cdf_snapshot
-
-        change, _ = self._do_activity(analyze, on_success, agent_name=type(on_success).__name__)
+        change, _ = self._do_activity(lambda: self.cdf_snapshot, on_success)
         self.provenance.append(change)
 
     def _gather_data_model(self, writer: DMSExporter) -> PhysicalDataModel:
@@ -204,32 +194,25 @@ class NeatStore:
         # this will be done by running self.provenance.can_agent_do_activity(agent)
 
     def _do_activity(
-        self,
-        activity: Callable,
-        on_success: OnSuccess | None = None,
-        agent_name: str | None = None,
-        **kwargs: Any,
-    ) -> tuple[Change, Any | None]:
-        """Execute activity and capture timing, results, and issues.
-
-        This is the single entry point for all provenance-recorded activities.
-        on_success can be either OnSuccessIssuesChecker (for validation) or
-        OnSuccessResultProducer (for deployment).
-        """
+        self, activity: Callable, on_success: OnSuccess | None = None, agent_name: str | None = None, **kwargs: Any
+    ) -> tuple[Change, PhysicalDataModel | None]:
+        """Execute activity and capture timing, results, and issues"""
         start = datetime.now(timezone.utc)
-        data_model_result: PhysicalDataModel | None = None
+        created_data_model: PhysicalDataModel | None = None
         issues = IssueList()
         errors = IssueList()
         deployment_result: DeploymentResult | None = None
 
         try:
-            data_model_result = activity(**kwargs)
-            if data_model_result and on_success:
-                on_success.run(data_model_result)
+            created_data_model = activity(**kwargs)
+            if created_data_model and on_success:
+                on_success.run(created_data_model)
                 if isinstance(on_success, OnSuccessIssuesChecker):
                     issues.extend(on_success.issues)
                 elif isinstance(on_success, OnSuccessResultProducer):
                     deployment_result = on_success.result
+                else:
+                    raise RuntimeError(f"Unknown OnSuccess type {type(on_success).__name__}")
 
         # we catch import exceptions to capture issues and errors in provenance
         except DataModelImportException as e:
@@ -257,7 +240,7 @@ class NeatStore:
             errors=errors,
             result=deployment_result,
             activity=Change.standardize_activity_name(activity.__name__, start, end),
-        ), data_model_result
+        ), created_data_model
 
 
 class DataModelList(UserList[PhysicalDataModel]):
