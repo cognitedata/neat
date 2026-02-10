@@ -121,7 +121,7 @@ class TestFixApplicatorApplyChanges:
 
     def test_no_fixes_returns_schema_unchanged(self, minimal_schema: RequestSchema) -> None:
         result = FixApplicator(minimal_schema, []).apply_fixes()
-        assert result is minimal_schema
+        assert result == minimal_schema
 
     @pytest.mark.parametrize(
         "actions",

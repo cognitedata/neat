@@ -112,9 +112,7 @@ class ReadPhysicalDataModel:
 
         # Step 2: Apply fixes if enabled and present
         if self._config.alpha.fix_validation_issues and on_success.pending_fixes:
-            applicator = FixApplicator(
-                self._store.physical_data_model[-1].model_copy(deep=True), on_success.pending_fixes
-            )
+            applicator = FixApplicator(self._store.physical_data_model[-1], on_success.pending_fixes)
             post_fix_on_success = self._create_on_success()
             change = self._store.transform_physical(applicator.apply_fixes, post_fix_on_success)
             change.applied_fixes = on_success.pending_fixes

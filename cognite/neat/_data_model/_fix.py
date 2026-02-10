@@ -49,18 +49,14 @@ class FixAction(BaseModel):
 
 
 class FixApplicator:
-    """Applies fix actions to a schema. Used as an activity in the store's provenance pipeline."""
+    """Applies the changes in FixAction objects to a schema."""
 
     def __init__(self, request_schema: RequestSchema, fix_actions: list[FixAction]) -> None:
-        self._request_schema = request_schema
+        self._request_schema = request_schema.model_copy(deep=True)
         self._fix_actions = fix_actions
 
     def apply_fixes(self) -> RequestSchema:
-        """Apply fix actions to the schema and return the fixed schema.
-
-        Note: This mutates the RequestSchema passed to the constructor.
-        The caller is responsible for passing a deep copy if needed.
-        """
+        """Apply fix actions and return the fixed schema (a deep copy of the original)."""
         if not self._fix_actions:
             return self._request_schema
 

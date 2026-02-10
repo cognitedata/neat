@@ -263,7 +263,7 @@ class TestTransformPhysical:
             ),
             code="TEST-001",
         )
-        applicator = FixApplicator(original_model.model_copy(deep=True), [action])
+        applicator = FixApplicator(original_model, [action])
         store.transform_physical(applicator.apply_fixes)
 
         # Original model is untouched
