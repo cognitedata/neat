@@ -37,18 +37,17 @@ def _make_container(external_id: str = "TestContainer", space: str = "test_space
     )
 
 
-@pytest.fixture
-def minimal_container() -> ContainerRequest:
-    return _make_container()
-
-
-@pytest.fixture
-def minimal_schema(minimal_container: ContainerRequest) -> RequestSchema:
+def _make_schema(*containers: ContainerRequest) -> RequestSchema:
     return RequestSchema(
         dataModel=DataModelRequest(space="test_space", externalId="TestModel", version="v1", views=[]),
-        containers=[minimal_container],
+        containers=list(containers or (_make_container(),)),
         spaces=[SpaceRequest(space="test_space")],
     )
+
+
+@pytest.fixture
+def minimal_schema() -> RequestSchema:
+    return _make_schema()
 
 
 class TestFixApplicatorApplyChanges:
@@ -84,16 +83,16 @@ class TestFixApplicatorApplyChanges:
     )
     def test_apply_single_change(
         self,
-        minimal_container: ContainerRequest,
         minimal_schema: RequestSchema,
         initial_constraints: dict | None,
         change: FieldChange,
         expected_constraints: dict | None,
     ) -> None:
-        minimal_container.constraints = initial_constraints
+        container = minimal_schema.containers[0]
+        container.constraints = initial_constraints
 
         action = FixAction(
-            resource_id=minimal_container.as_reference(),
+            resource_id=container.as_reference(),
             changes=(change,),
             code="TEST-001",
         )
@@ -104,11 +103,7 @@ class TestFixApplicatorApplyChanges:
     def test_same_field_path_on_different_resources_does_not_conflict(self) -> None:
         container_a = _make_container("ContainerA")
         container_b = _make_container("ContainerB")
-        schema = RequestSchema(
-            dataModel=DataModelRequest(space="test_space", externalId="TestModel", version="v1", views=[]),
-            containers=[container_a, container_b],
-            spaces=[SpaceRequest(space="test_space")],
-        )
+        schema = _make_schema(container_a, container_b)
         actions = [
             FixAction(resource_id=container_a.as_reference(), changes=(SAME_CHANGE,), code="TEST-001"),
             FixAction(resource_id=container_b.as_reference(), changes=(SAME_CHANGE,), code="TEST-001"),
