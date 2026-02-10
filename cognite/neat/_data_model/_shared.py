@@ -24,6 +24,11 @@ class OnSuccessIssuesChecker(OnSuccess, ABC):
         self._has_run = False
 
     @property
+    def pending_fixes(self) -> list[FixAction]:
+        """Return collected fix actions. Override in subclasses that support fixing."""
+        return []
+
+    @property
     def issues(self) -> IssueList:
         if not self._has_run:
             raise RuntimeError(f"{type(self).__name__} has not been run yet.")

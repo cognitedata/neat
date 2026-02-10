@@ -1,8 +1,10 @@
 import hashlib
+from collections import defaultdict
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import (
     AddedField,
     ChangedField,
@@ -11,10 +13,14 @@ from cognite.neat._data_model.deployer.data_classes import (
     RemovedField,
 )
 from cognite.neat._data_model.models.dms import (
+    ContainerReference,
+    DataModelReference,
     DataModelResource,
     SchemaResourceId,
+    SpaceReference,
+    ViewReference,
 )
-from cognite.neat._data_model.models.dms._references import ContainerReference
+from cognite.neat._data_model.models.dms._schema import RequestSchema
 
 # CDF constraint and index identifier max length is 43 characters
 MAX_IDENTIFIER_LENGTH = 43
@@ -24,37 +30,6 @@ HASH_LENGTH = 8  # Short hash to ensure uniqueness when truncating
 # e.g., "VeryLongContainerName_a1b2c3d4__auto" (max 43 chars)
 MAX_BASE_LENGTH_NO_HASH = MAX_IDENTIFIER_LENGTH - len(AUTO_SUFFIX)  # 37 characters
 MAX_BASE_LENGTH_WITH_HASH = MAX_BASE_LENGTH_NO_HASH - HASH_LENGTH - 1  # 28 characters
-
-
-def make_auto_id(base_id: str) -> str:
-    """Generate an auto-generated identifier with truncation if needed.
-
-    CDF has a 43-character limit on constraint/index identifiers. This function
-    ensures the ID stays within that limit while maintaining uniqueness.
-
-    Args:
-        base_id: The primary identifier to use (e.g., external_id or property_id).
-
-    Returns:
-        For short base_ids (≤37 chars): "{base_id}__auto"
-        For long base_ids (>37 chars): "{truncated_id}_{hash}__auto"
-    """
-    if len(base_id) <= MAX_BASE_LENGTH_NO_HASH:
-        return f"{base_id}{AUTO_SUFFIX}"
-
-    hash_suffix = hashlib.sha256(base_id.encode()).hexdigest()[:HASH_LENGTH]
-    truncated_id = base_id[:MAX_BASE_LENGTH_WITH_HASH]
-    return f"{truncated_id}_{hash_suffix}{AUTO_SUFFIX}"
-
-
-def make_auto_constraint_id(dst: ContainerReference) -> str:
-    """Generate a constraint identifier for auto-generated requires constraints."""
-    return make_auto_id(dst.external_id)
-
-
-def make_auto_index_id(property_id: str) -> str:
-    """Generate an index identifier for auto-generated indexes."""
-    return make_auto_id(property_id)
 
 
 class FixAction(BaseModel):
@@ -98,3 +73,97 @@ class FixAction(BaseModel):
                 resource_update[key] = None
 
         return current_resource.model_copy(update=resource_update)
+
+
+def make_auto_id(base_id: str) -> str:
+    """Generate an auto-generated identifier with truncation if needed.
+
+    CDF has a 43-character limit on constraint/index identifiers. This function
+    ensures the ID stays within that limit while maintaining uniqueness.
+
+    Args:
+        base_id: The primary identifier to use (e.g., external_id or property_id).
+
+    Returns:
+        For short base_ids (≤37 chars): "{base_id}__auto"
+        For long base_ids (>37 chars): "{truncated_id}_{hash}__auto"
+    """
+    if len(base_id) <= MAX_BASE_LENGTH_NO_HASH:
+        return f"{base_id}{AUTO_SUFFIX}"
+
+    hash_suffix = hashlib.sha256(base_id.encode()).hexdigest()[:HASH_LENGTH]
+    truncated_id = base_id[:MAX_BASE_LENGTH_WITH_HASH]
+    return f"{truncated_id}_{hash_suffix}{AUTO_SUFFIX}"
+
+
+def make_auto_constraint_id(dst: ContainerReference) -> str:
+    """Generate a constraint identifier for auto-generated requires constraints."""
+    return make_auto_id(dst.external_id)
+
+
+def make_auto_index_id(property_id: str) -> str:
+    """Generate an index identifier for auto-generated indexes."""
+    return make_auto_id(property_id)
+
+
+def _snapshot_key_for_resource(resource_id: SchemaResourceId) -> str:
+    """Map a resource reference to its SchemaSnapshot field name."""
+    if isinstance(resource_id, SpaceReference):
+        return "spaces"
+    elif isinstance(resource_id, DataModelReference):
+        return "data_model"
+    elif isinstance(resource_id, ViewReference):
+        return "views"
+    elif isinstance(resource_id, ContainerReference):
+        return "containers"
+    raise ValueError(f"Unsupported resource type: {type(resource_id)}")
+
+
+def _check_no_field_path_conflicts(actions: list[FixAction]) -> None:
+    """Raise if multiple actions touch the same field_path on the same resource."""
+    seen_paths: set[str] = set()
+    for action in actions:
+        for change in action.changes:
+            if change.field_path in seen_paths:
+                raise ValueError(f"Conflicting fixes: multiple changes to '{change.field_path}'")
+            seen_paths.add(change.field_path)
+
+
+def apply_fix_actions(request_schema: RequestSchema, fix_actions: list[FixAction]) -> RequestSchema:
+    """Apply fix actions to a schema and return the fixed schema.
+
+    This is a pure function — it does not mutate the input schema.
+
+    Args:
+        request_schema: The original schema to fix.
+        fix_actions: The fix actions to apply.
+
+    Returns:
+        A new RequestSchema with the fixes applied.
+    """
+    if not fix_actions:
+        return request_schema
+
+    fix_by_resource_id: dict[SchemaResourceId, list[FixAction]] = defaultdict(list)
+    for action in fix_actions:
+        fix_by_resource_id[action.resource_id].append(action)
+
+    fix_snapshot = SchemaSnapshot.from_request_schema(request_schema, deep_copy=False)
+
+    snapshot_update: dict[str, dict] = {}
+    for resource_id, actions in fix_by_resource_id.items():
+        _check_no_field_path_conflicts(actions)
+
+        resource_key = _snapshot_key_for_resource(resource_id)
+        if resource_key not in snapshot_update:
+            snapshot_update[resource_key] = dict(getattr(fix_snapshot, resource_key))
+
+        current_resource = snapshot_update[resource_key].get(resource_id)
+        if current_resource is None:
+            raise ValueError(f"Resource {resource_id} not found in snapshot")
+        for action in actions:
+            current_resource = action.as_resource_update(current_resource)
+        snapshot_update[resource_key][resource_id] = current_resource
+
+    fixed_snapshot = fix_snapshot.model_copy(update=snapshot_update)
+    return fixed_snapshot.to_request_schema()

@@ -6,7 +6,7 @@ from typing import Any, cast
 from cognite.neat._client.client import NeatClient
 from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._config import NeatConfig
-from cognite.neat._data_model._fix import FixAction
+from cognite.neat._data_model._fix import FixAction, apply_fix_actions
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
@@ -60,21 +60,45 @@ class NeatStore:
             self._cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
         return self._cdf_snapshot
 
-    def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None) -> None:
-        """Read object from the store"""
+    def read_physical(self, reader: DMSImporter, on_success: OnSuccessIssuesChecker | None = None) -> None:
+        """Read and validate a physical data model.
+
+        Imports the data model via the reader, optionally validates it via on_success,
+        and records both the import and validation issues in provenance.
+        """
         self._can_agent_do_activity(reader)
 
-        change, data_model = self._do_activity(reader.to_data_model, on_success)
+        import_change, data_model = self._do_activity(reader.to_data_model)
 
         if data_model:
-            change.target_entity = self.physical_data_model.generate_reference(cast(PhysicalDataModel, data_model))
+            import_change.target_entity = self.physical_data_model.generate_reference(
+                cast(PhysicalDataModel, data_model)
+            )
             self.physical_data_model.append(data_model)
             self.state = self.state.transition(reader)
-            change.target_state = self.state
+            import_change.target_state = self.state
+
+        if data_model and on_success:
+            on_success.run(data_model)
+            import_change.issues = on_success.issues
+
+        self.provenance.append(import_change)
+
+    def fix_physical(self, fix_actions: list[FixAction], on_success: OnSuccessIssuesChecker) -> None:
+        """Apply fixes to the latest physical data model, re-validate, and record in provenance."""
+
+        def apply_fixes() -> PhysicalDataModel:
+            return apply_fix_actions(self.physical_data_model[-1], fix_actions)
+
+        change, fixed_model = self._do_activity(apply_fixes, on_success, agent_name="FixApplicator")
+
+        if fixed_model:
+            change.applied_fixes = fix_actions
+            self.physical_data_model.append(fixed_model)
 
         self.provenance.append(change)
 
-    def write_physical(self, writer: DMSExporter, on_success: OnSuccess | None = None, **kwargs: Any) -> None:
+    def write_physical(self, writer: DMSExporter, on_success: OnSuccessResultProducer | None = None, **kwargs: Any) -> None:
         """Write object into the store"""
         self._can_agent_do_activity(writer)
 
@@ -108,9 +132,13 @@ class NeatStore:
                 [space.space for space in self.cdf_snapshot.spaces.keys()]
             )
 
-    def cdf_analyze(self, on_success: OnSuccess) -> None:
+    def cdf_analyze(self, on_success: OnSuccessIssuesChecker) -> None:
         """Analyze the entity of CDF data models"""
-        change, _ = self._do_activity(lambda: self.cdf_snapshot, on_success)
+
+        def analyze() -> SchemaSnapshot:
+            return self.cdf_snapshot
+
+        change, _ = self._do_activity(analyze, on_success, agent_name=type(on_success).__name__)
         self.provenance.append(change)
 
     def _gather_data_model(self, writer: DMSExporter) -> PhysicalDataModel:
@@ -174,27 +202,32 @@ class NeatStore:
         # this will be done by running self.provenance.can_agent_do_activity(agent)
 
     def _do_activity(
-        self, activity: Callable, on_success: OnSuccess | None = None, **kwargs: Any
-    ) -> tuple[Change, PhysicalDataModel | None]:
-        """Execute activity and capture timing, results, and issues"""
+        self,
+        activity: Callable,
+        on_success: OnSuccess | None = None,
+        agent_name: str | None = None,
+        **kwargs: Any,
+    ) -> tuple[Change, Any | None]:
+        """Execute activity and capture timing, results, and issues.
+
+        This is the single entry point for all provenance-recorded activities.
+        on_success can be either OnSuccessIssuesChecker (for validation) or
+        OnSuccessResultProducer (for deployment).
+        """
         start = datetime.now(timezone.utc)
-        created_data_model: PhysicalDataModel | None = None
+        result_data: Any | None = None
         issues = IssueList()
         errors = IssueList()
         deployment_result: DeploymentResult | None = None
-        applied_fixes: list[FixAction] = []
 
         try:
-            created_data_model = activity(**kwargs)
-            if created_data_model and on_success:
-                on_success.run(created_data_model)
+            result_data = activity(**kwargs)
+            if result_data and on_success:
+                on_success.run(result_data)
                 if isinstance(on_success, OnSuccessIssuesChecker):
-                    issues.extend(on_success.issues)
-                    applied_fixes.extend(on_success.applied_fixes)
+                    issues = on_success.issues
                 elif isinstance(on_success, OnSuccessResultProducer):
                     deployment_result = on_success.result
-                else:
-                    raise RuntimeError(f"Unknown OnSuccess type {type(on_success).__name__}")
 
         # we catch import exceptions to capture issues and errors in provenance
         except DataModelImportException as e:
@@ -209,17 +242,20 @@ class NeatStore:
 
         end = datetime.now(timezone.utc)
 
+        resolved_agent = agent_name
+        if not resolved_agent:
+            resolved_agent = type(activity.__self__).__name__ if hasattr(activity, "__self__") else "UnknownAgent"
+
         return Change(
             start=start,
             end=end,
             source_state=self.state,
-            agent=type(activity.__self__).__name__ if hasattr(activity, "__self__") else "UnknownAgent",
+            agent=resolved_agent,
             issues=issues,
             errors=errors,
-            applied_fixes=applied_fixes,
             result=deployment_result,
             activity=Change.standardize_activity_name(activity.__name__, start, end),
-        ), created_data_model
+        ), result_data
 
 
 class DataModelList(UserList[PhysicalDataModel]):
