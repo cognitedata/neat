@@ -217,17 +217,17 @@ class NeatStore:
         OnSuccessResultProducer (for deployment).
         """
         start = datetime.now(timezone.utc)
-        result_data: Any | None = None
+        data_model_result: PhysicalDataModel | None = None
         issues = IssueList()
         errors = IssueList()
         deployment_result: DeploymentResult | None = None
 
         try:
-            result_data = activity(**kwargs)
-            if result_data and on_success:
-                on_success.run(result_data)
+            data_model_result = activity(**kwargs)
+            if data_model_result and on_success:
+                on_success.run(data_model_result)
                 if isinstance(on_success, OnSuccessIssuesChecker):
-                    issues = on_success.issues
+                    issues.extend(on_success.issues)
                 elif isinstance(on_success, OnSuccessResultProducer):
                     deployment_result = on_success.result
 
@@ -257,7 +257,7 @@ class NeatStore:
             errors=errors,
             result=deployment_result,
             activity=Change.standardize_activity_name(activity.__name__, start, end),
-        ), result_data
+        ), data_model_result
 
 
 class DataModelList(UserList[PhysicalDataModel]):
