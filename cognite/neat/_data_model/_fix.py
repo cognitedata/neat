@@ -112,7 +112,7 @@ class FixApplicator:
                 setattr(resource, field_name, field_map)
             if isinstance(change, RemovedField):
                 field_map.pop(identifier, None)
-            elif isinstance(change, (AddedField, ChangedField)):
+            elif isinstance(change, AddedField | ChangedField):
                 field_map[identifier] = change.new_value
             if not field_map:
                 setattr(resource, field_name, None)
