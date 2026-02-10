@@ -1,11 +1,9 @@
-from collections import defaultdict
 from collections.abc import Callable
 
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model._snapshot import SchemaSnapshot
-from cognite.neat._data_model.models.dms import SchemaResourceId
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.rules.dms._base import DataModelRule
@@ -32,7 +30,7 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
         self._can_run_validator = can_run_validator or (lambda code, issue_type: True)  # type: ignore
         self._has_run = False
         self._enable_alpha_validators = enable_alpha_validators
-        self._fixes_by_resource_id: dict[SchemaResourceId, list[FixAction]] = defaultdict(list)
+        self._pending_fixes: list[FixAction] = []
 
     def run(self, request_schema: RequestSchema) -> None:
         """Validate the schema: run all validators and collect fix actions from fixable ones.
@@ -51,15 +49,14 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
             if self._can_run_validator(validator.code, validator.issue_type):
                 self._issues.extend(validator.validate())
                 if validator.fixable:
-                    for action in validator.fix():
-                        self._fixes_by_resource_id[action.resource_id].append(action)
+                    self._pending_fixes.extend(validator.fix())
 
         self._has_run = True
 
     @property
     def pending_fixes(self) -> list[FixAction]:
         """Return the collected fix actions (not yet applied)."""
-        return [action for actions in self._fixes_by_resource_id.values() for action in actions]
+        return self._pending_fixes
 
     def _gather_validation_resources(self, request_schema: RequestSchema) -> ValidationResources:
         # Deep copy for validation - we don't want to modify the original during merge/analysis
