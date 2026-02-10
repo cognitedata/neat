@@ -94,7 +94,8 @@ class FixApplicator:
         for change in changes:
             if not isinstance(change, PrimitiveField):
                 raise RuntimeError(
-                    f"{type(self).__name__}: Only primitive field changes are supported, got {type(change).__name__}. This is a bug in NEAT."
+                    f"{type(self).__name__}: Only primitive field changes are supported, "
+                    f"got {type(change).__name__}. This is a bug in NEAT."
                 )
             if "." not in change.field_path:
                 raise RuntimeError(
@@ -119,7 +120,8 @@ class FixApplicator:
         for change in changes:
             if change.field_path in seen_paths:
                 raise RuntimeError(
-                    f"{type(self).__name__}: Conflicting fixes — multiple changes to '{change.field_path}'. This is a bug in NEAT."
+                    f"{type(self).__name__}: Conflicting fixes — multiple changes "
+                    f"to '{change.field_path}'. This is a bug in NEAT."
                 )
             seen_paths.add(change.field_path)
 
