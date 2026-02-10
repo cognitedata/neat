@@ -3,6 +3,7 @@ from typing import Any, Literal
 
 from cognite.neat._client import NeatClient
 from cognite.neat._config import NeatConfig
+from cognite.neat._data_model._fix import FixApplicator
 from cognite.neat._data_model.deployer.deployer import DeploymentOptions, SchemaDeployer
 from cognite.neat._data_model.exporters import (
     DMSAPIExporter,
@@ -111,8 +112,10 @@ class ReadPhysicalDataModel:
 
         # Step 2: Apply fixes if enabled and present
         if self._config.alpha.fix_validation_issues and checker.pending_fixes:
+            applicator = FixApplicator(self._store.physical_data_model[-1], checker.pending_fixes)
             post_fix_checker = self._create_on_success()
-            self._store.fix_physical(checker.pending_fixes, post_fix_checker)
+            change = self._store.transform_physical(applicator.apply_fixes, post_fix_checker)
+            change.applied_fixes = checker.pending_fixes
 
     def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
         """Read physical data model from YAML file(s)

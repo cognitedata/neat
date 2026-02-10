@@ -75,6 +75,49 @@ class FixAction(BaseModel):
         return current_resource.model_copy(update=resource_update)
 
 
+class FixApplicator:
+    """Applies fix actions to a schema. Used as an activity in the store's provenance pipeline."""
+
+    def __init__(self, request_schema: RequestSchema, fix_actions: list[FixAction]) -> None:
+        self._request_schema = request_schema
+        self._fix_actions = fix_actions
+
+    def apply_fixes(self) -> RequestSchema:
+        """Apply fix actions to the schema and return the fixed schema.
+
+        This does not mutate the input schema.
+
+        Returns:
+            A new RequestSchema with the fixes applied.
+        """
+        if not self._fix_actions:
+            return self._request_schema
+
+        fix_by_resource_id: dict[SchemaResourceId, list[FixAction]] = defaultdict(list)
+        for action in self._fix_actions:
+            fix_by_resource_id[action.resource_id].append(action)
+
+        fix_snapshot = SchemaSnapshot.from_request_schema(self._request_schema, deep_copy=False)
+
+        snapshot_update: dict[str, dict] = {}
+        for resource_id, actions in fix_by_resource_id.items():
+            _check_no_field_path_conflicts(actions)
+
+            resource_key = _snapshot_key_for_resource(resource_id)
+            if resource_key not in snapshot_update:
+                snapshot_update[resource_key] = dict(getattr(fix_snapshot, resource_key))
+
+            current_resource = snapshot_update[resource_key].get(resource_id)
+            if current_resource is None:
+                raise ValueError(f"Resource {resource_id} not found in snapshot")
+            for action in actions:
+                current_resource = action.as_resource_update(current_resource)
+            snapshot_update[resource_key][resource_id] = current_resource
+
+        fixed_snapshot = fix_snapshot.model_copy(update=snapshot_update)
+        return fixed_snapshot.to_request_schema()
+
+
 def make_auto_id(base_id: str) -> str:
     """Generate an auto-generated identifier with truncation if needed.
 
@@ -127,43 +170,3 @@ def _check_no_field_path_conflicts(actions: list[FixAction]) -> None:
             if change.field_path in seen_paths:
                 raise ValueError(f"Conflicting fixes: multiple changes to '{change.field_path}'")
             seen_paths.add(change.field_path)
-
-
-def apply_fix_actions(request_schema: RequestSchema, fix_actions: list[FixAction]) -> RequestSchema:
-    """Apply fix actions to a schema and return the fixed schema.
-
-    This is a pure function — it does not mutate the input schema.
-
-    Args:
-        request_schema: The original schema to fix.
-        fix_actions: The fix actions to apply.
-
-    Returns:
-        A new RequestSchema with the fixes applied.
-    """
-    if not fix_actions:
-        return request_schema
-
-    fix_by_resource_id: dict[SchemaResourceId, list[FixAction]] = defaultdict(list)
-    for action in fix_actions:
-        fix_by_resource_id[action.resource_id].append(action)
-
-    fix_snapshot = SchemaSnapshot.from_request_schema(request_schema, deep_copy=False)
-
-    snapshot_update: dict[str, dict] = {}
-    for resource_id, actions in fix_by_resource_id.items():
-        _check_no_field_path_conflicts(actions)
-
-        resource_key = _snapshot_key_for_resource(resource_id)
-        if resource_key not in snapshot_update:
-            snapshot_update[resource_key] = dict(getattr(fix_snapshot, resource_key))
-
-        current_resource = snapshot_update[resource_key].get(resource_id)
-        if current_resource is None:
-            raise ValueError(f"Resource {resource_id} not found in snapshot")
-        for action in actions:
-            current_resource = action.as_resource_update(current_resource)
-        snapshot_update[resource_key][resource_id] = current_resource
-
-    fixed_snapshot = fix_snapshot.model_copy(update=snapshot_update)
-    return fixed_snapshot.to_request_schema()

@@ -6,7 +6,6 @@ from typing import Any, cast
 from cognite.neat._client.client import NeatClient
 from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._config import NeatConfig
-from cognite.neat._data_model._fix import FixAction, apply_fix_actions
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
@@ -60,11 +59,11 @@ class NeatStore:
             self._cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
         return self._cdf_snapshot
 
-    def read_physical(self, reader: DMSImporter, on_success: OnSuccessIssuesChecker | None = None) -> None:
+    def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None) -> None:
         """Read object from the store"""
         self._can_agent_do_activity(reader)
 
-        change, data_model = self._do_activity(reader.to_data_model)
+        change, data_model = self._do_activity(reader.to_data_model, on_success)
 
         if data_model:
             change.target_entity = self.physical_data_model.generate_reference(cast(PhysicalDataModel, data_model))
@@ -72,25 +71,17 @@ class NeatStore:
             self.state = self.state.transition(reader)
             change.target_state = self.state
 
-        if data_model and on_success:
-            on_success.run(data_model)
-            change.issues = on_success.issues
-
         self.provenance.append(change)
 
-    def fix_physical(self, fix_actions: list[FixAction], on_success: OnSuccessIssuesChecker) -> None:
-        """Apply fixes to the latest physical data model, re-validate, and record in provenance."""
+    def transform_physical(self, activity: Callable, on_success: OnSuccess | None = None) -> Change:
+        """Transform the current physical data model and record in provenance."""
+        change, transformed_model = self._do_activity(activity, on_success)
 
-        def apply_fixes() -> PhysicalDataModel:
-            return apply_fix_actions(self.physical_data_model[-1], fix_actions)
-
-        change, fixed_model = self._do_activity(apply_fixes, on_success, agent_name="FixApplicator")
-
-        if fixed_model:
-            change.applied_fixes = fix_actions
-            self.physical_data_model.append(fixed_model)
+        if transformed_model:
+            self.physical_data_model.append(transformed_model)
 
         self.provenance.append(change)
+        return change
 
     def write_physical(self, writer: DMSExporter, on_success: OnSuccess | None = None, **kwargs: Any) -> None:
         """Write object into the store"""
@@ -192,7 +183,7 @@ class NeatStore:
         # this will be done by running self.provenance.can_agent_do_activity(agent)
 
     def _do_activity(
-        self, activity: Callable, on_success: OnSuccess | None = None, agent_name: str | None = None, **kwargs: Any
+        self, activity: Callable, on_success: OnSuccess | None = None, **kwargs: Any
     ) -> tuple[Change, PhysicalDataModel | None]:
         """Execute activity and capture timing, results, and issues"""
         start = datetime.now(timezone.utc)
@@ -225,15 +216,11 @@ class NeatStore:
 
         end = datetime.now(timezone.utc)
 
-        resolved_agent = agent_name
-        if not resolved_agent:
-            resolved_agent = type(activity.__self__).__name__ if hasattr(activity, "__self__") else "UnknownAgent"
-
         return Change(
             start=start,
             end=end,
             source_state=self.state,
-            agent=resolved_agent,
+            agent=type(activity.__self__).__name__ if hasattr(activity, "__self__") else "UnknownAgent",
             issues=issues,
             errors=errors,
             result=deployment_result,
