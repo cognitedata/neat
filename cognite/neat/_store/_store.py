@@ -98,7 +98,9 @@ class NeatStore:
 
         self.provenance.append(change)
 
-    def write_physical(self, writer: DMSExporter, on_success: OnSuccessResultProducer | None = None, **kwargs: Any) -> None:
+    def write_physical(
+        self, writer: DMSExporter, on_success: OnSuccessResultProducer | None = None, **kwargs: Any
+    ) -> None:
         """Write object into the store"""
         self._can_agent_do_activity(writer)
 
