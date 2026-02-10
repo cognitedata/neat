@@ -75,11 +75,11 @@ class FixApplicator:
             resource_lookup = resources_list_lookup.get(type(resource_id))
             if resource_lookup is None:
                 raise RuntimeError(
-                    f"FixApplicator: Unsupported resource type {type(resource_id)}. This is a bug in NEAT."
+                    f"{type(self).__name__}: Unsupported resource type {type(resource_id)}. This is a bug in NEAT."
                 )
             resource = resource_lookup.get(resource_id)
             if resource is None:
-                raise RuntimeError(f"FixApplicator: Resource {resource_id} not found in schema. This is a bug in NEAT.")
+                raise RuntimeError(f"{type(self).__name__}: Resource {resource_id} not found in schema. This is a bug in NEAT.")
 
             all_changes_for_resource = [change for action in actions for change in action.changes]
             self._check_no_field_path_conflicts(all_changes_for_resource)
@@ -92,12 +92,11 @@ class FixApplicator:
         for change in changes:
             if not isinstance(change, PrimitiveField):
                 raise RuntimeError(
-                    f"FixApplicator: Only primitive field changes are supported, "
-                    f"got {type(change).__name__}. This is a bug in NEAT."
+                    f"{type(self).__name__}: Only primitive field changes are supported, got {type(change).__name__}. This is a bug in NEAT."
                 )
             if "." not in change.field_path:
                 raise RuntimeError(
-                    f"FixApplicator: Invalid field_path '{change.field_path}' "
+                    f"{type(self).__name__}: Invalid field_path '{change.field_path}' "
                     "(expected 'field_name.identifier' format). This is a bug in NEAT."
                 )
             field_name, identifier = change.field_path.split(".", maxsplit=1)
@@ -118,8 +117,7 @@ class FixApplicator:
         for change in changes:
             if change.field_path in seen_paths:
                 raise RuntimeError(
-                    f"FixApplicator: Conflicting fixes — multiple changes to '{change.field_path}'. "
-                    "This is a bug in NEAT."
+                    f"{type(self).__name__}: Conflicting fixes — multiple changes to '{change.field_path}'. This is a bug in NEAT."
                 )
             seen_paths.add(change.field_path)
 
