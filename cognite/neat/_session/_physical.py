@@ -117,7 +117,7 @@ class ReadPhysicalDataModel:
             )
             post_fix_on_success = self._create_on_success()
             change = self._store.transform_physical(applicator.apply_fixes, post_fix_on_success)
-            change.applied_fixes = post_fix_on_success.pending_fixes
+            change.applied_fixes = on_success.pending_fixes
 
     def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
         """Read physical data model from YAML file(s)

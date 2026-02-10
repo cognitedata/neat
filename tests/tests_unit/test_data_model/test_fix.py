@@ -26,16 +26,20 @@ CONSTRAINT = RequiresConstraintDefinition(require=ContainerReference(space="othe
 INDEX = BtreeIndex(properties=["prop1"], cursorable=True)
 OLD_INDEX = BtreeIndex(properties=["prop1"], cursorable=False)
 CONTAINER_REF = ContainerReference(space="test_space", external_id="TestContainer")
-SAME_CHANGE = AddedField(field_path="constraints.same_key", new_value="value", item_severity=SeverityType.WARNING)
+SAME_CHANGE = AddedField(field_path="constraints.same_key", new_value=CONSTRAINT, item_severity=SeverityType.WARNING)
+
+
+def _make_container(external_id: str = "TestContainer", space: str = "test_space") -> ContainerRequest:
+    return ContainerRequest(
+        space=space,
+        externalId=external_id,
+        properties={"prop1": ContainerPropertyDefinition(type=TextProperty())},
+    )
 
 
 @pytest.fixture
 def minimal_container() -> ContainerRequest:
-    return ContainerRequest(
-        space="test_space",
-        externalId="TestContainer",
-        properties={"prop1": ContainerPropertyDefinition(type=TextProperty())},
-    )
+    return _make_container()
 
 
 @pytest.fixture
@@ -96,6 +100,24 @@ class TestFixApplicatorApplyChanges:
         result = FixApplicator(minimal_schema, [action]).apply_fixes()
 
         assert result.containers[0].constraints == expected_constraints
+
+    def test_same_field_path_on_different_resources_does_not_conflict(self) -> None:
+        container_a = _make_container("ContainerA")
+        container_b = _make_container("ContainerB")
+        schema = RequestSchema(
+            dataModel=DataModelRequest(space="test_space", externalId="TestModel", version="v1", views=[]),
+            containers=[container_a, container_b],
+            spaces=[SpaceRequest(space="test_space")],
+        )
+        actions = [
+            FixAction(resource_id=container_a.as_reference(), changes=(SAME_CHANGE,), code="TEST-001"),
+            FixAction(resource_id=container_b.as_reference(), changes=(SAME_CHANGE,), code="TEST-001"),
+        ]
+
+        result = FixApplicator(schema, actions).apply_fixes()
+
+        assert result.containers[0].constraints == {"same_key": CONSTRAINT}
+        assert result.containers[1].constraints == {"same_key": CONSTRAINT}
 
     def test_no_fixes_returns_schema_unchanged(self, minimal_schema: RequestSchema) -> None:
         result = FixApplicator(minimal_schema, []).apply_fixes()

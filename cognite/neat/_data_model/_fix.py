@@ -54,7 +54,6 @@ class FixApplicator:
     def __init__(self, request_schema: RequestSchema, fix_actions: list[FixAction]) -> None:
         self._request_schema = request_schema
         self._fix_actions = fix_actions
-        self._seen_field_paths: set[str] = set()
 
     def apply_fixes(self) -> RequestSchema:
         """Apply fix actions to the schema and return the fixed schema.
@@ -119,13 +118,14 @@ class FixApplicator:
 
     def _check_no_field_path_conflicts(self, changes: list[FieldChange]) -> None:
         """Raise if any changes touch a field_path already modified by a previous change."""
+        seen_paths: set[str] = set()
         for change in changes:
-            if change.field_path in self._seen_field_paths:
+            if change.field_path in seen_paths:
                 raise RuntimeError(
                     f"FixApplicator: Conflicting fixes — multiple changes to '{change.field_path}'. "
                     "This is a bug in NEAT."
                 )
-            self._seen_field_paths.add(change.field_path)
+            seen_paths.add(change.field_path)
 
 
 def make_auto_id(base_id: str) -> str:
