@@ -79,7 +79,9 @@ class FixApplicator:
                 )
             resource = resource_lookup.get(resource_id)
             if resource is None:
-                raise RuntimeError(f"{type(self).__name__}: Resource {resource_id} not found in schema. This is a bug in NEAT.")
+                raise RuntimeError(
+                    f"{type(self).__name__}: Resource {resource_id} not found in schema. This is a bug in NEAT."
+                )
 
             all_changes_for_resource = [change for action in actions for change in action.changes]
             self._check_no_field_path_conflicts(all_changes_for_resource)
