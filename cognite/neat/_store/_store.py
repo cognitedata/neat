@@ -64,21 +64,19 @@ class NeatStore:
         """Read object from the store"""
         self._can_agent_do_activity(reader)
 
-        import_change, data_model = self._do_activity(reader.to_data_model)
+        change, data_model = self._do_activity(reader.to_data_model)
 
         if data_model:
-            import_change.target_entity = self.physical_data_model.generate_reference(
-                cast(PhysicalDataModel, data_model)
-            )
+            change.target_entity = self.physical_data_model.generate_reference(cast(PhysicalDataModel, data_model))
             self.physical_data_model.append(data_model)
             self.state = self.state.transition(reader)
-            import_change.target_state = self.state
+            change.target_state = self.state
 
         if data_model and on_success:
             on_success.run(data_model)
-            import_change.issues = on_success.issues
+            change.issues = on_success.issues
 
-        self.provenance.append(import_change)
+        self.provenance.append(change)
 
     def fix_physical(self, fix_actions: list[FixAction], on_success: OnSuccessIssuesChecker) -> None:
         """Apply fixes to the latest physical data model, re-validate, and record in provenance."""
