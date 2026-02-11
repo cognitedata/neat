@@ -1,8 +1,6 @@
 """Validators for checking containers in the data model."""
 
-from collections.abc import Iterable
-
-from cognite.neat._data_model._fix_actions import FixAction
+from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model.deployer.data_classes import RemovedField, SeverityType
 from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
@@ -218,45 +216,20 @@ class RequiresConstraintCycle(DataModelRule):
     alpha = True  # Still in development
     fixable = True
 
-    def _get_cycle_edges_to_remove(
-        self,
-    ) -> Iterable[tuple[list[ContainerReference], ContainerReference, ContainerReference]]:
-        """Yields (cycle, src, dst) for edges in cycles that should be removed."""
-        optimal_edges = self.validation_resources.oriented_mst_edges
-
-        for cycle in self.validation_resources.requires_constraint_cycles:
-            for i, container in enumerate(cycle):
-                next_container = cycle[(i + 1) % len(cycle)]
-                edge = (container, next_container)
-                if edge not in optimal_edges:
-                    yield cycle, container, next_container
-
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
-        reported_cycles: set[tuple[ContainerReference, ...]] = set()
-
-        # Collect once to avoid re-evaluating the generator
-        all_cycle_edges = list(self._get_cycle_edges_to_remove())
-
-        for cycle, _, _ in all_cycle_edges:
-            cycle_key = tuple(cycle)
-            if cycle_key in reported_cycles:
-                continue
-            reported_cycles.add(cycle_key)
-
+        for cycle in self.validation_resources.requires_constraint_cycles:
             cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
-
-            # Collect all edges to remove for this cycle
-            edges_to_remove = [f"{s} -> {d}" for c, s, d in all_cycle_edges if tuple(c) == cycle_key]
-
-            message = f"Requires constraints form a cycle: {cycle_str}"
-            if edges_to_remove:
-                message += f". Recommended removal: {', '.join(edges_to_remove)} (not in optimal structure)"
-
+            source_container_ref, required_container_ref = self.validation_resources.pick_cycle_constraint_to_remove(
+                cycle
+            )
             errors.append(
                 ConsistencyError(
-                    message=message,
-                    fix="Remove one of the requires constraints to break the cycle",
+                    message=(
+                        f"Requires constraints form a cycle: {cycle_str}. This can be fixed by removing the requires "
+                        f"constraint on {source_container_ref!s} to {required_container_ref!s}"
+                    ),
+                    fix="Remove the recommended requires constraint to break the cycle",
                     code=self.code,
                 )
             )
@@ -268,29 +241,31 @@ class RequiresConstraintCycle(DataModelRule):
         fix_actions: list[FixAction] = []
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
-        for _, src, dst in self._get_cycle_edges_to_remove():
-            if (src, dst) in seen:
+        for cycle in self.validation_resources.requires_constraint_cycles:
+            source_container_ref, required_container_ref = self.validation_resources.pick_cycle_constraint_to_remove(
+                cycle
+            )
+            if (source_container_ref, required_container_ref) in seen:
                 continue
-            seen.add((src, dst))
+            seen.add((source_container_ref, required_container_ref))
 
-            # Find ALL matching constraints (not just auto-generated) for cycle breaking
-            container = self.validation_resources.select_container(src)
+            container = self.validation_resources.select_container(source_container_ref)
             if not container:
                 continue
             for constraint_id, constraint_def in self.validation_resources.get_requires_constraints(container):
-                if constraint_def.require != dst:
+                if constraint_def.require != required_container_ref:
                     continue
                 fix_actions.append(
                     FixAction(
                         code=self.code,
-                        resource_id=src,
-                        changes=[
+                        resource_id=source_container_ref,
+                        changes=(
                             RemovedField(
                                 field_path=f"constraints.{constraint_id}",
                                 current_value=constraint_def,
                                 item_severity=SeverityType.WARNING,
-                            )
-                        ],
+                            ),
+                        ),
                         message="Removed requires constraint to break cycle",
                     )
                 )

@@ -1,16 +1,12 @@
 """Validators for checking performance-related aspects of the data model."""
 
-from collections.abc import Iterable
-
-from cognite.neat._data_model._analysis import RequiresChangeStatus, ResolvedReverseDirectRelation
+from cognite.neat._data_model._analysis import RequiresChangeStatus
 from cognite.neat._data_model._constants import COGNITE_SPACES
-from cognite.neat._data_model._fix_actions import FixAction
-from cognite.neat._data_model._fix_helpers import make_auto_constraint_id, make_auto_index_id
+from cognite.neat._data_model._fix import FixAction, make_auto_constraint_id, make_auto_index_id
 from cognite.neat._data_model.deployer.data_classes import AddedField, ChangedField, RemovedField, SeverityType
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
-from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
-from cognite.neat._data_model.models.dms._references import ContainerReference, ViewReference
+from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import Recommendation
 
@@ -41,39 +37,36 @@ class MissingRequiresConstraint(DataModelRule):
     alpha = True
     fixable = True
 
-    def _get_missing_constraints(self) -> Iterable[tuple[ViewReference, ContainerReference, ContainerReference]]:
-        """Yields (view_ref, src, dst) for missing requires constraints."""
-        for view_ref in self.validation_resources.merged.views:
-            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
-            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
-                continue
-            for src, dst in changes.to_add:
-                yield view_ref, src, dst
-
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref, src, dst in self._get_missing_constraints():
-            src_views = self.validation_resources.views_by_container.get(src, set())
-            other_views_with_src = src_views - {view_ref}
-            views_impacted_by_change = self.validation_resources.find_views_mapping_to_containers([src, dst])
+        for (
+            view_ref,
+            source_container_ref,
+            required_container_ref,
+        ) in self.validation_resources.missing_requires_constraints:
+            source_views = self.validation_resources.views_by_container.get(source_container_ref, set())
+            other_views_using_source = source_views - {view_ref}
+            views_impacted_by_change = self.validation_resources.find_views_mapping_to_containers(
+                [source_container_ref, required_container_ref]
+            )
 
             # Check if this is a "safe" recommendation (no cross-view dependencies)
-            is_safe = not other_views_with_src or view_ref in views_impacted_by_change
+            is_safe = not other_views_using_source or view_ref in views_impacted_by_change
 
             message = (
                 f"View '{view_ref!s}' is not optimized for querying. "
-                f"Add a 'requires' constraint from the container '{src!s}' to '{dst!s}'."
+                f"Add a 'requires' constraint from container '{source_container_ref!s}' "
+                f"to '{required_container_ref!s}'."
             )
             if not is_safe:
-                # Find a superset view to suggest for ingestion
                 merged_views = set(self.validation_resources.merged.views)
                 superset_views = views_impacted_by_change & merged_views
                 view_example = min(superset_views, key=str) if superset_views else None
                 message += (
                     " Note: this causes an ingestion dependency for this view, "
                     "if you will be using this view to ingest instances, you will "
-                    f"need to populate these instances into '{dst!s}' first"
+                    f"need to populate these instances into '{required_container_ref!s}' first"
                     + (f", for example through view '{view_example!s}'." if view_example else ".")
                 )
 
@@ -92,23 +85,27 @@ class MissingRequiresConstraint(DataModelRule):
         fix_actions: list[FixAction] = []
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
-        for _, src, dst in self._get_missing_constraints():
-            if (src, dst) in seen:
+        for (
+            _,
+            source_container_ref,
+            required_container_ref,
+        ) in self.validation_resources.missing_requires_constraints:
+            if (source_container_ref, required_container_ref) in seen:
                 continue
-            seen.add((src, dst))
+            seen.add((source_container_ref, required_container_ref))
 
-            constraint_id = make_auto_constraint_id(dst)
+            constraint_id = make_auto_constraint_id(required_container_ref)
             fix_actions.append(
                 FixAction(
                     code=self.code,
-                    resource_id=src,
-                    changes=[
+                    resource_id=source_container_ref,
+                    changes=(
                         AddedField(
                             field_path=f"constraints.{constraint_id}",
-                            new_value=RequiresConstraintDefinition(require=dst),
+                            new_value=RequiresConstraintDefinition(require=required_container_ref),
                             item_severity=SeverityType.WARNING,
-                        )
-                    ],
+                        ),
+                    ),
                     message="Added requires constraint to optimize query performance",
                 )
             )
@@ -142,24 +139,19 @@ class SuboptimalRequiresConstraint(DataModelRule):
     alpha = True
     fixable = True
 
-    def _get_suboptimal_constraints(self) -> Iterable[tuple[ViewReference, ContainerReference, ContainerReference]]:
-        """Yields (view_ref, src, dst) for suboptimal requires constraints to remove."""
-        for view_ref in self.validation_resources.merged.views:
-            changes = self.validation_resources.get_requires_changes_for_view(view_ref)
-            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
-                continue
-            for src, dst in changes.to_remove:
-                yield view_ref, src, dst
-
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref, src, dst in self._get_suboptimal_constraints():
+        for (
+            view_ref,
+            source_container_ref,
+            required_container_ref,
+        ) in self.validation_resources.suboptimal_requires_constraints:
             recommendations.append(
                 Recommendation(
                     message=(
-                        f"View '{view_ref!s}' is mapping to container '{src!s}' "
-                        f"that has a requires constraint to '{dst!s}'. This constraint is "
+                        f"View '{view_ref!s}' is mapping to container '{source_container_ref!s}' "
+                        f"that has a requires constraint to '{required_container_ref!s}'. This constraint is "
                         "not part of the optimal structure. Consider removing it."
                     ),
                     fix="Remove suboptimal requires constraints",
@@ -174,31 +166,34 @@ class SuboptimalRequiresConstraint(DataModelRule):
         fix_actions: list[FixAction] = []
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
-        for _, src, dst in self._get_suboptimal_constraints():
-            if (src, dst) in seen:
+        for (
+            _,
+            source_container_ref,
+            required_container_ref,
+        ) in self.validation_resources.suboptimal_requires_constraints:
+            if (source_container_ref, required_container_ref) in seen:
                 continue
-            seen.add((src, dst))
+            seen.add((source_container_ref, required_container_ref))
 
-            # Find auto-generated constraints to remove
-            container = self.validation_resources.select_container(src)
+            container = self.validation_resources.select_container(source_container_ref)
             if not container:
                 continue
             for constraint_id, constraint_def in self.validation_resources.get_requires_constraints(
                 container, auto_only=True
             ):
-                if constraint_def.require != dst:
+                if constraint_def.require != required_container_ref:
                     continue
                 fix_actions.append(
                     FixAction(
                         code=self.code,
-                        resource_id=src,
-                        changes=[
+                        resource_id=source_container_ref,
+                        changes=(
                             RemovedField(
                                 field_path=f"constraints.{constraint_id}",
                                 current_value=constraint_def,
                                 item_severity=SeverityType.WARNING,
-                            )
-                        ],
+                            ),
+                        ),
                         message="Removed suboptimal requires constraint",
                     )
                 )
@@ -308,67 +303,18 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
     alpha = True
     fixable = True
 
-    def _get_missing_index_targets(
-        self,
-    ) -> list[tuple[ResolvedReverseDirectRelation, tuple[str, BtreeIndex] | None]]:
-        """Get resolved reverse direct relations that are missing cursorable indexes.
-
-        Returns:
-            List of tuples: (resolved_relation, existing_non_cursorable_index or None)
-        """
-        targets: list[tuple[ResolvedReverseDirectRelation, tuple[str, BtreeIndex] | None]] = []
-
-        for resolved in self.validation_resources.resolved_reverse_direct_relations:
-            # Skip if container or container property couldn't be resolved
-            if not resolved.container or not resolved.container_property:
-                continue
-
-            # Skip CDM containers - we can't modify these
-            if resolved.container_ref.space in COGNITE_SPACES:
-                continue
-
-            # Must be a DirectNodeRelation type (other types handled by ReverseConnectionContainerPropertyWrongType)
-            if not isinstance(resolved.container_property.type, DirectNodeRelation):
-                continue
-
-            # Skip if this is a list direct relation - indexes are not useful for list properties
-            if resolved.container_property.type.list:
-                continue
-
-            # Check if there any of the existing indexes on the target container should be changed.
-            # We assume non-composite b-tree indexes have been set for the purpose of RDR traversal,
-            # and recommend "upgrading" them to cursorable if they are not already.
-            for index_id, index in (resolved.container.indexes or {}).items():
-                if not isinstance(index, BtreeIndex):
-                    continue
-                if len(index.properties) != 1:
-                    # Skip composite indexes as we don't consider them for RDR traversal
-                    continue
-                if resolved.container_property_id not in index.properties:
-                    continue
-                if index.cursorable:
-                    # Already has a cursorable index - skip entirely
-                    break
-                # Found a non-composite, non-cursorable index to update
-                targets.append((resolved, (index_id, index)))
-                break
-            else:
-                # No non-composite, non-cursorable index found - include in targets
-                targets.append((resolved, None))
-
-        return targets
-
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for resolved, _ in self._get_missing_index_targets():
+        for resolved_reverse_direct_relation, _ in self.validation_resources.missing_reverse_relation_index_targets:
             recommendations.append(
                 Recommendation(
                     message=(
-                        f"View '{resolved.reverse_view_ref!s}' has a reverse direct relation "
-                        f"'{resolved.reverse_property_id}' that cannot be efficently traversed through queries, "
-                        f"since it points to container {resolved.container_ref!s}' "
-                        f"property '{resolved.container_property_id}' that is unindexed. "
+                        f"View '{resolved_reverse_direct_relation.reverse_view_ref!s}' has a reverse direct relation "
+                        f"'{resolved_reverse_direct_relation.reverse_property_id}' that cannot be efficiently "
+                        f"traversed through queries, "
+                        f"since it points to container {resolved_reverse_direct_relation.container_ref!s}' "
+                        f"property '{resolved_reverse_direct_relation.container_property_id}' that is unindexed. "
                     ),
                     fix="Add a cursorable B-tree index on the target direct relation property",
                     code=self.code,
@@ -382,47 +328,47 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
         fix_actions: list[FixAction] = []
         seen: set[tuple[ContainerReference, str]] = set()
 
-        for resolved, existing_index in self._get_missing_index_targets():
-            key = (resolved.container_ref, resolved.container_property_id)
+        for (
+            resolved_reverse_direct_relation,
+            existing_index,
+        ) in self.validation_resources.missing_reverse_relation_index_targets:
+            key = (
+                resolved_reverse_direct_relation.container_ref,
+                resolved_reverse_direct_relation.container_property_id,
+            )
             if key in seen:
                 continue
             seen.add(key)
 
             if existing_index:
                 index_id, current_index = existing_index
-                updated_index = BtreeIndex(
-                    properties=current_index.properties, by_space=current_index.by_space, cursorable=True
+                change: AddedField | ChangedField = ChangedField(
+                    field_path=f"indexes.{index_id}",
+                    current_value=current_index,
+                    new_value=BtreeIndex(
+                        properties=current_index.properties, by_space=current_index.by_space, cursorable=True
+                    ),
+                    item_severity=SeverityType.SAFE,
                 )
-                fix_actions.append(
-                    FixAction(
-                        code=self.code,
-                        resource_id=resolved.container_ref,
-                        changes=[
-                            ChangedField(
-                                field_path=f"indexes.{index_id}",
-                                current_value=current_index,
-                                new_value=updated_index,
-                                item_severity=SeverityType.SAFE,
-                            )
-                        ],
-                        message="Updated index to be cursorable for efficient reverse relation queries",
-                    )
-                )
+                message = "Updated index to be cursorable for efficient reverse relation queries"
             else:
-                index_id = make_auto_index_id(resolved.container_property_id)
-                fix_actions.append(
-                    FixAction(
-                        code=self.code,
-                        resource_id=resolved.container_ref,
-                        changes=[
-                            AddedField(
-                                field_path=f"indexes.{index_id}",
-                                new_value=BtreeIndex(properties=[resolved.container_property_id], cursorable=True),
-                                item_severity=SeverityType.SAFE,
-                            )
-                        ],
-                        message="Added index to enable efficient querying through reverse direct relations",
-                    )
+                index_id = make_auto_index_id(resolved_reverse_direct_relation.container_property_id)
+                change = AddedField(
+                    field_path=f"indexes.{index_id}",
+                    new_value=BtreeIndex(
+                        properties=[resolved_reverse_direct_relation.container_property_id], cursorable=True
+                    ),
+                    item_severity=SeverityType.SAFE,
                 )
+                message = "Added cursorable index for efficient reverse direct relation queries"
+
+            fix_actions.append(
+                FixAction(
+                    code=self.code,
+                    resource_id=resolved_reverse_direct_relation.container_ref,
+                    changes=(change,),
+                    message=message,
+                )
+            )
 
         return fix_actions

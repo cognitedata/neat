@@ -10,7 +10,8 @@ import respx
 from cognite.neat import _state_machine as states
 from cognite.neat._client import NeatClientConfig
 from cognite.neat._config import NeatConfig
-from cognite.neat._data_model.deployer.data_classes import DeploymentResult
+from cognite.neat._data_model._fix import FixAction, FixApplicator
+from cognite.neat._data_model.deployer.data_classes import AddedField, DeploymentResult, SeverityType
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
 from cognite.neat._issues import IssueList
@@ -238,6 +239,40 @@ class TestNeatSession:
 
         # we remain in physical state even though we hit Forbidden state, auto-recovery
         assert isinstance(session._store.state, states.PhysicalState)
+
+
+@pytest.mark.usefixtures("empty_cdf")
+class TestTransformPhysical:
+    def test_transform_preserves_original_model(self, physical_state_session: NeatSession) -> None:
+        session = physical_state_session
+        store = session._store
+
+        original_model = store.physical_data_model[-1]
+        original_dump = original_model.model_dump()
+        provenance_before = len(store.provenance)
+        # Pick the first available resource to apply a fix to
+        view = original_model.views[0]
+        action = FixAction(
+            resource_id=view.as_reference(),
+            changes=(
+                AddedField(
+                    field_path="properties.test_prop",
+                    new_value="test_value",
+                    item_severity=SeverityType.SAFE,
+                ),
+            ),
+            code="TEST-001",
+        )
+        applicator = FixApplicator(original_model, [action])
+        store.transform_physical(applicator.apply_fixes)
+
+        # Original model is untouched
+        assert original_model.model_dump() == original_dump
+        # New model was appended
+        assert len(store.physical_data_model) == 2
+        assert "test_prop" in store.physical_data_model[-1].views[0].properties
+        # Provenance was recorded
+        assert len(store.provenance) == provenance_before + 1
 
 
 @pytest.mark.serial

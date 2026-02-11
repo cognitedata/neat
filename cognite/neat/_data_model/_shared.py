@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from cognite.neat._data_model._fix_actions import FixAction
+from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._issues import IssueList
 
@@ -20,24 +20,21 @@ class OnSuccessIssuesChecker(OnSuccess, ABC):
 
     def __init__(self) -> None:
         self._issues = IssueList()
-        self._applied_fixes: list[FixAction] = []
+        self._pending_fixes: list[FixAction] = []
         self._has_run = False
+
+    @property
+    def pending_fixes(self) -> list[FixAction]:
+        """Return collected fix actions. Subclasses that support fixing should populate _pending_fixes."""
+        if not self._has_run:
+            raise RuntimeError(f"{type(self).__name__} has not been run yet.")
+        return self._pending_fixes
 
     @property
     def issues(self) -> IssueList:
         if not self._has_run:
             raise RuntimeError(f"{type(self).__name__} has not been run yet.")
         return IssueList(self._issues)
-
-    @property
-    def applied_fixes(self) -> list[FixAction]:
-        """Return the list of fix actions that were applied.
-
-        For validators that don't perform fixes, this returns an empty list.
-        """
-        if not self._has_run:
-            raise RuntimeError(f"{type(self).__name__} has not been run yet.")
-        return list(self._applied_fixes)
 
 
 class OnSuccessResultProducer(OnSuccess, ABC):

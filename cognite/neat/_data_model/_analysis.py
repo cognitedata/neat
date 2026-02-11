@@ -14,6 +14,7 @@ from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._container import ContainerPropertyDefinition, ContainerRequest
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
+from cognite.neat._data_model.models.dms._indexes import BtreeIndex
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._references import (
     ContainerDirectReference,
@@ -620,7 +621,7 @@ class ValidationResources:
         return graph
 
     @cached_property
-    def implements_cycles(self) -> list[list[ViewReference]]:
+    def implements_cycles(self) -> list[tuple[ViewReference, ...]]:
         """Find all cycles in the implements graph.
         Returns:
             List of lists, where each list contains the ordered Views involved in forming the implements cycle.
@@ -784,7 +785,7 @@ class ValidationResources:
         return False
 
     @cached_property
-    def requires_constraint_cycles(self) -> list[list[ContainerReference]]:
+    def requires_constraint_cycles(self) -> list[tuple[ContainerReference, ...]]:
         """Find all cycles in the requires constraint graph.
         Returns:
             List of lists, where each list contains the ordered containers involved in forming the requires cycle.
@@ -792,9 +793,43 @@ class ValidationResources:
         return self.graph_cycles(self.requires_constraint_graph)
 
     @staticmethod
-    def graph_cycles(graph: nx.DiGraph) -> list[list[T_Reference]]:
+    def graph_cycles(graph: nx.DiGraph) -> list[tuple[T_Reference, ...]]:
         """Returns cycles in the graph otherwise empty list"""
-        return [candidate for candidate in nx.simple_cycles(graph) if len(candidate) > 1]
+        return [tuple(candidate) for candidate in nx.simple_cycles(graph) if len(candidate) > 1]
+
+    def pick_cycle_constraint_to_remove(
+        self, cycle: tuple[ContainerReference, ...]
+    ) -> tuple[ContainerReference, ContainerReference]:
+        """Pick the single best requires constraint to remove to break a cycle."""
+        suboptimal_constraints: list[tuple[ContainerReference, ContainerReference]] = []
+        for i, source_container_ref in enumerate(cycle):
+            required_container_ref = cycle[(i + 1) % len(cycle)]
+            if (source_container_ref, required_container_ref) not in self.oriented_mst_edges:
+                suboptimal_constraints.append((source_container_ref, required_container_ref))
+
+        # Tier 1: auto-generated and wrong direction from optimal solution
+        for source_ref, required_ref in suboptimal_constraints:
+            if self.requires_constraint_graph.edges[source_ref, required_ref].get("is_auto", False):
+                if (required_ref, source_ref) in self.oriented_mst_edges:
+                    return source_ref, required_ref
+
+        # Tier 2: auto-generated and redundant (covered by other constraints)
+        for source_ref, required_ref in suboptimal_constraints:
+            if self.requires_constraint_graph.edges[source_ref, required_ref].get("is_auto", False):
+                return source_ref, required_ref
+
+        # Tier 3: user-defined and wrong direction from optimal solution
+        for source_ref, required_ref in suboptimal_constraints:
+            if (required_ref, source_ref) in self.oriented_mst_edges:
+                return source_ref, required_ref
+
+        # Tier 4: user-defined and redundant (covered by other constraints)
+        if suboptimal_constraints:
+            return suboptimal_constraints[0]
+
+        raise RuntimeError(
+            f"{type(self).__name__}: No removable constraint found in cycle {cycle}. This is a bug in NEAT."
+        )
 
     @cached_property
     def optimized_requires_constraint_graph(self) -> nx.DiGraph:
@@ -997,6 +1032,80 @@ class ValidationResources:
 
         # Return MST edges that survive reduction
         return {e for e in reduced.edges() if e in self.oriented_mst_edges}
+
+    @cached_property
+    def missing_requires_constraints(
+        self,
+    ) -> list[tuple[ViewReference, ContainerReference, ContainerReference]]:
+        """Views with containers that are missing requires constraints needed for optimal query performance.
+
+        Each entry is a (view, source_container, required_container) tuple indicating that
+        source_container should have a requires constraint pointing to required_container.
+        """
+        missing_requires_constraints: list[tuple[ViewReference, ContainerReference, ContainerReference]] = []
+        for view_ref in self.merged.views:
+            changes = self.get_requires_changes_for_view(view_ref)
+            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
+                continue
+            for source_container_ref, required_container_ref in changes.to_add:
+                missing_requires_constraints.append((view_ref, source_container_ref, required_container_ref))
+        return missing_requires_constraints
+
+    @cached_property
+    def suboptimal_requires_constraints(
+        self,
+    ) -> list[tuple[ViewReference, ContainerReference, ContainerReference]]:
+        """Views with containers that have suboptimal requires constraints that should be removed.
+
+        Each entry is a (view, source_container, required_container) tuple indicating that
+        the existing requires constraint from source_container to required_container is
+        redundant or wrongly oriented relative to the optimal structure.
+        """
+        results: list[tuple[ViewReference, ContainerReference, ContainerReference]] = []
+        for view_ref in self.merged.views:
+            changes = self.get_requires_changes_for_view(view_ref)
+            if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
+                continue
+            for source_container_ref, required_container_ref in changes.to_remove:
+                results.append((view_ref, source_container_ref, required_container_ref))
+        return results
+
+    @cached_property
+    def missing_reverse_relation_index_targets(
+        self,
+    ) -> list[tuple[ResolvedReverseDirectRelation, tuple[str, BtreeIndex] | None]]:
+        """Reverse direct relations missing a cursorable index on the target container property.
+
+        Returns:
+            List of tuples: (resolved_relation, existing_non_cursorable_index or None)
+        """
+        targets: list[tuple[ResolvedReverseDirectRelation, tuple[str, BtreeIndex] | None]] = []
+
+        for resolved in self.resolved_reverse_direct_relations:
+            if not resolved.container or not resolved.container_property:
+                continue
+            if resolved.container_ref.space in COGNITE_SPACES:
+                continue
+            if not isinstance(resolved.container_property.type, DirectNodeRelation):
+                continue
+            if resolved.container_property.type.list:
+                continue
+
+            for index_id, index in (resolved.container.indexes or {}).items():
+                if not isinstance(index, BtreeIndex):
+                    continue
+                if len(index.properties) != 1:
+                    continue
+                if resolved.container_property_id not in index.properties:
+                    continue
+                if index.cursorable:
+                    break
+                targets.append((resolved, (index_id, index)))
+                break
+            else:
+                targets.append((resolved, None))
+
+        return targets
 
     def get_requires_changes_for_view(self, view: ViewReference) -> RequiresChangesForView:
         """Get requires constraint changes needed to optimize a view.

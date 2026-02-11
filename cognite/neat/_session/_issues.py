@@ -4,7 +4,7 @@ from collections import defaultdict
 from typing import Any
 
 from cognite.neat._config import NeatConfig
-from cognite.neat._data_model._fix_actions import FixAction
+from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model.deployer.data_classes import AddedField, ChangedField, RemovedField
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
