@@ -218,13 +218,18 @@ class RequiresConstraintCycle(DataModelRule):
 
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
-
         for cycle in self.validation_resources.requires_constraint_cycles:
             cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
+            source_container_ref, required_container_ref = self.validation_resources.pick_cycle_constraint_to_remove(
+                cycle
+            )
             errors.append(
                 ConsistencyError(
-                    message=f"Requires constraints form a cycle: {cycle_str}",
-                    fix="Remove one of the requires constraints to break the cycle",
+                    message=(
+                        f"Requires constraints form a cycle: {cycle_str}. This can be fixed by removing the requires "
+                        f"constraint on {source_container_ref!s} to {required_container_ref!s}"
+                    ),
+                    fix="Remove the recommended requires constraint to break the cycle",
                     code=self.code,
                 )
             )
@@ -237,33 +242,32 @@ class RequiresConstraintCycle(DataModelRule):
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
         for cycle in self.validation_resources.requires_constraint_cycles:
-            for i, source_container in enumerate(cycle):
-                required_container = cycle[(i + 1) % len(cycle)]
-                if (source_container, required_container) in self.validation_resources.oriented_mst_edges:
-                    continue
-                if (source_container, required_container) in seen:
-                    continue
-                seen.add((source_container, required_container))
+            source_container_ref, required_container_ref = self.validation_resources.pick_cycle_constraint_to_remove(
+                cycle
+            )
+            if (source_container_ref, required_container_ref) in seen:
+                continue
+            seen.add((source_container_ref, required_container_ref))
 
-                container = self.validation_resources.select_container(source_container)
-                if not container:
+            container = self.validation_resources.select_container(source_container_ref)
+            if not container:
+                continue
+            for constraint_id, constraint_def in self.validation_resources.get_requires_constraints(container):
+                if constraint_def.require != required_container_ref:
                     continue
-                for constraint_id, constraint_def in self.validation_resources.get_requires_constraints(container):
-                    if constraint_def.require != required_container:
-                        continue
-                    fix_actions.append(
-                        FixAction(
-                            code=self.code,
-                            resource_id=source_container,
-                            changes=(
-                                RemovedField(
-                                    field_path=f"constraints.{constraint_id}",
-                                    current_value=constraint_def,
-                                    item_severity=SeverityType.WARNING,
-                                ),
+                fix_actions.append(
+                    FixAction(
+                        code=self.code,
+                        resource_id=source_container_ref,
+                        changes=(
+                            RemovedField(
+                                field_path=f"constraints.{constraint_id}",
+                                current_value=constraint_def,
+                                item_severity=SeverityType.WARNING,
                             ),
-                            message="Removed suboptimal requires constraint to break cycle",
-                        )
+                        ),
+                        message="Removed requires constraint to break cycle",
                     )
+                )
 
         return fix_actions

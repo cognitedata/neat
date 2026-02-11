@@ -795,7 +795,51 @@ class ValidationResources:
     @staticmethod
     def graph_cycles(graph: nx.DiGraph) -> list[tuple[T_Reference, ...]]:
         """Returns cycles in the graph otherwise empty list"""
-        return [candidate for candidate in nx.simple_cycles(graph) if len(candidate) > 1]
+        return [tuple(candidate) for candidate in nx.simple_cycles(graph) if len(candidate) > 1]
+
+    def pick_cycle_constraint_to_remove(
+        self, cycle: tuple[ContainerReference, ...]
+    ) -> tuple[ContainerReference, ContainerReference]:
+        """Pick the single best requires constraint to remove to break a cycle.
+
+        A cycle always has at least one non-MST constraint (since the MST is acyclic),
+        so this method always returns a result.
+
+        Priority (highest first):
+        1. Auto-generated + wrong-direction (reverse is in oriented MST)
+        2. Auto-generated + redundant (neither direction in oriented MST)
+        3. User-defined + wrong-direction
+        4. User-defined + redundant
+        """
+        suboptimal_constraints: list[tuple[ContainerReference, ContainerReference]] = []
+        for i, source_container_ref in enumerate(cycle):
+            required_container_ref = cycle[(i + 1) % len(cycle)]
+            if (source_container_ref, required_container_ref) not in self.oriented_mst_edges:
+                suboptimal_constraints.append((source_container_ref, required_container_ref))
+
+        # Tier 1: auto-generated and wrong direction from optimal solution
+        for source_ref, required_ref in suboptimal_constraints:
+            if self.requires_constraint_graph.edges[source_ref, required_ref].get("is_auto", False):
+                if (required_ref, source_ref) in self.oriented_mst_edges:
+                    return source_ref, required_ref
+
+        # Tier 2: auto-generated and redundant (covered by other constraints)
+        for source_ref, required_ref in suboptimal_constraints:
+            if self.requires_constraint_graph.edges[source_ref, required_ref].get("is_auto", False):
+                return source_ref, required_ref
+
+        # Tier 3: user-defined and wrong direction from optimal solution
+        for source_ref, required_ref in suboptimal_constraints:
+            if (required_ref, source_ref) in self.oriented_mst_edges:
+                return source_ref, required_ref
+
+        # Tier 4: user-defined and redundant (covered by other constraints)
+        if suboptimal_constraints:
+            return suboptimal_constraints[0]
+
+        raise RuntimeError(
+            f"{type(self).__name__}: No removable constraint found in cycle {cycle}. This is a bug in NEAT."
+        )
 
     @cached_property
     def optimized_requires_constraint_graph(self) -> nx.DiGraph:
