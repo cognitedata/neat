@@ -218,30 +218,12 @@ class RequiresConstraintCycle(DataModelRule):
 
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
-        reported_cycles: set[tuple[ContainerReference, ...]] = set()
-        removable = self.validation_resources.removable_constraints_in_cycles
 
-        for cycle, _, _ in removable:
-            cycle_key = tuple(cycle)
-            if cycle_key in reported_cycles:
-                continue
-            reported_cycles.add(cycle_key)
-
+        for cycle in self.validation_resources.requires_constraint_cycles:
             cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
-
-            constraints_to_remove = [
-                f"'{source!s}' -> '{required!s}'"
-                for other_cycle, source, required in removable
-                if tuple(other_cycle) == cycle_key
-            ]
-
-            message = f"Requires constraints form a cycle: {cycle_str}"
-            if constraints_to_remove:
-                message += f". Recommended removal: {', '.join(constraints_to_remove)} (not in optimal structure)"
-
             errors.append(
                 ConsistencyError(
-                    message=message,
+                    message=f"Requires constraints form a cycle: {cycle_str}",
                     fix="Remove one of the requires constraints to break the cycle",
                     code=self.code,
                 )
@@ -254,30 +236,34 @@ class RequiresConstraintCycle(DataModelRule):
         fix_actions: list[FixAction] = []
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
-        for _, source_container, required_container in self.validation_resources.removable_constraints_in_cycles:
-            if (source_container, required_container) in seen:
-                continue
-            seen.add((source_container, required_container))
-
-            container = self.validation_resources.select_container(source_container)
-            if not container:
-                continue
-            for constraint_id, constraint_def in self.validation_resources.get_requires_constraints(container):
-                if constraint_def.require != required_container:
+        for cycle in self.validation_resources.requires_constraint_cycles:
+            for i, source_container in enumerate(cycle):
+                required_container = cycle[(i + 1) % len(cycle)]
+                if (source_container, required_container) in self.validation_resources.oriented_mst_edges:
                     continue
-                fix_actions.append(
-                    FixAction(
-                        code=self.code,
-                        resource_id=source_container,
-                        changes=(
-                            RemovedField(
-                                field_path=f"constraints.{constraint_id}",
-                                current_value=constraint_def,
-                                item_severity=SeverityType.WARNING,
+                if (source_container, required_container) in seen:
+                    continue
+                seen.add((source_container, required_container))
+
+                container = self.validation_resources.select_container(source_container)
+                if not container:
+                    continue
+                for constraint_id, constraint_def in self.validation_resources.get_requires_constraints(container):
+                    if constraint_def.require != required_container:
+                        continue
+                    fix_actions.append(
+                        FixAction(
+                            code=self.code,
+                            resource_id=source_container,
+                            changes=(
+                                RemovedField(
+                                    field_path=f"constraints.{constraint_id}",
+                                    current_value=constraint_def,
+                                    item_severity=SeverityType.WARNING,
+                                ),
                             ),
-                        ),
-                        message="Removed requires constraint to break cycle",
+                            message="Removed suboptimal requires constraint to break cycle",
+                        )
                     )
-                )
 
         return fix_actions
