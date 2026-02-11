@@ -56,7 +56,8 @@ class MissingRequiresConstraint(DataModelRule):
 
             message = (
                 f"View '{view_ref!s}' is not optimized for querying. "
-                f"Add a 'requires' constraint from container '{source_container_ref!s}' to '{required_container_ref!s}'."
+                f"Add a 'requires' constraint from container '{source_container_ref!s}' "
+                f"to '{required_container_ref!s}'."
             )
             if not is_safe:
                 merged_views = set(self.validation_resources.merged.views)
@@ -310,7 +311,8 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
                 Recommendation(
                     message=(
                         f"View '{resolved_reverse_direct_relation.reverse_view_ref!s}' has a reverse direct relation "
-                        f"'{resolved_reverse_direct_relation.reverse_property_id}' that cannot be efficently traversed through queries, "
+                        f"'{resolved_reverse_direct_relation.reverse_property_id}' that cannot be efficiently "
+                        f"traversed through queries, "
                         f"since it points to container {resolved_reverse_direct_relation.container_ref!s}' "
                         f"property '{resolved_reverse_direct_relation.container_property_id}' that is unindexed. "
                     ),

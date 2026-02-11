@@ -621,7 +621,7 @@ class ValidationResources:
         return graph
 
     @cached_property
-    def implements_cycles(self) -> list[list[ViewReference]]:
+    def implements_cycles(self) -> list[tuple[ViewReference, ...]]:
         """Find all cycles in the implements graph.
         Returns:
             List of lists, where each list contains the ordered Views involved in forming the implements cycle.
