@@ -208,12 +208,17 @@ function renderIssues() {
             ? `<span class="issue-code-link" onclick="event.stopPropagation(); window.open('https://cognite-neat.readthedocs-hosted.com/en/latest/validation/${firstIssue.code.toLowerCase()}.html', '_blank')">${firstIssue.code}</span>`
             : '';
 
+        const fixableBadge = firstIssue.automatically_fixable
+            ? '<span class="issue-badge badge-AutoFixable">Automatically fixable</span>'
+            : '';
+
         if (count === 1) {
             // Single issue - render normally
             html.push(`
                 <div class="issue-item">
                     <div class="issue-header">
                         <span class="issue-badge badge-${firstIssue.type}">${firstIssue.type}</span>
+                        ${fixableBadge}
                         ${codeLink}
                     </div>
                     <div class="issue-message">${firstIssue.message}</div>
@@ -233,6 +238,7 @@ function renderIssues() {
                         <div class="issue-group-info">
                             <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
                             <span class="issue-badge badge-${firstIssue.type}">${firstIssue.type}</span>
+                            ${fixableBadge}
                             ${codeLink}
                             <span class="issue-count">${count} issues</span>
                         </div>
