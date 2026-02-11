@@ -800,17 +800,7 @@ class ValidationResources:
     def pick_cycle_constraint_to_remove(
         self, cycle: tuple[ContainerReference, ...]
     ) -> tuple[ContainerReference, ContainerReference]:
-        """Pick the single best requires constraint to remove to break a cycle.
-
-        A cycle always has at least one non-MST constraint (since the MST is acyclic),
-        so this method always returns a result.
-
-        Priority (highest first):
-        1. Auto-generated + wrong-direction (reverse is in oriented MST)
-        2. Auto-generated + redundant (neither direction in oriented MST)
-        3. User-defined + wrong-direction
-        4. User-defined + redundant
-        """
+        """Pick the single best requires constraint to remove to break a cycle."""
         suboptimal_constraints: list[tuple[ContainerReference, ContainerReference]] = []
         for i, source_container_ref in enumerate(cycle):
             required_container_ref = cycle[(i + 1) % len(cycle)]
