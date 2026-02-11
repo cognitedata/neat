@@ -100,7 +100,7 @@ class ReadPhysicalDataModel:
             enable_alpha_validators=self._config.alpha.enable_experimental_validators,
         )
 
-    def _read_validate_fix(self, reader: DMSImporter) -> None:
+    def _read_validate_fix(self, reader: DMSImporter, apply_fixes: bool = False) -> None:
         """Read, validate, and optionally fix a physical data model.
 
         Step 1: Import + validate (records pre-fix issues in provenance)
@@ -111,7 +111,7 @@ class ReadPhysicalDataModel:
         self._store.read_physical(reader, on_success)
 
         # Step 2: Apply fixes if enabled and present
-        if self._config.alpha.fix_validation_issues and on_success.pending_fixes:
+        if apply_fixes and on_success.pending_fixes and self._config.alpha.fix_validation_issues:
             applicator = FixApplicator(self._store.physical_data_model[-1], on_success.pending_fixes)
             post_fix_on_success = self._create_on_success()
             change = self._store.transform_physical(applicator.apply_fixes, post_fix_on_success)
