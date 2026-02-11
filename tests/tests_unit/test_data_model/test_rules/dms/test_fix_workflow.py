@@ -1,7 +1,7 @@
-"""Tests for the autofix functionality.
+"""Tests for the autofix workflow.
 
 End-to-end tests verifying fixes from validators resolve validation issues.
-Unit tests for FixAction/FixApplicator mechanics are in test_fix.py.
+Unit tests for FixAction/FixApplicator mechanics are in test_data_model/test_fix.py.
 """
 
 import pytest
@@ -9,24 +9,11 @@ import pytest
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model._fix import FixApplicator
 from cognite.neat._data_model._snapshot import SchemaSnapshot
-from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.rules.dms._performance import (
     MissingRequiresConstraint,
     MissingReverseDirectRelationTargetIndex,
 )
 from tests.data import SNAPSHOT_CATALOG
-
-
-def _snapshot_to_request_schema(snapshot: SchemaSnapshot) -> RequestSchema:
-    """Convert a SchemaSnapshot to a RequestSchema for FixApplicator."""
-    data_model = next(iter(snapshot.data_model.values()))
-    return RequestSchema(
-        dataModel=data_model,
-        views=list(snapshot.views.values()),
-        containers=list(snapshot.containers.values()),
-        spaces=list(snapshot.spaces.values()),
-        node_types=list(snapshot.node_types.keys()),
-    )
 
 
 class TestFixWorkflow:
@@ -77,7 +64,7 @@ class TestFixWorkflow:
         fixes = validator.fix()
         assert len(fixes) > 0, "Validator should produce fixes"
 
-        request_schema = _snapshot_to_request_schema(local_snapshot)
+        request_schema = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
         fixed_schema = FixApplicator(request_schema, fixes).apply_fixes()
         fixed_snapshot = SchemaSnapshot.from_request_schema(fixed_schema, deep_copy=False)
 
