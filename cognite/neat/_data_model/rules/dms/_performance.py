@@ -101,13 +101,13 @@ class MissingRequiresConstraint(DataModelRule):
                 FixAction(
                     code=self.code,
                     resource_id=src,
-                    changes=[
+                    changes=(
                         AddedField(
                             field_path=f"constraints.{constraint_id}",
                             new_value=RequiresConstraintDefinition(require=dst),
                             item_severity=SeverityType.WARNING,
-                        )
-                    ],
+                        ),
+                    ),
                     message="Added requires constraint to optimize query performance",
                 )
             )
@@ -191,13 +191,13 @@ class SuboptimalRequiresConstraint(DataModelRule):
                     FixAction(
                         code=self.code,
                         resource_id=src,
-                        changes=[
+                        changes=(
                             RemovedField(
                                 field_path=f"constraints.{constraint_id}",
                                 current_value=constraint_def,
                                 item_severity=SeverityType.WARNING,
-                            )
-                        ],
+                            ),
+                        ),
                         message="Removed suboptimal requires constraint",
                     )
                 )
@@ -396,14 +396,14 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
                     FixAction(
                         code=self.code,
                         resource_id=resolved.container_ref,
-                        changes=[
+                        changes=(
                             ChangedField(
                                 field_path=f"indexes.{index_id}",
                                 current_value=current_index,
                                 new_value=updated_index,
                                 item_severity=SeverityType.SAFE,
-                            )
-                        ],
+                            ),
+                        ),
                         message="Updated index to be cursorable for efficient reverse relation queries",
                     )
                 )
@@ -413,13 +413,13 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
                     FixAction(
                         code=self.code,
                         resource_id=resolved.container_ref,
-                        changes=[
+                        changes=(
                             AddedField(
                                 field_path=f"indexes.{index_id}",
                                 new_value=BtreeIndex(properties=[resolved.container_property_id], cursorable=True),
                                 item_severity=SeverityType.SAFE,
-                            )
-                        ],
+                            ),
+                        ),
                         message="Added index to enable efficient querying through reverse direct relations",
                     )
                 )

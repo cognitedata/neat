@@ -284,13 +284,13 @@ class RequiresConstraintCycle(DataModelRule):
                     FixAction(
                         code=self.code,
                         resource_id=src,
-                        changes=[
+                        changes=(
                             RemovedField(
                                 field_path=f"constraints.{constraint_id}",
                                 current_value=constraint_def,
                                 item_severity=SeverityType.WARNING,
-                            )
-                        ],
+                            ),
+                        ),
                         message="Removed requires constraint to break cycle",
                     )
                 )
