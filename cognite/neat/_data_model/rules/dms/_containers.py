@@ -1,7 +1,5 @@
 """Validators for checking containers in the data model."""
 
-from collections.abc import Iterable
-
 from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model.deployer.data_classes import RemovedField, SeverityType
 from cognite.neat._data_model.models.dms._references import ContainerReference
@@ -218,27 +216,12 @@ class RequiresConstraintCycle(DataModelRule):
     alpha = True  # Still in development
     fixable = True
 
-    def _get_cycle_edges_to_remove(
-        self,
-    ) -> Iterable[tuple[list[ContainerReference], ContainerReference, ContainerReference]]:
-        """Yields (cycle, src, dst) for edges in cycles that should be removed."""
-        optimal_edges = self.validation_resources.oriented_mst_edges
-
-        for cycle in self.validation_resources.requires_constraint_cycles:
-            for i, container in enumerate(cycle):
-                next_container = cycle[(i + 1) % len(cycle)]
-                edge = (container, next_container)
-                if edge not in optimal_edges:
-                    yield cycle, container, next_container
-
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
         reported_cycles: set[tuple[ContainerReference, ...]] = set()
+        removable = self.validation_resources.removable_constraints_in_cycles
 
-        # Collect once to avoid re-evaluating the generator
-        all_cycle_edges = list(self._get_cycle_edges_to_remove())
-
-        for cycle, _, _ in all_cycle_edges:
+        for cycle, _, _ in removable:
             cycle_key = tuple(cycle)
             if cycle_key in reported_cycles:
                 continue
@@ -246,12 +229,15 @@ class RequiresConstraintCycle(DataModelRule):
 
             cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
 
-            # Collect all edges to remove for this cycle
-            edges_to_remove = [f"{s} -> {d}" for c, s, d in all_cycle_edges if tuple(c) == cycle_key]
+            constraints_to_remove = [
+                f"'{source!s}' -> '{required!s}'"
+                for other_cycle, source, required in removable
+                if tuple(other_cycle) == cycle_key
+            ]
 
             message = f"Requires constraints form a cycle: {cycle_str}"
-            if edges_to_remove:
-                message += f". Recommended removal: {', '.join(edges_to_remove)} (not in optimal structure)"
+            if constraints_to_remove:
+                message += f". Recommended removal: {', '.join(constraints_to_remove)} (not in optimal structure)"
 
             errors.append(
                 ConsistencyError(
@@ -268,22 +254,21 @@ class RequiresConstraintCycle(DataModelRule):
         fix_actions: list[FixAction] = []
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
-        for _, src, dst in self._get_cycle_edges_to_remove():
-            if (src, dst) in seen:
+        for _, source_container, required_container in self.validation_resources.removable_constraints_in_cycles:
+            if (source_container, required_container) in seen:
                 continue
-            seen.add((src, dst))
+            seen.add((source_container, required_container))
 
-            # Find ALL matching constraints (not just auto-generated) for cycle breaking
-            container = self.validation_resources.select_container(src)
+            container = self.validation_resources.select_container(source_container)
             if not container:
                 continue
             for constraint_id, constraint_def in self.validation_resources.get_requires_constraints(container):
-                if constraint_def.require != dst:
+                if constraint_def.require != required_container:
                     continue
                 fix_actions.append(
                     FixAction(
                         code=self.code,
-                        resource_id=src,
+                        resource_id=source_container,
                         changes=(
                             RemovedField(
                                 field_path=f"constraints.{constraint_id}",

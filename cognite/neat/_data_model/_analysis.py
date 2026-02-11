@@ -791,6 +791,24 @@ class ValidationResources:
         """
         return self.graph_cycles(self.requires_constraint_graph)
 
+    @cached_property
+    def removable_constraints_in_cycles(
+        self,
+    ) -> list[tuple[list[ContainerReference], ContainerReference, ContainerReference]]:
+        """Identify requires constraints in cycles that are not part of the optimal structure.
+
+        Returns:
+            List of (cycle, source_container, required_container) tuples where the constraint
+            from source_container to required_container can be removed to break the cycle.
+        """
+        results: list[tuple[list[ContainerReference], ContainerReference, ContainerReference]] = []
+        for cycle in self.requires_constraint_cycles:
+            for i, source_container in enumerate(cycle):
+                required_container = cycle[(i + 1) % len(cycle)]
+                if (source_container, required_container) not in self.oriented_mst_edges:
+                    results.append((cycle, source_container, required_container))
+        return results
+
     @staticmethod
     def graph_cycles(graph: nx.DiGraph) -> list[list[T_Reference]]:
         """Returns cycles in the graph otherwise empty list"""
