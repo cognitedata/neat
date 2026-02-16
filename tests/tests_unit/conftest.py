@@ -212,6 +212,16 @@ def example_dms_schema_request(
 
 
 @pytest.fixture
+def multi_data_model_schema_request(
+    example_dms_schema_request: dict[str, Any],
+) -> dict[str, Any]:
+    copy = example_dms_schema_request.copy()
+    # two copies purposely to trigger the multiple data model files
+    copy["dataModel"] = [copy["dataModel"], copy["dataModel"]]
+    return copy
+
+
+@pytest.fixture
 def respx_mock_data_model(
     neat_client: NeatClient,
     respx_mock: respx.MockRouter,

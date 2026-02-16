@@ -99,7 +99,7 @@ class ReadPhysicalDataModel:
             enable_alpha_validators=self._config.alpha.enable_experimental_validators,
         )
 
-    def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
+    def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat", data_model_file: str | None = None) -> None:
         """Read physical data model from YAML file(s)
 
         Args:
@@ -107,15 +107,20 @@ class ReadPhysicalDataModel:
             format (Literal["neat", "toolkit"]): The format of the input file(s).
                 - "neat": Neat's DMS table format.
                 - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+            data_model_file (str | None): Optional specific data model file to read. This is only applicable when format
+            is set to "toolkit", and when io contains multiple data model YAML files.
+            The value should match the file name of the data model YAML file to read.
+
         """
 
         path = NeatReader.create(io).materialize_path()
+        data_model_file = NeatReader.create(data_model_file).materialize_path() if data_model_file else None
 
         reader: DMSImporter
         if format == "neat":
             reader = DMSTableImporter.from_yaml(path)
         elif format == "toolkit":
-            reader = DMSAPIImporter.from_yaml(path)
+            reader = DMSAPIImporter.from_yaml(path, data_model_file=data_model_file)
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
