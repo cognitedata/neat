@@ -2,7 +2,8 @@
 
 import pytest
 
-from cognite.neat._data_model._fix import FixAction, FixApplicator
+from cognite.neat._data_model._fix import FixAction
+from cognite.neat._data_model.transformers import FixApplicator
 from cognite.neat._data_model.deployer.data_classes import (
     AddedField,
     ChangedField,
@@ -96,7 +97,7 @@ class TestFixApplicatorApplyChanges:
             changes=(change,),
             code="TEST-001",
         )
-        result = FixApplicator(minimal_schema, [action]).apply_fixes()
+        result = FixApplicator(minimal_schema, [action]).transform()
 
         assert result.containers[0].constraints == expected_constraints
 
@@ -109,13 +110,13 @@ class TestFixApplicatorApplyChanges:
             FixAction(resource_id=container_b.as_reference(), changes=(SAME_CHANGE,), code="TEST-001"),
         ]
 
-        result = FixApplicator(schema, actions).apply_fixes()
+        result = FixApplicator(schema, actions).transform()
 
         assert result.containers[0].constraints == {"same_key": CONSTRAINT}
         assert result.containers[1].constraints == {"same_key": CONSTRAINT}
 
     def test_no_fixes_returns_schema_unchanged(self, minimal_schema: RequestSchema) -> None:
-        result = FixApplicator(minimal_schema, []).apply_fixes()
+        result = FixApplicator(minimal_schema, []).transform()
         assert result == minimal_schema
 
     @pytest.mark.parametrize(
@@ -172,4 +173,4 @@ class TestFixApplicatorApplyChanges:
     )
     def test_raises_runtime_error(self, minimal_schema: RequestSchema, actions: list[FixAction]) -> None:
         with pytest.raises(RuntimeError):
-            FixApplicator(minimal_schema, actions).apply_fixes()
+            FixApplicator(minimal_schema, actions).transform()

@@ -8,6 +8,7 @@ from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._config import NeatConfig
 from cognite.neat._data_model._fix import FixAction, FixApplicator
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
+from cognite.neat._data_model.transformers import Transformer
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._data_model.deployer.deployer import SchemaDeployer
@@ -81,18 +82,18 @@ class NeatStore:
             and isinstance(on_success, OnSuccessIssuesChecker)
             and on_success.pending_fixes
         ):
-            self.transform_physical(FixApplicator(data_model, on_success.pending_fixes).apply_fixes, on_success.new())
+            self.transform_physical(FixApplicator(data_model, on_success.pending_fixes), on_success.new())
 
-    def transform_physical(self, activity: Callable, on_success: OnSuccess | None = None) -> None:
+    def transform_physical(self, transformer: Transformer, on_success: OnSuccess | None = None) -> None:
         """Transform the current physical data model and record in provenance."""
-        change, transformed_model = self._do_activity(activity, on_success)
+        change, transformed_model = self._do_activity(transformer.transform, on_success)
 
         if transformed_model:
             change.target_entity = self.physical_data_model.generate_reference(
                 cast(PhysicalDataModel, transformed_model)
             )
             self.physical_data_model.append(transformed_model)
-            self.state = self.state.transition(activity)
+            self.state = self.state.transition(transformer)
             change.target_state = self.state
 
         self.provenance.append(change)

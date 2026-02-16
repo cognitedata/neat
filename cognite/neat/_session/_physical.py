@@ -157,7 +157,7 @@ class ReadPhysicalDataModel:
         reader = DMSTableImporter.from_excel(path)
 
         on_success = self._create_on_success()
-        self._store.read_physical(reader, on_success)
+        return self._store.read_physical(reader, on_success)
 
     def cdf(self, space: str, external_id: str, version: str) -> None:
         """Read physical data model from CDF
