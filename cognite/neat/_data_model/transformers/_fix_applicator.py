@@ -23,24 +23,25 @@ from cognite.neat._data_model.transformers._base import Transformer
 class FixApplicator(Transformer):
     """Applies the changes in FixAction objects to a schema."""
 
-    def __init__(self, request_schema: RequestSchema, fix_actions: list[FixAction]) -> None:
-        self._request_schema = request_schema.model_copy(deep=True)
+    def __init__(self, fix_actions: list[FixAction]) -> None:
         self._fix_actions = fix_actions
 
-    def transform(self) -> RequestSchema:
+    def transform(self, data_model: RequestSchema) -> RequestSchema:
         """Apply fix actions and return the fixed schema (a deep copy of the original)."""
+        result = data_model.model_copy(deep=True)
+
         if not self._fix_actions:
-            return self._request_schema
+            return result
 
         fix_by_resource_id: dict[SchemaResourceId, list[FixAction]] = defaultdict(list)
         for action in self._fix_actions:
             fix_by_resource_id[action.resource_id].append(action)
 
         resources_list_lookup: dict[type, dict[SchemaResourceId, DataModelResource]] = {
-            ViewReference: {view.as_reference(): view for view in self._request_schema.views},
-            ContainerReference: {container.as_reference(): container for container in self._request_schema.containers},
-            SpaceReference: {space.as_reference(): space for space in self._request_schema.spaces},
-            DataModelReference: {self._request_schema.data_model.as_reference(): self._request_schema.data_model},
+            ViewReference: {view.as_reference(): view for view in result.views},
+            ContainerReference: {container.as_reference(): container for container in result.containers},
+            SpaceReference: {space.as_reference(): space for space in result.spaces},
+            DataModelReference: {result.data_model.as_reference(): result.data_model},
         }
 
         for resource_id, actions in fix_by_resource_id.items():
@@ -59,7 +60,7 @@ class FixApplicator(Transformer):
             self._check_no_field_path_conflicts(all_changes_for_resource)
             self._apply_changes_to_resource(resource, all_changes_for_resource)
 
-        return self._request_schema
+        return result
 
     def _apply_changes_to_resource(self, resource: DataModelResource, changes: list[FieldChange]) -> None:
         """Apply field changes to the resource in place."""

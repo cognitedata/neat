@@ -97,7 +97,7 @@ class TestFixApplicatorApplyChanges:
             changes=(change,),
             code="TEST-001",
         )
-        result = FixApplicator(minimal_schema, [action]).transform()
+        result = FixApplicator([action]).transform(minimal_schema)
 
         assert result.containers[0].constraints == expected_constraints
 
@@ -110,13 +110,13 @@ class TestFixApplicatorApplyChanges:
             FixAction(resource_id=container_b.as_reference(), changes=(SAME_CHANGE,), code="TEST-001"),
         ]
 
-        result = FixApplicator(schema, actions).transform()
+        result = FixApplicator(actions).transform(schema)
 
         assert result.containers[0].constraints == {"same_key": CONSTRAINT}
         assert result.containers[1].constraints == {"same_key": CONSTRAINT}
 
     def test_no_fixes_returns_schema_unchanged(self, minimal_schema: RequestSchema) -> None:
-        result = FixApplicator(minimal_schema, []).transform()
+        result = FixApplicator([]).transform(minimal_schema)
         assert result == minimal_schema
 
     @pytest.mark.parametrize(
@@ -173,4 +173,4 @@ class TestFixApplicatorApplyChanges:
     )
     def test_raises_runtime_error(self, minimal_schema: RequestSchema, actions: list[FixAction]) -> None:
         with pytest.raises(RuntimeError):
-            FixApplicator(minimal_schema, actions).transform()
+            FixApplicator(actions).transform(minimal_schema)

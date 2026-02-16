@@ -6,7 +6,7 @@ from typing import Any, cast
 from cognite.neat._client.client import NeatClient
 from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._config import NeatConfig
-from cognite.neat._data_model._fix import FixAction, FixApplicator
+from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
@@ -17,7 +17,7 @@ from cognite.neat._data_model.exporters._table_exporter.exporter import DMSTable
 from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
-from cognite.neat._data_model.transformers import Transformer
+from cognite.neat._data_model.transformers import FixApplicator, Transformer
 from cognite.neat._exceptions import DataModelCreateException, DataModelImportException
 from cognite.neat._issues import IssueList
 from cognite.neat._state_machine._states import EmptyState, PhysicalState, State
@@ -82,11 +82,13 @@ class NeatStore:
             and isinstance(on_success, OnSuccessIssuesChecker)
             and on_success.pending_fixes
         ):
-            self.transform_physical(FixApplicator(data_model, on_success.pending_fixes), on_success.new())
+            self.transform_physical(FixApplicator(on_success.pending_fixes), on_success.new())
 
     def transform_physical(self, transformer: Transformer, on_success: OnSuccess | None = None) -> None:
         """Transform the current physical data model and record in provenance."""
-        change, transformed_model = self._do_activity(transformer.transform, on_success)
+        change, transformed_model = self._do_activity(
+            transformer.transform, on_success, data_model=self.physical_data_model[-1]
+        )
 
         if transformed_model:
             change.target_entity = self.physical_data_model.generate_reference(
