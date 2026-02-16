@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import datetime, timezone
 
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
@@ -62,8 +63,16 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
         )
 
     def _gather_validation_resources(self, request_schema: RequestSchema) -> ValidationResources:
-        # Deep copy for validation - we don't want to modify the original during merge/analysis
-        local = SchemaSnapshot.from_request_schema(request_schema, deep_copy=True)
+        # we do not want to modify the original request schema during validation
+        copy = request_schema.model_copy(deep=True)
+        local = SchemaSnapshot(
+            data_model={request_schema.data_model.as_reference(): copy.data_model},
+            views={view.as_reference(): view for view in copy.views},
+            containers={container.as_reference(): container for container in copy.containers},
+            spaces={space.as_reference(): space for space in copy.spaces},
+            node_types={node_type: node_type for node_type in copy.node_types},
+            timestamp=datetime.now(timezone.utc),
+        )
 
         return ValidationResources(
             cdf=self._cdf_snapshot,
