@@ -162,7 +162,7 @@ class DMSAPIImporter(DMSImporter):
                         cls._display_name(directory).as_posix(),
                         "Multiple data model files found in directory."
                         " You can specify which one to use by providing the 'data_model_file' argument"
-                        "with the file name of the data model YAML file you want to use.",
+                        " with the file name of the data model YAML file you want to use.",
                     )
                 data_model = data
 
