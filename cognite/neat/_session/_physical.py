@@ -1,3 +1,4 @@
+from pathlib import Path
 from types import MethodType
 from typing import Any, Literal
 
@@ -114,7 +115,7 @@ class ReadPhysicalDataModel:
         """
 
         path = NeatReader.create(io).materialize_path()
-        data_model_file = NeatReader.create(data_model_file).materialize_path() if data_model_file else None
+        data_model_file = Path(data_model_file) if data_model_file else None
 
         reader: DMSImporter
         if format == "neat":
