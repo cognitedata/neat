@@ -1,7 +1,7 @@
 from collections import Counter
+from typing import cast
 
 from pydantic import Field, ValidationInfo, field_validator
-from pyparsing import cast
 
 from cognite.neat._data_model.models.entities import ConceptEntity
 from cognite.neat._data_model.models.entities._constants import PREFIX_PATTERN, SUFFIX_PATTERN, VERSION_PATTERN

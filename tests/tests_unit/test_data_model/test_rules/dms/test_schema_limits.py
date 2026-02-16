@@ -13,7 +13,7 @@ from cognite.neat._data_model.rules.dms._limits import (
     ViewImplementsCountIsOutOfLimits,
     ViewPropertyCountIsOutOfLimits,
 )
-from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelValidation
+from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelRulesOrchestrator
 from cognite.neat._utils.text import NEWLINE as NL
 from tests.data import SNAPSHOT_CATALOG
 from tests.data.snapshots.catalog import CDF_SNAPSHOTS_DIR
@@ -282,7 +282,7 @@ def test_validation(dms_yaml_hitting_all_the_data_model_limits: tuple[str, dict[
     data_model = importer.to_data_model()
 
     # Run on success validators
-    on_success = DmsDataModelValidation(
+    on_success = DmsDataModelRulesOrchestrator(
         cdf_snapshot=SNAPSHOT_CATALOG.load_schema_snapshot(CDF_SNAPSHOTS_DIR / "for_validators"),
         limits=SchemaLimits(),
     )

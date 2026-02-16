@@ -28,7 +28,7 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
             identifier = f"{cls.__name__}.{func.__name__}"
             try:
                 res = func(self, *args, **kwargs)
-                if not self._store.provenance or "DataModel" not in identifier:
+                if not self._store.provenance or ("DataModel" not in identifier and "CDF" not in identifier):
                     print(f"{display_name} ✅")
                     if _COLLECTOR.can_collect:
                         _COLLECTOR.collect("action", {"action": identifier, "success": True})

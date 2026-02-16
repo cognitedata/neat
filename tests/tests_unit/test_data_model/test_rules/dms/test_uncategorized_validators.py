@@ -4,7 +4,7 @@ from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.rules.dms import (
     ConnectionValueTypeUndefined,
     ConnectionValueTypeUnexisting,
-    DmsDataModelValidation,
+    DmsDataModelRulesOrchestrator,
     ExternalContainerDoesNotExist,
     ExternalContainerPropertyDoesNotExist,
     ImplementedViewNotExisting,
@@ -29,7 +29,9 @@ class TestValidators:
         )
         data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
 
-        on_success = DmsDataModelValidation(cdf_snapshot=cdf_snapshot, limits=SchemaLimits(), modus_operandi="additive")
+        on_success = DmsDataModelRulesOrchestrator(
+            cdf_snapshot=cdf_snapshot, limits=SchemaLimits(), modus_operandi="additive"
+        )
 
         on_success.run(data_model)
 
@@ -157,7 +159,9 @@ class TestValidators:
         )
         data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
 
-        on_success = DmsDataModelValidation(cdf_snapshot=cdf_snapshot, limits=SchemaLimits(), modus_operandi="rebuild")
+        on_success = DmsDataModelRulesOrchestrator(
+            cdf_snapshot=cdf_snapshot, limits=SchemaLimits(), modus_operandi="rebuild"
+        )
 
         on_success.run(data_model)
 

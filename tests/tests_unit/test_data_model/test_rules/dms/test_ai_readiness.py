@@ -14,7 +14,7 @@ from cognite.neat._data_model.rules.dms._ai_readiness import (
     ViewPropertyMissingDescription,
     ViewPropertyMissingName,
 )
-from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelValidation
+from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelRulesOrchestrator
 from tests.data import SNAPSHOT_CATALOG
 
 PROBLEMS = {
@@ -67,7 +67,7 @@ def test_validation_deep(
     data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
 
     # Run on success validators
-    on_success = DmsDataModelValidation(
+    on_success = DmsDataModelRulesOrchestrator(
         cdf_snapshot=cdf_snapshot,
         limits=SchemaLimits(),
         modus_operandi=mode,

@@ -1,4 +1,4 @@
-**Neat supports 36 validation rules** for data modeling. These rules are learned
+**Neat supports 37 validation rules** for data modeling. These rules are learned
  from best practice, knowledge of the Cognite Data Fusion data modeling service, and practical experience from
  helping customers build and maintain their data models.
 
@@ -78,6 +78,7 @@ Validators for checking performance-related aspects of the data model.
 | NEAT-DMS-PERFORMANCE-001 | [MissingRequiresConstraint](neat-dms-performance-001.md) | Recommends adding requires constraints to optimize query performance. |
 | NEAT-DMS-PERFORMANCE-002 | [SuboptimalRequiresConstraint](neat-dms-performance-002.md) | Recommends removing requires constraints that are not optimal. |
 | NEAT-DMS-PERFORMANCE-003 | [UnresolvableQueryPerformance](neat-dms-performance-003.md) | Identifies views with query performance issues that cannot be resolved. |
+| NEAT-DMS-PERFORMANCE-004 | [MissingReverseDirectRelationTargetIndex](neat-dms-performance-004.md) | Recommends adding a cursorable index on direct relation properties that are |
 
 ### Views (NEAT-DMS-VIEW)
 

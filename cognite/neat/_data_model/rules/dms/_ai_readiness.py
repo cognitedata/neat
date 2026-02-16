@@ -1,7 +1,7 @@
 """Validators for checking if data model is AI-ready."""
 
 from cognite.neat._data_model.models.dms._data_types import EnumProperty
-from cognite.neat._data_model.rules._base import DataModelRule
+from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import Recommendation
 
 BASE_CODE = "NEAT-DMS-AI-READINESS"

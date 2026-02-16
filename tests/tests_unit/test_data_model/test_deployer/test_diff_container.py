@@ -140,7 +140,7 @@ class TestContainerDiffer:
                     ),
                     AddedField(
                         field_path="constraints.constraintToAdd",
-                        item_severity=SeverityType.SAFE,
+                        item_severity=SeverityType.WARNING,
                         # MyPy do not see that we hardcoded the "toAdd" key in the changed_container
                         new_value=changed_container.constraints["constraintToAdd"],  # type: ignore[index]
                     ),

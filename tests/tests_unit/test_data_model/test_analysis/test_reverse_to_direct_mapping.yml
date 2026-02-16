@@ -1,6 +1,8 @@
 my_space:AncestorView(version=v1).innerReflection: my_space:AncestorView(version=v1),my_space:AncestorView(version=v1).outerReflection
 my_space:AnotherView(version=v1).reverseSourceToAnotheViewConnection: my_space:SourceView(version=v1),my_space:SourceView(version=v1).directSourceToAnotheViewConnection
 my_space:DescendantView(version=v1).innerReflection: my_space:DescendantView(version=v1),my_space:DescendantView(version=v1).outerReflection
+my_space:ReverseToIndexedDirectView(version=v1).reverseToIndexedDirectTarget: my_space:IndexedDirectView(version=v1),my_space:IndexedDirectView(version=v1).indexedDirectRelationTarget
+my_space:ReverseToListDirectView(version=v1).reverseToListDirectTarget: my_space:ListDirectView(version=v1),my_space:ListDirectView(version=v1).listDirectRelationTarget
 my_space:TargetView(version=v1).reverseSourceToTargetViewConnection: my_space:SourceView(version=v1),my_space:SourceView(version=v1).directSourceToAnotheViewConnection
 my_space:TargetView(version=v1).reverseToAttribute: my_space:SourceView(version=v1),my_space:SourceView(version=v1).name
 my_space:TargetView(version=v1).reverseToDirectConnectionWithoutContainer: my_space:SourceView(version=v1),my_space:SourceView(version=v1).directConnectionWithoutContainer

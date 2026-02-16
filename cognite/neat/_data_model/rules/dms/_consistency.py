@@ -1,7 +1,7 @@
 """Validators checking for consistency issues in data model."""
 
 from cognite.neat._data_model._constants import COGNITE_SPACES
-from cognite.neat._data_model.rules._base import DataModelRule
+from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import Recommendation
 
 BASE_CODE = "NEAT-DMS-CONSISTENCY"

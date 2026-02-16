@@ -56,3 +56,27 @@
   externalId: DescendantContainer
   usedFor: node
   properties: {}
+- space: my_space
+  externalId: IndexedDirectContainer
+  usedFor: node
+  properties:
+    indexedDirectRelationTarget:
+      nullable: true
+      type:
+        type: direct
+        list: false
+  indexes:
+    indexedDirectRelationIndex:
+      indexType: btree
+      properties:
+        - indexedDirectRelationTarget
+      cursorable: true
+- space: my_space
+  externalId: ListDirectContainer
+  usedFor: node
+  properties:
+    listDirectRelationTarget:
+      nullable: true
+      type:
+        type: direct
+        list: true

@@ -1,13 +1,15 @@
-# /Users/nikola/repos/neat/cognite/neat/_session/_cdf.py
 import uuid
 
 from cognite.neat._client import NeatClient
 from cognite.neat._config import NeatConfig
+from cognite.neat._data_model.rules.cdf._orchestrator import CDFRulesOrchestrator
+from cognite.neat._session._wrappers import session_wrapper
 from cognite.neat._store._store import NeatStore
 
 from ._html._render import render
 
 
+@session_wrapper
 class CDF:
     """Read from a data source into NeatSession graph store."""
 
@@ -34,3 +36,15 @@ class CDF:
                 "data_models_limit": self._store.cdf_limits.data_models.limit,
             },
         )
+
+    def analyze(self) -> None:
+        """Analyze the entity of CDF data models."""
+
+        on_success = CDFRulesOrchestrator(
+            limits=self._store.cdf_limits,
+            space_statistics=self._store.cdf_space_statistics,
+            can_run_validator=self._config.validation.can_run_validator,
+            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
+        )
+
+        return self._store.cdf_analyze(on_success)

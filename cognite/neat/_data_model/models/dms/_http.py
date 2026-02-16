@@ -6,6 +6,8 @@ from cognite.neat._utils.useful_types import ReferenceObject
 from ._container import ContainerRequest
 from ._data_model import DataModelRequest
 from ._references import (
+    ContainerConstraintReference,
+    ContainerIndexReference,
     ContainerReference,
     DataModelReference,
     SpaceReference,
@@ -18,7 +20,14 @@ DataModelResource: TypeAlias = SpaceRequest | DataModelRequest | ViewRequest | C
 
 T_DataModelResource = TypeVar("T_DataModelResource", bound=DataModelResource)
 
-ResourceId: TypeAlias = SpaceReference | DataModelReference | ViewReference | ContainerReference
+ResourceId: TypeAlias = (
+    SpaceReference
+    | DataModelReference
+    | ViewReference
+    | ContainerReference
+    | ContainerIndexReference
+    | ContainerConstraintReference
+)
 
 T_ResourceId = TypeVar("T_ResourceId", bound=ResourceId)
 

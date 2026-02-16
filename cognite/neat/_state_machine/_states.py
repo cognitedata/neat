@@ -34,7 +34,7 @@ class EmptyState(State):
     The initial state with empty NEAT store.
     """
 
-    def transition(self, event: Any) -> State:
+    def transition(self, event: Any | None) -> State:
         if isinstance(event, DMSImporter):
             return PhysicalState()
         return ForbiddenState(self)
