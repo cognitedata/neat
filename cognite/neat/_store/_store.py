@@ -6,6 +6,7 @@ from typing import Any, cast
 from cognite.neat._client.client import NeatClient
 from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._config import NeatConfig
+from cognite.neat._data_model._fix import FixAction, FixApplicator
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
@@ -59,7 +60,7 @@ class NeatStore:
             self._cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
         return self._cdf_snapshot
 
-    def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None) -> None:
+    def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None, fix: bool = False) -> None:
         """Read object from the store"""
         self._can_agent_do_activity(reader)
 
@@ -73,15 +74,28 @@ class NeatStore:
 
         self.provenance.append(change)
 
-    def transform_physical(self, activity: Callable, on_success: OnSuccess | None = None) -> Change:
+        if (
+            data_model
+            and fix
+            and self._config.alpha.fix_validation_issues
+            and isinstance(on_success, OnSuccessIssuesChecker)
+            and on_success.pending_fixes
+        ):
+            self.transform_physical(FixApplicator(data_model, on_success.pending_fixes).apply_fixes, on_success.new())
+
+    def transform_physical(self, activity: Callable, on_success: OnSuccess | None = None) -> None:
         """Transform the current physical data model and record in provenance."""
         change, transformed_model = self._do_activity(activity, on_success)
 
         if transformed_model:
+            change.target_entity = self.physical_data_model.generate_reference(
+                cast(PhysicalDataModel, transformed_model)
+            )
             self.physical_data_model.append(transformed_model)
+            self.state = self.state.transition(activity)
+            change.target_state = self.state
 
         self.provenance.append(change)
-        return change
 
     def write_physical(self, writer: DMSExporter, on_success: OnSuccess | None = None, **kwargs: Any) -> None:
         """Write object into the store"""
@@ -190,6 +204,7 @@ class NeatStore:
         created_data_model: PhysicalDataModel | None = None
         issues = IssueList()
         errors = IssueList()
+        fixes: list[FixAction] = []
         deployment_result: DeploymentResult | None = None
 
         try:
@@ -198,6 +213,7 @@ class NeatStore:
                 on_success.run(created_data_model)
                 if isinstance(on_success, OnSuccessIssuesChecker):
                     issues.extend(on_success.issues)
+                    fixes.extend(on_success.pending_fixes)
                 elif isinstance(on_success, OnSuccessResultProducer):
                     deployment_result = on_success.result
                 else:
@@ -223,6 +239,7 @@ class NeatStore:
             agent=type(activity.__self__).__name__ if hasattr(activity, "__self__") else "UnknownAgent",
             issues=issues,
             errors=errors,
+            fixes=fixes,
             result=deployment_result,
             activity=Change.standardize_activity_name(activity.__name__, start, end),
         ), created_data_model

@@ -3,7 +3,6 @@ from typing import Any, Literal
 
 from cognite.neat._client import NeatClient
 from cognite.neat._config import NeatConfig
-from cognite.neat._data_model._fix import FixApplicator
 from cognite.neat._data_model.deployer.deployer import DeploymentOptions, SchemaDeployer
 from cognite.neat._data_model.exporters import (
     DMSAPIExporter,
@@ -100,23 +99,6 @@ class ReadPhysicalDataModel:
             enable_alpha_validators=self._config.alpha.enable_experimental_validators,
         )
 
-    def _read_validate_fix(self, reader: DMSImporter, apply_fixes: bool = False) -> None:
-        """Read, validate, and optionally fix a physical data model.
-
-        Step 1: Import + validate (records pre-fix issues in provenance)
-        Step 2: If fixes found, apply them and re-validate (records fix + post-fix issues in provenance)
-        """
-        # Step 1: Read + validate
-        on_success = self._create_on_success()
-        self._store.read_physical(reader, on_success)
-
-        # Step 2: Apply fixes if enabled and present
-        if apply_fixes and on_success.pending_fixes and self._config.alpha.fix_validation_issues:
-            applicator = FixApplicator(self._store.physical_data_model[-1], on_success.pending_fixes)
-            post_fix_on_success = self._create_on_success()
-            change = self._store.transform_physical(applicator.apply_fixes, post_fix_on_success)
-            change.applied_fixes = on_success.pending_fixes
-
     def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
         """Read physical data model from YAML file(s)
 
@@ -137,7 +119,8 @@ class ReadPhysicalDataModel:
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
-        return self._read_validate_fix(reader)
+        on_success = self._create_on_success()
+        return self._store.read_physical(reader, on_success)
 
     def json(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
         """Read physical data model from JSON file(s)
@@ -159,7 +142,8 @@ class ReadPhysicalDataModel:
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
-        return self._read_validate_fix(reader)
+        on_success = self._create_on_success()
+        return self._store.read_physical(reader, on_success)
 
     def excel(self, io: Any) -> None:
         """Read physical data model from Excel file
@@ -172,7 +156,8 @@ class ReadPhysicalDataModel:
         path = NeatReader.create(io).materialize_path()
         reader = DMSTableImporter.from_excel(path)
 
-        return self._read_validate_fix(reader)
+        on_success = self._create_on_success()
+        self._store.read_physical(reader, on_success)
 
     def cdf(self, space: str, external_id: str, version: str) -> None:
         """Read physical data model from CDF
@@ -187,7 +172,8 @@ class ReadPhysicalDataModel:
             DataModelReference(space=space, external_id=external_id, version=version), self._client
         )
 
-        return self._read_validate_fix(reader)
+        on_success = self._create_on_success()
+        return self._store.read_physical(reader, on_success)
 
 
 @session_wrapper
@@ -335,4 +321,5 @@ def create(
         cdf_snapshot=self._store.cdf_snapshot,
     )
 
-    return self.read._read_validate_fix(creator)
+    on_success = self.read._create_on_success()
+    return self._store.read_physical(creator, on_success)
