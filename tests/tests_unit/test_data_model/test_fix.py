@@ -3,7 +3,6 @@
 import pytest
 
 from cognite.neat._data_model._fix import FixAction
-from cognite.neat._data_model.transformers import FixApplicator
 from cognite.neat._data_model.deployer.data_classes import (
     AddedField,
     ChangedField,
@@ -22,6 +21,7 @@ from cognite.neat._data_model.models.dms import (
 )
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
 from cognite.neat._data_model.models.dms._schema import RequestSchema
+from cognite.neat._data_model.transformers import FixApplicator
 
 CONSTRAINT = RequiresConstraintDefinition(require=ContainerReference(space="other_space", external_id="OtherContainer"))
 INDEX = BtreeIndex(properties=["prop1"], cursorable=True)

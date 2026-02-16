@@ -8,7 +8,6 @@ from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._config import NeatConfig
 from cognite.neat._data_model._fix import FixAction, FixApplicator
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
-from cognite.neat._data_model.transformers import Transformer
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._data_model.deployer.deployer import SchemaDeployer
@@ -18,6 +17,7 @@ from cognite.neat._data_model.exporters._table_exporter.exporter import DMSTable
 from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
+from cognite.neat._data_model.transformers import Transformer
 from cognite.neat._exceptions import DataModelCreateException, DataModelImportException
 from cognite.neat._issues import IssueList
 from cognite.neat._state_machine._states import EmptyState, PhysicalState, State
