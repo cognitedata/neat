@@ -47,8 +47,19 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
                 continue
             if self._can_run_validator(validator.code, validator.issue_type):
                 self._issues.extend(validator.validate())
+                if validator.fixable:
+                    self._pending_fixes.extend(validator.fix())
 
         self._has_run = True
+
+    def copy(self) -> "DmsDataModelRulesOrchestrator":
+        return DmsDataModelRulesOrchestrator(
+            cdf_snapshot=self._cdf_snapshot,
+            limits=self._limits,
+            modus_operandi=self._modus_operandi,
+            can_run_validator=self._can_run_validator,
+            enable_alpha_validators=self._enable_alpha_validators,
+        )
 
     def _gather_validation_resources(self, request_schema: RequestSchema) -> ValidationResources:
         # we do not want to modify the original request schema during validation

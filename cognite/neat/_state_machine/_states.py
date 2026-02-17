@@ -2,6 +2,7 @@ from typing import Any
 
 from cognite.neat._data_model.exporters import DMSExporter
 from cognite.neat._data_model.importers import DMSImporter
+from cognite.neat._data_model.transformers import Transformer
 
 from ._base import State
 
@@ -46,7 +47,7 @@ class PhysicalState(State):
     """
 
     def transition(self, event: Any) -> State:
-        if isinstance(event, DMSExporter):
+        if isinstance(event, DMSExporter | Transformer):
             return PhysicalState()
 
         return ForbiddenState(self)
