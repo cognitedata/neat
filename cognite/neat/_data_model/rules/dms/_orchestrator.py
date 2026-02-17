@@ -52,8 +52,7 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
 
         self._has_run = True
 
-    def new(self) -> "DmsDataModelRulesOrchestrator":
-        """Create a new instance with the same configuration but clean state."""
+    def copy(self) -> "DmsDataModelRulesOrchestrator":
         return DmsDataModelRulesOrchestrator(
             cdf_snapshot=self._cdf_snapshot,
             limits=self._limits,

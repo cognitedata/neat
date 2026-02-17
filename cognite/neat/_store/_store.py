@@ -82,10 +82,16 @@ class NeatStore:
             and isinstance(on_success, OnSuccessIssuesChecker)
             and on_success.pending_fixes
         ):
-            self.transform_physical(FixApplicator(on_success.pending_fixes), on_success.new())
+            self.transform_physical(FixApplicator(on_success.pending_fixes), on_success.copy())
 
     def transform_physical(self, transformer: Transformer, on_success: OnSuccess | None = None) -> None:
-        """Transform the current physical data model and record in provenance."""
+        """
+        Transform the current physical data model.
+
+        Args:
+            transformer: The `Transformer` object to apply to the current physical data model to transform it.
+            on_success: The `OnSuccess` handler to run after the transformation has been applied.
+        """
         change, transformed_model = self._do_activity(
             transformer.transform, on_success, data_model=self.physical_data_model[-1]
         )
