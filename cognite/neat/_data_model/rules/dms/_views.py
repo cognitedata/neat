@@ -176,8 +176,8 @@ class DataModelViewDoesNotExist(DataModelRule):
     the data model cannot be deployed to CDF.
     """
 
-    code: str = f"{BASE_CODE}-004"
-    issue_type: type[ConsistencyError] = ConsistencyError
+    code = f"{BASE_CODE}-004"
+    issue_type = ConsistencyError
 
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
