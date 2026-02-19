@@ -131,7 +131,7 @@ class LocalStorageAdapter:
             asyncio.set_event_loop(loop)
             return loop
 
-    def _execute_db_operation(self, operation: str, key: str, value: str | None = None) -> "PyodideTask":
+    def _execute_db_operation(self, operation: str, key: str, value: str | None = None) -> str:
         """Executes a database operation by creating and calling a JS function."""
 
         async def db_operation() -> str:
@@ -219,7 +219,7 @@ class LocalStorageAdapter:
             return ""
 
     def read(self, key: str) -> ReadResult:
-        return PyodideResult(self._execute_db_operation("read", key))
+        return ManualReadResult(self._execute_db_operation("read", key))
 
     def write(self, key: str, value: str) -> None:
         self._execute_db_operation("write", key, value)

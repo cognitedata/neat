@@ -6,6 +6,7 @@ from typing import Any, cast
 from cognite.neat._client.client import NeatClient
 from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._config import NeatConfig
+from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
@@ -16,6 +17,7 @@ from cognite.neat._data_model.exporters._table_exporter.exporter import DMSTable
 from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
+from cognite.neat._data_model.transformers import FixApplicator, Transformer
 from cognite.neat._exceptions import DataModelCreateException, DataModelImportException
 from cognite.neat._issues import IssueList
 from cognite.neat._state_machine._states import EmptyState, PhysicalState, State
@@ -59,7 +61,7 @@ class NeatStore:
             self._cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
         return self._cdf_snapshot
 
-    def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None) -> None:
+    def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None, fix: bool = False) -> None:
         """Read object from the store"""
         self._can_agent_do_activity(reader)
 
@@ -69,6 +71,37 @@ class NeatStore:
             change.target_entity = self.physical_data_model.generate_reference(cast(PhysicalDataModel, data_model))
             self.physical_data_model.append(data_model)
             self.state = self.state.transition(reader)
+            change.target_state = self.state
+
+        self.provenance.append(change)
+
+        if (
+            data_model
+            and fix
+            and self._config.alpha.fix_validation_issues
+            and isinstance(on_success, OnSuccessIssuesChecker)
+            and on_success.pending_fixes
+        ):
+            self.transform_physical(FixApplicator(on_success.pending_fixes), on_success.copy())
+
+    def transform_physical(self, transformer: Transformer, on_success: OnSuccess | None = None) -> None:
+        """
+        Transform the current physical data model.
+
+        Args:
+            transformer: The `Transformer` object to apply to the current physical data model to transform it.
+            on_success: The `OnSuccess` handler to run after the transformation has been applied.
+        """
+        change, transformed_model = self._do_activity(
+            transformer.transform, on_success, data_model=self.physical_data_model[-1]
+        )
+
+        if transformed_model:
+            change.target_entity = self.physical_data_model.generate_reference(
+                cast(PhysicalDataModel, transformed_model)
+            )
+            self.physical_data_model.append(transformed_model)
+            self.state = self.state.transition(transformer)
             change.target_state = self.state
 
         self.provenance.append(change)
@@ -180,6 +213,7 @@ class NeatStore:
         created_data_model: PhysicalDataModel | None = None
         issues = IssueList()
         errors = IssueList()
+        fixes: list[FixAction] = []
         deployment_result: DeploymentResult | None = None
 
         try:
@@ -188,6 +222,7 @@ class NeatStore:
                 on_success.run(created_data_model)
                 if isinstance(on_success, OnSuccessIssuesChecker):
                     issues.extend(on_success.issues)
+                    fixes.extend(on_success.pending_fixes)
                 elif isinstance(on_success, OnSuccessResultProducer):
                     deployment_result = on_success.result
                 else:
@@ -213,6 +248,7 @@ class NeatStore:
             agent=type(activity.__self__).__name__ if hasattr(activity, "__self__") else "UnknownAgent",
             issues=issues,
             errors=errors,
+            fixes=fixes,
             result=deployment_result,
             activity=Change.standardize_activity_name(activity.__name__, start, end),
         ), created_data_model
