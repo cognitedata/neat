@@ -106,8 +106,9 @@ class ViewMissingName(DataModelRule):
         for view_ref in self.validation_resources.merged_data_model.views or []:
             view = self.validation_resources.select_view(view_ref)
 
+            # it will be captured by another validator
             if view is None:
-                raise RuntimeError(f"{type(self).__name__}: View {view_ref!s} not found. This is a bug.")
+                continue
 
             if not view.name:
                 recommendations.append(
@@ -157,8 +158,9 @@ class ViewMissingDescription(DataModelRule):
         for view_ref in self.validation_resources.merged_data_model.views or []:
             view = self.validation_resources.select_view(view_ref)
 
+            # it will be captured by another validator
             if view is None:
-                raise RuntimeError(f"{type(self).__name__}: View {view_ref!s} not found. This is a bug.")
+                continue
 
             if not view.description:
                 recommendations.append(
@@ -198,8 +200,9 @@ class ViewPropertyMissingName(DataModelRule):
         for view_ref in self.validation_resources.merged_data_model.views or []:
             view = self.validation_resources.select_view(view_ref)
 
+            # it will be captured by another validator
             if view is None:
-                raise RuntimeError(f"{type(self).__name__}: View {view_ref!s} not found. This is a bug.")
+                continue
 
             if not view.properties:
                 continue
@@ -254,8 +257,9 @@ class ViewPropertyMissingDescription(DataModelRule):
         for view_ref in self.validation_resources.merged_data_model.views or []:
             view = self.validation_resources.select_view(view_ref)
 
+            # it will be captured by another validator
             if view is None:
-                raise RuntimeError(f"{type(self).__name__}: View {view_ref!s} not found. This is a bug.")
+                continue
 
             if not view.properties:
                 continue

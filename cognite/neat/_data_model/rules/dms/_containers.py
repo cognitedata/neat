@@ -39,10 +39,9 @@ class ExternalContainerDoesNotExist(DataModelRule):
         for view_ref in self.validation_resources.merged_data_model.views:
             view = self.validation_resources.select_view(view_ref)
 
-            if not view:
-                raise RuntimeError(
-                    f"{type(self).__name__}: View {view_ref!s} not found in local resources. This is a bug in NEAT."
-                )
+            # it will be captured by another validator
+            if view is None:
+                continue
 
             if view.properties is None:
                 continue
@@ -101,10 +100,9 @@ class ExternalContainerPropertyDoesNotExist(DataModelRule):
             for view_ref in self.validation_resources.merged_data_model.views:
                 view = self.validation_resources.select_view(view_ref)
 
-                if not view:
-                    raise RuntimeError(
-                        f"{type(self).__name__}: View {view_ref!s} not found in local resources. This is a bug in NEAT."
-                    )
+                # it will be captured by another validator
+                if view is None:
+                    continue
 
                 if view.properties is None:
                     continue
