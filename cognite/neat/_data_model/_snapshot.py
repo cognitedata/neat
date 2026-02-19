@@ -52,7 +52,6 @@ class SchemaSnapshot(BaseModel, extra="ignore"):
             cdf_model = cdf.data_model[model_ref]
             if new_views := (set(cdf_model.views or []) - set(local_model.views or [])):
                 for view_ref in new_views:
-                    print(f"Adding view {view_ref} from CDF to merged snapshot.")
                     if cdf_view := cdf.views.get(view_ref):
                         merged.views[view_ref] = cdf_view
             # We append the local views at the end of the CDF views.
