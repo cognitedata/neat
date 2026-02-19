@@ -20,3 +20,7 @@ views:
   externalId: MissingProperties
   version: v2
   type: view
+- space: my_space
+  externalId: ThisViewDoesNotExist
+  version: v1
+  type: view
