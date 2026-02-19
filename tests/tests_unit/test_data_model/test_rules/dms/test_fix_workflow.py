@@ -7,12 +7,13 @@ Unit tests for FixAction/FixApplicator mechanics are in test_data_model/test_fix
 import pytest
 
 from cognite.neat._data_model._analysis import ValidationResources
-from cognite.neat._data_model._fix import FixApplicator
 from cognite.neat._data_model._snapshot import SchemaSnapshot
+from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._data_model.rules.dms._performance import (
     MissingRequiresConstraint,
     MissingReverseDirectRelationTargetIndex,
 )
+from cognite.neat._data_model.transformers import FixApplicator
 from tests.data import SNAPSHOT_CATALOG
 
 
@@ -43,7 +44,7 @@ class TestFixWorkflow:
         scenario: str,
         cdf_scenario: str,
         include_cdm: bool,
-        validator_class: type,
+        validator_class: type[DataModelRule],
     ) -> None:
         """Applying fixes from a validator should resolve all validation issues it identified."""
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
@@ -65,7 +66,7 @@ class TestFixWorkflow:
         assert len(fixes) > 0, "Validator should produce fixes"
 
         request_schema = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
-        fixed_schema = FixApplicator(request_schema, fixes).apply_fixes()
+        fixed_schema = FixApplicator(fixes).transform(request_schema)
         fixed_snapshot = SchemaSnapshot.from_request_schema(fixed_schema, deep_copy=False)
 
         # 3. Run validator again on fixed snapshot

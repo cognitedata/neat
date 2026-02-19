@@ -626,7 +626,7 @@ class ValidationResources:
     def implements_cycles(self) -> list[tuple[ViewReference, ...]]:
         """Find all cycles in the implements graph.
         Returns:
-            List of lists, where each list contains the ordered Views involved in forming the implements cycle.
+            List of tuples, where each tuple contains the ordered Views involved in forming the implements cycle.
         """
 
         return self.graph_cycles(self.implements_graph)
@@ -790,7 +790,7 @@ class ValidationResources:
     def requires_constraint_cycles(self) -> list[tuple[ContainerReference, ...]]:
         """Find all cycles in the requires constraint graph.
         Returns:
-            List of lists, where each list contains the ordered containers involved in forming the requires cycle.
+            List of tuples, where each tuple contains the ordered containers involved in forming the requires cycle.
         """
         return self.graph_cycles(self.requires_constraint_graph)
 
