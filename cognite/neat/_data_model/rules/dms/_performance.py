@@ -2,7 +2,8 @@
 
 from cognite.neat._data_model._analysis import RequiresChangeStatus
 from cognite.neat._data_model._constants import COGNITE_SPACES
-from cognite.neat._data_model._fix import FixAction, make_auto_constraint_id, make_auto_index_id
+from cognite.neat._data_model._fix import FixAction
+from cognite.neat._data_model._identifiers import AutoIdentifier
 from cognite.neat._data_model.deployer.data_classes import AddedField, ChangedField, RemovedField, SeverityType
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
@@ -94,7 +95,7 @@ class MissingRequiresConstraint(DataModelRule):
                 continue
             seen.add((source_container_ref, required_container_ref))
 
-            constraint_id = make_auto_constraint_id(required_container_ref)
+            constraint_id = AutoIdentifier.for_constraint(required_container_ref)
             fix_actions.append(
                 FixAction(
                     code=self.code,
@@ -352,7 +353,7 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
                 )
                 message = "Updated index to be cursorable for efficient reverse relation queries"
             else:
-                index_id = make_auto_index_id(resolved_reverse_direct_relation.container_property_id)
+                index_id = AutoIdentifier.for_index(resolved_reverse_direct_relation.container_property_id)
                 change = AddedField(
                     field_path=f"indexes.{index_id}",
                     new_value=BtreeIndex(
