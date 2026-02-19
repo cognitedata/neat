@@ -118,13 +118,13 @@ class DMSAPIImporter(DMSImporter):
         )
 
     @classmethod
-    def from_yaml(cls, yaml_file: Path) -> "DMSAPIImporter":
+    def from_yaml(cls, yaml_file: Path, data_model_file: Path | None = None) -> "DMSAPIImporter":
         """Create a DMSTableImporter from a YAML file."""
         source = cls._display_name(yaml_file)
         if yaml_file.suffix.lower() in {".yaml", ".yml", ".json"}:
             return cls(yaml.safe_load(yaml_file.read_text(encoding=cls.ENCODING)))
         elif yaml_file.is_dir():
-            return cls(cls._read_yaml_files(yaml_file))
+            return cls(cls._read_yaml_files(yaml_file, data_model_file))
         raise FileReadException(source.as_posix(), f"Unsupported file type: {source.suffix}")
 
     @classmethod
@@ -142,7 +142,7 @@ class DMSAPIImporter(DMSImporter):
         return source
 
     @classmethod
-    def _read_yaml_files(cls, directory: Path) -> dict[str, Any]:
+    def _read_yaml_files(cls, directory: Path, data_model_file: Path | None = None) -> dict[str, Any]:
         """Read all YAML files in a directory and combine them into a single dictionary."""
         schema_data: dict[str, Any] = {}
         data_model: dict[str, Any] | None = None
@@ -150,15 +150,22 @@ class DMSAPIImporter(DMSImporter):
             if yaml_file.suffix.lower() not in {".yaml", ".yml", ".json"}:
                 continue
             stem = yaml_file.stem.casefold()
-            if stem.endswith("datamodel") and data_model is not None:
-                raise FileReadException(
-                    cls._display_name(directory).as_posix(),
-                    "Multiple data model files found in directory.",
-                )
+
             data = yaml.safe_load(yaml_file.read_text(encoding=cls.ENCODING))
             list_data = data if isinstance(data, list) else [data]
+
             if stem.endswith("datamodel"):
+                if data_model_file and yaml_file.name != data_model_file.name:
+                    continue  # skip this file as it doesn't match the specified data model file
+                if data_model is not None and not data_model_file:
+                    raise FileReadException(
+                        cls._display_name(directory).as_posix(),
+                        "Multiple data model files found in directory."
+                        " You can specify which one to use by providing the 'data_model_file' argument"
+                        " with the file name of the data model YAML file you want to use.",
+                    )
                 data_model = data
+
             elif stem.endswith("container"):
                 schema_data.setdefault("containers", []).extend(list_data)
             elif stem.endswith("view"):

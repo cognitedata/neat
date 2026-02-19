@@ -4,6 +4,7 @@ from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.rules.dms import (
     ConnectionValueTypeUndefined,
     ConnectionValueTypeUnexisting,
+    DataModelViewDoesNotExist,
     DmsDataModelRulesOrchestrator,
     ExternalContainerDoesNotExist,
     ExternalContainerPropertyDoesNotExist,
@@ -37,7 +38,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 21
+        assert len(on_success.issues) == 22
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -48,6 +49,7 @@ class TestValidators:
             ExternalContainerDoesNotExist.code,
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
+            DataModelViewDoesNotExist.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 3
@@ -167,7 +169,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 22
+        assert len(on_success.issues) == 23
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -179,6 +181,7 @@ class TestValidators:
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
             ImplementedViewNotExisting.code,
+            DataModelViewDoesNotExist.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 5

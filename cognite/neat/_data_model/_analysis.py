@@ -365,9 +365,9 @@ class ValidationResources:
             for view_ref in self.merged_data_model.views:
                 view = self.select_view(view_ref)
 
-                # This should never happen, if it happens, it's a bug
+                # Specific validator will capture this
                 if not view:
-                    raise RuntimeError(f"reverse_to_direct_mapping: View {view_ref!s} not found. This is a bug!")
+                    continue
 
                 if not view.properties:
                     continue
@@ -467,8 +467,10 @@ class ValidationResources:
         if self.merged_data_model.views:
             for view_ref in self.merged_data_model.views:
                 view = self.select_view(view_ref)
+
+                # Specific validator will capture this
                 if not view:
-                    raise RuntimeError(f"View {view_ref!s} not found. This is a bug!")
+                    continue
 
                 if not view.properties:
                     continue

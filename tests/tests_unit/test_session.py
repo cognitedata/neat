@@ -10,10 +10,11 @@ import respx
 from cognite.neat import _state_machine as states
 from cognite.neat._client import NeatClientConfig
 from cognite.neat._config import NeatConfig
-from cognite.neat._data_model._fix import FixAction, FixApplicator
+from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model.deployer.data_classes import AddedField, DeploymentResult, SeverityType
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
+from cognite.neat._data_model.transformers import FixApplicator
 from cognite.neat._issues import IssueList
 from cognite.neat._session._physical import ReadPhysicalDataModel
 from cognite.neat._session._session import NeatSession
@@ -263,8 +264,8 @@ class TestTransformPhysical:
             ),
             code="TEST-001",
         )
-        applicator = FixApplicator(original_model, [action])
-        store.transform_physical(applicator.apply_fixes)
+        applicator = FixApplicator([action])
+        store.transform_physical(applicator)
 
         # Original model is untouched
         assert original_model.model_dump() == original_dump

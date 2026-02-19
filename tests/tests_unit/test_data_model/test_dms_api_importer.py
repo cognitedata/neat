@@ -10,7 +10,7 @@ import yaml
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.importers import DMSAPIImporter
 from cognite.neat._data_model.models.dms import DataModelReference, RequestSchema
-from cognite.neat._exceptions import CDFAPIException
+from cognite.neat._exceptions import CDFAPIException, FileReadException
 from cognite.neat._utils.http_client import FailedRequestMessage
 
 
@@ -239,3 +239,33 @@ class TestDMSAPIImporter:
         importer = DMSAPIImporter.from_yaml(yaml_dir)
         schema = importer.to_data_model()
         assert schema.model_dump(by_alias=True, exclude_unset=True) == example_dms_schema_request
+
+    def test_read_multi_yaml_multi_data_model_directory(self, multi_data_model_schema_request: dict[str, Any]) -> None:
+        """Test reading data model schema from multiple YAML files in a directory."""
+        yaml_files: list[MagicMock] = []
+
+        for key, data in multi_data_model_schema_request.items():
+            for i, item in enumerate(data):
+                yaml_file = MagicMock(spec=Path)
+                yaml_file.read_text.return_value = yaml.safe_dump(item)
+                yaml_file.suffix = ".yaml"
+                yaml_file.stem = f"my_{i}.{key.removesuffix('s')}"
+                yaml_file.name = f"{yaml_file.stem}{yaml_file.suffix}"
+                yaml_files.append(yaml_file)
+
+        yaml_dir = MagicMock(spec=Path)
+        yaml_dir.rglob.return_value = yaml_files
+
+        # with pytest.raises(FileReadException) as exc_info:
+
+        with pytest.raises(FileReadException) as exc_info:
+            _ = DMSAPIImporter.from_yaml(yaml_dir)
+
+        assert "Multiple data model files found in directory" in str(exc_info.value)
+
+        importer = DMSAPIImporter.from_yaml(yaml_dir, data_model_file=Path("my_0.dataModel.yaml"))
+        schema = importer.to_data_model()
+
+        # drop the second data model
+        multi_data_model_schema_request["dataModel"] = multi_data_model_schema_request["dataModel"][0]
+        assert schema.model_dump(by_alias=True, exclude_unset=True) == multi_data_model_schema_request

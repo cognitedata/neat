@@ -51,6 +51,15 @@ class DmsDataModelRulesOrchestrator(OnSuccessIssuesChecker):
 
         self._has_run = True
 
+    def copy(self) -> "DmsDataModelRulesOrchestrator":
+        return DmsDataModelRulesOrchestrator(
+            cdf_snapshot=self._cdf_snapshot,
+            limits=self._limits,
+            modus_operandi=self._modus_operandi,
+            can_run_validator=self._can_run_validator,
+            enable_alpha_validators=self._enable_alpha_validators,
+        )
+
     def _gather_validation_resources(self, request_schema: RequestSchema) -> ValidationResources:
         # Deep copy for validation - we don't want to modify the original during merge/analysis
         local = SchemaSnapshot.from_request_schema(request_schema, deep_copy=True)

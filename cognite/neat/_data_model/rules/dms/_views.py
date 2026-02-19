@@ -35,10 +35,9 @@ class ViewToContainerMappingNotPossible(DataModelRule):
         for view_ref in self.validation_resources.merged_data_model.views:
             view = self.validation_resources.select_view(view_ref)
 
+            # it will be captured by another validator
             if not view:
-                raise RuntimeError(
-                    f"{type(self).__name__}: View {view_ref!s} not found in local resources. This is a bug in NEAT."
-                )
+                continue
 
             if view.properties is None:
                 continue
@@ -106,10 +105,9 @@ class ImplementedViewNotExisting(DataModelRule):
         for view_ref in self.validation_resources.merged_data_model.views:
             view = self.validation_resources.select_view(view_ref)
 
+            # it will be captured by another validator
             if not view:
-                raise RuntimeError(
-                    f"{type(self).__name__}: View {view_ref!s} not found in local resources. This is a bug in NEAT."
-                )
+                continue
 
             if view.implements is None:
                 continue
@@ -160,5 +158,38 @@ class CyclicImplements(DataModelRule):
                     code=self.code,
                 )
             )
+
+        return errors
+
+
+class DataModelViewDoesNotExist(DataModelRule):
+    """Validates that views referenced in the data model actually exist.
+
+    ## What it does
+    Validates that all views referenced in the data model actually exist either locally or in CDF.
+
+    ## Why is this bad?
+    If a view referenced in the data model does not exist, the data model cannot be deployed to CDF.
+
+    ## Example
+    If view WindTurbine is referenced in the data model, but does not exist in the data model or in CDF,
+    the data model cannot be deployed to CDF.
+    """
+
+    code = f"{BASE_CODE}-004"
+    issue_type = ConsistencyError
+
+    def validate(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+
+        for view_ref in self.validation_resources.merged_data_model.views or []:
+            if self.validation_resources.select_view(view_ref) is None:
+                errors.append(
+                    ConsistencyError(
+                        message=f"View {view_ref!s} is referenced in the data model but does not exist.",
+                        fix="Define the missing view",
+                        code=self.code,
+                    )
+                )
 
         return errors
