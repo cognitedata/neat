@@ -4,6 +4,8 @@ End-to-end tests verifying fixes from validators resolve validation issues.
 Unit tests for FixAction/FixApplicator mechanics are in test_data_model/test_fix.py.
 """
 
+from datetime import datetime, timezone
+
 import pytest
 
 from cognite.neat._data_model._analysis import ValidationResources
@@ -67,7 +69,14 @@ class TestFixWorkflow:
 
         request_schema = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
         fixed_schema = FixApplicator(fixes).transform(request_schema)
-        fixed_snapshot = SchemaSnapshot.from_request_schema(fixed_schema, deep_copy=False)
+        fixed_snapshot = SchemaSnapshot(
+            data_model={fixed_schema.data_model.as_reference(): fixed_schema.data_model},
+            views={view.as_reference(): view for view in fixed_schema.views},
+            containers={container.as_reference(): container for container in fixed_schema.containers},
+            spaces={space.as_reference(): space for space in fixed_schema.spaces},
+            node_types={node_type: node_type for node_type in fixed_schema.node_types},
+            timestamp=datetime.now(timezone.utc),
+        )
 
         # 3. Run validator again on fixed snapshot
         fixed_resources = ValidationResources(modus_operandi="additive", local=fixed_snapshot, cdf=cdf_snapshot)
