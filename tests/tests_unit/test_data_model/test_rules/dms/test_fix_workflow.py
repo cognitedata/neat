@@ -15,6 +15,7 @@ from cognite.neat._data_model.rules.dms._containers import RequiresConstraintCyc
 from cognite.neat._data_model.rules.dms._performance import (
     MissingRequiresConstraint,
     MissingReverseDirectRelationTargetIndex,
+    SuboptimalRequiresConstraint,
 )
 from cognite.neat._data_model.transformers import FixApplicator
 from tests.data import SNAPSHOT_CATALOG
@@ -46,6 +47,13 @@ class TestFixWorkflow:
                 False,
                 RequiresConstraintCycle,
                 id="cyclic_requires_constraint",
+            ),
+            pytest.param(
+                "requires_constraints",
+                "for_validators",
+                True,
+                SuboptimalRequiresConstraint,
+                id="suboptimal_requires_constraint",
             ),
         ],
     )

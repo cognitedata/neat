@@ -732,14 +732,23 @@ class ValidationResources:
 
         A constraint is user-intentional if:
         1. The constraint identifier does NOT have '__auto' postfix
-        2. Neither src nor dst is part of a cycle (cyclic constraints are errors)
+        2. Neither src nor dst is part of a manually-created cycle
 
         These constraints are preserved even if they're not in the optimal structure, because
         they may be used for data integrity purposes.
-        We DON'T consider manual-created constraints as user-intended if they form part of a cycle,
-        because that indicates a problem with the data model where we likely can provide a better solution.
+        We DON'T consider manual-created constraints as user-intended if they form part of a cycle
+        consisting entirely of manual constraints. We ignore these because it indicates a problem with 
+        the data model where we likely can provide a better solution. We don't consider cycles formed 
+        only by __auto constraints.
         """
-        containers_in_cycles = {container for cycle in self.requires_constraint_cycles for container in cycle}
+        containers_in_cycles: set[ContainerReference] = set()
+        for cycle in self.requires_constraint_cycles:
+            if all(
+                self.requires_constraint_graph.edges[cycle[i], cycle[(i + 1) % len(cycle)]].get("is_auto", False)
+                for i in range(len(cycle))
+            ):
+                continue
+            containers_in_cycles.update(cycle)
 
         return {
             (src, dst)
