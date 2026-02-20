@@ -20,15 +20,7 @@ class OnSuccessIssuesChecker(OnSuccess, ABC):
 
     def __init__(self) -> None:
         self._issues = IssueList()
-        self._pending_fixes: list[FixAction] = []
         self._has_run = False
-
-    @property
-    def pending_fixes(self) -> list[FixAction]:
-        """Return collected fix actions. Subclasses that support fixing should populate _pending_fixes."""
-        if not self._has_run:
-            raise RuntimeError(f"{type(self).__name__} has not been run yet.")
-        return self._pending_fixes
 
     @property
     def issues(self) -> IssueList:
@@ -36,13 +28,28 @@ class OnSuccessIssuesChecker(OnSuccess, ABC):
             raise RuntimeError(f"{type(self).__name__} has not been run yet.")
         return IssueList(self._issues)
 
+
+class FixProducingOrchestrator(OnSuccessIssuesChecker, ABC):
+    """An OnSuccessIssuesChecker that supports applying fixes and re-running validation."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._pending_fixes: list[FixAction] = []
+
+    @property
+    def pending_fixes(self) -> list[FixAction]:
+        """Return collected fix actions."""
+        if not self._has_run:
+            raise RuntimeError(f"{type(self).__name__} has not been run yet.")
+        return self._pending_fixes
+
     @abstractmethod
-    def copy(self) -> "OnSuccessIssuesChecker":
+    def copy(self) -> "FixProducingOrchestrator":
         """Create a new instance of this handler with the same configuration but with a clean state.
 
         This is used to enable re-running the handler after the data model state has been modified.
         """
-        pass
+        ...
 
 
 class OnSuccessResultProducer(OnSuccess, ABC):

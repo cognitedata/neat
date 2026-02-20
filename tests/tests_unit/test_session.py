@@ -11,7 +11,7 @@ from cognite.neat import _state_machine as states
 from cognite.neat._client import NeatClientConfig
 from cognite.neat._config import NeatConfig
 from cognite.neat._data_model._fix import FixAction
-from cognite.neat._data_model._shared import OnSuccessIssuesChecker
+from cognite.neat._data_model._shared import FixProducingOrchestrator
 from cognite.neat._data_model.deployer.data_classes import AddedField, DeploymentResult, SeverityType
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
@@ -304,10 +304,10 @@ class TestReadPhysicalWithFix:
         mock_reader.to_data_model.return_value = request_schema
         mock_reader.to_data_model.__name__ = DMSImporter.to_data_model.__name__
 
-        on_success_copy = MagicMock(spec=OnSuccessIssuesChecker)
+        on_success_copy = MagicMock(spec=FixProducingOrchestrator)
         on_success_copy.issues = IssueList()
 
-        on_success = MagicMock(spec=OnSuccessIssuesChecker)
+        on_success = MagicMock(spec=FixProducingOrchestrator)
         on_success.issues = IssueList()
         on_success.pending_fixes = [fix_action]
         on_success.copy.return_value = on_success_copy
