@@ -258,7 +258,7 @@ document.getElementById('searchInput-' + uniqueId).addEventListener('input', fun
 window['exportIssues_' + uniqueId] = function() {
     const csv = [
         ['Type', 'Code', 'Message', 'Fix'],
-        ...issues.concat(fixes).map(i => [i.type, i.code || '', i.message, i.fix || ''])
+        ...issues.map(i => [i.type, i.code || '', i.message, i.fix || ''])
     ].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
