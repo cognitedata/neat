@@ -14,6 +14,8 @@ from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model.deployer.data_classes import AddedField, DeploymentResult, SeverityType
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
+from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
+from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.transformers import FixApplicator
 from cognite.neat._issues import IssueList
 from cognite.neat._session._physical import ReadPhysicalDataModel
@@ -316,6 +318,30 @@ class TestRender:
         html_repr = session.issues._repr_html_()
 
         assert isinstance(html_repr, str)
+
+    def test_render_issues_with_applied_fixes(self, physical_state_session: NeatSession) -> None:
+        session = physical_state_session
+        session._store._config.alpha.fix_validation_issues = True
+        last_change = session._store.provenance.last_change
+        assert last_change is not None
+        last_change.fixes = [
+            FixAction(
+                resource_id=ContainerReference(space="sp", external_id="ContainerA"),
+                code="NEAT-DMS-PERF-001",
+                message="Added missing requires constraint",
+                changes=(
+                    AddedField(
+                        field_path="constraints.req_a_b",
+                        new_value=RequiresConstraintDefinition(require=container_b),
+                        item_severity=SeverityType.WARNING,
+                    ),
+                ),
+            ),
+        ]
+        html_repr = session.issues._repr_html_()
+
+        assert isinstance(html_repr, str)
+        assert "Fixes" in html_repr
 
     @pytest.mark.parametrize(
         "dry_run,rollback",
