@@ -365,9 +365,9 @@ class ValidationResources:
             for view_ref in self.merged_data_model.views:
                 view = self.select_view(view_ref)
 
-                # This should never happen, if it happens, it's a bug
+                # Specific validator will capture this
                 if not view:
-                    raise RuntimeError(f"reverse_to_direct_mapping: View {view_ref!s} not found. This is a bug!")
+                    continue
 
                 if not view.properties:
                     continue
@@ -467,8 +467,10 @@ class ValidationResources:
         if self.merged_data_model.views:
             for view_ref in self.merged_data_model.views:
                 view = self.select_view(view_ref)
+
+                # Specific validator will capture this
                 if not view:
-                    raise RuntimeError(f"View {view_ref!s} not found. This is a bug!")
+                    continue
 
                 if not view.properties:
                     continue
@@ -624,7 +626,7 @@ class ValidationResources:
     def implements_cycles(self) -> list[tuple[ViewReference, ...]]:
         """Find all cycles in the implements graph.
         Returns:
-            List of lists, where each list contains the ordered Views involved in forming the implements cycle.
+            List of tuples, where each tuple contains the ordered Views involved in forming the implements cycle.
         """
 
         return self.graph_cycles(self.implements_graph)
@@ -730,14 +732,23 @@ class ValidationResources:
 
         A constraint is user-intentional if:
         1. The constraint identifier does NOT have '__auto' postfix
-        2. Neither src nor dst is part of a cycle (cyclic constraints are errors)
+        2. Neither src nor dst is part of a manually-created cycle
 
         These constraints are preserved even if they're not in the optimal structure, because
         they may be used for data integrity purposes.
-        We DON'T consider manual-created constraints as user-intended if they form part of a cycle,
-        because that indicates a problem with the data model where we likely can provide a better solution.
+        We DON'T consider manual-created constraints as user-intended if they form part of a cycle
+        consisting entirely of manual constraints. We ignore these because it indicates a problem with
+        the data model where we likely can provide a better solution. We don't consider cycles formed
+        only by __auto constraints.
         """
-        containers_in_cycles = {container for cycle in self.requires_constraint_cycles for container in cycle}
+        containers_in_cycles: set[ContainerReference] = set()
+        for cycle in self.requires_constraint_cycles:
+            if all(
+                self.requires_constraint_graph.edges[cycle[i], cycle[(i + 1) % len(cycle)]].get("is_auto", False)
+                for i in range(len(cycle))
+            ):
+                continue
+            containers_in_cycles.update(cycle)
 
         return {
             (src, dst)
@@ -788,7 +799,7 @@ class ValidationResources:
     def requires_constraint_cycles(self) -> list[tuple[ContainerReference, ...]]:
         """Find all cycles in the requires constraint graph.
         Returns:
-            List of lists, where each list contains the ordered containers involved in forming the requires cycle.
+            List of tuples, where each tuple contains the ordered containers involved in forming the requires cycle.
         """
         return self.graph_cycles(self.requires_constraint_graph)
 
@@ -800,7 +811,13 @@ class ValidationResources:
     def pick_cycle_constraint_to_remove(
         self, cycle: tuple[ContainerReference, ...]
     ) -> tuple[ContainerReference, ContainerReference]:
-        """Pick the single best requires constraint to remove to break a cycle."""
+        """Pick the single best requires constraint to remove to break a cycle.
+
+        Selects a constraint edge from the cycle using a tiered preference:
+        auto-generated constraints are preferred over user-defined ones, and
+        edges that conflict with the direction considered optimal by the global optimizer
+        are preferred over those that are only redundant and covered by other constraints.
+        """
         suboptimal_constraints: list[tuple[ContainerReference, ContainerReference]] = []
         for i, source_container_ref in enumerate(cycle):
             required_container_ref = cycle[(i + 1) % len(cycle)]

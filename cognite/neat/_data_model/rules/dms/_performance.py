@@ -2,7 +2,8 @@
 
 from cognite.neat._data_model._analysis import RequiresChangeStatus
 from cognite.neat._data_model._constants import COGNITE_SPACES
-from cognite.neat._data_model._fix import FixAction, make_auto_constraint_id, make_auto_index_id
+from cognite.neat._data_model._fix import FixAction
+from cognite.neat._data_model._identifiers import AutoIdentifier
 from cognite.neat._data_model.deployer.data_classes import AddedField, ChangedField, RemovedField, SeverityType
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
@@ -84,6 +85,9 @@ class MissingRequiresConstraint(DataModelRule):
     def fix(self) -> list[FixAction]:
         """Return fix actions to add missing requires constraints."""
         fix_actions: list[FixAction] = []
+        # missing_requires_constraints yields (view, source, required) tuples,
+        # so the same container pair can appear for multiple views. Dedup here
+        # because each constraint only needs to be added once.
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
         for (
@@ -95,7 +99,7 @@ class MissingRequiresConstraint(DataModelRule):
                 continue
             seen.add((source_container_ref, required_container_ref))
 
-            constraint_id = make_auto_constraint_id(required_container_ref)
+            constraint_id = AutoIdentifier.for_constraint(required_container_ref)
             fix_actions.append(
                 FixAction(
                     code=self.code,
@@ -166,6 +170,9 @@ class SuboptimalRequiresConstraint(DataModelRule):
     def fix(self) -> list[FixAction]:
         """Return fix actions to remove suboptimal requires constraints."""
         fix_actions: list[FixAction] = []
+        # suboptimal_requires_constraints yields (view, source, required) tuples,
+        # so the same container pair can appear for multiple views. Dedup here
+        # because each constraint only needs to be removed once.
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
         for (
@@ -177,6 +184,8 @@ class SuboptimalRequiresConstraint(DataModelRule):
                 continue
             seen.add((source_container_ref, required_container_ref))
 
+            # validate() only needs the references for the message, but fix() needs
+            # the actual container to resolve the constraint ID for the FixAction.
             container = self.validation_resources.select_container(source_container_ref)
             if not container:
                 continue
@@ -329,6 +338,9 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
     def fix(self) -> list[FixAction]:
         """Return fix actions to add or update indexes."""
         fix_actions: list[FixAction] = []
+        # missing_reverse_relation_index_targets yields per-view results,
+        # so the same container/property pair can appear for multiple views.
+        # Dedup here because each index only needs to be added/updated once.
         seen: set[tuple[ContainerReference, str]] = set()
 
         for (
@@ -355,7 +367,7 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
                 )
                 message = "Updated index to be cursorable for efficient reverse relation queries"
             else:
-                index_id = make_auto_index_id(resolved_reverse_direct_relation.container_property_id)
+                index_id = AutoIdentifier.for_index(resolved_reverse_direct_relation.container_property_id)
                 change = AddedField(
                     field_path=f"indexes.{index_id}",
                     new_value=BtreeIndex(

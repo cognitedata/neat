@@ -310,6 +310,39 @@
         version: v1
         type: view
 - space: my_space
+  externalId: NonCursorableIndexedDirectView
+  version: v1
+  properties:
+    nonCursorableDirectTarget:
+      container:
+        space: my_space
+        externalId: NonCursorableIndexedDirectContainer
+        type: container
+      containerPropertyIdentifier: nonCursorableDirectTarget
+      source:
+        space: my_space
+        externalId: TargetView
+        version: v1
+        type: view
+- space: my_space
+  externalId: ReverseToNonCursorableIndexedDirectView
+  version: v1
+  properties:
+    reverseToNonCursorableDirectTarget:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: NonCursorableIndexedDirectView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: NonCursorableIndexedDirectView
+          version: v1
+          type: view
+        identifier: nonCursorableDirectTarget
+- space: my_space
   externalId: ReverseToIndexedDirectView
   version: v1
   properties:

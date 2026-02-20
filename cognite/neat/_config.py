@@ -110,6 +110,13 @@ class AlphaFlagConfig(ConfigModel):
     )
     enable_cdf_analysis: bool = Field(default=False, description="If enabled, neat.cdf endpoint will be available.")
 
+    enable_datamodel_file_selection: bool = Field(
+        default=False,
+        description="If enabled, when multiple data model YAML files are found in a directory, "
+        "the user can specify which one to use by providing the 'data_model_file' "
+        "argument with the file name of the data model YAML file they want to use.",
+    )
+
     def __setattr__(self, key: str, value: Any) -> None:
         """Set attribute value or raise AttributeError."""
         if key in self.model_fields:

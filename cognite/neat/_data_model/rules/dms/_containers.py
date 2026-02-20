@@ -42,10 +42,9 @@ class ExternalContainerDoesNotExist(DataModelRule):
         for view_ref in self.validation_resources.merged_data_model.views:
             view = self.validation_resources.select_view(view_ref)
 
-            if not view:
-                raise RuntimeError(
-                    f"{type(self).__name__}: View {view_ref!s} not found in local resources. This is a bug in NEAT."
-                )
+            # it will be captured by another validator
+            if view is None:
+                continue
 
             if view.properties is None:
                 continue
@@ -104,10 +103,9 @@ class ExternalContainerPropertyDoesNotExist(DataModelRule):
             for view_ref in self.validation_resources.merged_data_model.views:
                 view = self.validation_resources.select_view(view_ref)
 
-                if not view:
-                    raise RuntimeError(
-                        f"{type(self).__name__}: View {view_ref!s} not found in local resources. This is a bug in NEAT."
-                    )
+                # it will be captured by another validator
+                if view is None:
+                    continue
 
                 if view.properties is None:
                     continue
@@ -240,6 +238,8 @@ class RequiresConstraintCycle(DataModelRule):
     def fix(self) -> list[FixAction]:
         """Return fix actions to break requires constraint cycles."""
         fix_actions: list[FixAction] = []
+        # Overlapping cycles can share the same edge to remove. Dedup here
+        # because each constraint only needs to be removed once.
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
         for cycle in self.validation_resources.requires_constraint_cycles:

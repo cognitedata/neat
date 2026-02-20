@@ -4,15 +4,20 @@ End-to-end tests verifying fixes from validators resolve validation issues.
 Unit tests for FixAction/FixApplicator mechanics are in test_data_model/test_fix.py.
 """
 
+from datetime import datetime, timezone
+
 import pytest
 
 from cognite.neat._data_model._analysis import ValidationResources
-from cognite.neat._data_model._fix import FixApplicator
 from cognite.neat._data_model._snapshot import SchemaSnapshot
+from cognite.neat._data_model.rules.dms._base import DataModelRule
+from cognite.neat._data_model.rules.dms._containers import RequiresConstraintCycle
 from cognite.neat._data_model.rules.dms._performance import (
     MissingRequiresConstraint,
     MissingReverseDirectRelationTargetIndex,
+    SuboptimalRequiresConstraint,
 )
+from cognite.neat._data_model.transformers import FixApplicator
 from tests.data import SNAPSHOT_CATALOG
 
 
@@ -36,6 +41,20 @@ class TestFixWorkflow:
                 MissingReverseDirectRelationTargetIndex,
                 id="missing_index",
             ),
+            pytest.param(
+                "cyclic_requires",
+                "for_validators",
+                False,
+                RequiresConstraintCycle,
+                id="cyclic_requires_constraint",
+            ),
+            pytest.param(
+                "requires_constraints",
+                "for_validators",
+                True,
+                SuboptimalRequiresConstraint,
+                id="suboptimal_requires_constraint",
+            ),
         ],
     )
     def test_applying_fixes_resolves_validation_issues(
@@ -43,7 +62,7 @@ class TestFixWorkflow:
         scenario: str,
         cdf_scenario: str,
         include_cdm: bool,
-        validator_class: type,
+        validator_class: type[DataModelRule],
     ) -> None:
         """Applying fixes from a validator should resolve all validation issues it identified."""
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
@@ -65,8 +84,15 @@ class TestFixWorkflow:
         assert len(fixes) > 0, "Validator should produce fixes"
 
         request_schema = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
-        fixed_schema = FixApplicator(request_schema, fixes).apply_fixes()
-        fixed_snapshot = SchemaSnapshot.from_request_schema(fixed_schema, deep_copy=False)
+        fixed_schema = FixApplicator(fixes).transform(request_schema)
+        fixed_snapshot = SchemaSnapshot(
+            data_model={fixed_schema.data_model.as_reference(): fixed_schema.data_model},
+            views={view.as_reference(): view for view in fixed_schema.views},
+            containers={container.as_reference(): container for container in fixed_schema.containers},
+            spaces={space.as_reference(): space for space in fixed_schema.spaces},
+            node_types={node_type: node_type for node_type in fixed_schema.node_types},
+            timestamp=datetime.now(timezone.utc),
+        )
 
         # 3. Run validator again on fixed snapshot
         fixed_resources = ValidationResources(modus_operandi="additive", local=fixed_snapshot, cdf=cdf_snapshot)

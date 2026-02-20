@@ -35,6 +35,14 @@ views:
     version: v1
     type: view
   - space: my_space
+    externalId: NonCursorableIndexedDirectView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: ReverseToNonCursorableIndexedDirectView
+    version: v1
+    type: view
+  - space: my_space
     externalId: ReverseToIndexedDirectView
     version: v1
     type: view

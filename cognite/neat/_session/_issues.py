@@ -34,7 +34,7 @@ class Issues:
     def _applied_fixes(self) -> list[FixAction]:
         """Get all applied fixes from the last change in the store."""
         if change := self._store.provenance.last_change:
-            return change.applied_fixes or []
+            return change.fixes or []
         return []
 
     @property

@@ -1,10 +1,11 @@
 import warnings
+from pathlib import Path
 from types import MethodType
 from typing import Any, Literal
 
 from cognite.neat._client import NeatClient
 from cognite.neat._config import NeatConfig
-from cognite.neat._data_model._fix import FixApplicator
+from cognite.neat._data_model.transformers._fix_applicator import FixApplicator
 from cognite.neat._data_model.deployer.deployer import DeploymentOptions, SchemaDeployer
 from cognite.neat._data_model.exporters import (
     DMSAPIExporter,
@@ -91,7 +92,13 @@ class ReadPhysicalDataModel:
         self._client = client
         self._config = config
 
+        if self._config.alpha.enable_datamodel_file_selection:
+            self.yaml = MethodType(read_yaml_alpha, self)  # type: ignore[attr-defined]
+        else:
+            self.yaml = self._yaml  # type: ignore[assignment]
+
     def _create_on_success(self) -> DmsDataModelRulesOrchestrator:
+        """Create the on_success handler for orchestrating validation."""
         return DmsDataModelRulesOrchestrator(
             modus_operandi=self._config.modeling.mode,
             cdf_snapshot=self._store.cdf_snapshot,
@@ -123,9 +130,9 @@ class ReadPhysicalDataModel:
             applicator = FixApplicator(self._store.physical_data_model[-1], on_success.pending_fixes)
             post_fix_on_success = self._create_on_success()
             change = self._store.transform_physical(applicator.apply_fixes, post_fix_on_success)
-            change.applied_fixes = on_success.pending_fixes
+            change.fixes = on_success.pending_fixes
 
-    def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat", fix: bool = False) -> None:
+    def _yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat", fix: bool = False) -> None:
         """Read physical data model from YAML file(s)
 
         Args:
@@ -350,3 +357,38 @@ def create(
     )
 
     return self.read._read_validate_fix(creator, apply_fixes=fix)
+
+
+def read_yaml_alpha(
+    self: ReadPhysicalDataModel,
+    io: Any,
+    format: Literal["neat", "toolkit"] = "neat",
+    data_model_file: str | None = None,
+    fix: bool = False,
+) -> None:
+    """Read physical data model from YAML file(s)
+
+    Args:
+        io (Any): The file or directory path or buffer to read from.
+        format (Literal["neat", "toolkit"]): The format of the input file(s).
+            - "neat": Neat's DMS table format.
+            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+        data_model_file (str | None): Optional specific data model file to read. This is only applicable when format
+        is set to "toolkit", and when io contains multiple data model YAML files.
+        The value should match the file name of the data model YAML file to read.
+        fix (bool): If True, automatically apply fixes for fixable issues (e.g., requires constraints).
+
+    """
+
+    path = NeatReader.create(io).materialize_path()
+    data_model_file = Path(data_model_file) if data_model_file else None
+
+    reader: DMSImporter
+    if format == "neat":
+        reader = DMSTableImporter.from_yaml(path)
+    elif format == "toolkit":
+        reader = DMSAPIImporter.from_yaml(path, data_model_file=data_model_file)
+    else:
+        raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
+
+    return self._read_validate_fix(reader, apply_fixes=fix)

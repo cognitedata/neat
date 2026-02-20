@@ -26,9 +26,10 @@ now = datetime.now()
 LocalScenario: TypeAlias = Literal[
     "ai_readiness",
     "bi_directional_connections",
+    "cyclic_implements",
+    "cyclic_requires",
     "requires_constraints",
     "uncategorized_validators",
-    "cyclic_implements",
 ]
 CDFScenario: TypeAlias = Literal["cdm", "for_validators"]
 

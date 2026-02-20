@@ -24,6 +24,13 @@
       type:
         type: text
         list: false
+  constraints:
+    Level02_TagWithWrongRequiresContainer__auto:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: Level02_TagWithWrongRequiresContainer
+        type: container
 
 - space: my_space
   externalId: Level02_AssetContainer
