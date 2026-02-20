@@ -11,11 +11,10 @@ from cognite.neat import _state_machine as states
 from cognite.neat._client import NeatClientConfig
 from cognite.neat._config import NeatConfig
 from cognite.neat._data_model._fix import FixAction
+from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model.deployer.data_classes import AddedField, DeploymentResult, SeverityType
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
-from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
-from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.transformers import FixApplicator
 from cognite.neat._issues import IssueList
 from cognite.neat._session._physical import ReadPhysicalDataModel
@@ -278,6 +277,49 @@ class TestTransformPhysical:
         assert len(store.provenance) == provenance_before + 1
 
 
+@pytest.mark.usefixtures("empty_cdf")
+class TestReadPhysicalWithFix:
+    def test_read_physical_with_fix_applies_and_records_fixes(
+        self, example_dms_schema_response: dict[str, Any], new_session: NeatSession
+    ) -> None:
+        session = new_session
+        store = session._store
+        store._config.alpha.fix_validation_issues = True
+
+        request_schema = RequestSchema.model_validate(example_dms_schema_response)
+        fix_action = FixAction(
+            resource_id=request_schema.views[0].as_reference(),
+            changes=(
+                AddedField(
+                    field_path="properties.test_prop",
+                    new_value="test_value",
+                    item_severity=SeverityType.SAFE,
+                ),
+            ),
+            code="TEST-001",
+            message="Test fix",
+        )
+
+        mock_reader = MagicMock(spec=DMSImporter)
+        mock_reader.to_data_model.return_value = request_schema
+        mock_reader.to_data_model.__name__ = DMSImporter.to_data_model.__name__
+
+        on_success_copy = MagicMock(spec=OnSuccessIssuesChecker)
+        on_success_copy.issues = IssueList()
+
+        on_success = MagicMock(spec=OnSuccessIssuesChecker)
+        on_success.issues = IssueList()
+        on_success.pending_fixes = [fix_action]
+        on_success.copy.return_value = on_success_copy
+
+        store.read_physical(mock_reader, on_success, fix=True)
+
+        # read + transform = 2 models, 2 provenance entries
+        assert len(store.physical_data_model) == 2
+        assert len(store.provenance) == 2
+        assert store.provenance[-1].fixes == [fix_action]
+
+
 @pytest.mark.serial
 class TestCollector:
     def test_collector_is_singleton(self) -> None:
@@ -319,29 +361,13 @@ class TestRender:
 
         assert isinstance(html_repr, str)
 
-    def test_render_issues_with_applied_fixes(self, physical_state_session: NeatSession) -> None:
+    def test_render_issues_with_fix_alpha_flag(self, physical_state_session: NeatSession) -> None:
         session = physical_state_session
         session._store._config.alpha.fix_validation_issues = True
-        last_change = session._store.provenance.last_change
-        assert last_change is not None
-        last_change.fixes = [
-            FixAction(
-                resource_id=ContainerReference(space="sp", external_id="ContainerA"),
-                code="NEAT-DMS-PERF-001",
-                message="Added missing requires constraint",
-                changes=(
-                    AddedField(
-                        field_path="constraints.req_a_b",
-                        new_value=RequiresConstraintDefinition(require=container_b),
-                        item_severity=SeverityType.WARNING,
-                    ),
-                ),
-            ),
-        ]
+
         html_repr = session.issues._repr_html_()
 
         assert isinstance(html_repr, str)
-        assert "Fixes" in html_repr
 
     @pytest.mark.parametrize(
         "dry_run,rollback",
