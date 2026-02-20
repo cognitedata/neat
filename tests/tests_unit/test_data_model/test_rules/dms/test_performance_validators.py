@@ -5,9 +5,9 @@ from typing import Literal
 import pytest
 
 from cognite.neat._config import internal_profiles
+from cognite.neat._data_model.deployer.data_classes import ChangedField
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelRulesOrchestrator
-from cognite.neat._data_model.deployer.data_classes import ChangedField
 from cognite.neat._data_model.rules.dms._performance import MissingReverseDirectRelationTargetIndex
 from tests.data import SNAPSHOT_CATALOG
 
@@ -55,5 +55,3 @@ def test_fix_updates_existing_non_cursorable_index() -> None:
     change = update_fixes[0].changes[0]
     assert isinstance(change, ChangedField), "Should update existing index, not add a new one"
     assert change.new_value.cursorable is True
-
-
