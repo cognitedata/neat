@@ -802,7 +802,13 @@ class ValidationResources:
     def pick_cycle_constraint_to_remove(
         self, cycle: tuple[ContainerReference, ...]
     ) -> tuple[ContainerReference, ContainerReference]:
-        """Pick the single best requires constraint to remove to break a cycle."""
+        """Pick the single best requires constraint to remove to break a cycle.
+
+        Selects a constraint edge from the cycle using a tiered preference:
+        auto-generated constraints are preferred over user-defined ones, and
+        edges that conflict with the direction considered optimal by the global optimizer
+        are preferred over those that are only redundant and covered by other constraints.
+        """
         suboptimal_constraints: list[tuple[ContainerReference, ContainerReference]] = []
         for i, source_container_ref in enumerate(cycle):
             required_container_ref = cycle[(i + 1) % len(cycle)]
