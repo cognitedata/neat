@@ -84,6 +84,9 @@ class MissingRequiresConstraint(DataModelRule):
     def fix(self) -> list[FixAction]:
         """Return fix actions to add missing requires constraints."""
         fix_actions: list[FixAction] = []
+        # missing_requires_constraints yields (view, source, required) tuples,
+        # so the same container pair can appear for multiple views. Dedup here
+        # because each constraint only needs to be added once.
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
         for (
@@ -165,6 +168,9 @@ class SuboptimalRequiresConstraint(DataModelRule):
     def fix(self) -> list[FixAction]:
         """Return fix actions to remove suboptimal requires constraints."""
         fix_actions: list[FixAction] = []
+        # suboptimal_requires_constraints yields (view, source, required) tuples,
+        # so the same container pair can appear for multiple views. Dedup here
+        # because each constraint only needs to be removed once.
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
         for (
@@ -176,6 +182,8 @@ class SuboptimalRequiresConstraint(DataModelRule):
                 continue
             seen.add((source_container_ref, required_container_ref))
 
+            # validate() only needs the references for the message, but fix() needs
+            # the actual container to resolve the constraint ID for the FixAction.
             container = self.validation_resources.select_container(source_container_ref)
             if not container:
                 continue
@@ -327,6 +335,9 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
     def fix(self) -> list[FixAction]:
         """Return fix actions to add or update indexes."""
         fix_actions: list[FixAction] = []
+        # missing_reverse_relation_index_targets yields per-view results,
+        # so the same container/property pair can appear for multiple views.
+        # Dedup here because each index only needs to be added/updated once.
         seen: set[tuple[ContainerReference, str]] = set()
 
         for (

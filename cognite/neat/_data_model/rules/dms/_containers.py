@@ -237,6 +237,8 @@ class RequiresConstraintCycle(DataModelRule):
     def fix(self) -> list[FixAction]:
         """Return fix actions to break requires constraint cycles."""
         fix_actions: list[FixAction] = []
+        # Overlapping cycles can share the same edge to remove. Dedup here
+        # because each constraint only needs to be removed once.
         seen: set[tuple[ContainerReference, ContainerReference]] = set()
 
         for cycle in self.validation_resources.requires_constraint_cycles:
