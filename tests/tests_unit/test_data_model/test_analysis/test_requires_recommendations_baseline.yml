@@ -156,7 +156,8 @@ my_space:TagWithAssetView(v1):
   to_add:
   - Level02_AssetContainer -> Level02_TagWithWrongRequiresContainer
   - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
-  to_remove: []
+  to_remove:
+  - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer
 my_space:ValveView(v1):
   containers:
   - Level01_ValveContainer
@@ -167,4 +168,5 @@ my_space:ValveView(v1):
   - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
   to_add:
   - Level02_TagWithWrongRequiresContainer -> Level03_DescribableContainer
-  to_remove: []
+  to_remove:
+  - Level03_DescribableContainer -> Level02_TagWithWrongRequiresContainer

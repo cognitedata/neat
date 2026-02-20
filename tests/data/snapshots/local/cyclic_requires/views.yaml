@@ -1,0 +1,24 @@
+- space: my_space
+  externalId: CyclicView
+  version: v1
+  name: Cyclic View
+  description: View mapping to all three cyclic containers
+  properties:
+    fieldA:
+      container:
+        space: my_space
+        externalId: ContainerA
+        type: container
+      containerPropertyIdentifier: fieldA
+    fieldB:
+      container:
+        space: my_space
+        externalId: ContainerB
+        type: container
+      containerPropertyIdentifier: fieldB
+    fieldC:
+      container:
+        space: my_space
+        externalId: ContainerC
+        type: container
+      containerPropertyIdentifier: fieldC

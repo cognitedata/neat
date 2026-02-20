@@ -1,5 +1,8 @@
+import hashlib
+
 from pydantic import HttpUrl, RootModel, ValidationError
 
+from cognite.neat._data_model.models.dms import ContainerReference
 from cognite.neat._utils.auxiliary import local_import
 
 
@@ -59,3 +62,47 @@ class NameSpace(RootModel[str]):
         from rdflib import Namespace
 
         return Namespace(self.root)
+
+
+class AutoIdentifier:
+    """Generates identifiers for auto-created CDF constraints and indexes.
+
+    CDF has a 43-character limit on constraint/index identifiers. This class
+    ensures generated IDs stay within that limit while maintaining uniqueness.
+    """
+
+    MAX_LENGTH = 43
+    SUFFIX = "__auto"
+    HASH_LENGTH = 8
+    # base_id + suffix must fit in MAX_LENGTH
+    _MAX_BASE_NO_HASH = MAX_LENGTH - len(SUFFIX)
+    # base_id + "_" + hash + suffix must fit in MAX_LENGTH
+    _MAX_BASE_WITH_HASH = _MAX_BASE_NO_HASH - HASH_LENGTH - 1
+
+    @classmethod
+    def make(cls, base_id: str) -> str:
+        """Generate an auto identifier, truncating with a hash if needed.
+
+        Args:
+            base_id: The primary identifier (e.g., external_id or property_id).
+
+        Returns:
+            For short base_ids (<=37 chars): "{base_id}__auto"
+            For long base_ids (>37 chars): "{truncated_id}_{hash}__auto"
+        """
+        if len(base_id) <= cls._MAX_BASE_NO_HASH:
+            return f"{base_id}{cls.SUFFIX}"
+
+        hash_suffix = hashlib.sha256(base_id.encode()).hexdigest()[: cls.HASH_LENGTH]
+        truncated_id = base_id[: cls._MAX_BASE_WITH_HASH]
+        return f"{truncated_id}_{hash_suffix}{cls.SUFFIX}"
+
+    @classmethod
+    def for_constraint(cls, destination: ContainerReference) -> str:
+        """Generate a constraint identifier for auto-generated requires constraints."""
+        return cls.make(destination.external_id)
+
+    @classmethod
+    def for_index(cls, property_id: str) -> str:
+        """Generate an index identifier for auto-generated indexes."""
+        return cls.make(property_id)

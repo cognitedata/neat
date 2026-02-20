@@ -1,5 +1,8 @@
 """Validators for checking containers in the data model."""
 
+from cognite.neat._data_model._fix import FixAction
+from cognite.neat._data_model.deployer.data_classes import RemovedField, SeverityType
+from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import ConsistencyError
@@ -209,32 +212,62 @@ class RequiresConstraintCycle(DataModelRule):
     code = f"{BASE_CODE}-005"
     issue_type = ConsistencyError
     alpha = True  # Still in development
+    fixable = True
 
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
-        optimal_edges = self.validation_resources.oriented_mst_edges
-
         for cycle in self.validation_resources.requires_constraint_cycles:
             cycle_str = " -> ".join(str(c) for c in cycle) + f" -> {cycle[0]!s}"
-
-            # Find edges in cycle that are NOT in optimal structure (these should be removed)
-            edges_to_remove = []
-            for i, container in enumerate(cycle):
-                next_container = cycle[(i + 1) % len(cycle)]
-                edge = (container, next_container)
-                if edge not in optimal_edges:
-                    edges_to_remove.append(f"{container} -> {next_container}")
-
-            message = f"Requires constraints form a cycle: {cycle_str}"
-            if edges_to_remove:
-                message += f". Recommended removal: {', '.join(edges_to_remove)} (not in optimal structure)"
-
+            source_container_ref, required_container_ref = self.validation_resources.pick_cycle_constraint_to_remove(
+                cycle
+            )
             errors.append(
                 ConsistencyError(
-                    message=message,
-                    fix="Remove one of the requires constraints to break the cycle",
+                    message=(
+                        f"Requires constraints form a cycle: {cycle_str}. This can be fixed by removing the requires "
+                        f"constraint on {source_container_ref!s} to {required_container_ref!s}"
+                    ),
+                    fix="Remove the recommended requires constraint to break the cycle",
                     code=self.code,
                 )
             )
 
         return errors
+
+    def fix(self) -> list[FixAction]:
+        """Return fix actions to break requires constraint cycles."""
+        fix_actions: list[FixAction] = []
+        # Overlapping cycles can share the same edge to remove. Dedup here
+        # because each constraint only needs to be removed once.
+        seen: set[tuple[ContainerReference, ContainerReference]] = set()
+
+        for cycle in self.validation_resources.requires_constraint_cycles:
+            source_container_ref, required_container_ref = self.validation_resources.pick_cycle_constraint_to_remove(
+                cycle
+            )
+            if (source_container_ref, required_container_ref) in seen:
+                continue
+            seen.add((source_container_ref, required_container_ref))
+
+            container = self.validation_resources.select_container(source_container_ref)
+            if not container:
+                continue
+            for constraint_id, constraint_def in self.validation_resources.get_requires_constraints(container):
+                if constraint_def.require != required_container_ref:
+                    continue
+                fix_actions.append(
+                    FixAction(
+                        code=self.code,
+                        resource_id=source_container_ref,
+                        changes=(
+                            RemovedField(
+                                field_path=f"constraints.{constraint_id}",
+                                current_value=constraint_def,
+                                item_severity=SeverityType.WARNING,
+                            ),
+                        ),
+                        message="Removed requires constraint to break cycle",
+                    )
+                )
+
+        return fix_actions
