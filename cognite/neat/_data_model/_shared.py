@@ -36,12 +36,13 @@ class OnSuccessIssuesChecker(OnSuccess, ABC):
             raise RuntimeError(f"{type(self).__name__} has not been run yet.")
         return IssueList(self._issues)
 
+    @abstractmethod
     def copy(self) -> "OnSuccessIssuesChecker":
-        """
-        Create a new instance of this handler with the same configuration but with a clean state.
+        """Create a new instance of this handler with the same configuration but with a clean state.
+
         This is used to enable re-running the handler after the data model state has been modified.
         """
-        raise NotImplementedError(f"{type(self).__name__} does not support copying instances.")
+        pass
 
 
 class OnSuccessResultProducer(OnSuccess, ABC):
