@@ -72,6 +72,21 @@
         - indexedDirectRelationTarget
       cursorable: true
 - space: my_space
+  externalId: NonCursorableIndexedDirectContainer
+  usedFor: node
+  properties:
+    nonCursorableDirectTarget:
+      nullable: true
+      type:
+        type: direct
+        list: false
+  indexes:
+    nonCursorableIdx:
+      indexType: btree
+      properties:
+        - nonCursorableDirectTarget
+      cursorable: false
+- space: my_space
   externalId: ListDirectContainer
   usedFor: node
   properties:
