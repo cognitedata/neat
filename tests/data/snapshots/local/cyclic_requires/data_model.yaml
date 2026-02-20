@@ -1,0 +1,10 @@
+space: my_space
+externalId: CyclicModel
+version: v1
+name: Cyclic Requires Test
+description: Model with containers forming a requires constraint cycle
+views:
+- space: my_space
+  externalId: CyclicView
+  version: v1
+  type: view

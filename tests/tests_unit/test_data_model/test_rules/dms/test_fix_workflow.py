@@ -11,6 +11,7 @@ import pytest
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.rules.dms._base import DataModelRule
+from cognite.neat._data_model.rules.dms._containers import RequiresConstraintCycle
 from cognite.neat._data_model.rules.dms._performance import (
     MissingRequiresConstraint,
     MissingReverseDirectRelationTargetIndex,
@@ -38,6 +39,13 @@ class TestFixWorkflow:
                 False,
                 MissingReverseDirectRelationTargetIndex,
                 id="missing_index",
+            ),
+            pytest.param(
+                "cyclic_requires",
+                "for_validators",
+                False,
+                RequiresConstraintCycle,
+                id="cyclic_requires_constraint",
             ),
         ],
     )

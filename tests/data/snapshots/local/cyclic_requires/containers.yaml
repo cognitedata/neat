@@ -1,0 +1,55 @@
+# Three containers forming a requires cycle: A -> B -> C -> A
+# All constraints are auto-generated (suffix __auto) so the fix can remove them.
+- space: my_space
+  externalId: ContainerA
+  usedFor: node
+  properties:
+    fieldA:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    ContainerB__auto:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: ContainerB
+        type: container
+
+- space: my_space
+  externalId: ContainerB
+  usedFor: node
+  properties:
+    fieldB:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    ContainerC__auto:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: ContainerC
+        type: container
+
+- space: my_space
+  externalId: ContainerC
+  usedFor: node
+  properties:
+    fieldC:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    ContainerA__auto:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: ContainerA
+        type: container
