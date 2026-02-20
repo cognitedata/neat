@@ -3,7 +3,6 @@ import uuid
 from collections import defaultdict
 from typing import Any
 
-from cognite.neat._config import NeatConfig
 from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model.deployer.data_classes import AddedField, ChangedField, RemovedField
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
@@ -17,9 +16,8 @@ from cognite.neat._store import NeatStore
 class Issues:
     """Class to handle issues in the NeatSession."""
 
-    def __init__(self, store: NeatStore, config: NeatConfig) -> None:
+    def __init__(self, store: NeatStore) -> None:
         self._store = store
-        self._config = config
 
     @property
     def _issues(self) -> IssueList:
@@ -163,7 +161,7 @@ class Issues:
 
         # Only show Fixed tab if the alpha flag is enabled
         fixed_count = len(self._applied_fixes)
-        if self._config.alpha.fix_validation_issues:
+        if self._store._config.alpha.fix_validation_issues:
             fixed_tab_html = f"""<div class="stat-item stat-fixed" data-filter="Fixed">
                 <span class="stat-number">{fixed_count}</span> Fixes
             </div>"""
