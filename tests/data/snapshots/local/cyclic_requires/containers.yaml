@@ -1,5 +1,6 @@
 # Three containers forming a requires cycle: A -> B -> C -> A
-# All constraints are auto-generated (suffix __auto) so the fix can remove them.
+# C -> A is manual (no __auto suffix) to test mixed auto/manual cycle handling.
+# B also has an extra constraint to D (not part of cycle) to test fix loop iteration.
 - space: my_space
   externalId: ContainerA
   usedFor: node
@@ -35,6 +36,12 @@
         space: my_space
         externalId: ContainerC
         type: container
+    ContainerD__auto:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: ContainerD
+        type: container
 
 - space: my_space
   externalId: ContainerC
@@ -47,9 +54,20 @@
         type: text
         list: false
   constraints:
-    ContainerA__auto:
+    ContainerA_req:
       constraintType: requires
       require:
         space: my_space
         externalId: ContainerA
         type: container
+
+- space: my_space
+  externalId: ContainerD
+  usedFor: node
+  properties:
+    fieldD:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
