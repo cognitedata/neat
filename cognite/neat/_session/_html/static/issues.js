@@ -91,14 +91,10 @@ function renderFixedIssueContent(issue) {
 function renderIssues() {
     const listContainer = document.getElementById('issuesList-' + uniqueId);
     const filtered = issues.filter(issue => {
-        // Handle the "Fixed" filter separately
         if (currentFilter === 'Fixed') {
-            // Show only fixed issues
-            if (!issue.fixed) return false;
+            if (issue.type !== 'Fixed') return false;
         } else {
-            // For all other filters, exclude fixed issues
-            if (issue.fixed) return false;
-            // Then apply the type filter
+            if (issue.type === 'Fixed') return false;
             if (currentFilter !== 'all' && issue.type !== currentFilter) return false;
         }
         const searchLower = currentSearch.toLowerCase();
@@ -119,7 +115,7 @@ function renderIssues() {
     if (filtered.length === 0) {
         if (currentFilter === 'Fixed') {
             // Check if there are any fixes at all (search just didn't match)
-            const hasAnyFixes = issues.some(i => i.fixed);
+            const hasAnyFixes = issues.some(i => i.type === 'Fixed');
             if (hasAnyFixes && currentSearch) {
                 listContainer.innerHTML = '<div class="no-issues">No fixes match your filters</div>';
             } else if (fixableCount > 0) {

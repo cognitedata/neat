@@ -70,7 +70,6 @@ class Issues:
                     "code": issue.code or "",
                     "message": issue.message,
                     "fix": issue.fix or "",
-                    "fixed": False,
                     "automatically_fixable": issue.automatically_fixable,
                 }
             )
@@ -91,7 +90,6 @@ class Issues:
                 "code": fix_action.code,
                 "message": fix_action.message or "",
                 "fix": "",
-                "fixed": True,
             }
 
             # Add fields for fancy UI rendering based on the field changes
