@@ -6,7 +6,6 @@ from typing import Any, cast
 from cognite.neat._client.client import NeatClient
 from cognite.neat._client.data_classes import SpaceStatisticsResponse
 from cognite.neat._config import NeatConfig
-from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
@@ -82,7 +81,10 @@ class NeatStore:
             and isinstance(on_success, OnSuccessIssuesChecker)
             and on_success.pending_fixes
         ):
-            self.transform_physical(FixApplicator(on_success.pending_fixes), on_success.copy())
+            applied_fixes = on_success.pending_fixes
+            self.transform_physical(FixApplicator(applied_fixes), on_success.copy())
+            if self.provenance.last_change:
+                self.provenance.last_change.fixes = applied_fixes
 
     def transform_physical(self, transformer: Transformer, on_success: OnSuccess | None = None) -> None:
         """
@@ -213,7 +215,6 @@ class NeatStore:
         created_data_model: PhysicalDataModel | None = None
         issues = IssueList()
         errors = IssueList()
-        fixes: list[FixAction] = []
         deployment_result: DeploymentResult | None = None
 
         try:
@@ -222,7 +223,6 @@ class NeatStore:
                 on_success.run(created_data_model)
                 if isinstance(on_success, OnSuccessIssuesChecker):
                     issues.extend(on_success.issues)
-                    fixes.extend(on_success.pending_fixes)
                 elif isinstance(on_success, OnSuccessResultProducer):
                     deployment_result = on_success.result
                 else:
@@ -248,7 +248,6 @@ class NeatStore:
             agent=type(activity.__self__).__name__ if hasattr(activity, "__self__") else "UnknownAgent",
             issues=issues,
             errors=errors,
-            fixes=fixes,
             result=deployment_result,
             activity=Change.standardize_activity_name(activity.__name__, start, end),
         ), created_data_model

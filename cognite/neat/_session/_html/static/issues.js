@@ -111,7 +111,7 @@ function renderIssues() {
             if (fixes.length > 0 && currentSearch) {
                 listContainer.innerHTML = '<div class="no-issues">No fixes match your filters</div>';
             } else if (fixableCount > 0) {
-                listContainer.innerHTML = `<div class="no-issues"><div style="margin-bottom: 16px; text-align: center;">No fixes have been applied yet. <strong>${fixableCount} issue${fixableCount === 1 ? '' : 's'} can be automatically fixed.</strong></div><div class="info-box"><span class="info-icon">💡</span><div><strong>Tip:</strong> Read your data model with <code style="background: rgba(128, 128, 128, 0.15); padding: 2px 6px; border-radius: 3px; font-family: monospace; color: var(--text-primary);">fix=True</code> to automatically fix common issues.</div></div></div>`;
+                listContainer.innerHTML = `<div class="no-issues"><div style="margin-bottom: 16px; text-align: center;">No fixes have been applied yet. <strong>${fixableCount} issue${fixableCount === 1 ? '' : 's'} can be automatically fixed.</strong></div><div class="info-box"><span class="info-icon">💡</span><div>Read your data model with <code style="background: rgba(128, 128, 128, 0.15); padding: 2px 6px; border-radius: 3px; font-family: monospace; color: var(--text-primary);">fix=True</code> to automatically fix common issues.</div></div></div>`;
             } else {
                 listContainer.innerHTML = '<div class="no-issues">No issues can be automatically fixed.</div>';
             }

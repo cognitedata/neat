@@ -89,19 +89,19 @@
     color: #6ee7b7;
 }
 
-/* Fixed stat item styling */
-.stat-fixed {
-    background: rgba(16, 185, 129, 0.2) !important;
-    border-color: rgba(16, 185, 129, 0.3) !important;
+/* Fixed stat item styling (compound selector for specificity over .stat-item) */
+.stat-item.stat-fixed {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.3);
 }
 
-.stat-fixed:hover {
-    background: rgba(16, 185, 129, 0.3) !important;
+.stat-item.stat-fixed:hover {
+    background: rgba(16, 185, 129, 0.3);
 }
 
-.stat-fixed.active {
-    background: rgba(16, 185, 129, 0.4) !important;
-    border-color: rgba(16, 185, 129, 0.5) !important;
+.stat-item.stat-fixed.active {
+    background: rgba(16, 185, 129, 0.4);
+    border-color: rgba(16, 185, 129, 0.5);
 }
 
 .issue-code {
@@ -190,15 +190,12 @@
     border-left-color: #fb923c;
 }
 
-.issue-item.grouped .fix-item,
-.issue-item.grouped .fix-item-add,
-.issue-item.grouped .fix-item-remove {
+.issue-item.grouped .fix-item {
     width: 100%;
     background: none;
     padding: 0;
     margin: 0;
     border-radius: 0;
-    border-left: none !important;
 }
 
 
@@ -314,28 +311,22 @@
     margin-left: auto;
 }
 
-/* Compensate for padding in non-grouped items */
-.issue-item:not(.grouped) .fix-identifier {
-    margin-right: -20px;
-}
-
-/* Compensate for padding in grouped items */
-.issue-item.grouped .fix-identifier {
-    margin-right: -12px;
-}
-
 .dark-mode .fix-identifier {
     color: #9ca3af;
     background: rgba(156, 163, 175, 0.15);
 }
 
-/* Add/Remove action item styling (for non-grouped single items) */
+/* Add/Remove accent for single (non-grouped) fix items */
+.issue-item:not(.grouped) .fix-item {
+    border-left: 3px solid transparent;
+}
+
 .issue-item:not(.grouped) .fix-item-add {
-    border-left: 3px solid #10b981;
+    border-left-color: #10b981;
 }
 
 .issue-item:not(.grouped) .fix-item-remove {
-    border-left: 3px solid #ea580c;
+    border-left-color: #ea580c;
 }
 
 /* Strikethrough for removed constraint destination and identifier */
