@@ -229,7 +229,7 @@ class RequiresConstraintCycle(DataModelRule):
                     ),
                     fix="Remove the recommended requires constraint to break the cycle",
                     code=self.code,
-                    automatically_fixable=True,
+                    fixable=True,
                 )
             )
 

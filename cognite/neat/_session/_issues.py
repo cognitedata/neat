@@ -70,7 +70,7 @@ class Issues:
                     "code": issue.code or "",
                     "message": issue.message,
                     "fix": issue.fix or "",
-                    "automatically_fixable": issue.automatically_fixable,
+                    "fixable": issue.fixable,
                 }
             )
         return serialized
@@ -162,7 +162,7 @@ class Issues:
         # Combine current issues and applied fixes for the JSON data
         all_serialized = self._serialized_issues + self._serialized_applied_fixes
 
-        fixable_count = sum(1 for issue in self._issues if issue.automatically_fixable)
+        fixable_count = sum(1 for issue in self._issues if issue.fixable)
 
         # Only show Fixed tab if the alpha flag is enabled
         fixed_count = len(self._applied_fixes)

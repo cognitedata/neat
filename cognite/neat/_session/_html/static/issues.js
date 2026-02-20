@@ -204,7 +204,7 @@ function renderIssues() {
             ? `<span class="issue-code-link" onclick="event.stopPropagation(); window.open('https://cognite-neat.readthedocs-hosted.com/en/latest/validation/${firstIssue.code.toLowerCase()}.html', '_blank')">${firstIssue.code}</span>`
             : '';
 
-        const fixableBadge = firstIssue.automatically_fixable
+        const fixableBadge = firstIssue.fixable
             ? '<span class="issue-badge badge-AutoFixable">Automatically fixable</span>'
             : '';
 
