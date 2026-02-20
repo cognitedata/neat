@@ -113,7 +113,7 @@ class ReadPhysicalDataModel:
             format (Literal["neat", "toolkit"]): The format of the input file(s).
                 - "neat": Neat's DMS table format.
                 - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-            fix (bool): If True, automatically apply fixes for fixable issues (e.g., requires constraints).
+            fix (bool): If True, automatically apply fixes for fixable issues.
         """
 
         path = NeatReader.create(io).materialize_path()
@@ -127,7 +127,7 @@ class ReadPhysicalDataModel:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
         on_success = self._create_on_success()
-        self._store.read_physical(reader, on_success, fix=fix)
+        return self._store.read_physical(reader, on_success, fix=fix)
 
     def json(self, io: Any, format: Literal["neat", "toolkit"] = "neat", fix: bool = False) -> None:
         """Read physical data model from JSON file(s)
@@ -137,7 +137,7 @@ class ReadPhysicalDataModel:
             format (Literal["neat", "toolkit"]): The format of the input file(s).
                 - "neat": Neat's DMS table format.
                 - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-            fix (bool): If True, automatically apply fixes for fixable issues (e.g., requires constraints).
+            fix (bool): If True, automatically apply fixes for fixable issues.
         """
 
         path = NeatReader.create(io).materialize_path()
@@ -151,14 +151,14 @@ class ReadPhysicalDataModel:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
         on_success = self._create_on_success()
-        self._store.read_physical(reader, on_success, fix=fix)
+        return self._store.read_physical(reader, on_success, fix=fix)
 
     def excel(self, io: Any, fix: bool = False) -> None:
         """Read physical data model from Excel file
 
         Args:
             io (Any): The file path or buffer to read from.
-            fix (bool): If True, automatically apply fixes for fixable issues (e.g., requires constraints).
+            fix (bool): If True, automatically apply fixes for fixable issues.
 
         """
 
@@ -166,7 +166,7 @@ class ReadPhysicalDataModel:
         reader = DMSTableImporter.from_excel(path)
 
         on_success = self._create_on_success()
-        self._store.read_physical(reader, on_success, fix=fix)
+        return self._store.read_physical(reader, on_success, fix=fix)
 
     def cdf(self, space: str, external_id: str, version: str, fix: bool = False) -> None:
         """Read physical data model from CDF
@@ -175,7 +175,7 @@ class ReadPhysicalDataModel:
             space (str): The schema space of the data model.
             external_id (str): The external id of the data model.
             version (str): The version of the data model.
-            fix (bool): If True, automatically apply fixes for fixable issues (e.g., requires constraints).
+            fix (bool): If True, automatically apply fixes for fixable issues.
 
         """
         reader = DMSAPIImporter.from_cdf(
@@ -183,7 +183,7 @@ class ReadPhysicalDataModel:
         )
 
         on_success = self._create_on_success()
-        self._store.read_physical(reader, on_success, fix=fix)
+        return self._store.read_physical(reader, on_success, fix=fix)
 
 
 @session_wrapper
@@ -303,7 +303,6 @@ def create(
     name: str | None = None,
     description: str | None = None,
     kind: Literal["solution"] = "solution",
-    fix: bool = False,
 ) -> None:
     """Create a solution data model in Neat from CDF views.
 
@@ -316,7 +315,6 @@ def create(
         name (str | None): The name of the data model. If None, the name will be fetched from CDF.
         description (str | None): The description of the data model. If None, the description will be fetched from CDF.
         kind (Literal["solution"]): The kind of the data model. Currently, only "solution" is supported.
-        fix (bool): If True, automatically apply fixes for fixable issues (e.g., requires constraints).
     """
 
     if not self._store.cdf_snapshot.data_model:
@@ -334,7 +332,7 @@ def create(
     )
 
     on_success = self.read._create_on_success()
-    self._store.read_physical(creator, on_success, fix=fix)
+    return self._store.read_physical(creator, on_success)
 
 
 def read_yaml_alpha(
@@ -354,7 +352,7 @@ def read_yaml_alpha(
         data_model_file (str | None): Optional specific data model file to read. This is only applicable when format
         is set to "toolkit", and when io contains multiple data model YAML files.
         The value should match the file name of the data model YAML file to read.
-        fix (bool): If True, automatically apply fixes for fixable issues (e.g., requires constraints).
+        fix (bool): If True, automatically apply fixes for fixable issues.
 
     """
 
@@ -370,4 +368,4 @@ def read_yaml_alpha(
         raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
     on_success = self._create_on_success()
-    self._store.read_physical(reader, on_success, fix=fix)
+    return self._store.read_physical(reader, on_success, fix=fix)
