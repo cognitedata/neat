@@ -87,7 +87,6 @@ class Issues:
                 "type": "Fixed",
                 "code": fix_action.code,
                 "message": fix_action.message or "",
-                "fix": "",
             }
 
             # Add fields for fancy UI rendering based on the field changes

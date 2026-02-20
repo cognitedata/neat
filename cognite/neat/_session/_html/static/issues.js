@@ -90,9 +90,9 @@ function renderFixContent(issue) {
 function matchesSearch(item) {
     if (!currentSearch) return true;
     const searchLower = currentSearch.toLowerCase();
-    return item.message.toLowerCase().includes(searchLower) ||
-        (item.code && item.code.toLowerCase().includes(searchLower)) ||
-        (item.fix && item.fix.toLowerCase().includes(searchLower));
+    const fields = [item.message, item.code, item.fix, item.source_name, item.dest_name,
+                    item.container_name, item.property_id, item.constraint_id, item.index_id];
+    return fields.some(f => f && f.toLowerCase().includes(searchLower));
 }
 
 function renderSingleItem(issue, isFixed) {
