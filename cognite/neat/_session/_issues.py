@@ -159,9 +159,6 @@ class Issues:
         # Generate unique ID for this render to avoid conflicts in Jupyter
         unique_id = uuid.uuid4().hex[:8]
 
-        # Combine current issues and applied fixes for the JSON data
-        all_serialized = self._serialized_issues + self._serialized_applied_fixes
-
         fixable_count = sum(1 for issue in self._issues if issue.fixable)
 
         # Only show Fixed tab if the alpha flag is enabled
@@ -174,7 +171,8 @@ class Issues:
             fixed_tab_html = ""
 
         template_vars = {
-            "JSON": json.dumps(all_serialized),
+            "ISSUES_JSON": json.dumps(self._serialized_issues),
+            "FIXES_JSON": json.dumps(self._serialized_applied_fixes),
             "total": stats["total"],
             "syntax_errors": stats["by_type"].get("ModelSyntaxError", 0),
             "consistency_errors": stats["by_type"].get("ConsistencyError", 0),

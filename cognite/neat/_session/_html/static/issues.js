@@ -88,35 +88,27 @@ function renderFixedIssueContent(issue) {
     }
 }
 
+function matchesSearch(item) {
+    if (!currentSearch) return true;
+    const searchLower = currentSearch.toLowerCase();
+    return item.message.toLowerCase().includes(searchLower) ||
+        (item.code && item.code.toLowerCase().includes(searchLower)) ||
+        (item.fix && item.fix.toLowerCase().includes(searchLower));
+}
+
 function renderIssues() {
     const listContainer = document.getElementById('issuesList-' + uniqueId);
-    const filtered = issues.filter(issue => {
-        if (currentFilter === 'Fixed') {
-            if (issue.type !== 'Fixed') return false;
-        } else {
-            if (issue.type === 'Fixed') return false;
-            if (currentFilter !== 'all' && issue.type !== currentFilter) return false;
-        }
-        const searchLower = currentSearch.toLowerCase();
-        const matchesSearch = !currentSearch ||
-            issue.message.toLowerCase().includes(searchLower) ||
-            (issue.code && issue.code.toLowerCase().includes(searchLower)) ||
-            (issue.fix && issue.fix.toLowerCase().includes(searchLower)) ||
-            // Fix-specific fields for searching
-            (issue.source_name && issue.source_name.toLowerCase().includes(searchLower)) ||
-            (issue.dest_name && issue.dest_name.toLowerCase().includes(searchLower)) ||
-            (issue.container_name && issue.container_name.toLowerCase().includes(searchLower)) ||
-            (issue.property_id && issue.property_id.toLowerCase().includes(searchLower)) ||
-            (issue.constraint_id && issue.constraint_id.toLowerCase().includes(searchLower)) ||
-            (issue.index_id && issue.index_id.toLowerCase().includes(searchLower));
-        return matchesSearch;
+
+    const isFixedTab = currentFilter === 'Fixed';
+    const source = isFixedTab ? fixes : issues;
+    const filtered = source.filter(item => {
+        if (!isFixedTab && currentFilter !== 'all' && item.type !== currentFilter) return false;
+        return matchesSearch(item);
     });
 
     if (filtered.length === 0) {
-        if (currentFilter === 'Fixed') {
-            // Check if there are any fixes at all (search just didn't match)
-            const hasAnyFixes = issues.some(i => i.type === 'Fixed');
-            if (hasAnyFixes && currentSearch) {
+        if (isFixedTab) {
+            if (fixes.length > 0 && currentSearch) {
                 listContainer.innerHTML = '<div class="no-issues">No fixes match your filters</div>';
             } else if (fixableCount > 0) {
                 listContainer.innerHTML = `<div class="no-issues"><div style="margin-bottom: 16px; text-align: center;">No fixes have been applied yet. <strong>${fixableCount} issue${fixableCount === 1 ? '' : 's'} can be automatically fixed.</strong></div><div class="info-box"><span class="info-icon">💡</span><div><strong>Tip:</strong> Read your data model with <code style="background: rgba(128, 128, 128, 0.15); padding: 2px 6px; border-radius: 3px; font-family: monospace; color: var(--text-primary);">fix=True</code> to automatically fix common issues.</div></div></div>`;
@@ -290,7 +282,7 @@ document.getElementById('searchInput-' + uniqueId).addEventListener('input', fun
 window['exportIssues_' + uniqueId] = function() {
     const csv = [
         ['Type', 'Code', 'Message', 'Fix'],
-        ...issues.map(i => [i.type, i.code || '', i.message, i.fix || ''])
+        ...issues.concat(fixes).map(i => [i.type, i.code || '', i.message, i.fix || ''])
     ].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
