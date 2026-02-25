@@ -12,7 +12,7 @@ from cognite.neat._issues import ConsistencyError
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from tests.data import SNAPSHOT_CATALOG
 
-BASE_CODE = "NEAT-ALPHA"
+NEAT_TEST_BASE_CODE = "NEAT-TEST"
 
 
 @pytest.mark.parametrize("enable", [True, False])
@@ -23,7 +23,7 @@ def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> Non
     can_run_validator = config.validation.can_run_validator
 
     class TestAlphaValidator(DataModelRule):
-        code = f"{BASE_CODE}-001"
+        code = f"{NEAT_TEST_BASE_CODE}-001"
         issue_type = ConsistencyError
         alpha = True
 
