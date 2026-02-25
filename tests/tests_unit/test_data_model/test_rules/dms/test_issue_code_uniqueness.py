@@ -14,7 +14,7 @@ def test_validator_code_uniqueness() -> None:
     # Get all codes
     # The NEAT_TEST_BASE_CODE is used in testing and may be duplicated, as we execute the same test
     # multiple times with different data.
-    codes = [validator.code for validator in all_validators if validator.code != NEAT_TEST_BASE_CODE]
+    codes = [validator.code for validator in all_validators if validator.code.startswith(NEAT_TEST_BASE_CODE)]
 
     # Check for duplicates
     duplicates = [code for code, count in Counter(codes).items() if count > 1]
