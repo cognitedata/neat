@@ -1,6 +1,6 @@
 from collections import Counter
 
-from cognite.neat._data_model.rules.dms._base import DataModelRule
+from cognite.neat._data_model.rules.dms import DataModelRule
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from tests.tests_unit.test_data_model.test_rules.dms.test_alpha_validator import NEAT_TEST_BASE_CODE
 
