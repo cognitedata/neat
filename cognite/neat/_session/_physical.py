@@ -90,10 +90,23 @@ class ReadPhysicalDataModel:
         self._client = client
         self._config = config
 
+        if self._config.alpha.enable_datamodel_file_selection and self._config.alpha.enable_fix_validation_issues:
+            self.yaml = self._yaml
         if self._config.alpha.enable_datamodel_file_selection:
-            self.yaml = MethodType(read_yaml_alpha, self)  # type: ignore[attr-defined]
+            self.yaml = MethodType(read_yaml_alpha_data_model_file, self)  # type: ignore[attr-defined]
+        elif self._config.alpha.enable_fix_validation_issues:
+            self.yaml = MethodType(read_yaml_alpha_fix, self)  # type: ignore[attr-defined]
         else:
-            self.yaml = self._yaml  # type: ignore[assignment]
+            self.yaml = MethodType(yaml, self)  # type: ignore[attr-defined]
+
+        if self._config.alpha.enable_fix_validation_issues:
+            self.json = self._json
+            self.excel = self._excel
+            self.cdf = self._cdf
+        else:
+            self.json = MethodType(json, self)  # type: ignore[attr-defined]
+            self.excel = MethodType(excel, self)  # type: ignore[attr-defined]
+            self.cdf = MethodType(cdf, self)  # type: ignore[attr-defined]
 
     def _create_on_success(self) -> DmsDataModelRulesOrchestrator:
         """Create the on_success handler for orchestrating validation."""
@@ -105,7 +118,13 @@ class ReadPhysicalDataModel:
             enable_alpha_validators=self._config.alpha.enable_experimental_validators,
         )
 
-    def _yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat", fix: bool = False) -> None:
+    def _yaml(
+        self,
+        io: Any,
+        format: Literal["neat", "toolkit"] = "neat",
+        data_model_file: Path | None = None,
+        fix: bool = False,
+    ) -> None:
         """Read physical data model from YAML file(s)
 
         Args:
@@ -113,7 +132,6 @@ class ReadPhysicalDataModel:
             format (Literal["neat", "toolkit"]): The format of the input file(s).
                 - "neat": Neat's DMS table format.
                 - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-            fix (bool): If True, automatically apply fixes for fixable issues.
         """
 
         path = NeatReader.create(io).materialize_path()
@@ -122,14 +140,14 @@ class ReadPhysicalDataModel:
         if format == "neat":
             reader = DMSTableImporter.from_yaml(path)
         elif format == "toolkit":
-            reader = DMSAPIImporter.from_yaml(path)
+            reader = DMSAPIImporter.from_yaml(path, data_model_file=data_model_file)
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
         on_success = self._create_on_success()
         return self._store.read_physical(reader, on_success, fix=fix)
 
-    def json(self, io: Any, format: Literal["neat", "toolkit"] = "neat", fix: bool = False) -> None:
+    def _json(self, io: Any, format: Literal["neat", "toolkit"] = "neat", fix: bool = False) -> None:
         """Read physical data model from JSON file(s)
 
         Args:
@@ -153,7 +171,7 @@ class ReadPhysicalDataModel:
         on_success = self._create_on_success()
         return self._store.read_physical(reader, on_success, fix=fix)
 
-    def excel(self, io: Any, fix: bool = False) -> None:
+    def _excel(self, io: Any, fix: bool = False) -> None:
         """Read physical data model from Excel file
 
         Args:
@@ -168,7 +186,7 @@ class ReadPhysicalDataModel:
         on_success = self._create_on_success()
         return self._store.read_physical(reader, on_success, fix=fix)
 
-    def cdf(self, space: str, external_id: str, version: str, fix: bool = False) -> None:
+    def _cdf(self, space: str, external_id: str, version: str, fix: bool = False) -> None:
         """Read physical data model from CDF
 
         Args:
@@ -335,11 +353,27 @@ def create(
     return self._store.read_physical(creator, on_success)
 
 
-def read_yaml_alpha(
+def yaml(
     self: ReadPhysicalDataModel,
     io: Any,
     format: Literal["neat", "toolkit"] = "neat",
-    data_model_file: str | None = None,
+) -> None:
+    """Read physical data model from YAML file(s)
+
+    Args:
+        io (Any): The file or directory path or buffer to read from.
+        format (Literal["neat", "toolkit"]): The format of the input file(s).
+            - "neat": Neat's DMS table format.
+            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+
+    """
+    self._yaml(io=io, format=format, data_model_file=None, fix=False)
+
+
+def read_yaml_alpha_fix(
+    self: ReadPhysicalDataModel,
+    io: Any,
+    format: Literal["neat", "toolkit"] = "neat",
     fix: bool = False,
 ) -> None:
     """Read physical data model from YAML file(s)
@@ -349,23 +383,75 @@ def read_yaml_alpha(
         format (Literal["neat", "toolkit"]): The format of the input file(s).
             - "neat": Neat's DMS table format.
             - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-        data_model_file (str | None): Optional specific data model file to read. This is only applicable when format
-        is set to "toolkit", and when io contains multiple data model YAML files.
-        The value should match the file name of the data model YAML file to read.
         fix (bool): If True, automatically apply fixes for fixable issues.
 
     """
+    self._yaml(io=io, format=format, fix=fix)
 
-    path = NeatReader.create(io).materialize_path()
-    data_model_file = Path(data_model_file) if data_model_file else None
 
-    reader: DMSImporter
-    if format == "neat":
-        reader = DMSTableImporter.from_yaml(path)
-    elif format == "toolkit":
-        reader = DMSAPIImporter.from_yaml(path, data_model_file=data_model_file)
-    else:
-        raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
+def read_yaml_alpha_data_model_file(
+    self: ReadPhysicalDataModel,
+    io: Any,
+    format: Literal["neat", "toolkit"] = "neat",
+    data_model_file: Path | None = None,
+) -> None:
+    """Read physical data model from YAML file(s)
 
-    on_success = self._create_on_success()
-    return self._store.read_physical(reader, on_success, fix=fix)
+    Args:
+        io (Any): The file or directory path or buffer to read from.
+        format (Literal["neat", "toolkit"]): The format of the input file(s).
+            - "neat": Neat's DMS table format.
+            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+        data_model_file (str | None): Optional specific data model file to read. This is only applicable when format
+            is set to "toolkit", and when io contains multiple data model YAML files.
+            The value should match the file name of the data model YAML file to read.
+
+    """
+    self._yaml(io=io, format=format, data_model_file=data_model_file, fix=False)
+
+
+def json(
+    self: ReadPhysicalDataModel,
+    io: Any,
+    format: Literal["neat", "toolkit"] = "neat",
+) -> None:
+    """Read physical data model from JSON file(s)
+
+    Args:
+        io (Any): The file or directory path or buffer to read from.
+        format (Literal["neat", "toolkit"]): The format of the input file(s).
+            - "neat": Neat's DMS table format.
+            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+
+    """
+    self._json(io=io, format=format, fix=False)
+
+
+def excel(
+    self: ReadPhysicalDataModel,
+    io: Any,
+) -> None:
+    """Read physical data model from Excel file
+
+    Args:
+        io (Any): The file path or buffer to read from.
+
+    """
+    self._excel(io=io, fix=False)
+
+
+def cdf(
+    self: ReadPhysicalDataModel,
+    space: str,
+    external_id: str,
+    version: str,
+) -> None:
+    """Read physical data model from CDF
+
+    Args:
+        space (str): The schema space of the data model.
+        external_id (str): The external id of the data model.
+        version (str): The version of the data model.
+
+    """
+    self._cdf(space=space, external_id=external_id, version=version, fix=False)
