@@ -361,11 +361,21 @@ class TestRender:
 
         assert isinstance(html_repr, str)
 
-    def test_render_issues_with_fix_alpha_flag(self, physical_state_session: NeatSession) -> None:
-        session = physical_state_session
-        session._store._config.alpha.enable_fix_validation_issues = True
+    def test_render_issues_with_fix_alpha_flag(
+        self, neat_config: NeatClientConfig, dms_yaml_format_missing_container_constraint: str
+    ) -> None:
+        config = NeatConfig.create_predefined("deep-rebuild")
+        config.alpha.enable_fix_validation_issues = True
+        config.alpha.enable_experimental_validators = True
 
-        html_repr = session.issues._repr_html_()
+        read_yaml = MagicMock(spec=Path)
+        read_yaml.read_text.return_value = dms_yaml_format_missing_container_constraint
+
+        neat = NeatSession(neat_config, config)
+
+        neat.physical_data_model.read.yaml(read_yaml, fix=True)
+
+        html_repr = neat.issues._repr_html_()
 
         assert isinstance(html_repr, str)
 
