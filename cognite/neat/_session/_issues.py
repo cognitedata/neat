@@ -160,7 +160,7 @@ class Issues:
 
         # Only show Fixed tab if the alpha flag is enabled
         fixed_count = len(self._applied_fixes)
-        if self._store._config.alpha.fix_validation_issues:
+        if self._store._config.alpha.enable_fix_validation_issues:
             fixed_tab_html = f"""<div class="stat-item stat-fixed" data-filter="Fixed">
                 <span class="stat-number">{fixed_count}</span> Fixes
             </div>"""

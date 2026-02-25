@@ -284,7 +284,7 @@ class TestReadPhysicalWithFix:
     ) -> None:
         session = new_session
         store = session._store
-        store._config.alpha.fix_validation_issues = True
+        store._config.alpha.enable_fix_validation_issues = True
 
         request_schema = RequestSchema.model_validate(example_dms_schema_response)
         fix_action = FixAction(
@@ -363,7 +363,7 @@ class TestRender:
 
     def test_render_issues_with_fix_alpha_flag(self, physical_state_session: NeatSession) -> None:
         session = physical_state_session
-        session._store._config.alpha.fix_validation_issues = True
+        session._store._config.alpha.enable_fix_validation_issues = True
 
         html_repr = session.issues._repr_html_()
 

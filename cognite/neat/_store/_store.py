@@ -82,7 +82,7 @@ class NeatStore:
         if (
             data_model
             and fix
-            and self._config.alpha.fix_validation_issues
+            and self._config.alpha.enable_fix_validation_issues
             and isinstance(on_success, FixProducingOrchestrator)
             and on_success.pending_fixes
         ):
