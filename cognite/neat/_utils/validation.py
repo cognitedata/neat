@@ -148,7 +148,10 @@ def _enum_message(type_: str, loc: tuple[int | str, ...], context: ValidationCon
     location = context.humanize_location(loc[:-1] if loc[-1] == "values" else loc)
 
     if loc[-1] != "values":
-        return f"In {location}: unexpected enum validation error with message '{raw_msg}'"
+        raise RuntimeError(
+            f"_enum_message called with unexpected loc={loc!r}, type_={type_!r}, raw_msg={raw_msg!r}. "
+            "This is a bug in NEAT."
+        )
     if type_ == "missing":
         return (
             f"In {location}: definition should include "
