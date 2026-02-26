@@ -35,6 +35,7 @@ def test_all_exports_are_defined() -> None:
         "DMSAPIImporter",
         "DmsDataModelRulesOrchestrator",
         "NeatClient",
+        "NeatIssueList",
         "NeatConsistencyError",
         "NeatModelSyntaxError",
         "NeatRecommendation",
