@@ -23,6 +23,7 @@
             <div class="stat-item" data-filter="Recommendation">
                 <span class="stat-number">{{recommendations}}</span> Recommendations
             </div>
+            {{fixed_tab}}
             <button class="export-btn" onclick="exportIssues_{{unique_id}}()">Export CSV</button>
         </div>
     </div>
@@ -38,8 +39,10 @@
 
 <script>
 (function() {
-    const issues = {{JSON}};
+    const issues = {{ISSUES_JSON}};
+    const fixes = {{FIXES_JSON}};
     const uniqueId = '{{unique_id}}';
+    const fixableCount = {{fixable_count}};
     {{SCRIPTS}}
 })();
 </script>

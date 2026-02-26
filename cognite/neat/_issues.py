@@ -9,6 +9,7 @@ class Issue(BaseModel):
     message: str
     code: str | None = None
     fix: str | None = None
+    fixable: bool = False
 
     @classmethod
     def issue_type(cls) -> str:

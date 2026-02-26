@@ -97,7 +97,7 @@ class ModelingConfig(ConfigModel):
 class AlphaFlagConfig(ConfigModel):
     """Alpha feature flags configuration."""
 
-    fix_validation_issues: bool = Field(
+    enable_fix_validation_issues: bool = Field(
         default=False,
         description="If enabled, Neat will attempt to automatically fix certain validation issues in the data model.",
     )

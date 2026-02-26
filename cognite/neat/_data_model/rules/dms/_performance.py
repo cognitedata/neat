@@ -76,6 +76,7 @@ class MissingRequiresConstraint(DataModelRule):
                     message=message,
                     fix="Add the recommended requires constraints to optimize query performance",
                     code=self.code,
+                    fixable=True,
                 )
             )
 
@@ -160,6 +161,7 @@ class SuboptimalRequiresConstraint(DataModelRule):
                     ),
                     fix="Remove suboptimal requires constraints",
                     code=self.code,
+                    fixable=True,
                 )
             )
 
@@ -327,6 +329,7 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
                     ),
                     fix="Add a cursorable B-tree index on the target direct relation property",
                     code=self.code,
+                    fixable=True,
                 )
             )
 

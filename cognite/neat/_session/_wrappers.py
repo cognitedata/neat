@@ -24,7 +24,7 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
 
         @wraps(func)
         def wrapper(self: HasStore, *args: Any, **kwargs: Any) -> Any:
-            display_name = f"{' '.join(split_on_capitals(cls.__name__))} - {func.__name__}"
+            display_name = f"{' '.join(split_on_capitals(cls.__name__))} - {func.__name__.removeprefix('_')}"
             identifier = f"{cls.__name__}.{func.__name__}"
             try:
                 res = func(self, *args, **kwargs)

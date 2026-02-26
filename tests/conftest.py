@@ -224,6 +224,60 @@ Containers:
 
 
 @pytest.fixture(scope="session")
+def dms_yaml_format_missing_container_constraint() -> str:
+    return """Metadata:
+- Key: space
+  Value: cdf_cdm
+- Key: externalId
+  Value: CogniteDataModel
+- Key: version
+  Value: v1
+- Key: description
+  Value: Sample Cognite Data Model
+- Key: name
+  Value: Cognite Data Model
+Properties:
+- View: CogniteDescribable
+  View Property: name
+  Name: Name Property
+  Description: The name of the describable entity
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: CogniteDescribable
+  Container Property: name
+  Index: btree:name(cursorable=True)
+  Connection: null
+- View: CogniteAsset
+  View Property: parent
+  Name: Parent Asset Property
+  Description: The parent asset of the asset entity
+  Value Type: CogniteAsset
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: CogniteAsset
+  Container Property: parent
+  Index: btree:name(cursorable=True)
+  Connection: null
+Views:
+- View: CogniteDescribable
+  Name: Describable View
+  Description: View for describable entities
+- View: CogniteAsset
+  Name: Asset View
+  Description: View for asset entities
+  Implements: CogniteDescribable
+Containers:
+- Container: CogniteDescribable
+  Used For: node
+- Container: CogniteAsset
+  Used For: node
+"""
+
+
+@pytest.fixture(scope="session")
 def valid_dms_tabular_yaml_partial() -> str:
     return """Metadata:
 - Key: space

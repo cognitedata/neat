@@ -1,7 +1,8 @@
 from collections import Counter
 
-from cognite.neat._data_model.rules.dms._base import DataModelRule
+from cognite.neat._data_model.rules.dms import DataModelRule
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
+from tests.tests_unit.test_data_model.test_rules.dms.test_alpha_validator import NEAT_TEST_BASE_CODE
 
 
 def test_validator_code_uniqueness() -> None:
@@ -11,7 +12,9 @@ def test_validator_code_uniqueness() -> None:
     all_validators: list[type[DataModelRule]] = get_concrete_subclasses(DataModelRule)
 
     # Get all codes
-    codes = [validator.code for validator in all_validators]
+    # The NEAT_TEST_BASE_CODE is used in testing and may be duplicated, as we execute the same test
+    # multiple times with different data.
+    codes = [validator.code for validator in all_validators if not validator.code.startswith(NEAT_TEST_BASE_CODE)]
 
     # Check for duplicates
     duplicates = [code for code, count in Counter(codes).items() if count > 1]

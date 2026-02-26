@@ -8,6 +8,7 @@ from ._ai_readiness import (
     ViewPropertyMissingDescription,
     ViewPropertyMissingName,
 )
+from ._base import DataModelRule
 from ._connections import (
     ConnectionValueTypeUndefined,
     ConnectionValueTypeUnexisting,
@@ -53,6 +54,7 @@ __all__ = [
     "ContainerPropertyListSizeIsOutOfLimits",
     "DataModelMissingDescription",
     "DataModelMissingName",
+    "DataModelRule",
     "DataModelViewCountIsOutOfLimits",
     "DataModelViewDoesNotExist",
     "DmsDataModelRulesOrchestrator",

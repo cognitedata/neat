@@ -3,6 +3,11 @@ import uuid
 from collections import defaultdict
 from typing import Any
 
+from cognite.neat._data_model._fix import FixAction
+from cognite.neat._data_model.deployer.data_classes import AddedField, ChangedField, RemovedField
+from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
+from cognite.neat._data_model.models.dms._indexes import BtreeIndex
+from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError, Recommendation
 from cognite.neat._session._html._render import render
 from cognite.neat._store import NeatStore
@@ -22,6 +27,13 @@ class Issues:
             issues += change.errors or IssueList()
             issues += change.issues or IssueList()
         return issues
+
+    @property
+    def _applied_fixes(self) -> list[FixAction]:
+        """Get all applied fixes from the last change in the store."""
+        if change := self._store.provenance.last_change:
+            return change.fixes or []
+        return []
 
     @property
     def _stats(self) -> dict[str, Any]:
@@ -56,25 +68,114 @@ class Issues:
                     "code": issue.code or "",
                     "message": issue.message,
                     "fix": issue.fix or "",
+                    "fixable": issue.fixable,
                 }
             )
         return serialized
 
+    @property
+    def _serialized_applied_fixes(self) -> list[dict[str, Any]]:
+        """Convert applied fixes to JSON-serializable format for the Fixed tab.
+
+        Each fix is displayed individually, like issues. Field change details
+        are included for fancy UI rendering.
+        """
+        serialized = []
+        for idx, fix_action in enumerate(self._applied_fixes):
+            item: dict[str, Any] = {
+                "id": f"fixed-{idx}",
+                "type": "Fixed",
+                "code": fix_action.code,
+                "message": fix_action.message or "",
+            }
+
+            # Add fields for fancy UI rendering based on the field changes
+            self._add_fix_ui_fields(fix_action, item)
+
+            serialized.append(item)
+        return serialized
+
+    def _add_fix_ui_fields(self, fix_action: FixAction, item: dict[str, Any]) -> None:
+        """Add UI rendering fields based on the fix action's field changes."""
+        if not fix_action.changes:
+            return
+
+        container_name = ""
+        if isinstance(fix_action.resource_id, ContainerReference):
+            container_name = fix_action.resource_id.external_id
+
+        change = fix_action.changes[0]
+        field_path = change.field_path
+
+        if field_path.startswith("constraints."):
+            constraint_id = field_path.split(".", 1)[1]
+            item.update(
+                {
+                    "fix_type": "constraint",
+                    "source_name": container_name,
+                    "constraint_id": constraint_id,
+                }
+            )
+            if isinstance(change, AddedField) and isinstance(change.new_value, RequiresConstraintDefinition):
+                item["action_type"] = "add"
+                item["dest_name"] = change.new_value.require.external_id
+            elif isinstance(change, RemovedField) and isinstance(change.current_value, RequiresConstraintDefinition):
+                item["action_type"] = "remove"
+                item["dest_name"] = change.current_value.require.external_id
+
+        elif field_path.startswith("indexes."):
+            index_id = field_path.split(".", 1)[1]
+            item.update(
+                {
+                    "fix_type": "index",
+                    "container_name": container_name,
+                    "index_id": index_id,
+                }
+            )
+            # Extract property_id from the index definition (AddedField or ChangedField)
+            index_value = None
+            if isinstance(change, AddedField):
+                index_value = change.new_value
+            elif isinstance(change, ChangedField):
+                index_value = change.new_value
+                item["action_type"] = "change"
+
+            if isinstance(index_value, BtreeIndex) and index_value.properties:
+                item["property_id"] = index_value.properties[0]
+
     def _repr_html_(self) -> str:
         """Generate interactive HTML representation."""
-        if not self._issues:
+        has_issues = len(self._issues) > 0
+        has_fixed = len(self._applied_fixes) > 0
+
+        if not has_issues and not has_fixed:
             return "<b>No issues found.</b>"
+
         stats = self._stats
 
         # Generate unique ID for this render to avoid conflicts in Jupyter
         unique_id = uuid.uuid4().hex[:8]
 
+        fixable_count = sum(1 for issue in self._issues if issue.fixable)
+
+        # Only show Fixed tab if the alpha flag is enabled
+        fixed_count = len(self._applied_fixes)
+        if self._store._config.alpha.enable_fix_validation_issues:
+            fixed_tab_html = f"""<div class="stat-item stat-fixed" data-filter="Fixed">
+                <span class="stat-number">{fixed_count}</span> Fixes
+            </div>"""
+        else:
+            fixed_tab_html = ""
+
         template_vars = {
-            "JSON": json.dumps(self._serialized_issues),
+            "ISSUES_JSON": json.dumps(self._serialized_issues),
+            "FIXES_JSON": json.dumps(self._serialized_applied_fixes),
             "total": stats["total"],
             "syntax_errors": stats["by_type"].get("ModelSyntaxError", 0),
             "consistency_errors": stats["by_type"].get("ConsistencyError", 0),
             "recommendations": stats["by_type"].get("Recommendation", 0),
+            "fixable_count": fixable_count,
+            "fixed_tab": fixed_tab_html,
             "unique_id": unique_id,
         }
 
