@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic_core import ErrorDetails
 
+from cognite.neat._data_model.models.dms._constants import ENUM_VALUES_MAX_COUNT
+
 
 def as_json_path(loc: tuple[str | int, ...]) -> str:
     """Converts a location tuple to a JSON path.
@@ -92,7 +94,9 @@ def humanize_validation_error(
             f"type {type(error['input']).__name__}."
         )
     elif type_ == "union_tag_invalid":
-        msg = error["msg"].replace(", 'direct'", "").replace("found using 'type' ", "").replace("tag", "value")
+        ctx = error["ctx"]
+        expected_tags = ctx["expected_tags"].replace(", 'direct'", "")
+        msg = f"Input value '{ctx['tag']}' does not match any of the expected values: {expected_tags}"
     elif type_ == "string_pattern_mismatch":
         msg = f"string '{error['input']}' does not match the required pattern: '{error['ctx']['pattern']}'."
 
@@ -112,7 +116,7 @@ def humanize_validation_error(
 
     if len(loc) >= 3 and context.field_name == "column" and loc[-3:] == ("type", "enum", "values"):
         # Special handling for enum errors in table columns
-        msg = _enum_message(type_, loc, context)
+        msg = _enum_message(type_, loc, context, error["msg"])
     elif len(loc) > 1 and type_ in {"extra_forbidden", "missing"}:
         if context.missing_required_descriptor == "empty" and type_ == "missing":
             # This is a table so we modify the error message.
@@ -138,17 +142,25 @@ def humanize_validation_error(
     return msg
 
 
-def _enum_message(type_: str, loc: tuple[int | str, ...], context: ValidationContext) -> str:
+def _enum_message(type_: str, loc: tuple[int | str, ...], context: ValidationContext, raw_msg: str) -> str:
     """Special handling of enum errors in table columns."""
 
+    location = context.humanize_location(loc[:-1] if loc[-1] == "values" else loc)
+
     if loc[-1] != "values":
-        raise RuntimeError("This is a neat bug, report to the team.")
+        return f"In {location}: unexpected enum validation error with message '{raw_msg}'"
     if type_ == "missing":
         return (
-            f"In {context.humanize_location(loc[:-1])} definition should include "
+            f"In {location}: definition should include "
             "a reference to a collection in the 'Enum' sheet (e.g., collection='MyEnumCollection')."
         )
     elif type_ == "too_short":
-        return f"In {context.humanize_location(loc[:-1])} collection is not defined in the 'Enum' sheet"
+        return f"In {location}: collection is not defined in the 'Enum' sheet"
+    elif type_ == "too_long":
+        return f"In {location}: collection has too many possible values (max {ENUM_VALUES_MAX_COUNT} allowed)"
+    elif type_ == "value_error":
+        detail = raw_msg.removeprefix("Value error, ")
+        return f"In {location}: {detail}"
     else:
-        raise RuntimeError("This is a neat bug, report to the team.")
+        detail = raw_msg.removeprefix("Value error, ")
+        return f"In {location}: {detail}"

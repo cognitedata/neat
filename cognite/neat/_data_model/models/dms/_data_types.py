@@ -8,7 +8,7 @@ from pydantic import Field, TypeAdapter, field_validator
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from cognite.neat._utils.useful_types import BaseModelObject
 
-from ._constants import ENUM_VALUE_IDENTIFIER_PATTERN, FORBIDDEN_ENUM_VALUES, INSTANCE_ID_PATTERN
+from ._constants import ENUM_VALUE_IDENTIFIER_PATTERN, ENUM_VALUES_MAX_COUNT, FORBIDDEN_ENUM_VALUES, INSTANCE_ID_PATTERN
 from ._references import ContainerReference, ViewReference
 
 
@@ -147,26 +147,37 @@ class EnumProperty(PropertyTypeDefinition):
     values: dict[str, EnumValue] = Field(
         description="A set of all possible values for the enum property.",
         min_length=1,
-        max_length=32,
+        max_length=ENUM_VALUES_MAX_COUNT,
     )
 
     @field_validator("values", mode="after")
     def _valid_enum_value(cls, val: dict[str, EnumValue]) -> dict[str, EnumValue]:
-        errors: list[str] = []
+        invalid_pattern: list[str] = []
+        invalid_length: list[str] = []
+        forbidden: list[str] = []
         for key in val.keys():
             if not _ENUM_KEY.match(key):
-                errors.append(
-                    f"Enum value {key!r} is not valid. Enum values must match "
-                    f"the pattern: {ENUM_VALUE_IDENTIFIER_PATTERN}"
-                )
+                invalid_pattern.append(key)
             if len(key) > 128 or len(key) < 1:
-                errors.append(f"Enum value {key!r} must be between 1 and 128 characters long.")
+                invalid_length.append(key)
             if key.lower() in FORBIDDEN_ENUM_VALUES:
-                errors.append(
-                    f"Enum value {key!r} cannot be any of the following reserved values: {FORBIDDEN_ENUM_VALUES}"
-                )
+                forbidden.append(key)
+        errors: list[str] = []
+        if invalid_pattern:
+            keys = ", ".join(repr(k) for k in invalid_pattern)
+            errors.append(
+                f"Enum values {keys} do not match the required pattern: {ENUM_VALUE_IDENTIFIER_PATTERN}"
+            )
+        if invalid_length:
+            keys = ", ".join(repr(k) for k in invalid_length)
+            errors.append(f"Enum values {keys} must be between 1 and 128 characters long.")
+        if forbidden:
+            keys = ", ".join(repr(k) for k in forbidden)
+            errors.append(
+                f"Enum values {keys} cannot be any of the following reserved values: {FORBIDDEN_ENUM_VALUES}"
+            )
         if errors:
-            raise ValueError(";".join(errors))
+            raise ValueError("; ".join(errors))
         return val
 
 
