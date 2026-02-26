@@ -10,6 +10,7 @@ from cognite.neat._data_model.rules.dms import DmsDataModelRulesOrchestrator
 from cognite.neat._issues import (
     ConsistencyError as NeatConsistencyError,
 )
+from cognite.neat._issues import IssueList as NeatIssueList
 from cognite.neat._issues import (
     ModelSyntaxError as NeatModelSyntaxError,
 )
@@ -22,6 +23,7 @@ __all__ = [
     "DmsDataModelRulesOrchestrator",
     "NeatClient",
     "NeatConsistencyError",
+    "NeatIssueList",
     "NeatModelSyntaxError",
     "NeatRecommendation",
     "SchemaLimits",
