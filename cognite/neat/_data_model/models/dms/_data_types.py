@@ -165,17 +165,13 @@ class EnumProperty(PropertyTypeDefinition):
         errors: list[str] = []
         if invalid_pattern:
             keys = ", ".join(repr(k) for k in invalid_pattern)
-            errors.append(
-                f"Enum values {keys} do not match the required pattern: {ENUM_VALUE_IDENTIFIER_PATTERN}"
-            )
+            errors.append(f"Enum values {keys} do not match the required pattern: {ENUM_VALUE_IDENTIFIER_PATTERN}")
         if invalid_length:
             keys = ", ".join(repr(k) for k in invalid_length)
             errors.append(f"Enum values {keys} must be between 1 and 128 characters long.")
         if forbidden:
             keys = ", ".join(repr(k) for k in forbidden)
-            errors.append(
-                f"Enum values {keys} cannot be any of the following reserved values: {FORBIDDEN_ENUM_VALUES}"
-            )
+            errors.append(f"Enum values {keys} cannot be any of the following reserved values: {FORBIDDEN_ENUM_VALUES}")
         if errors:
             raise ValueError("; ".join(errors))
         return val
