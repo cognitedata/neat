@@ -6,11 +6,7 @@ from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.importers import DMSAPIImporter
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.rules.dms import DmsDataModelRulesOrchestrator
-from cognite.neat._issues import (
-    ConsistencyError,
-    ModelSyntaxError,
-    Recommendation,
-)
+from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError, Recommendation
 
 
 @pytest.mark.parametrize(
@@ -22,6 +18,7 @@ from cognite.neat._issues import (
         ("NeatConsistencyError", ConsistencyError),
         ("NeatModelSyntaxError", ModelSyntaxError),
         ("NeatRecommendation", Recommendation),
+        ("NeatIssueList", IssueList),
         ("SchemaLimits", SchemaLimits),
         ("SchemaSnapshot", SchemaSnapshot),
     ],
