@@ -28,7 +28,9 @@ class NeatSession:
     """A session is an interface for neat operations."""
 
     def __init__(
-        self, client: CogniteClient | ClientConfig | None, config: PredefinedProfile | NeatConfig = "legacy-additive"
+        self,
+        client: CogniteClient | ClientConfig | None = None,
+        config: PredefinedProfile | NeatConfig = "legacy-additive",
     ) -> None:
         """Initialize a Neat session.
 
