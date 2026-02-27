@@ -1,5 +1,4 @@
 import json
-import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Literal, TypeVar, cast, overload
@@ -24,11 +23,7 @@ from cognite.neat._data_model.models.dms import (
     ViewRequestProperty,
     ViewRequestPropertyAdapter,
 )
-from cognite.neat._data_model.models.dms._constants import (
-    CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
-    DATA_MODEL_DESCRIPTION_MAX_LENGTH,
-    FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER,
-)
+from cognite.neat._data_model.models.dms._constants import DATA_MODEL_DESCRIPTION_MAX_LENGTH
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
 from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._issues import ModelSyntaxError
@@ -51,7 +46,6 @@ from .data_classes import (
 from .source import TableSource
 
 T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
-_PROPERTY_ID_PATTERN = re.compile(CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN)
 
 
 @dataclass
@@ -434,29 +428,6 @@ class DMSTableReader:
         view_entities: set[ParsedEntity],
     ) -> None:
         loc = (self.Sheets.properties, row_no)
-        if not _PROPERTY_ID_PATTERN.match(prop.view_property):
-            self.errors.append(
-                ModelSyntaxError(
-                    message=(
-                        f"In {self.source.location(loc)} column {self.PropertyColumns.view_property!r}"
-                        f" value {prop.view_property!r} does not match the required"
-                        f" pattern: {CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN}"
-                    )
-                )
-            )
-            return None
-        if prop.view_property in FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER:
-            self.errors.append(
-                ModelSyntaxError(
-                    message=(
-                        f"In {self.source.location(loc)} column {self.PropertyColumns.view_property!r}"
-                        f" value {prop.view_property!r} is a reserved property identifier."
-                        f" Reserved identifiers are: "
-                        f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER)}"
-                    )
-                )
-            )
-            return None
         data = self.read_view_property(prop, loc)
         view_prop = self._validate_adapter(ViewRequestPropertyAdapter, data, loc)
         if view_prop is None:
