@@ -147,8 +147,8 @@ class TestDataTypeAdapter:
             pytest.param(
                 {"type": "enum", "values": {"validValue1": {}, "invalid-value": {}}},
                 {
-                    "In enum.values enum value 'invalid-value' is not valid. Enum values must "
-                    "match the pattern: ^[_A-Za-z][_0-9A-Za-z]{0,127}$."
+                    "In enum.values enum values 'invalid-value' do not match the required "
+                    "pattern: ^[_A-Za-z][_0-9A-Za-z]{0,127}$."
                 },
                 id="Enum with invalid value key",
             ),

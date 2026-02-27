@@ -70,7 +70,7 @@ class TestHumanizeValidationError:
                     missing_required_descriptor="empty",
                 ),
                 (
-                    "In table 'Properties' row 277 column 'Value Type' -> enum"
+                    "In table 'Properties' row 277 column 'Value Type' -> enum:"
                     " definition should include a reference to a collection in the 'Enum' sheet"
                     " (e.g., collection='MyEnumCollection')."
                 ),
@@ -94,7 +94,7 @@ class TestHumanizeValidationError:
                     missing_required_descriptor="empty",
                 ),
                 (
-                    "In table 'Properties' row 277 column 'Value Type' -> enum"
+                    "In table 'Properties' row 277 column 'Value Type' -> enum:"
                     " collection is not defined in the 'Enum' sheet."
                 ),
                 id="Missing enum collection",
@@ -110,6 +110,14 @@ class TestHumanizeValidationError:
                             "'json', 'timeseries', 'file', 'sequence', 'enum', 'direct'"
                         ),
                         "input": {"maxListSize": None, "list": False, "type": "primitive"},
+                        "ctx": {
+                            "discriminator": "'type'",
+                            "tag": "primitive",
+                            "expected_tags": (
+                                "'text', 'float32', 'float64', 'boolean', 'int32', 'int64', 'timestamp', 'date', "
+                                "'json', 'timeseries', 'file', 'sequence', 'enum', 'direct'"
+                            ),
+                        },
                     }
                 ),
                 ValidationContext(
