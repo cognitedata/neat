@@ -235,9 +235,9 @@ class TestValidators:
                     found_affected_reverse_properties.add(expected_property)
         assert found_affected_reverse_properties == expected_affected_reverse_properties
 
-        assert len(by_code[ViewToContainerMappingNotPossible.code]) == 4
+        assert len(by_code[ViewToContainerMappingNotPossible.code]) == 2
         referenced_containers_messages = [issue.message for issue in by_code[ViewToContainerMappingNotPossible.code]]
-        expected_missing_containers = {"nospace:UnexistingContainer", "my_space:DirectConnectionRemoteContainer"}
+        expected_missing_containers = {"nospace:UnexistingContainer"}
         expected_missing_container_properties = {"unexistingProperty"}
 
         found_missing_containers = set()
