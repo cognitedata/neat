@@ -1,3 +1,5 @@
+""" "Tests that applies to all validators."""
+
 from collections import Counter
 
 from cognite.neat._data_model.rules.dms import DataModelRule
