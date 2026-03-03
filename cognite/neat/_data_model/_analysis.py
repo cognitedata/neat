@@ -355,29 +355,31 @@ class ValidationResources:
     def reverse_to_direct_mapping(
         self,
     ) -> dict[tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]]:
-        """Get a mapping of reverse direct relations to their corresponding source view and 'through' property."""
+        """Get a mapping of reverse direct relations to their corresponding source view and 'through' property.
+
+        Excludes views in system spaces (cdf_cdm, etc.).
+        """
 
         bidirectional_connections: dict[
             tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]
         ] = {}
 
-        if self.merged_data_model.views:
-            for view_ref in self.merged_data_model.views:
-                view = self.select_view(view_ref)
+        for view_ref in self.validatable_data_model_views:
+            view = self.select_view(view_ref)
 
-                # Specific validator will capture this
-                if not view:
-                    continue
+            # Specific validator will capture this
+            if not view:
+                continue
 
-                if not view.properties:
-                    continue
-                for prop_ref, property_ in view.properties.items():
-                    # reverse direct relation
-                    if isinstance(property_, ReverseDirectRelationProperty):
-                        bidirectional_connections[(view_ref, prop_ref)] = (
-                            property_.source,
-                            property_.through,
-                        )
+            if not view.properties:
+                continue
+            for prop_ref, property_ in view.properties.items():
+                # reverse direct relation
+                if isinstance(property_, ReverseDirectRelationProperty):
+                    bidirectional_connections[(view_ref, prop_ref)] = (
+                        property_.source,
+                        property_.through,
+                    )
 
         return bidirectional_connections
 
@@ -397,7 +399,7 @@ class ValidationResources:
 
     @cached_property
     def resolved_reverse_direct_relations(self) -> list[ResolvedReverseDirectRelation]:
-        """Get all reverse direct relations with their resolved context.
+        """Get all reverse direct relations with their resolved context, excluding system spaces.
 
         This property traverses from reverse direct relation → source view → container,
         resolving all references along the way.
@@ -460,52 +462,54 @@ class ValidationResources:
 
     @property
     def connection_end_node_types(self) -> dict[tuple[ViewReference, str], ViewReference | None]:
-        """Get a mapping of view references to their corresponding ViewRequest objects."""
+        """
+        Get a mapping of view references to their corresponding
+        ViewRequest objects, excluding system spaces.
+        """
 
         connection_end_node_types: dict[tuple[ViewReference, str], ViewReference | None] = {}
 
-        if self.merged_data_model.views:
-            for view_ref in self.merged_data_model.views:
-                view = self.select_view(view_ref)
+        for view_ref in self.validatable_data_model_views:
+            view = self.select_view(view_ref)
 
-                # Specific validator will capture this
-                if not view:
-                    continue
+            # Specific validator will capture this
+            if not view:
+                continue
 
-                if not view.properties:
-                    continue
+            if not view.properties:
+                continue
 
-                for prop_ref, property_ in view.properties.items():
-                    # direct relation
-                    if isinstance(property_, ViewCorePropertyRequest):
-                        # explicit set of end node type via 'source' which is View reference
-                        if property_.source:
-                            connection_end_node_types[(view_ref, prop_ref)] = property_.source
-
-                        # implicit end node type via container property, without actual knowledge of end node type
-                        elif (
-                            (
-                                container := self.select_container(
-                                    property_.container, property_.container_property_identifier
-                                )
-                            )
-                            and (property_.container_property_identifier in container.properties)
-                            and (
-                                isinstance(
-                                    container.properties[property_.container_property_identifier].type,
-                                    DirectNodeRelation,
-                                )
-                            )
-                        ):
-                            connection_end_node_types[(view_ref, prop_ref)] = None
-
-                    # reverse direct relation
-                    elif isinstance(property_, ReverseDirectRelationProperty) and property_.source:
+            for prop_ref, property_ in view.properties.items():
+                # direct relation
+                if isinstance(property_, ViewCorePropertyRequest):
+                    # explicit set of end node type via 'source' which is View reference
+                    if property_.source:
                         connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
-                    # edge property
-                    elif isinstance(property_, EdgeProperty) and property_.source:
-                        connection_end_node_types[(view_ref, prop_ref)] = property_.source
+                    # implicit end node type via container property, without actual knowledge of end node type
+                    elif (
+                        (
+                            container := self.select_container(
+                                property_.container, property_.container_property_identifier
+                            )
+                        )
+                        and (property_.container_property_identifier in container.properties)
+                        and (
+                            isinstance(
+                                container.properties[property_.container_property_identifier].type,
+                                DirectNodeRelation,
+                            )
+                        )
+                    ):
+                        connection_end_node_types[(view_ref, prop_ref)] = None
+
+                # reverse direct relation
+                elif isinstance(property_, ReverseDirectRelationProperty) and property_.source:
+                    connection_end_node_types[(view_ref, prop_ref)] = property_.source
+
+                # edge property
+                elif isinstance(property_, EdgeProperty) and property_.source:
+                    connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
         return connection_end_node_types
 
@@ -690,6 +694,20 @@ class ValidationResources:
         - It's a user container brought in through the loaded data model scope or view implements chain
         """
         return {container_ref for container_ref in self.merged.containers if container_ref.space not in COGNITE_SPACES}
+
+    # --- Filtered properties for validators (exclude system spaces like cdf_cdm) ---
+    # Validators should usually use these instead of iterating over the full merged resources directly,
+    # to avoid reporting issues on built-in CDF resources that users cannot modify.
+
+    @cached_property
+    def validatable_data_model_views(self) -> list[ViewReference]:
+        """Data model views excluding system spaces (cdf_cdm, cdf_idm, etc.)."""
+        return [v for v in self.merged_data_model.views or [] if v.space not in COGNITE_SPACES]
+
+    @cached_property
+    def validatable_containers(self) -> set[ContainerReference]:
+        """Container refs from merged schema excluding system spaces."""
+        return {ref for ref in self.merged.containers if ref.space not in COGNITE_SPACES}
 
     @cached_property
     def immutable_requires_constraint_graph(self) -> nx.DiGraph:
@@ -1060,7 +1078,7 @@ class ValidationResources:
         source_container should have a requires constraint pointing to required_container.
         """
         missing_requires_constraints: list[tuple[ViewReference, ContainerReference, ContainerReference]] = []
-        for view_ref in self.merged.views:
+        for view_ref in self.validatable_data_model_views:
             changes = self.get_requires_changes_for_view(view_ref)
             if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
                 continue
@@ -1079,7 +1097,7 @@ class ValidationResources:
         redundant or wrongly oriented relative to the optimal structure.
         """
         results: list[tuple[ViewReference, ContainerReference, ContainerReference]] = []
-        for view_ref in self.merged.views:
+        for view_ref in self.validatable_data_model_views:
             changes = self.get_requires_changes_for_view(view_ref)
             if changes.status != RequiresChangeStatus.CHANGES_AVAILABLE:
                 continue
@@ -1100,8 +1118,6 @@ class ValidationResources:
 
         for resolved in self.resolved_reverse_direct_relations:
             if not resolved.container or not resolved.container_property:
-                continue
-            if resolved.container_ref.space in COGNITE_SPACES:
                 continue
             if not isinstance(resolved.container_property.type, DirectNodeRelation):
                 continue

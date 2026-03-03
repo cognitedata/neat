@@ -41,14 +41,14 @@ PROBLEMS = {
         "confidence",
     },
     EnumerationMissingName: {
-        ("'blueprint' in property category of container cdf_cdm:CogniteFile is missing a human-readable name"),
-        ("'document' in property category of container cdf_cdm:CogniteFile is missing a human-readable name"),
-        ("'other' in property category of container cdf_cdm:CogniteFile is missing a human-readable name"),
+        ("'blueprint' in property category of container my_space:CogniteFile is missing a human-readable name"),
+        ("'document' in property category of container my_space:CogniteFile is missing a human-readable name"),
+        ("'other' in property category of container my_space:CogniteFile is missing a human-readable name"),
     },
     EnumerationMissingDescription: {
-        ("'blueprint' in property category of container cdf_cdm:CogniteFile is missing a human-readable description."),
-        ("'document' in property category of container cdf_cdm:CogniteFile is missing a human-readable description."),
-        ("'other' in property category of container cdf_cdm:CogniteFile is missing a human-readable description."),
+        ("'blueprint' in property category of container my_space:CogniteFile is missing a human-readable description."),
+        ("'document' in property category of container my_space:CogniteFile is missing a human-readable description."),
+        ("'other' in property category of container my_space:CogniteFile is missing a human-readable description."),
     },
 }
 

@@ -103,7 +103,7 @@ class ViewMissingName(DataModelRule):
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.validation_resources.merged_data_model.views or []:
+        for view_ref in self.validation_resources.validatable_data_model_views:
             view = self.validation_resources.select_view(view_ref)
 
             # it will be captured by another validator
@@ -155,7 +155,7 @@ class ViewMissingDescription(DataModelRule):
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.validation_resources.merged_data_model.views or []:
+        for view_ref in self.validation_resources.validatable_data_model_views:
             view = self.validation_resources.select_view(view_ref)
 
             # it will be captured by another validator
@@ -197,7 +197,7 @@ class ViewPropertyMissingName(DataModelRule):
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.validation_resources.merged_data_model.views or []:
+        for view_ref in self.validation_resources.validatable_data_model_views:
             view = self.validation_resources.select_view(view_ref)
 
             # it will be captured by another validator
@@ -254,7 +254,7 @@ class ViewPropertyMissingDescription(DataModelRule):
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.validation_resources.merged_data_model.views or []:
+        for view_ref in self.validation_resources.validatable_data_model_views:
             view = self.validation_resources.select_view(view_ref)
 
             # it will be captured by another validator
@@ -300,7 +300,7 @@ class EnumerationMissingName(DataModelRule):
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for container_ref in self.validation_resources.merged.containers:
+        for container_ref in self.validation_resources.validatable_containers:
             container = self.validation_resources.select_container(container_ref)
 
             if not container:
@@ -360,7 +360,7 @@ class EnumerationMissingDescription(DataModelRule):
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for container_ref in self.validation_resources.merged.containers:
+        for container_ref in self.validation_resources.validatable_containers:
             container = self.validation_resources.select_container(container_ref)
             if not container:
                 raise RuntimeError(f"{self.__class__.__name__}: Container {container_ref!s} not found. This is a bug.")

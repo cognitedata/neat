@@ -1,4 +1,4 @@
-- space: cdf_cdm
+- space: my_space
   externalId: CogniteDescribable
   usedFor: all
   properties:
@@ -21,7 +21,7 @@
       properties:
       - name
       cursorable: false
-- space: cdf_cdm
+- space: my_space
   externalId: CogniteFile
   usedFor: node
   properties:
@@ -54,6 +54,6 @@
     describablePresent:
       constraintType: requires
       require:
-        space: cdf_cdm
+        space: my_space
         externalId: CogniteDescribable
         type: container

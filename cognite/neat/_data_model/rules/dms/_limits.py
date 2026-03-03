@@ -86,7 +86,7 @@ class ViewPropertyCountIsOutOfLimits(DataModelRule):
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        for view_ref in self.validation_resources.merged_data_model.views or []:
+        for view_ref in self.validation_resources.validatable_data_model_views:
             # will be captured by a specific validator
             if not (view := self.validation_resources.expand_view_properties(view_ref)):
                 continue
@@ -140,7 +140,7 @@ class ViewContainerCountIsOutOfLimits(DataModelRule):
         recommendations: list[Recommendation] = []
 
         # Single loop over all views
-        for view_ref in self.validation_resources.merged_data_model.views or []:
+        for view_ref in self.validation_resources.validatable_data_model_views:
             # will be captured by a specific validator
             if not (view := self.validation_resources.expand_view_properties(view_ref)):
                 continue
@@ -189,7 +189,7 @@ class ViewImplementsCountIsOutOfLimits(DataModelRule):
         errors: list[ConsistencyError] = []
 
         # Single loop over all views
-        for view_ref in self.validation_resources.merged_data_model.views or []:
+        for view_ref in self.validation_resources.validatable_data_model_views:
             ancestors = self.validation_resources.view_ancestors(view_ref)
             if ancestors and len(ancestors) > self.validation_resources.limits.views.implements:
                 errors.append(
@@ -229,7 +229,7 @@ class ContainerPropertyCountIsOutOfLimits(DataModelRule):
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
         # Single loop over all containers
-        for container_ref in self.validation_resources.merged.containers:
+        for container_ref in self.validation_resources.validatable_containers:
             container = self.validation_resources.select_container(container_ref)
 
             if not container:
@@ -294,7 +294,7 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelRule):
         errors: list[ConsistencyError] = []
 
         # Single loop over all containers
-        for container_ref in self.validation_resources.merged.containers:
+        for container_ref in self.validation_resources.validatable_containers:
             container = self.validation_resources.select_container(container_ref)
 
             if not container:

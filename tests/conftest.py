@@ -344,9 +344,9 @@ Containers:
 def consistency_error_dms_yaml_format() -> str:
     return """Metadata:
 - Key: space
-  Value: cdf_cdm
+  Value: my_space
 - Key: externalId
-  Value: CogniteDataModel
+  Value: MyDataModel
 - Key: version
   Value: v1
 Properties:

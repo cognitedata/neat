@@ -1,7 +1,6 @@
 """Validators for checking performance-related aspects of the data model."""
 
 from cognite.neat._data_model._analysis import RequiresChangeStatus
-from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model._fix import FixAction
 from cognite.neat._data_model._identifiers import AutoIdentifier
 from cognite.neat._data_model.deployer.data_classes import AddedField, ChangedField, RemovedField, SeverityType
@@ -248,10 +247,7 @@ class UnresolvableQueryPerformance(DataModelRule):
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.validation_resources.merged.views:
-            if view_ref.space in COGNITE_SPACES:
-                continue
-
+        for view_ref in self.validation_resources.validatable_data_model_views:
             changes = self.validation_resources.get_requires_changes_for_view(view_ref)
 
             if changes.status == RequiresChangeStatus.NO_MODIFIABLE_CONTAINERS:

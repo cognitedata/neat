@@ -29,10 +29,7 @@ class ViewToContainerMappingNotPossible(DataModelRule):
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        if not self.validation_resources.merged_data_model.views:
-            return errors
-
-        for view_ref in self.validation_resources.merged_data_model.views:
+        for view_ref in self.validation_resources.validatable_data_model_views:
             view = self.validation_resources.select_view(view_ref)
 
             # it will be captured by another validator
@@ -99,10 +96,7 @@ class ImplementedViewNotExisting(DataModelRule):
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        if not self.validation_resources.merged_data_model.views:
-            return errors
-
-        for view_ref in self.validation_resources.merged_data_model.views:
+        for view_ref in self.validation_resources.validatable_data_model_views:
             view = self.validation_resources.select_view(view_ref)
 
             # it will be captured by another validator
@@ -182,7 +176,7 @@ class DataModelViewDoesNotExist(DataModelRule):
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        for view_ref in self.validation_resources.merged_data_model.views or []:
+        for view_ref in self.validation_resources.validatable_data_model_views:
             if self.validation_resources.select_view(view_ref) is None:
                 errors.append(
                     ConsistencyError(

@@ -36,10 +36,7 @@ class ExternalContainerDoesNotExist(DataModelRule):
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        if not self.validation_resources.merged_data_model.views:
-            return errors
-
-        for view_ref in self.validation_resources.merged_data_model.views:
+        for view_ref in self.validation_resources.validatable_data_model_views:
             view = self.validation_resources.select_view(view_ref)
 
             # it will be captured by another validator
@@ -103,48 +100,47 @@ class ExternalContainerPropertyDoesNotExist(DataModelRule):
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        if self.validation_resources.merged_data_model.views:
-            for view_ref in self.validation_resources.merged_data_model.views:
-                view = self.validation_resources.select_view(view_ref)
+        for view_ref in self.validation_resources.validatable_data_model_views:
+            view = self.validation_resources.select_view(view_ref)
 
-                # it will be captured by another validator
-                if view is None:
+            # it will be captured by another validator
+            if view is None:
+                continue
+
+            if view.properties is None:
+                continue
+
+            for property_ref, property_ in view.properties.items():
+                if not isinstance(property_, ViewCorePropertyRequest):
                     continue
 
-                if view.properties is None:
+                if property_.container.space == self.validation_resources.merged_data_model.space:
                     continue
 
-                for property_ref, property_ in view.properties.items():
-                    if not isinstance(property_, ViewCorePropertyRequest):
-                        continue
+                # Only check property if container exists in CDF
+                # this check is done in ExternalContainerDoesNotExist
+                if (
+                    property_.container not in self.validation_resources.cdf.containers
+                    or property_.container in self.validation_resources.merged.containers
+                ):
+                    continue
 
-                    if property_.container.space == self.validation_resources.merged_data_model.space:
-                        continue
-
-                    # Only check property if container exists in CDF
-                    # this check is done in ExternalContainerDoesNotExist
-                    if (
-                        property_.container not in self.validation_resources.cdf.containers
-                        or property_.container in self.validation_resources.merged.containers
-                    ):
-                        continue
-
-                    # Check existence of container property in CDF
-                    if (
-                        property_.container_property_identifier
-                        not in self.validation_resources.cdf.containers[property_.container].properties
-                    ):
-                        errors.append(
-                            ConsistencyError(
-                                message=(
-                                    f"View {view_ref!s} property {property_ref!s} maps to "
-                                    f"external container {property_.container!s} which does not have "
-                                    f"property '{property_.container_property_identifier}' in CDF."
-                                ),
-                                fix="Define necessary container property in CDF",
-                                code=self.code,
-                            )
+                # Check existence of container property in CDF
+                if (
+                    property_.container_property_identifier
+                    not in self.validation_resources.cdf.containers[property_.container].properties
+                ):
+                    errors.append(
+                        ConsistencyError(
+                            message=(
+                                f"View {view_ref!s} property {property_ref!s} maps to "
+                                f"external container {property_.container!s} which does not have "
+                                f"property '{property_.container_property_identifier}' in CDF."
+                            ),
+                            fix="Define necessary container property in CDF",
+                            code=self.code,
                         )
+                    )
 
         return errors
 
@@ -173,7 +169,7 @@ class RequiredContainerDoesNotExist(DataModelRule):
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        for container_ref in self.validation_resources.merged.containers:
+        for container_ref in self.validation_resources.validatable_containers:
             container = self.validation_resources.select_container(container_ref)
 
             if not container:

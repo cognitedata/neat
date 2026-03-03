@@ -1,6 +1,5 @@
 """Validators checking for consistency issues in data model."""
 
-from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import Recommendation
 
@@ -28,23 +27,16 @@ class ViewSpaceVersionInconsistentWithDataModel(DataModelRule):
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        if not self.validation_resources.merged_data_model.views:
-            return recommendations
-
         space = self.validation_resources.merged_data_model.space
         version = self.validation_resources.merged_data_model.version
 
-        for view_ref in self.validation_resources.merged_data_model.views:
+        for view_ref in self.validation_resources.validatable_data_model_views:
             issue_description = ""
 
-            if view_ref.space not in COGNITE_SPACES:
-                # notify about inconsistent space
-                if view_ref.space != space:
-                    issue_description = f"space (view: {view_ref.space}, data model: {space})"
-
-                # or version if spaces are same
-                elif view_ref.version != version:
-                    issue_description = f"version (view: {view_ref.version}, data model: {version})"
+            if view_ref.space != space:
+                issue_description = f"space (view: {view_ref.space}, data model: {space})"
+            elif view_ref.version != version:
+                issue_description = f"version (view: {view_ref.version}, data model: {version})"
 
             if issue_description:
                 recommendations.append(
