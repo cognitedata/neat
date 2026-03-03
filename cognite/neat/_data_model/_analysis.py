@@ -888,8 +888,13 @@ class ValidationResources:
                 weight = min(w1, w2)
                 has_forbidden_direction = w1 == self._TIER_FORBIDDEN or w2 == self._TIER_FORBIDDEN
 
-                G.add_edge(src, dst, weight=weight, preferred_direction=direction,
-                           has_forbidden_direction=has_forbidden_direction)
+                G.add_edge(
+                    src,
+                    dst,
+                    weight=weight,
+                    preferred_direction=direction,
+                    has_forbidden_direction=has_forbidden_direction,
+                )
 
         return G
 
