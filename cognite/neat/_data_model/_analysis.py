@@ -610,8 +610,9 @@ class ValidationResources:
         for view_ref in self.merged.views:
             graph.add_node(view_ref)
 
-        # Add edges for implements
-        for view_ref in graph.nodes():
+        # Add edges for implements (only between known views — missing targets
+        # are reported by ImplementedViewNotExisting validator)
+        for view_ref in list(graph.nodes()):
             view = self.select_view(view_ref)
             if not view or not view.implements:
                 continue
