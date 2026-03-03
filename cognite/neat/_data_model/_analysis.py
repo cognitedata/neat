@@ -689,11 +689,7 @@ class ValidationResources:
         Containers in other spaces (CDM, other user spaces, etc.) are treated as immutable
         since they belong to other data models or system schemas.
         """
-        return {
-            container_ref
-            for container_ref in self.merged.containers
-            if container_ref.space == self.merged_data_model.space
-        }
+        return {container_ref for container_ref in self.merged.containers if container_ref.space not in COGNITE_SPACES}
 
     @cached_property
     def immutable_requires_constraint_graph(self) -> nx.DiGraph:
@@ -1173,7 +1169,13 @@ class ValidationResources:
             edge for edge in self._transitively_reduced_edges if edge[0] in modifiable_containers_in_view
         }
 
-        to_add = optimal_for_view - existing_from_view
+        # To add: optimal edges not yet present, skip if external views use src but not dst
+        merged_views = set(self.merged.views)
+        to_add = {
+            (src, dst)
+            for src, dst in optimal_for_view - existing_from_view
+            if not (self.views_by_container.get(src, set()) - self.views_by_container.get(dst, set()) - merged_views)
+        }
 
         # To remove: existing edges with wrong direction or not in MST (and not needed externally)
         # But NEVER remove user-intentional constraints (manually defined, no __auto postfix)
@@ -1185,14 +1187,18 @@ class ValidationResources:
             if (dst, src) in self.oriented_mst_edges:
                 to_remove.add((src, dst))  # Always remove if opposite direction from optimal solution
             elif (src, dst) not in self.oriented_mst_edges and not (
-                self.find_views_mapping_to_containers([src, dst]) - set(self.merged.views)
+                self.find_views_mapping_to_containers([src, dst]) - merged_views
             ):
                 to_remove.add((src, dst))  # Remove if not in optimal solution and not needed by external views
 
-        # Check solvability in optimized state
-        if not self.forms_directed_path(
-            self.containers_by_view.get(view, set()), self.optimized_requires_constraint_graph
-        ):
+        # Check solvability: use the global optimized graph, but exclude edges we filtered from to_add
+        filtered_out = (optimal_for_view - existing_from_view) - to_add
+        if filtered_out:
+            adjusted_graph = nx.DiGraph(self.optimized_requires_constraint_graph)
+            adjusted_graph.remove_edges_from(filtered_out)
+        else:
+            adjusted_graph = self.optimized_requires_constraint_graph
+        if not self.forms_directed_path(self.containers_by_view.get(view, set()), adjusted_graph):
             return RequiresChangesForView(set(), set(), RequiresChangeStatus.UNSOLVABLE)
 
         if not to_add and not to_remove:
