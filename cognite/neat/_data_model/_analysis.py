@@ -685,9 +685,8 @@ class ValidationResources:
     def modifiable_containers(self) -> set[ContainerReference]:
         """Containers whose requires constraints can be modified in this session.
 
-        A container is modifiable if it's in the same space as the data model.
-        Containers in other spaces (CDM, other user spaces, etc.) are treated as immutable
-        since they belong to other data models or system schemas.
+        - It's NOT in a CDF built-in space (CDM, IDM, etc.)
+        - It's a user container brought in through the loaded data model scope or view implements chain
         """
         return {container_ref for container_ref in self.merged.containers if container_ref.space not in COGNITE_SPACES}
 
