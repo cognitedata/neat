@@ -1169,12 +1169,17 @@ class ValidationResources:
             edge for edge in self._transitively_reduced_edges if edge[0] in modifiable_containers_in_view
         }
 
-        # To add: optimal edges not yet present, skip if external views use src but not dst
+        # To add: optimal edges not yet present, skip if external views use source but not destination
+        # This is to avoid making recommendations that would break ingestion on existing views for other data models.
         merged_views = set(self.merged.views)
         to_add = {
             (src, dst)
             for src, dst in optimal_for_view - existing_from_view
-            if not (self.views_by_container.get(src, set()) - self.views_by_container.get(dst, set()) - merged_views)
+            if not (
+                self.views_by_container.get(src, set[ViewReference]())
+                - self.views_by_container.get(dst, set())
+                - merged_views
+            )
         }
 
         # To remove: existing edges with wrong direction or not in MST (and not needed externally)
