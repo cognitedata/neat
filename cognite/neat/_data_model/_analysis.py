@@ -685,11 +685,15 @@ class ValidationResources:
     def modifiable_containers(self) -> set[ContainerReference]:
         """Containers whose requires constraints can be modified in this session.
 
-        A container is modifiable if:
-        - It's NOT in a CDF built-in space (CDM, IDM, etc.)
-        - It's a user container brought in through the loaded data model scope or view implements chain
+        A container is modifiable if it's in the same space as the data model.
+        Containers in other spaces (CDM, other user spaces, etc.) are treated as immutable
+        since they belong to other data models or system schemas.
         """
-        return {container_ref for container_ref in self.merged.containers if container_ref.space not in COGNITE_SPACES}
+        return {
+            container_ref
+            for container_ref in self.merged.containers
+            if container_ref.space == self.merged_data_model.space
+        }
 
     @cached_property
     def immutable_requires_constraint_graph(self) -> nx.DiGraph:
@@ -882,8 +886,10 @@ class ValidationResources:
                 w2 = self._compute_requires_edge_weight(dst, src)
                 direction = (src, dst) if w1 <= w2 else (dst, src)
                 weight = min(w1, w2)
+                has_forbidden_direction = w1 == self._TIER_FORBIDDEN or w2 == self._TIER_FORBIDDEN
 
-                G.add_edge(src, dst, weight=weight, preferred_direction=direction)
+                G.add_edge(src, dst, weight=weight, preferred_direction=direction,
+                           has_forbidden_direction=has_forbidden_direction)
 
         return G
 
@@ -1020,6 +1026,15 @@ class ValidationResources:
 
         # Sort for deterministic iteration (hash randomization affects set order)
         for c1, c2 in sorted(all_edges, key=lambda e: (str(e[0]), str(e[1]))):
+            edge_data = self._requires_candidate_graph[c1][c2]
+            preferred = edge_data.get("preferred_direction", (c1, c2))
+
+            # When one direction conflicts with fixed constraints (FORBIDDEN),
+            # the preferred_direction is the only valid choice — votes cannot override it.
+            if edge_data.get("has_forbidden_direction", False):
+                oriented.add(preferred)
+                continue
+
             c1_votes = edge_votes.get((c1, c2), 0)
             c2_votes = edge_votes.get((c2, c1), 0)
 
@@ -1028,8 +1043,7 @@ class ValidationResources:
             elif c2_votes > c1_votes:
                 oriented.add((c2, c1))
             else:
-                # Tie-breaker: use preferred_direction from weight function
-                oriented.add(self._requires_candidate_graph[c1][c2].get("preferred_direction", (c1, c2)))
+                oriented.add(preferred)
 
         return oriented
 
