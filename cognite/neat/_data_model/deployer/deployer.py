@@ -68,6 +68,7 @@ class DeploymentOptions:
     drop_data: bool = False
     max_severity: SeverityType = SeverityType.WARNING
     modus_operandi: ModusOperandi = "additive"
+    allow_deploy_different_space: bool = False
 
 
 class SchemaDeployer(OnSuccessResultProducer):
@@ -246,8 +247,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                 modified_diffs.append(diff)
         return modified_diffs
 
-    @classmethod
-    def _skip_resource(cls, resource_id: T_ResourceId, model_space: str) -> str | None:
+    def _skip_resource(self, resource_id: T_ResourceId, model_space: str) -> str | None:
         """Checks if a resource should be skipped based on its space.
 
         Args:
@@ -259,7 +259,7 @@ class SchemaDeployer(OnSuccessResultProducer):
         """
         if resource_id.space in COGNITE_SPACES:
             return f"Skipping resource as it is in the reserved Cognite space '{resource_id.space}'."
-        elif resource_id.space != model_space:
+        elif resource_id.space != model_space and not self.options.allow_deploy_different_space:
             return (
                 f"Skipping resource as it is in the space '{resource_id.space}'"
                 f" not matching data model space '{model_space}'."
