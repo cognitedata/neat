@@ -146,7 +146,7 @@ class ValidationResources:
         return next(candidates, None)
 
     def select_container(
-        self, container_ref: ContainerReference, property_: str | None = None, source: ResourceSource = "both"
+        self, container_ref: ContainerReference, property_: str | None = None, source: ResourceSource = "auto"
     ) -> ContainerRequest | None:
         """Select container definition based on source strategy and optionally filter by property.
 
