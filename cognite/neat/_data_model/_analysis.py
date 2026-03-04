@@ -611,7 +611,7 @@ class ValidationResources:
             graph.add_node(view_ref)
 
         # Add edges for implements
-        for view_ref in graph.nodes():
+        for view_ref in list(graph.nodes()):
             view = self.select_view(view_ref)
             if not view or not view.implements:
                 continue
