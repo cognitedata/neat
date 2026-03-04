@@ -861,6 +861,19 @@ class TestValidationResourcesRequiresConstraints:
                 ),
                 id="star-topology-root-to-multiple-leaves",
             ),
+            # Forbidden direction: Alpha→Beta is user-intentional, BFS votes for Beta→Alpha
+            # because Beta has fewer views (1) than Alpha (2), making Beta the root.
+            # Without the has_forbidden_direction check, this would create a cycle and crash.
+            pytest.param(
+                {
+                    "MainView": ["Alpha", "Beta"],
+                    "ExtraView": ["Alpha", "Gamma"],  # Alpha in 2 views → Beta becomes root
+                },
+                {"Alpha": ["Beta"]},  # Existing user-intentional constraint of Alpha→Beta
+                "MainView",
+                RequiresChangesForView(set(), set(), RequiresChangeStatus.OPTIMAL),
+                id="forbidden-direction-not-overridden-by-votes",
+            ),
         ],
     )
     def test_get_requires_changes_for_view(
