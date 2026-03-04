@@ -224,13 +224,14 @@ class ContainerPropertyCountIsOutOfLimits(DataModelRule):
     """
 
     code = f"{BASE_CODE}-CONTAINER-001"
-    issue_type = ConsistencyError
+    issue_type = Recommendation
 
-    def validate(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
+    def validate(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
         # Single loop over all containers
         for container_ref in self.validation_resources.merged.containers:
             container = self.validation_resources.select_container(container_ref)
+            limit = self.validation_resources.limits.containers.properties.limit_per_container
 
             if not container:
                 raise RuntimeError(
@@ -238,31 +239,29 @@ class ContainerPropertyCountIsOutOfLimits(DataModelRule):
                     "not found in local resources. This is a bug in NEAT."
                 )
 
-            if (
-                container.properties
-                and len(container.properties) > self.validation_resources.limits.containers.properties()
-            ):
-                errors.append(
-                    ConsistencyError(
+            if container.properties and len(container.properties) > limit:
+                recommendations.append(
+                    Recommendation(
                         message=(
                             f"Container {container_ref!s} has {len(container.properties)} properties, "
-                            "which exceeds the limit of "
-                            f"{self.validation_resources.limits.containers.properties()} properties per container."
+                            "which exceeds the default limit of "
+                            f"{limit} "
+                            "properties per container."
                         ),
-                        fix="Define at least one property for container",
+                        fix=f"Container must have at least 1 and no more than {limit} properties.",
                         code=self.code,
                     )
                 )
             elif not container.properties:
-                errors.append(
-                    ConsistencyError(
+                recommendations.append(
+                    Recommendation(
                         message=(f"Container {container_ref!s} does not have any properties defined."),
-                        fix="Define at least one property for container",
+                        fix=f"Container must have at least 1 and no more than {limit} properties.",
                         code=self.code,
                     )
                 )
 
-        return errors
+        return recommendations
 
 
 class ContainerPropertyListSizeIsOutOfLimits(DataModelRule):

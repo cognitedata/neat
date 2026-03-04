@@ -38,9 +38,9 @@ class ListablePropertyLimits(BaseModel):
 
 
 class ContainerPropertyLimits(BaseModel):
-    limit: int = Field(100, description="Limit of properties per container.")
+    limit_per_container: int = Field(100, description="Limit of properties per container.")
+    limit: int = Field(25_000, description="Total limit of properties.")
     enums: int = Field(32, description="Limit of enums per property.")
-    total: int = Field(25_000, description="Total limit of properties.")
 
     listable: ListablePropertyLimits = Field(default_factory=ListablePropertyLimits)
 
