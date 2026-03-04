@@ -156,9 +156,9 @@ class TestStatisticsAPI:
         dms_stats = SchemaLimits()
         container_props = dms_stats.containers.properties
 
-        assert container_props() == 100  # Default limit per container
+        assert container_props.limit == 25_000
+        assert container_props.limit_per_container == 100  # Default limit for max properties per container
         assert container_props.enums == 32
-        assert container_props.total == 25_000
 
     def test_space_statistics(
         self, neat_client: NeatClient, respx_mock: respx.MockRouter, example_space_statistics_response: dict
