@@ -641,7 +641,6 @@ class TestValidationResourcesRequiresConstraints:
         self,
         mapped_containers_by_view: dict[str, list[str]],
         requires_graph: dict[str, list[str]],
-        cdf_only_views: dict[str, list[str]] | None = None,
     ) -> ValidationResources:
         """Create a minimal ValidationResources for testing requires constraint logic.
 
@@ -650,9 +649,6 @@ class TestValidationResourcesRequiresConstraints:
             requires_graph: Dict mapping container name to list of containers it requires.
                            Use "__auto" suffix to mark constraint as auto-generated.
                            Container names starting with "Cognite" are placed in CDM space.
-            cdf_only_views: Optional dict mapping view names to container names for views
-                           that exist only in CDF (not in the data model). These simulate
-                           external views from other data models.
         """
         # Collect all container names
         all_container_names = set(requires_graph.keys())
@@ -660,8 +656,6 @@ class TestValidationResourcesRequiresConstraints:
             all_container_names.update(container_names)
         for targets in requires_graph.values():
             all_container_names.update(target.removesuffix("__auto") for target in targets)
-        for container_names in (cdf_only_views or {}).values():
-            all_container_names.update(container_names)
 
         # Build containers
         containers: dict[ContainerReference, ContainerRequest] = {}
@@ -702,26 +696,6 @@ class TestValidationResourcesRequiresConstraints:
                 }
             )
 
-        # Build CDF-only views (external views not in the data model)
-        cdf_views: dict[ViewReference, ViewRequest] = {}
-        for view_name, container_names in (cdf_only_views or {}).items():
-            view_ref = self._view_ref(view_name)
-            props = {
-                f"prop_{c}": {
-                    "container": {"space": self._space_for(c), "externalId": c},
-                    "containerPropertyIdentifier": f"prop_{c}",
-                }
-                for c in container_names
-            }
-            cdf_views[view_ref] = ViewRequest.model_validate(
-                {
-                    "space": view_ref.space,
-                    "externalId": view_ref.external_id,
-                    "version": view_ref.version,
-                    "properties": props,
-                }
-            )
-
         # Build data model
         dm_ref = DataModelReference(space=self.DEFAULT_SPACE, external_id="test_model", version=self.DEFAULT_VERSION)
         data_model = {
@@ -736,8 +710,7 @@ class TestValidationResourcesRequiresConstraints:
         }
 
         local = SchemaSnapshot(data_model=data_model, views=views, containers=containers)
-        cdf = SchemaSnapshot(views=cdf_views, containers=containers) if cdf_views else SchemaSnapshot()
-        return ValidationResources(modus_operandi="additive", local=local, cdf=cdf, limits=SchemaLimits())
+        return ValidationResources(modus_operandi="additive", local=local, cdf=SchemaSnapshot(), limits=SchemaLimits())
 
     @pytest.mark.parametrize(
         "mapped_containers_by_view,requires_graph,view_name,expected",
@@ -1055,57 +1028,6 @@ class TestValidationResourcesRequiresConstraints:
 
         result = ValidationResources.forms_directed_path(container_refs, resources.requires_constraint_graph)
         assert result == expected_complete
-
-    @pytest.mark.parametrize(
-        "cdf_only_views,expected",
-        [
-            # ExternalView uses ContainerA only → adding ContainerA→ContainerB
-            # would create an unwanted ingestion dependency on ContainerB for ExternalView
-            pytest.param(
-                {"ExternalView": ["ContainerA"]},
-                RequiresChangesForView(set(), set(), RequiresChangeStatus.UNSOLVABLE),
-                id="external-view-blocks-to-add",
-            ),
-            # ExternalView uses both containers → no new ingestion dependency
-            pytest.param(
-                {"ExternalView": ["ContainerA", "ContainerB"]},
-                RequiresChangesForView(
-                    to_add={
-                        (
-                            ContainerReference(space=DEFAULT_SPACE, external_id="ContainerA"),
-                            ContainerReference(space=DEFAULT_SPACE, external_id="ContainerB"),
-                        )
-                    },
-                    to_remove=set(),
-                    status=RequiresChangeStatus.CHANGES_AVAILABLE,
-                ),
-                id="external-view-allows-to-add-when-both-containers-shared",
-            ),
-        ],
-    )
-    def test_external_view_filter_on_to_add(
-        self,
-        cdf_only_views: dict[str, list[str]],
-        expected: RequiresChangesForView,
-    ) -> None:
-        """Test that external CDF views (not in data model) correctly gate to_add recommendations.
-
-        Setup: MainView=[ContainerA, ContainerB], ExtraView=[ContainerB, ContainerC].
-        ExtraView gives ContainerB more views, so ContainerA becomes root → optimizer proposes ContainerA→ContainerB.
-        """
-        resources = self.create_test_scenario(
-            mapped_containers_by_view={
-                "MainView": ["ContainerA", "ContainerB"],
-                "ExtraView": ["ContainerB", "ContainerC"],
-            },
-            requires_graph={},
-            cdf_only_views=cdf_only_views,
-        )
-        result = resources.get_requires_changes_for_view(self._view_ref("MainView"))
-
-        assert result.to_add == expected.to_add
-        assert result.to_remove == expected.to_remove
-        assert result.status == expected.status
 
     def test_requires_mst_has_no_spurious_cross_group_edges(self) -> None:
         """Verify MST doesn't connect containers that don't share a view."""

@@ -1169,16 +1169,7 @@ class ValidationResources:
             edge for edge in self._transitively_reduced_edges if edge[0] in modifiable_containers_in_view
         }
 
-        # To add: optimal edges not yet present, skip if external views use source but not destination.
-        # This avoids recommending constraints that would break ingestion for views in other data models.
-        merged_views = set(self.merged.views)
-        candidates = optimal_for_view - existing_from_view
-        to_add = {
-            (src, dst)
-            for src, dst in candidates
-            if not (self.views_by_container.get(src, set()) - self.views_by_container.get(dst, set()) - merged_views)
-        }
-        filtered_out = candidates - to_add
+        to_add = optimal_for_view - existing_from_view
 
         # To remove: existing edges with wrong direction or not in MST (and not needed externally)
         # But NEVER remove user-intentional constraints (manually defined, no __auto postfix)
@@ -1190,17 +1181,14 @@ class ValidationResources:
             if (dst, src) in self.oriented_mst_edges:
                 to_remove.add((src, dst))  # Always remove if opposite direction from optimal solution
             elif (src, dst) not in self.oriented_mst_edges and not (
-                self.find_views_mapping_to_containers([src, dst]) - merged_views
+                self.find_views_mapping_to_containers([src, dst]) - set(self.merged.views)
             ):
                 to_remove.add((src, dst))  # Remove if not in optimal solution and not needed by external views
 
-        # Check solvability: use the global optimized graph, but exclude edges filtered from to_add
-        if filtered_out:
-            adjusted_graph = nx.DiGraph(self.optimized_requires_constraint_graph)
-            adjusted_graph.remove_edges_from(filtered_out)
-        else:
-            adjusted_graph = self.optimized_requires_constraint_graph
-        if not self.forms_directed_path(self.containers_by_view.get(view, set()), adjusted_graph):
+        # Check solvability in optimized state
+        if not self.forms_directed_path(
+            self.containers_by_view.get(view, set()), self.optimized_requires_constraint_graph
+        ):
             return RequiresChangesForView(set(), set(), RequiresChangeStatus.UNSOLVABLE)
 
         if not to_add and not to_remove:
