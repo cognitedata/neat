@@ -56,10 +56,6 @@ class ExternalContainerDoesNotExist(DataModelRule):
                 if property_.container.space == self.validation_resources.merged_data_model.space:
                     continue
 
-                if property_.container in self.validation_resources.merged.containers:
-                    # Not an external container.
-                    continue
-
                 # Check existence of container in CDF
                 if property_.container not in self.validation_resources.cdf.containers:
                     errors.append(
@@ -123,10 +119,7 @@ class ExternalContainerPropertyDoesNotExist(DataModelRule):
 
                     # Only check property if container exists in CDF
                     # this check is done in ExternalContainerDoesNotExist
-                    if (
-                        property_.container not in self.validation_resources.cdf.containers
-                        or property_.container in self.validation_resources.merged.containers
-                    ):
+                    if property_.container not in self.validation_resources.cdf.containers:
                         continue
 
                     # Check existence of container property in CDF
