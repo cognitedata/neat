@@ -12,7 +12,7 @@ to ensure optimal performance and prevent resource exhaustion.
 
 ## Example
 If a DirectRelation property has max_list_size=2000 with a btree index, but the limit
-is 1000 for indexed DirectRelations, this validator will raise a ConsistencyError issue.
+is 1000 for indexed DirectRelations, this validator will raise a Recommendation issue.
 
 ## Note
 Enum properties are skipped as they have a separate 32-value limit checked during read time of data model to neat
