@@ -36,7 +36,9 @@ class Change:
     @property
     def successful(self) -> bool:
         """Check if change was successful"""
-        return not self.errors
+        if not self.result:
+            return not self.errors
+        return self.result.status == "success"
 
     @property
     def error_count(self) -> int:

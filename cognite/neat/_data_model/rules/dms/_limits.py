@@ -44,6 +44,10 @@ class DataModelViewCountIsOutOfLimits(DataModelRule):
                 Recommendation(
                     message="The data model does not have any views. This means it is not a data model.",
                     code=self.code,
+                    fix=(
+                        "Data model should have at least 1 and no more than"
+                        f" {self.validation_resources.limits.data_models.views} views."
+                    ),
                 )
             )
 
@@ -58,6 +62,10 @@ class DataModelViewCountIsOutOfLimits(DataModelRule):
                         f"{self.validation_resources.limits.data_models.views} views per data model."
                     ),
                     code=self.code,
+                    fix=(
+                        "Data model should have at least 1 and no more than"
+                        f" {self.validation_resources.limits.data_models.views} views."
+                    ),
                 )
             )
         return recommendations
@@ -100,6 +108,10 @@ class ViewPropertyCountIsOutOfLimits(DataModelRule):
                             f"{self.validation_resources.limits.views.properties} properties per view."
                         ),
                         code=self.code,
+                        fix=(
+                            "View should have at least 1 and no more than"
+                            f" {self.validation_resources.limits.views.properties} properties."
+                        ),
                     )
                 )
 
@@ -110,8 +122,11 @@ class ViewPropertyCountIsOutOfLimits(DataModelRule):
                             f"View {view_ref!s} does "
                             "not have any properties defined, either directly or through implements."
                         ),
-                        fix="Define at least one property for view",
                         code=self.code,
+                        fix=(
+                            "View should have at least 1 and no more than"
+                            f" {self.validation_resources.limits.views.properties} properties."
+                        ),
                     )
                 )
 
@@ -162,6 +177,10 @@ class ViewContainerCountIsOutOfLimits(DataModelRule):
                                 f"{self.validation_resources.limits.views.containers} containers per view."
                             ),
                             code=self.code,
+                            fix=(
+                                "Reduce the number of containers referenced by the view by consolidating properties"
+                                " into fewer containers or refactoring the view to reference fewer containers."
+                            ),
                         )
                     )
 
@@ -200,6 +219,10 @@ class ViewImplementsCountIsOutOfLimits(DataModelRule):
                             f" {self.validation_resources.limits.views.implements} implemented views per view."
                         ),
                         code=self.code,
+                        fix=(
+                            "Reduce the number of implemented views by "
+                            "refactoring the view hierarchy or consolidating views."
+                        ),
                     )
                 )
         return recommendations
@@ -231,6 +254,7 @@ class ContainerPropertyCountIsOutOfLimits(DataModelRule):
         # Single loop over all containers
         for container_ref in self.validation_resources.merged.containers:
             container = self.validation_resources.select_container(container_ref)
+            limit = self.validation_resources.limits.containers.properties.limit_per_container
 
             if not container:
                 raise RuntimeError(
@@ -238,17 +262,16 @@ class ContainerPropertyCountIsOutOfLimits(DataModelRule):
                     "not found in local resources. This is a bug in NEAT."
                 )
 
-            if (
-                container.properties
-                and len(container.properties) > self.validation_resources.limits.containers.properties()
-            ):
+            if container.properties and len(container.properties) > limit:
                 recommendations.append(
                     Recommendation(
                         message=(
                             f"Container {container_ref!s} has {len(container.properties)} properties, "
-                            "which exceeds the limit of "
-                            f"{self.validation_resources.limits.containers.properties()} properties per container."
+                            "which exceeds the default limit of "
+                            f"{limit} "
+                            "properties per container."
                         ),
+                        fix=f"Container must have at least 1 and no more than {limit} properties.",
                         code=self.code,
                     )
                 )
@@ -256,6 +279,7 @@ class ContainerPropertyCountIsOutOfLimits(DataModelRule):
                 recommendations.append(
                     Recommendation(
                         message=(f"Container {container_ref!s} does not have any properties defined."),
+                        fix=f"Container must have at least 1 and no more than {limit} properties.",
                         code=self.code,
                     )
                 )
