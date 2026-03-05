@@ -11,7 +11,7 @@ from cognite.neat._data_model.models.dms._view_property import (
 from cognite.neat._data_model.rules.dms._base import (
     DataModelRule,
 )
-from cognite.neat._issues import ConsistencyError, Recommendation
+from cognite.neat._issues import Recommendation
 
 BASE_CODE = "NEAT-DMS-LIMITS"
 
@@ -34,14 +34,14 @@ class DataModelViewCountIsOutOfLimits(DataModelRule):
     """
 
     code = f"{BASE_CODE}-DATA-MODEL-001"
-    issue_type = ConsistencyError
+    issue_type = Recommendation
 
-    def validate(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
+    def validate(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
 
         if self.validation_resources.merged_data_model.views is None:
-            errors.append(
-                ConsistencyError(
+            recommendations.append(
+                Recommendation(
                     message="The data model does not have any views. This means it is not a data model.",
                     code=self.code,
                 )
@@ -50,8 +50,8 @@ class DataModelViewCountIsOutOfLimits(DataModelRule):
         elif (
             len(self.validation_resources.merged_data_model.views) > self.validation_resources.limits.data_models.views
         ):
-            errors.append(
-                ConsistencyError(
+            recommendations.append(
+                Recommendation(
                     message=(
                         f"The data model references {len(self.validation_resources.merged_data_model.views)} views, "
                         "which exceeds the limit of "
@@ -60,7 +60,7 @@ class DataModelViewCountIsOutOfLimits(DataModelRule):
                     code=self.code,
                 )
             )
-        return errors
+        return recommendations
 
 
 ### View level limits
@@ -81,10 +81,10 @@ class ViewPropertyCountIsOutOfLimits(DataModelRule):
     """
 
     code = f"{BASE_CODE}-VIEW-001"
-    issue_type = ConsistencyError
+    issue_type = Recommendation
 
-    def validate(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
+    def validate(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
 
         for view_ref in self.validation_resources.merged_data_model.views or []:
             # will be captured by a specific validator
@@ -92,8 +92,8 @@ class ViewPropertyCountIsOutOfLimits(DataModelRule):
                 continue
 
             if view.properties and len(view.properties) > self.validation_resources.limits.views.properties:
-                errors.append(
-                    ConsistencyError(
+                recommendations.append(
+                    Recommendation(
                         message=(
                             f"View {view_ref!s} has {len(view.properties)} properties,"
                             " which exceeds the limit of "
@@ -104,8 +104,8 @@ class ViewPropertyCountIsOutOfLimits(DataModelRule):
                 )
 
             elif not view.properties:
-                errors.append(
-                    ConsistencyError(
+                recommendations.append(
+                    Recommendation(
                         message=(
                             f"View {view_ref!s} does "
                             "not have any properties defined, either directly or through implements."
@@ -115,7 +115,7 @@ class ViewPropertyCountIsOutOfLimits(DataModelRule):
                     )
                 )
 
-        return errors
+        return recommendations
 
 
 class ViewContainerCountIsOutOfLimits(DataModelRule):
@@ -179,21 +179,21 @@ class ViewImplementsCountIsOutOfLimits(DataModelRule):
 
     ## Example
     If a view implements 15 other views and the CDF limit is 10 implemented views per view,
-    this validator will raise a ConsistencyError issue.
+    this validator will raise a Recommendation issue.
     """
 
     code = f"{BASE_CODE}-VIEW-003"
-    issue_type = ConsistencyError
+    issue_type = Recommendation
 
-    def validate(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
+    def validate(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
 
         # Single loop over all views
         for view_ref in self.validation_resources.merged_data_model.views or []:
             ancestors = self.validation_resources.view_ancestors(view_ref)
             if ancestors and len(ancestors) > self.validation_resources.limits.views.implements:
-                errors.append(
-                    ConsistencyError(
+                recommendations.append(
+                    Recommendation(
                         message=(
                             f"View {view_ref!s} implements {len(ancestors)} views,"
                             " which exceeds the limit of"
@@ -202,7 +202,7 @@ class ViewImplementsCountIsOutOfLimits(DataModelRule):
                         code=self.code,
                     )
                 )
-        return errors
+        return recommendations
 
 
 ### Container level limits
@@ -220,14 +220,14 @@ class ContainerPropertyCountIsOutOfLimits(DataModelRule):
 
     ## Example
     If a container has 150 properties and the CDF limit is 100 properties per container,
-    this validator will raise a ConsistencyError issue.
+    this validator will raise a Recommendation issue.
     """
 
     code = f"{BASE_CODE}-CONTAINER-001"
-    issue_type = ConsistencyError
+    issue_type = Recommendation
 
-    def validate(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
+    def validate(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
         # Single loop over all containers
         for container_ref in self.validation_resources.merged.containers:
             container = self.validation_resources.select_container(container_ref)
@@ -242,27 +242,25 @@ class ContainerPropertyCountIsOutOfLimits(DataModelRule):
                 container.properties
                 and len(container.properties) > self.validation_resources.limits.containers.properties()
             ):
-                errors.append(
-                    ConsistencyError(
+                recommendations.append(
+                    Recommendation(
                         message=(
                             f"Container {container_ref!s} has {len(container.properties)} properties, "
                             "which exceeds the limit of "
                             f"{self.validation_resources.limits.containers.properties()} properties per container."
                         ),
-                        fix="Define at least one property for container",
                         code=self.code,
                     )
                 )
             elif not container.properties:
-                errors.append(
-                    ConsistencyError(
+                recommendations.append(
+                    Recommendation(
                         message=(f"Container {container_ref!s} does not have any properties defined."),
-                        fix="Define at least one property for container",
                         code=self.code,
                     )
                 )
 
-        return errors
+        return recommendations
 
 
 class ContainerPropertyListSizeIsOutOfLimits(DataModelRule):
@@ -280,7 +278,7 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelRule):
 
     ## Example
     If a DirectRelation property has max_list_size=2000 with a btree index, but the limit
-    is 1000 for indexed DirectRelations, this validator will raise a ConsistencyError issue.
+    is 1000 for indexed DirectRelations, this validator will raise a Recommendation issue.
 
     ## Note
     Enum properties are skipped as they have a separate 32-value limit checked during read time of data model to neat
@@ -288,10 +286,10 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelRule):
     """
 
     code = f"{BASE_CODE}-CONTAINER-002"
-    issue_type = ConsistencyError
+    issue_type = Recommendation
 
-    def validate(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
+    def validate(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
 
         # Single loop over all containers
         for container_ref in self.validation_resources.merged.containers:
@@ -320,8 +318,8 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelRule):
                 limit = self.validation_resources.limits.containers.properties.listable(type_, has_btree_index)
 
                 if type_.max_list_size > limit:
-                    errors.append(
-                        ConsistencyError(
+                    recommendations.append(
+                        Recommendation(
                             message=(
                                 f"Container {container_ref!s} has property {property_id} with list size "
                                 f"{type_.max_list_size}, which exceeds the limit of {limit} "
@@ -331,7 +329,7 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelRule):
                         )
                     )
 
-        return errors
+        return recommendations
 
     @staticmethod
     def container_property_by_index_type(container: ContainerRequest) -> dict[Literal["btree", "inverted"], list]:

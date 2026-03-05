@@ -8,4 +8,4 @@ CDF enforces limits on the number of implemented views to prevent overly deep in
 
 ## Example
 If a view implements 15 other views and the CDF limit is 10 implemented views per view,
-this validator will raise a ConsistencyError issue.
+this validator will raise a Recommendation issue.

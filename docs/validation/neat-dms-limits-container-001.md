@@ -9,4 +9,4 @@ and prevent PostGres tables that have too many columns.
 
 ## Example
 If a container has 150 properties and the CDF limit is 100 properties per container,
-this validator will raise a ConsistencyError issue.
+this validator will raise a Recommendation issue.
