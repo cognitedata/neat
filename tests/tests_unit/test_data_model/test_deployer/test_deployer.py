@@ -399,3 +399,59 @@ class TestSchemaDeployer:
         assert len(changes.unchanged) == 0
         assert len(changes.skipped) == len(model.spaces) + len(model.containers) + len(model.views) + 1
         assert all(["in the reserved Cognite space" in cast(str, skipped.message) for skipped in changes.skipped])
+
+    def test_apply_plan_skip_subsequent_resources_on_failure(
+        self, neat_client: NeatClient, model: RequestSchema, respx_mock: respx.MockRouter
+    ) -> None:
+        """Test that subsequent resources are skipped when an earlier resource fails during upsert.
+
+        This test verifies the behavior where:
+        1. Containers fail to upsert
+        2. Views should be skipped with the failure message
+        3. Skipped changes should have current_value and new_value set to None
+        """
+        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=False))
+        plan: list[ResourceDeploymentPlan] = [
+            ResourceDeploymentPlan(
+                endpoint="containers",
+                resources=[
+                    ResourceChange(resource_id=container.as_reference(), new_value=container)
+                    for container in model.containers
+                ],
+            ),
+            ResourceDeploymentPlan(
+                endpoint="views",
+                resources=[ResourceChange(resource_id=view.as_reference(), new_value=view) for view in model.views],
+            ),
+        ]
+
+        # Mock containers endpoint to fail
+        respx_mock.post(neat_client.config.create_api_url("/models/containers")).respond(
+            status_code=500,
+            json={
+                "error": {
+                    "code": "InternalError",
+                    "message": "Simulated container creation error",
+                }
+            },
+        )
+
+        with patch("time.sleep"):  # In order to speed up tests
+            result = deployer.apply_changes(plan)
+
+        # Assertions for container failure
+        assert not result.is_success
+        assert len(result.created) == 1  # Failed creation attempt
+
+        # Assertions for skipped views
+        assert len(result.skipped) == len(model.views), "All views should be skipped"
+
+        # Verify that skipped changes have current_value and new_value set to None
+        for skipped_change in result.skipped:
+            assert skipped_change.change.current_value is None, (
+                "Skipped change should have current_value set to None to mark as creation"
+            )
+            assert skipped_change.change.new_value is None, "Skipped change should have new_value set to None"
+            assert "Skipping due to containers upsert failing" in skipped_change.reason, (
+                "Skipped change should have the failure message"
+            )
