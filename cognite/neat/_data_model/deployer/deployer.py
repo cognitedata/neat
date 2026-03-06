@@ -308,6 +308,8 @@ class SchemaDeployer(OnSuccessResultProducer):
         applied_changes = AppliedChanges()
         # If any HTTP request fails, the skip_message will be set and subsequent operations will be skipped
         failure_message: str | None = None
+
+        # Step 1: Delete resources in reverse order
         for resource in reversed(plan):
             if failure_message is None:
                 deletions = self._delete_items(resource)
@@ -322,7 +324,9 @@ class SchemaDeployer(OnSuccessResultProducer):
                     ]
                 )
 
+        # Step 2: Create/update resources in original order spaces, containers, views, data models
         for resource in plan:
+            # Try to upsert resources, if one of them fail, the remaining resources will be skipped
             if failure_message is None:
                 if isinstance(resource, ContainerDeploymentPlan):
                     # Note that we continue to deploy even if removing constraints/indexes fail,
@@ -335,13 +339,13 @@ class SchemaDeployer(OnSuccessResultProducer):
                 applied_changes.updated.extend(updated)
                 if any(not change.is_success for change in creations + updated):
                     failure_message = f"Skipping due to {resource.endpoint} upsert failing."
+
+            # Any follow up operations are skipped if there was a failure in the current resource
             else:
-                applied_changes.skipped.extend(
-                    [
-                        NoOpChangeResult(endpoint=resource.endpoint, change=change, reason=failure_message)
-                        for change in resource.to_upsert
-                    ]
-                )
+                for change in resource.to_upsert:
+                    change.current_value = None  # Mark as creation in the skipped changes
+                    change.new_value = None
+                    change.message = failure_message
 
             applied_changes.unchanged.extend(
                 [
