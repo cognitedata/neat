@@ -9,6 +9,13 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 
+[manifest]
+constraints = [
+    { name = "cryptography", specifier = ">=46.0.5" },
+    { name = "nbconvert", specifier = ">=7.17.0" },
+    { name = "pillow", specifier = ">=12.1.1" },
+]
+
 [[package]]
 name = "annotated-types"
 version = "0.7.0"
