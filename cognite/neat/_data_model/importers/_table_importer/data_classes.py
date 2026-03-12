@@ -20,6 +20,7 @@ from cognite.neat._utils.useful_types import CellValueType
 # This marker is used to identify creator in the description field.
 CREATOR_MARKER = "Creator: "
 CREATOR_KEY = "creator"
+GOVERNED_SPACES_KEY = "governedSpaces"
 
 
 def parse_entity_str(v: str) -> ParsedEntity:

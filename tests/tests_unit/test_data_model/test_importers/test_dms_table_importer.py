@@ -14,6 +14,7 @@ from cognite.neat._data_model.exporters._table_exporter.exporter import (
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookCreator
 from cognite.neat._data_model.importers import DMSTableImporter
 from cognite.neat._data_model.importers._table_importer.data_classes import (
+    GOVERNED_SPACES_KEY,
     EntityTableFilter,
     RAWFilterTableFilter,
     TableViewFilter,
@@ -1004,7 +1005,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                 {"Key": "space", "Value": "test_space"},
                 {"Key": "externalId", "Value": "TestModel"},
                 {"Key": "version", "Value": "v1"},
-                {"Key": "governedSpaces", "Value": "anotherSpace,yetAnotherSpace"},
+                {"Key": GOVERNED_SPACES_KEY, "Value": "anotherSpace,yetAnotherSpace"},
             ],
             "Properties": [
                 {
