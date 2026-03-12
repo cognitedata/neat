@@ -227,8 +227,10 @@ class TestDMSAPIImporter:
     def test_read_multi_yaml_directory(self, example_dms_schema_request: dict[str, Any]) -> None:
         """Test reading data model schema from multiple YAML files in a directory."""
         yaml_files: list[MagicMock] = []
+        empty: set[str] = set()
         for key, data in example_dms_schema_request.items():
             if not data:
+                empty.add(key)
                 continue
             yaml_file = MagicMock(spec=Path)
             yaml_file.read_text.return_value = yaml.safe_dump(data)
@@ -240,14 +242,17 @@ class TestDMSAPIImporter:
 
         importer = DMSAPIImporter.from_yaml(yaml_dir)
         schema = importer.to_data_model()
-        assert schema.model_dump(by_alias=True, exclude_unset=True) == example_dms_schema_request
+        assert schema.model_dump(by_alias=True, exclude_unset=True) == {
+            k: v for k, v in example_dms_schema_request.items() if k not in empty
+        }
 
     def test_read_multi_yaml_multi_data_model_directory(self, multi_data_model_schema_request: dict[str, Any]) -> None:
         """Test reading data model schema from multiple YAML files in a directory."""
         yaml_files: list[MagicMock] = []
-
+        empty: set[str] = set()
         for key, data in multi_data_model_schema_request.items():
             if not data:
+                empty.add(key)
                 continue
             for i, item in enumerate(data):
                 yaml_file = MagicMock(spec=Path)
@@ -272,4 +277,6 @@ class TestDMSAPIImporter:
 
         # drop the second data model
         multi_data_model_schema_request["dataModel"] = multi_data_model_schema_request["dataModel"][0]
-        assert schema.model_dump(by_alias=True, exclude_unset=True) == multi_data_model_schema_request
+        assert schema.model_dump(by_alias=True, exclude_unset=True) == {
+            k: v for k, v in multi_data_model_schema_request.items() if k not in empty
+        }
