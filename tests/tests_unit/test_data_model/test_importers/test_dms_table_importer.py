@@ -998,6 +998,68 @@ def valid_dms_table_formats() -> Iterable[tuple]:
         ),
         id="Multi-property indices and constraints",
     )
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+                {"Key": "governedSpaces", "Value": "anotherSpace,yetAnotherSpace"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "name",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "name",
+                },
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+        },
+        RequestSchema(
+            dataModel=DataModelRequest(
+                space="test_space",
+                externalId="TestModel",
+                version="v1",
+                views=[ViewReference(space="test_space", external_id="TestView", version="v1")],
+            ),
+            spaces=[SpaceRequest(space="test_space")],
+            views=[
+                ViewRequest(
+                    space="test_space",
+                    externalId="TestView",
+                    version="v1",
+                    properties={
+                        "name": ViewCorePropertyRequest(
+                            container=ContainerReference(space="test_space", external_id="TestContainer"),
+                            containerPropertyIdentifier="name",
+                        ),
+                    },
+                )
+            ],
+            containers=[
+                ContainerRequest(
+                    space="test_space",
+                    externalId="TestContainer",
+                    usedFor="node",
+                    properties={
+                        "name": ContainerPropertyDefinition(
+                            type=TextProperty(list=False),
+                            nullable=True,
+                        ),
+                    },
+                )
+            ],
+            nodeTypes=[],
+            governedSpace=[SpaceRequest(space="anotherSpace"), SpaceRequest(space="yetAnotherSpace")],
+        ),
+        id="Reading with governed spaces",
+    )
 
 
 def invalid_dms_table_formats() -> Iterable[tuple]:
