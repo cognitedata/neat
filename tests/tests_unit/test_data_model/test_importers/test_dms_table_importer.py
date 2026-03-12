@@ -1057,7 +1057,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                 )
             ],
             nodeTypes=[],
-            governedSpace=[SpaceRequest(space="anotherSpace"), SpaceRequest(space="yetAnotherSpace")],
+            governedSpaces=[SpaceRequest(space="anotherSpace"), SpaceRequest(space="yetAnotherSpace")],
         ),
         id="Reading with governed spaces",
     )

@@ -228,6 +228,8 @@ class TestDMSAPIImporter:
         """Test reading data model schema from multiple YAML files in a directory."""
         yaml_files: list[MagicMock] = []
         for key, data in example_dms_schema_request.items():
+            if not data:
+                continue
             yaml_file = MagicMock(spec=Path)
             yaml_file.read_text.return_value = yaml.safe_dump(data)
             yaml_file.suffix = ".yaml"
@@ -245,6 +247,8 @@ class TestDMSAPIImporter:
         yaml_files: list[MagicMock] = []
 
         for key, data in multi_data_model_schema_request.items():
+            if not data:
+                continue
             for i, item in enumerate(data):
                 yaml_file = MagicMock(spec=Path)
                 yaml_file.read_text.return_value = yaml.safe_dump(item)

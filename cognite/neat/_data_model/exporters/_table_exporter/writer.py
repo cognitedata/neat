@@ -9,6 +9,7 @@ from cognite.neat._data_model._constants import DEFAULT_MAX_LIST_SIZE, DEFAULT_M
 from cognite.neat._data_model.importers._table_importer.data_classes import (
     CREATOR_KEY,
     CREATOR_MARKER,
+    GOVERNED_SPACES_KEY,
     DMSContainer,
     DMSEnum,
     DMSNode,
@@ -37,6 +38,7 @@ from cognite.neat._data_model.models.dms import (
     NodeReference,
     RequestSchema,
     RequiresConstraintDefinition,
+    SpaceRequest,
     UniquenessConstraintDefinition,
     ViewCorePropertyRequest,
     ViewReference,
@@ -74,7 +76,7 @@ class DMSTableWriter:
 
     ## Main Entry Point ###
     def write_tables(self, schema: RequestSchema) -> TableDMS:
-        metadata = self.write_metadata(schema.data_model)
+        metadata = self.write_metadata(schema.data_model, schema.governed_spaces)
         container_properties = self.write_container_properties(schema.containers)
         view_properties = self.write_view_properties(schema.views, container_properties)
         views = self.write_views(schema.views)
@@ -91,7 +93,7 @@ class DMSTableWriter:
 
     ### Metadata Sheet ###
     @classmethod
-    def write_metadata(cls, data_model: DataModelRequest) -> list[MetadataValue]:
+    def write_metadata(cls, data_model: DataModelRequest, governed_spaces: list[SpaceRequest]) -> list[MetadataValue]:
         metadata = [
             MetadataValue(key=key, value=value)
             for key, value in data_model.model_dump(
@@ -104,6 +106,12 @@ class DMSTableWriter:
                 metadata.append(MetadataValue(key="description", value=description))
             if creator:
                 metadata.append(MetadataValue(key=CREATOR_KEY, value=creator))
+        if governed_spaces:
+            metadata.append(
+                MetadataValue(
+                    key=GOVERNED_SPACES_KEY, value=",".join(sorted([space.space for space in governed_spaces]))
+                )
+            )
         return metadata
 
     @staticmethod

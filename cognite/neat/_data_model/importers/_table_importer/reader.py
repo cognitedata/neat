@@ -203,7 +203,7 @@ class DMSTableReader:
             containers=containers,
             spaces=[space_request],
             nodeTypes=node_types,
-            governedSpace=governed_spaces,
+            governedSpaces=governed_spaces,
         )
 
     def read_space(self, space: str) -> SpaceRequest:
