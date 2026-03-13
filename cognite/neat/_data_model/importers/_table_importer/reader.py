@@ -33,12 +33,14 @@ from cognite.neat._utils.validation import ValidationContext, humanize_validatio
 from .data_classes import (
     CREATOR_KEY,
     CREATOR_MARKER,
+    GOVERNED_SPACES_KEY,
     DMSContainer,
     DMSEnum,
     DMSNode,
     DMSProperty,
     DMSView,
     EntityTableFilter,
+    MetadataValue,
     RAWFilterTableFilter,
     TableDMS,
     TableViewFilter,
@@ -191,11 +193,17 @@ class DMSTableReader:
         containers = self.read_containers(tables.containers, processed)
         views, valid_view_entities = self.read_views(tables.views, processed.view)
         data_model = self.read_data_model(tables, valid_view_entities)
+        governed_spaces = self.read_governed_spaces(tables.metadata)
 
         if self.errors:
             raise DataModelImportException(self.errors) from None
         return RequestSchema(
-            dataModel=data_model, views=views, containers=containers, spaces=[space_request], nodeTypes=node_types
+            dataModel=data_model,
+            views=views,
+            containers=containers,
+            spaces=[space_request],
+            nodeTypes=node_types,
+            governedSpaces=governed_spaces,
         )
 
     def read_space(self, space: str) -> SpaceRequest:
@@ -942,6 +950,12 @@ class DMSTableReader:
             # This is the last step, so we can raise the error here.
             raise DataModelImportException(self.errors) from None
         return model
+
+    def read_governed_spaces(self, metadata: list[MetadataValue]) -> list[SpaceRequest]:
+        value = next((item.value for item in metadata if item.key == GOVERNED_SPACES_KEY), None)
+        if value is None:
+            return []
+        return [SpaceRequest(space=space) for space_str in str(value).split(",") if (space := space_str.strip())]
 
     def _create_description_field(self, data: dict[str, Any]) -> str | None:
         """DataModelRequest does not have a 'creator' field, this is a special addition that the Neat tables

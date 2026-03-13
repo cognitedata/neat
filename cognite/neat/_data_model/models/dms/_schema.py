@@ -16,3 +16,11 @@ class RequestSchema(Resource):
     containers: list[ContainerRequest] = Field(default_factory=list)
     spaces: list[SpaceRequest] = Field(default_factory=list)
     node_types: list[NodeReference] = Field(default_factory=list)
+    governed_spaces: list[SpaceRequest] = Field(
+        default_factory=list,
+        description="This is an optional list of SpaceRequest objects"
+        "that contains spaces that is governed by Neat. This will impact validation and deployment",
+    )
+
+    def governed_space_set(self) -> set[str]:
+        return {space.space for space in self.governed_spaces} | {self.data_model.space}

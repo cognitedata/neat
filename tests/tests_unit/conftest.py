@@ -208,6 +208,7 @@ def example_dms_schema_request(
             .as_request()
             .model_dump(by_alias=True, exclude_unset=True)
         ],
+        "governedSpaces": [],
     }
 
 
