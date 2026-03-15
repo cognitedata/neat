@@ -4,6 +4,7 @@ from typing import Any, Literal, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from cognite.neat._data_model.importers._table_importer.data_classes import GOVERNED_SPACES_KEY
 from cognite.neat._exceptions import UserInputError
 from cognite.neat._issues import ConsistencyError, ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
@@ -115,6 +116,13 @@ class AlphaFlagConfig(ConfigModel):
         description="If enabled, when multiple data model YAML files are found in a directory, "
         "the user can specify which one to use by providing the 'data_model_file' "
         "argument with the file name of the data model YAML file they want to use.",
+    )
+    enable_govern_spaces: bool = Field(
+        default=False,
+        description=f"If enabled, Neat will read {GOVERNED_SPACES_KEY} in the metadata sheet and consider "
+        "all containers and views part in these spaces to be part of the governed data model. This "
+        "means that Neat will check the local data model instead of CDF for containers and views "
+        "in these spaces. In addition, Neat will deploy and not skip containers and views in these spaces. ",
     )
 
     def __setattr__(self, key: str, value: Any) -> None:
