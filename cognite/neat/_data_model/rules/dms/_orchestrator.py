@@ -83,5 +83,7 @@ class DmsDataModelRulesOrchestrator(FixProducingOrchestrator):
             local=local,
             limits=self._limits,
             modus_operandi=self._modus_operandi,
-            alpha_flags=self._alpha_flags,
+            governed_spaces=request_schema.governed_space_set()
+            if self._alpha_flags and self._alpha_flags.enable_governed_spaces
+            else {request_schema.data_model.space},
         )
