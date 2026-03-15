@@ -1,7 +1,7 @@
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from functools import partial
-from typing import cast
+from typing import Any, cast
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model._constants import COGNITE_SPACES
@@ -23,6 +23,7 @@ from cognite.neat._utils.http_client import (
     SuccessResponseItems,
 )
 from cognite.neat._utils.http_client._data_classes import APIResponse
+from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.useful_types import ModusOperandi, T_Reference
 
 from ._differ import ItemDiffer
@@ -61,6 +62,7 @@ class DeploymentOptions:
         modus_operandi (ModusOperandi): Deployment mode. If "additive", only add/modify resources
             specified in the data model. If "rebuild", remove resources not present in the data model.
             Defaults to "additive".
+        check_governed_spaces: Whether to check the governed spaces of the data model when deciding to skip resources.
     """
 
     dry_run: bool = True
@@ -68,6 +70,7 @@ class DeploymentOptions:
     drop_data: bool = False
     max_severity: SeverityType = SeverityType.WARNING
     modus_operandi: ModusOperandi = "additive"
+    check_governed_spaces: bool = False
 
 
 class SchemaDeployer(OnSuccessResultProducer):
@@ -127,6 +130,13 @@ class SchemaDeployer(OnSuccessResultProducer):
         )
 
     def create_deployment_plan(self, snapshot: SchemaSnapshot, data_model: RequestSchema) -> ResourceDeploymentPlanList:
+        skip_args: dict[str, Any] = dict(
+            model_space=data_model.data_model.space,
+            governed_spaces=set(),
+        )
+        if self.options.check_governed_spaces:
+            skip_args["governed_spaces"] = data_model.governed_space_set()
+
         return ResourceDeploymentPlanList(
             [
                 self._create_resource_plan(
@@ -134,7 +144,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                     data_model.spaces,
                     "spaces",
                     SpaceDiffer(),
-                    skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),
+                    skip_criteria=partial(self._skip_resource, **skip_args),
                 ),
                 self._create_resource_plan(
                     snapshot.containers,
@@ -142,7 +152,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                     "containers",
                     ContainerDiffer(),
                     ContainerDeploymentPlan,
-                    skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),
+                    skip_criteria=partial(self._skip_resource, **skip_args),
                 ),
                 self._create_resource_plan(
                     snapshot.views,
@@ -152,14 +162,14 @@ class SchemaDeployer(OnSuccessResultProducer):
                         current_container_map=snapshot.containers,
                         new_container_map={container.as_reference(): container for container in data_model.containers},
                     ),
-                    skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),
+                    skip_criteria=partial(self._skip_resource, **skip_args),
                 ),
                 self._create_resource_plan(
                     snapshot.data_model,
                     [data_model.data_model],
                     "datamodels",
                     DataModelDiffer(),
-                    skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),
+                    skip_criteria=partial(self._skip_resource, **skip_args),
                 ),
             ]
         )
@@ -247,22 +257,24 @@ class SchemaDeployer(OnSuccessResultProducer):
         return modified_diffs
 
     @classmethod
-    def _skip_resource(cls, resource_id: T_ResourceId, model_space: str) -> str | None:
+    def _skip_resource(cls, resource_id: T_ResourceId, model_space: str, governed_spaces: set[str]) -> str | None:
         """Checks if a resource should be skipped based on its space.
 
         Args:
             resource_id: The ID of the resource to check.
             model_space: The space of the data model.
+            governed_spaces: The spaces that are governed by Neat, thus we should not skip them
 
         Returns:
             A reason for skipping if the resource space does not match the model space, otherwise None.
         """
         if resource_id.space in COGNITE_SPACES:
             return f"Skipping resource as it is in the reserved Cognite space '{resource_id.space}'."
-        elif resource_id.space != model_space:
+        elif resource_id.space != model_space and resource_id.space not in governed_spaces:
+            all_governed_spaces = humanize_collection({model_space} | governed_spaces)
             return (
                 f"Skipping resource as it is in the space '{resource_id.space}'"
-                f" not matching data model space '{model_space}'."
+                f" not matching any of the spaces Neat govern: '{all_governed_spaces}'."
             )
         return None
 
