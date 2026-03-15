@@ -76,7 +76,7 @@ class DMSTableWriter:
 
     ## Main Entry Point ###
     def write_tables(self, schema: RequestSchema) -> TableDMS:
-        metadata = self.write_metadata(schema.data_model, schema.governed_spaces)
+        metadata = self.write_metadata(schema.data_model, schema.extra.governed_spaces)
         container_properties = self.write_container_properties(schema.containers)
         view_properties = self.write_view_properties(schema.views, container_properties)
         views = self.write_views(schema.views)
