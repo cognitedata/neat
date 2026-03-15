@@ -44,6 +44,7 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
+from cognite.neat._data_model.models.dms._schema import SchemaExtra
 from cognite.neat._data_model.models.entities import ParsedEntity
 from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
@@ -1057,7 +1058,9 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                 )
             ],
             nodeTypes=[],
-            governedSpaces=[SpaceRequest(space="anotherSpace"), SpaceRequest(space="yetAnotherSpace")],
+            extra=SchemaExtra(
+                governedSpaces=[SpaceRequest(space="anotherSpace"), SpaceRequest(space="yetAnotherSpace")]
+            ),
         ),
         id="Reading with governed spaces",
     )
