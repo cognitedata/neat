@@ -307,7 +307,7 @@ class WritePhysicalDataModel:
             auto_rollback=rollback,
             drop_data=drop_data,
             modus_operandi=self._config.modeling.mode,
-            check_governed_spaces=self._config.alpha.enable_govern_spaces,
+            check_governed_spaces=self._config.alpha.enable_governed_spaces,
         )
         on_success = SchemaDeployer(self._client, options)
         return self._store.write_physical(writer, on_success)

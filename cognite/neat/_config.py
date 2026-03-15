@@ -117,7 +117,7 @@ class AlphaFlagConfig(ConfigModel):
         "the user can specify which one to use by providing the 'data_model_file' "
         "argument with the file name of the data model YAML file they want to use.",
     )
-    enable_govern_spaces: bool = Field(
+    enable_governed_spaces: bool = Field(
         default=False,
         description=f"If enabled, Neat will read {GOVERNED_SPACES_KEY} in the metadata sheet and consider "
         "all containers and views part in these spaces to be part of the governed data model. This "
