@@ -9,6 +9,7 @@ from typing import Literal, TypeAlias, TypeVar
 import networkx as nx
 
 from cognite.neat._client.data_classes import SpaceStatisticsResponse
+from cognite.neat._config import AlphaFlagConfig
 from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
@@ -88,10 +89,12 @@ class ValidationResources:
         cdf: SchemaSnapshot,
         limits: SchemaLimits | None = None,
         space_statistics: SpaceStatisticsResponse | None = None,
+        alpha_flags: AlphaFlagConfig | None = None,
     ) -> None:
         self._modus_operandi = modus_operandi
         self.limits = limits or SchemaLimits()
         self.space_statistics = space_statistics
+        self.alpha_flags = alpha_flags
 
         self.local = local
         self.cdf = cdf

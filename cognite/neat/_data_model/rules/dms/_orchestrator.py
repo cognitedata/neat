@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from datetime import datetime, timezone
 
+from cognite.neat._config import AlphaFlagConfig
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model._shared import FixProducingOrchestrator
 from cognite.neat._data_model._snapshot import SchemaSnapshot
@@ -21,7 +22,7 @@ class DmsDataModelRulesOrchestrator(FixProducingOrchestrator):
         limits: SchemaLimits,
         modus_operandi: ModusOperandi = "additive",
         can_run_validator: Callable[[str, type], bool] | None = None,
-        enable_alpha_validators: bool = False,
+        alpha_flags: AlphaFlagConfig | None = None,
     ) -> None:
         super().__init__()
         self._cdf_snapshot = cdf_snapshot
@@ -29,7 +30,7 @@ class DmsDataModelRulesOrchestrator(FixProducingOrchestrator):
         self._modus_operandi = modus_operandi
         self._can_run_validator = can_run_validator or (lambda code, issue_type: True)  # type: ignore
         self._has_run = False
-        self._enable_alpha_validators = enable_alpha_validators
+        self._alpha_flags = alpha_flags
 
     def run(self, request_schema: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
@@ -43,7 +44,7 @@ class DmsDataModelRulesOrchestrator(FixProducingOrchestrator):
 
         # Run validators
         for validator in validators:
-            if validator.alpha and not self._enable_alpha_validators:
+            if validator.alpha and not self._is_alpha_validators_enabled:
                 continue
             if self._can_run_validator(validator.code, validator.issue_type):
                 self._issues.extend(validator.validate())
@@ -52,13 +53,17 @@ class DmsDataModelRulesOrchestrator(FixProducingOrchestrator):
 
         self._has_run = True
 
+    @property
+    def _is_alpha_validators_enabled(self) -> bool:
+        return bool(self._alpha_flags and self._alpha_flags.enable_experimental_validators)
+
     def copy(self) -> "DmsDataModelRulesOrchestrator":
         return DmsDataModelRulesOrchestrator(
             cdf_snapshot=self._cdf_snapshot,
             limits=self._limits,
             modus_operandi=self._modus_operandi,
             can_run_validator=self._can_run_validator,
-            enable_alpha_validators=self._enable_alpha_validators,
+            alpha_flags=self._alpha_flags,
         )
 
     def _gather_validation_resources(self, request_schema: RequestSchema) -> ValidationResources:
@@ -78,4 +83,5 @@ class DmsDataModelRulesOrchestrator(FixProducingOrchestrator):
             local=local,
             limits=self._limits,
             modus_operandi=self._modus_operandi,
+            alpha_flags=self._alpha_flags,
         )

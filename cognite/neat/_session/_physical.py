@@ -115,7 +115,7 @@ class ReadPhysicalDataModel:
             cdf_snapshot=self._store.cdf_snapshot,
             limits=self._store.cdf_limits,
             can_run_validator=self._config.validation.can_run_validator,
-            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
+            alpha_flags=self._config.alpha,
         )
 
     def _yaml(

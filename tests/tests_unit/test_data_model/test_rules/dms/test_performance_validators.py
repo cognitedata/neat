@@ -4,7 +4,7 @@ from typing import Literal
 
 import pytest
 
-from cognite.neat._config import internal_profiles
+from cognite.neat._config import AlphaFlagConfig, internal_profiles
 from cognite.neat._data_model.deployer.data_classes import ChangedField
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
@@ -31,7 +31,7 @@ def test_missing_reverse_direct_relation_target_index(
         limits=SchemaLimits(),
         modus_operandi=mode,
         can_run_validator=config.validation.can_run_validator,
-        enable_alpha_validators=True,
+        alpha_flags=AlphaFlagConfig(enable_experimental_validators=True),
     )
     on_success.run(data_model)
     by_code = on_success.issues.by_code()
