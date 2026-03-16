@@ -115,7 +115,7 @@ class ReadPhysicalDataModel:
             cdf_snapshot=self._store.cdf_snapshot,
             limits=self._store.cdf_limits,
             can_run_validator=self._config.validation.can_run_validator,
-            enable_alpha_validators=self._config.alpha.enable_experimental_validators,
+            alpha_flags=self._config.alpha,
         )
 
     def _yaml(
@@ -307,6 +307,7 @@ class WritePhysicalDataModel:
             auto_rollback=rollback,
             drop_data=drop_data,
             modus_operandi=self._config.modeling.mode,
+            check_governed_spaces=self._config.alpha.enable_governed_spaces,
         )
         on_success = SchemaDeployer(self._client, options)
         return self._store.write_physical(writer, on_success)

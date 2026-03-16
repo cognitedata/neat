@@ -1,5 +1,6 @@
 import math
 from collections import defaultdict
+from collections.abc import Set
 from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
@@ -88,6 +89,7 @@ class ValidationResources:
         cdf: SchemaSnapshot,
         limits: SchemaLimits | None = None,
         space_statistics: SpaceStatisticsResponse | None = None,
+        governed_spaces: Set[str] | None = None,
     ) -> None:
         self._modus_operandi = modus_operandi
         self.limits = limits or SchemaLimits()
@@ -105,7 +107,7 @@ class ValidationResources:
 
         # need this shortcut for easier access and also to avoid mypy to complains
         self.merged_data_model = self.merged.data_model[next(iter(self.merged.data_model.keys()))]
-
+        self.governed_spaces = governed_spaces or {self.merged_data_model.space}
         # For caching of expanded views
         self._expanded_views_cache: dict[ViewReference, ViewRequest] = {}
 
@@ -196,18 +198,18 @@ class ValidationResources:
             # Auto mode: driven by data modeling modus (approach)
             # If elements is in the schema space, we check merged, else we check CDF
 
-            in_schema_space = resource_ref.space == self.merged_data_model.space
+            is_governed_space = resource_ref.space in self.governed_spaces
 
             if self._modus_operandi == "additive":
                 # In additive modus, schema space means local additions on top of CDF
                 # always check CDF, while do not check merged if resource is not in schema space
-                check_merged = in_schema_space
+                check_merged = is_governed_space
                 check_cdf = True
             elif self._modus_operandi == "rebuild":
                 # In rebuild modus, schema space means the full desired state is in local schema (i.e., merged)
                 # you are not adding to CDF, but replacing it, so never check CDF for schema space resources
-                check_merged = in_schema_space
-                check_cdf = not in_schema_space
+                check_merged = is_governed_space
+                check_cdf = not is_governed_space
             else:
                 raise RuntimeError(
                     f"_resolve_resource_sources: Unknown modus_operandi: {self._modus_operandi}. This is a bug!"

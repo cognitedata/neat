@@ -24,6 +24,7 @@ from cognite.neat._data_model.models.dms import (
     ViewRequestPropertyAdapter,
 )
 from cognite.neat._data_model.models.dms._constants import DATA_MODEL_DESCRIPTION_MAX_LENGTH
+from cognite.neat._data_model.models.dms._schema import SchemaExtra
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
 from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._issues import ModelSyntaxError
@@ -203,7 +204,7 @@ class DMSTableReader:
             containers=containers,
             spaces=[space_request],
             nodeTypes=node_types,
-            governedSpaces=governed_spaces,
+            extra=SchemaExtra(governedSpaces=governed_spaces),
         )
 
     def read_space(self, space: str) -> SpaceRequest:

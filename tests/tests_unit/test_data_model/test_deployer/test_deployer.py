@@ -27,11 +27,16 @@ from cognite.neat._data_model.models.dms import (
     ContainerPropertyDefinition,
     ContainerReference,
     ContainerRequest,
+    DataModelRequest,
     RequestSchema,
     RequiresConstraintDefinition,
+    SpaceRequest,
     TextProperty,
     UniquenessConstraintDefinition,
+    ViewCorePropertyRequest,
+    ViewRequest,
 )
+from cognite.neat._data_model.models.dms._schema import SchemaExtra
 from tests.data import SNAPSHOT_CATALOG
 
 
@@ -45,6 +50,49 @@ def schema_snapshot(
     neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
 ) -> SchemaSnapshot:
     return SchemaSnapshot.fetch_cdf_data_model(neat_client, model)
+
+
+@pytest.fixture()
+def container_in_other_space() -> RequestSchema:
+    """Create a schema where the container is in a different space than the data model."""
+    data_model_space = "my_space"
+    container_space = "other_space"
+
+    container_ref = ContainerReference(space=container_space, external_id="my_container")
+    container = ContainerRequest(
+        space=container_space,
+        externalId="my_container",
+        name="My Container",
+        properties={"prop1": ContainerPropertyDefinition(type=TextProperty())},
+    )
+    view = ViewRequest(
+        space=data_model_space,
+        externalId="my_view",
+        version="v1",
+        name="My View",
+        properties={
+            "prop1": ViewCorePropertyRequest(
+                container=container_ref,
+                containerPropertyIdentifier="prop1",
+            )
+        },
+    )
+    data_model = DataModelRequest(
+        space=data_model_space,
+        externalId="my_data_model",
+        version="v1",
+        name="My Data Model",
+        views=[view.as_reference()],
+    )
+    space = SpaceRequest(space=data_model_space, name="My Space")
+
+    return RequestSchema(
+        dataModel=data_model,
+        views=[view],
+        containers=[container],
+        spaces=[space],
+        extra=SchemaExtra(governedSpaces=[SpaceRequest(space=container_space)]),
+    )
 
 
 class TestSchemaDeployer:
@@ -455,3 +503,32 @@ class TestSchemaDeployer:
             assert "Skipping due to containers upsert failing" in skipped_change.reason, (
                 "Skipped change should have the failure message"
             )
+
+    @pytest.mark.parametrize(
+        "check_governed_spaces",
+        [pytest.param(True, id="Govern other space"), pytest.param(False, id="Only check schema space")],
+    )
+    def test_govern_container_in_other_space(
+        self,
+        check_governed_spaces: bool,
+        container_in_other_space: RequestSchema,
+        neat_client: NeatClient,
+        empty_cdf: respx.MockRouter,
+    ) -> None:
+        deployer = SchemaDeployer(
+            neat_client,
+            options=DeploymentOptions(dry_run=True, check_governed_spaces=check_governed_spaces),
+        )
+        results = deployer.deploy(container_in_other_space)
+
+        plan = results.plan
+        to_create = sum(len(item.to_create) for item in plan)
+        to_skip = sum(len(item.skip) for item in plan)
+
+        # There should be 4 resources, space, container, view and data model.
+        # If governed spaces is not turned on, then we should skip the container.
+        if check_governed_spaces:
+            assert to_create == 4
+        else:
+            assert to_create == 3
+            assert to_skip == 1

@@ -3,6 +3,7 @@ from typing import Any
 import pytest
 
 from cognite.neat import NeatConfig
+from cognite.neat._config import AlphaFlagConfig
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.rules.dms._base import DataModelRule  # for identity check
@@ -57,7 +58,7 @@ def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> Non
         limits=SchemaLimits(),
         modus_operandi=mode,
         can_run_validator=can_run_validator,
-        enable_alpha_validators=enable,
+        alpha_flags=AlphaFlagConfig(enable_experimental_validators=enable),
     )
     on_success.run(data_model)
     by_code = on_success.issues.by_code()
