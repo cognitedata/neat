@@ -19,7 +19,8 @@ class Plugin:
 
     !!! note "name uniqueness"
         The name of the plugin must be lower case and unique across all plugins of the same kind.
-        If two plugins have the same name, the exception will be raised.
+        If two plugins have the same name, duplicated plugin will be skipped and a warning will be raised.
+        If there is an issue with loading of the plugin, it will be skipped and a warning will be raised.
     """
 
     def __init__(self, name: str, type_: type[NeatPlugin], entry_point: metadata.EntryPoint):
