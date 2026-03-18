@@ -115,7 +115,11 @@ jobs:
           path: .venv
           key: venv-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('uv.lock') }}
 
-      - run: uv sync --all-extras
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Install external plugin
+        run: uv pip install -e ./scripts/external_plugin
 
       - name: Create test coverage report
         env:
