@@ -46,7 +46,7 @@ class PluginManager:
         PhysicalDataModelReaderPlugin._entry_point: PhysicalDataModelReaderPlugin,
     }
 
-    def __init__(self, plugins: dict[tuple[str, type[NeatPlugin]], Any]) -> None:
+    def __init__(self, plugins: dict[tuple[str, type[NeatPlugin]], type[NeatPlugin]]) -> None:
         self._plugins = plugins
 
     @overload
