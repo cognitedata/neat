@@ -217,7 +217,7 @@ class ReadPhysicalDataModel:
         """Creates method from external plugin by wrapping it in the reader format
 
         Args:
-            plugin_cls (type[DataModelImporterPlugin]): external plugin class
+            plugin_cls (type[PhysicalDataModelReaderPlugin]): external plugin class
         """
 
         plugin = plugin_cls().configure
