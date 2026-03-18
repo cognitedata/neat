@@ -240,7 +240,6 @@ class ReadPhysicalDataModel:
                 inspect.Parameter("fix", inspect.Parameter.POSITIONAL_OR_KEYWORD, default=False),
             ]
         )
-        print(params)
         wrapper.__signature__ = signature.replace(parameters=params)  # type: ignore[attr-defined]
         wrapper.__doc__ = docstring
 
