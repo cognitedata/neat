@@ -8,7 +8,7 @@ class NeatPlugin(ABC):
     _entry_point: ClassVar[str] = "cognite.neat.plugin"
 
     @abstractmethod
-    def configure(self, *args: Any, **kwargs: Any) -> Any:
+    def configure(self, *args: Any) -> Any:
         """A method that all plugins must implement."""
         raise NotImplementedError()
 
@@ -28,7 +28,6 @@ class PhysicalDataModelReaderPlugin(NeatPlugin):
         Args:
             *args (Any): Positional arguments for plugin configuration.
                          The specific arguments depend on the plugin implementation.
-
         Returns:
             DMSImporter: An instance of typically subclassed DMSImporter, specialized for given plugin
         """
