@@ -17,4 +17,4 @@ class ExternalDataModelReaderPlugin(PhysicalDataModelReaderPlugin):
         return DMSTableImporter.from_excel(excel_file=Path(io))
 
 
-__all__ = ["ExcelDataModelReaderPlugin"]
+__all__ = ["ExternalDataModelReaderPlugin"]
