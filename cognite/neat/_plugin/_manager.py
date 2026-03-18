@@ -2,7 +2,7 @@
 
 import warnings
 from importlib import metadata
-from typing import Any, ClassVar, TypeVar, overload
+from typing import ClassVar, TypeVar, overload
 
 from ._interfaces import NeatPlugin, PhysicalDataModelReaderPlugin
 
