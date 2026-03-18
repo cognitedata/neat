@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "external_plugin"
+version = "0.1.0"
+description = "Excel importer plugin for NEAT"
+requires-python = ">=3.9"
+dependencies = [
+    "cognite-neat",
+]
+
+# IMPORTANT:
+# cognite.neat.plugin.data_model.readers comes forn PhysicalDataModelReaderPlugin._entry_point
+# external is the name of method that will be attached
+# `src:ExternalDataModelReaderPlugin` represents actual path , where src is submodule of package
+# while ExternalDataModelReaderPlugin is name of class holding definition of plugin
+[project.entry-points."cognite.neat.plugin.data_model.readers"]
+external = "src:ExternalDataModelReaderPlugin"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

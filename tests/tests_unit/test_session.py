@@ -33,6 +33,7 @@ def new_session(neat_config: NeatClientConfig) -> NeatSession:
 def new_session_with_alpha_features(neat_config: NeatClientConfig) -> NeatSession:
     cfg = NeatConfig.create_predefined("legacy-additive")
     cfg.alpha.enable_cdf_analysis = True
+    cfg.alpha.enable_plugins = True
 
     return NeatSession(neat_config, cfg)
 
@@ -241,6 +242,10 @@ class TestNeatSession:
 
         # we remain in physical state even though we hit Forbidden state, auto-recovery
         assert isinstance(session._store.state, states.PhysicalState)
+
+    def test_plugin_attachment(self, new_session_with_alpha_features: NeatSession) -> None:
+        session = new_session_with_alpha_features
+        assert hasattr(session.physical_data_model.read, "external")
 
 
 @pytest.mark.usefixtures("empty_cdf")
