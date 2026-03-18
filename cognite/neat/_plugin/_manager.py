@@ -90,7 +90,7 @@ class PluginManager:
         Args:
             entry_points: Entry points to load plugins from. If None, uses the default entry points.
         """
-        plugins: dict[tuple[str, type[NeatPlugin]], Any] = {}
+        plugins: dict[tuple[str, type[NeatPlugin]], type[NeatPlugin]] = {}
 
         entry_points = entry_points or metadata.entry_points()
         if hasattr(entry_points, "select"):
