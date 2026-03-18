@@ -2,9 +2,11 @@
 
 import warnings
 from importlib import metadata
-from typing import Any, ClassVar, overload
+from typing import Any, ClassVar, TypeVar, overload
 
-from ._interfaces import DataModelImporterPlugin, NeatPlugin
+from ._interfaces import NeatPlugin, PhysicalDataModelReaderPlugin
+
+T_ClassInstance = TypeVar("T_ClassInstance")
 
 
 class Plugin:
@@ -41,19 +43,21 @@ class PluginManager:
     """Plugin manager for external plugins."""
 
     _plugins_entry_points: ClassVar[dict[str, type[NeatPlugin]]] = {
-        "cognite.neat.plugin.data_model.importers": DataModelImporterPlugin,
+        PhysicalDataModelReaderPlugin._entry_point: PhysicalDataModelReaderPlugin,
     }
 
     def __init__(self, plugins: dict[tuple[str, type[NeatPlugin]], Any]) -> None:
         self._plugins = plugins
 
     @overload
-    def get(self, type_: type[NeatPlugin]) -> list[type[NeatPlugin]]: ...
+    def get(self, type_: type[NeatPlugin]) -> dict[str, type[NeatPlugin]]: ...
 
     @overload
     def get(self, type_: type[NeatPlugin], name: str) -> type[NeatPlugin] | None: ...
 
-    def get(self, type_: type[NeatPlugin], name: str | None = None) -> type[NeatPlugin] | list[type[NeatPlugin]] | None:
+    def get(
+        self, type_: type[NeatPlugin], name: str | None = None
+    ) -> type[NeatPlugin] | dict[str, type[NeatPlugin]] | None:
         """
         Returns desired plugin(s).
 
@@ -63,12 +67,16 @@ class PluginManager:
                                   If not provided, returns all plugins of the given type.
 
         Returns:
-            type[NeatPlugin] | list[type[NeatPlugin]]: Single plugin if name is provided,
+            type[NeatPlugin] | dict[str,type[NeatPlugin]]: Single plugin if name is provided,
                                                        list of plugins if name is None.
         """
 
         return (
-            [plugin for (_, plugin_type), plugin in self._plugins.items() if plugin_type == type_]
+            {
+                plugin_name: plugin
+                for (plugin_name, plugin_type), plugin in self._plugins.items()
+                if plugin_type == type_
+            }
             if name is None
             else self._plugins.get((name, type_), None)
         )

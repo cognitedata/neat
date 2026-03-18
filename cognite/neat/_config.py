@@ -124,6 +124,10 @@ class AlphaFlagConfig(ConfigModel):
         "in these spaces. In addition, Neat will deploy and not skip containers and views in these spaces. ",
     )
 
+    enable_plugins: bool = Field(
+        default=False, description="If enabled, external plugins can be attached to NeatSession."
+    )
+
     def __setattr__(self, key: str, value: Any) -> None:
         """Set attribute value or raise AttributeError."""
         if key in self.model_fields:
