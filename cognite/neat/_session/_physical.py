@@ -1,5 +1,6 @@
 import inspect
 from collections.abc import Callable
+from functools import wraps
 from pathlib import Path
 from types import MethodType
 from typing import Any, Literal
@@ -223,26 +224,23 @@ class ReadPhysicalDataModel:
 
         plugin = plugin_cls().configure
 
-        signature = inspect.signature(plugin)
-        docstring = plugin.__doc__
-
-        def wrapper(self: ReadPhysicalDataModel, fix: bool = False, **kwargs: Any) -> None:
-            reader = plugin(**kwargs)
+        @wraps(plugin)
+        def wrapper(self: ReadPhysicalDataModel, *args: Any, fix: bool = False, **kwargs: Any) -> None:
+            reader = plugin(*args, **kwargs)
             on_success = self._create_on_success()
             return self._store.read_physical(reader, on_success, fix=fix)
 
         # Rebuild signature to include self, original parameters and fix parameter
-        params = (
-            [
-                inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD),
-            ]
-            + [p for p in signature.parameters.values() if p.kind != inspect.Parameter.VAR_KEYWORD]
-            + [
-                inspect.Parameter("fix", inspect.Parameter.POSITIONAL_OR_KEYWORD, default=False),
-            ]
-        )
+        signature = inspect.signature(plugin)
+
+        params = [
+            inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD),
+            *signature.parameters.values(),
+            inspect.Parameter("fix", inspect.Parameter.POSITIONAL_OR_KEYWORD, default=False),
+        ]
+
         wrapper.__signature__ = signature.replace(parameters=params)  # type: ignore[attr-defined]
-        wrapper.__doc__ = docstring
+        wrapper.__doc__ = plugin.__doc__
 
         return wrapper
 
