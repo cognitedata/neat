@@ -239,6 +239,7 @@ class ReadPhysicalDataModel:
 
         wrapper.__signature__ = signature.replace(parameters=params)  # type: ignore[attr-defined]
         wrapper.__doc__ = plugin.__doc__
+        wrapper.__name__ = plugin.display_name
 
         return wrapper
 
