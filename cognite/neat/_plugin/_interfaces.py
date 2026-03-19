@@ -23,11 +23,11 @@ class PhysicalDataModelReaderPlugin(NeatPlugin):
 
     _entry_point: ClassVar[str] = "cognite.neat.plugin.data_model.readers"
 
-    def configure(self, *args: Any) -> DMSImporter:
+    def configure(self, **kwargs: Any) -> DMSImporter:
         """Return a configure plugin for data model import.
         Args:
-            *args (Any): Positional arguments for plugin configuration.
-                         The specific arguments depend on the plugin implementation.
+            **kwargs (Any): Keyword arguments for plugin configuration.
+                            The specific arguments depend on the plugin implementation.
         Returns:
             DMSImporter: An instance of typically subclassed DMSImporter, specialized for given plugin
         """
