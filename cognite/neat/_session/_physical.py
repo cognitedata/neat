@@ -1,6 +1,5 @@
 import inspect
 from collections.abc import Callable
-from functools import wraps
 from pathlib import Path
 from types import MethodType
 from typing import Any, Literal
@@ -224,7 +223,6 @@ class ReadPhysicalDataModel:
 
         plugin = plugin_cls().configure
 
-        @wraps(plugin)
         def wrapper(self: ReadPhysicalDataModel, *args: Any, fix: bool = False, **kwargs: Any) -> None:
             reader = plugin(*args, **kwargs)
             on_success = self._create_on_success()
