@@ -1,3 +1,5 @@
+import inspect
+from collections.abc import Callable
 from pathlib import Path
 from types import MethodType
 from typing import Any, Literal
@@ -19,6 +21,7 @@ from cognite.neat._data_model.importers import DMSAPICreator, DMSAPIImporter, DM
 from cognite.neat._data_model.models.dms import DataModelReference
 from cognite.neat._data_model.rules.dms import DmsDataModelRulesOrchestrator
 from cognite.neat._exceptions import UserInputError
+from cognite.neat._plugin import PhysicalDataModelReaderPlugin, get_plugin_manager
 from cognite.neat._state_machine import PhysicalState
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
@@ -43,7 +46,9 @@ class PhysicalDataModel:
 
     def _repr_html_(self) -> str:
         if not isinstance(self._store.state, PhysicalState):
-            return "No physical data model. Get started by reading physical data model <em>.physica_data_mode.read</em>"
+            return (
+                "No physical data model. Get started by reading physical data model <em>.physical_data_mode.read</em>"
+            )
 
         dm = self._store.physical_data_model[-1]
 
@@ -107,6 +112,14 @@ class ReadPhysicalDataModel:
             self.json = MethodType(json, self)  # type: ignore[attr-defined]
             self.excel = MethodType(excel, self)  # type: ignore[attr-defined]
             self.cdf = MethodType(cdf, self)  # type: ignore[attr-defined]
+
+        if self._config.alpha.enable_plugins and (plugins := get_plugin_manager().get(PhysicalDataModelReaderPlugin)):
+            for plugin_cls in plugins.values():
+                print(
+                    f"Attaching external plugin {plugin_cls.method_name} as method "
+                    f"to .physical_data_model.read.{plugin_cls.method_name}\n"
+                )
+                setattr(self, plugin_cls.method_name, self._create_method(plugin_cls))  # type: ignore
 
     def _create_on_success(self) -> DmsDataModelRulesOrchestrator:
         """Create the on_success handler for orchestrating validation."""
@@ -202,6 +215,36 @@ class ReadPhysicalDataModel:
 
         on_success = self._create_on_success()
         return self._store.read_physical(reader, on_success, fix=fix)
+
+    @classmethod
+    def _create_method(cls, plugin_cls: type[PhysicalDataModelReaderPlugin]) -> Callable:
+        """Creates method from external plugin by wrapping it in the reader format
+
+        Args:
+            plugin_cls (type[PhysicalDataModelReaderPlugin]): external plugin class
+        """
+
+        plugin = plugin_cls().configure
+
+        def wrapper(self: ReadPhysicalDataModel, *args: Any, fix: bool = False, **kwargs: Any) -> None:
+            reader = plugin(*args, **kwargs)
+            on_success = self._create_on_success()
+            return self._store.read_physical(reader, on_success, fix=fix)
+
+        # Rebuild signature to include self, original parameters and fix parameter
+        signature = inspect.signature(plugin)
+
+        params = [
+            inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD),
+            *signature.parameters.values(),
+            inspect.Parameter("fix", inspect.Parameter.POSITIONAL_OR_KEYWORD, default=False),
+        ]
+
+        wrapper.__signature__ = signature.replace(parameters=params)  # type: ignore[attr-defined]
+        wrapper.__doc__ = plugin.__doc__
+        wrapper.__name__ = plugin_cls.method_name
+
+        return wrapper
 
 
 @session_wrapper
