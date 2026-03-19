@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import ClassVar
 
 from cognite.neat._plugin_adapter import PhysicalDataModelReaderPlugin
 from cognite.neat._data_model.importers import DMSTableImporter
@@ -6,6 +7,7 @@ from cognite.neat._data_model.importers import DMSTableImporter
 
 class ExternalDataModelReaderPlugin(PhysicalDataModelReaderPlugin):
     """Real ExcelDataModelImporter implementation for testing."""
+    method_name: ClassVar[str] = "external_excel"
 
     def configure(self, io: str) -> DMSTableImporter:
         """

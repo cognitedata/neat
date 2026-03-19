@@ -6,6 +6,7 @@ from cognite.neat._data_model.importers._base import DMSImporter
 
 class NeatPlugin(ABC):
     _entry_point: ClassVar[str] = "cognite.neat.plugin"
+    method_name: ClassVar[str] = "plugin_name"
 
     @abstractmethod
     def configure(self, **kwargs: Any) -> Any:

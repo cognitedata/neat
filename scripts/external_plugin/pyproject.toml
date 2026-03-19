@@ -12,12 +12,12 @@ dependencies = [
 ]
 
 # IMPORTANT:
-# cognite.neat.plugin.data_model.readers comes forn PhysicalDataModelReaderPlugin._entry_point
-# external is the name of method that will be attached
+# cognite.neat.plugin.data_model.readers comes from ExternalDataModelReaderPlugin._entry_point
+# while external_excel comes from ExternalDataModelReaderPlugin.method_name
 # `src:ExternalDataModelReaderPlugin` represents actual path , where src is submodule of package
 # while ExternalDataModelReaderPlugin is name of class holding definition of plugin
 [project.entry-points."cognite.neat.plugin.data_model.readers"]
-external = "src:ExternalDataModelReaderPlugin"
+external_excel = "src:ExternalDataModelReaderPlugin"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
