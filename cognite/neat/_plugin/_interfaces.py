@@ -8,7 +8,7 @@ class NeatPlugin(ABC):
     _entry_point: ClassVar[str] = "cognite.neat.plugin"
 
     @abstractmethod
-    def configure(self, *args: Any) -> Any:
+    def configure(self, **kwargs: Any) -> Any:
         """A method that all plugins must implement."""
         raise NotImplementedError()
 
