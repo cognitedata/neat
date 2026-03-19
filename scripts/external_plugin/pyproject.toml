@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "external_plugin"
 version = "0.1.0"
 description = "Excel importer plugin for NEAT"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "cognite-neat",
 ]
