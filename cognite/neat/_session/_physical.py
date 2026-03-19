@@ -115,6 +115,7 @@ class ReadPhysicalDataModel:
 
         if self._config.alpha.enable_plugins and (plugins := get_plugin_manager().get(PhysicalDataModelReaderPlugin)):
             for method_name, plugin_cls in plugins.items():
+                print(f"Attaching external plugin {method_name} as method to .physical_data_model.read.{method_name}\n")
                 setattr(self, method_name, self._create_method(plugin_cls))  # type: ignore
 
     def _create_on_success(self) -> DmsDataModelRulesOrchestrator:
