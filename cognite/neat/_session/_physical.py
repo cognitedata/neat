@@ -116,7 +116,7 @@ class ReadPhysicalDataModel:
         if self._config.alpha.enable_plugins and (plugins := get_plugin_manager().get(PhysicalDataModelReaderPlugin)):
             for method_name, plugin_cls in plugins.items():
                 print(f"Attaching external plugin {method_name} as method to .physical_data_model.read.{method_name}\n")
-                setattr(self, method_name, self._create_method(plugin_cls))  # type: ignore
+                setattr(self, method_name, self._create_method(plugin_cls, method_name))  # type: ignore
 
     def _create_on_success(self) -> DmsDataModelRulesOrchestrator:
         """Create the on_success handler for orchestrating validation."""
@@ -214,11 +214,12 @@ class ReadPhysicalDataModel:
         return self._store.read_physical(reader, on_success, fix=fix)
 
     @classmethod
-    def _create_method(cls, plugin_cls: type[PhysicalDataModelReaderPlugin]) -> Callable:
+    def _create_method(cls, plugin_cls: type[PhysicalDataModelReaderPlugin], method_name: str) -> Callable:
         """Creates method from external plugin by wrapping it in the reader format
 
         Args:
             plugin_cls (type[PhysicalDataModelReaderPlugin]): external plugin class
+            method_name (str): The name of the method to create
         """
 
         plugin = plugin_cls().configure
@@ -239,7 +240,7 @@ class ReadPhysicalDataModel:
 
         wrapper.__signature__ = signature.replace(parameters=params)  # type: ignore[attr-defined]
         wrapper.__doc__ = plugin.__doc__
-        wrapper.__name__ = plugin.display_name
+        wrapper.__name__ = method_name
 
         return wrapper
 
