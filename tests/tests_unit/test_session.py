@@ -245,7 +245,7 @@ class TestNeatSession:
 
     def test_plugin_attachment(self, new_session_with_alpha_features: NeatSession) -> None:
         session = new_session_with_alpha_features
-        assert hasattr(session.physical_data_model.read, "external")
+        assert hasattr(session.physical_data_model.read, "external_excel")
 
 
 @pytest.mark.usefixtures("empty_cdf")
