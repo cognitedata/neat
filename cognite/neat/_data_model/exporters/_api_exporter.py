@@ -124,8 +124,8 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
     def _skip_component(
         self, component: SpaceRequest | DataModelRequest | ViewRequest | ContainerRequest | NodeReference
     ) -> bool:
-        return self._exclude_space_prefixes is not None and all(
-            not component.space.startswith(prefix) for prefix in self._exclude_space_prefixes
+        return self._exclude_space_prefixes is not None and any(
+            component.space.startswith(prefix) for prefix in self._exclude_space_prefixes
         )
 
 
