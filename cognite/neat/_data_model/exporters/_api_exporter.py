@@ -1,13 +1,13 @@
 import warnings
 import zipfile
-from collections.abc import Iterator
+from collections.abc import Iterator, Set
 from pathlib import Path
 
 import yaml
 from pydantic import BaseModel
 
 from cognite.neat._data_model.exporters._base import DMSExporter, DMSFileExporter
-from cognite.neat._data_model.models.dms import RequestSchema
+from cognite.neat._data_model.models.dms import DataModelRequest, RequestSchema, SpaceRequest
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._references import NodeReference
 from cognite.neat._data_model.models.dms._views import ViewRequest
@@ -25,8 +25,8 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
     # The name of the directory where Toolkit expects to find data modeling resources.
     RESOURCE_DIR = "data_modeling"
 
-    def __init__(self, exclude_space_prefix: str = "cdf_") -> None:
-        self._exclude_space_prefix = exclude_space_prefix
+    def __init__(self, exclude_space_prefix: Set[str] | None = frozenset({"cdf_"})) -> None:
+        self._exclude_space_prefixes = exclude_space_prefix
 
     def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
         """Export the data model to a YAML files or zip file in API format.
@@ -96,14 +96,17 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
         """
 
         def _dump(item: BaseModel) -> str:
-            return yaml.safe_dump(item.model_dump(mode="json", by_alias=True), sort_keys=False)
+            return yaml.safe_dump(item.model_dump(mode="json", by_alias=True, exclude_none=True), sort_keys=False)
 
         # Export spaces
         for space in data_model.spaces:
+            if self._skip_component(space):
+                continue
             yield f"{space.space}.space.yaml", _dump(space)
 
         # Export data model
-        yield f"{data_model.data_model.external_id}.datamodel.yaml", _dump(data_model.data_model)
+        if not self._skip_component(data_model.data_model):
+            yield f"{data_model.data_model.external_id}.datamodel.yaml", _dump(data_model.data_model)
 
         component_configs: list[tuple[str, list[ViewRequest] | list[ContainerRequest] | list[NodeReference]]] = [
             ("views", data_model.views),
@@ -114,7 +117,16 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
         for dir_prefix, components in component_configs:
             file_suffix = dir_prefix.removesuffix("s")
             for component in components:
+                if self._skip_component(component):
+                    continue
                 yield f"{dir_prefix}/{component.external_id}.{file_suffix}.yaml", _dump(component)
+
+    def _skip_component(
+        self, component: SpaceRequest | DataModelRequest | ViewRequest | ContainerRequest | NodeReference
+    ) -> bool:
+        return self._exclude_space_prefixes is not None and all(
+            not component.space.startswith(prefix) for prefix in self._exclude_space_prefixes
+        )
 
 
 class DMSAPIJSONExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
