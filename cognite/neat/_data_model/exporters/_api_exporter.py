@@ -23,7 +23,7 @@ class DMSAPIExporter(DMSExporter[RequestSchema]):
 
 class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
     # The name of the directory where Toolkit expects to find data modeling resources.
-    RESOURCE_DIR = "data_models"
+    RESOURCE_DIR = "data_modeling"
 
     def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
         """Export the data model to a YAML files or zip file in API format.
