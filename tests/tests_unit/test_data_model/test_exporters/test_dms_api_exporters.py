@@ -20,7 +20,7 @@ class TestYAMLExporter:
         exporter.export_to_file(schema, export_dir)
 
         # Verify data_models directory was created
-        data_models_dir = export_dir / "data_models"
+        data_models_dir = export_dir / DMSAPIYAMLExporter.RESOURCE_DIR
         assert data_models_dir.exists(), "data_models directory not created"
 
         # Verify datamodel file exists
@@ -66,9 +66,9 @@ class TestYAMLExporter:
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             actual_files = set(zip_ref.namelist())
 
-            expected_files = {f"data_models/{schema.data_model.external_id}.datamodel.yaml"}
+            expected_files = {f"{DMSAPIYAMLExporter.RESOURCE_DIR}/{schema.data_model.external_id}.datamodel.yaml"}
             if schema.spaces:
-                expected_files.update(f"data_models/{s.space}.space.yaml" for s in schema.spaces)
+                expected_files.update(f"{DMSAPIYAMLExporter.RESOURCE_DIR}/{s.space}.space.yaml" for s in schema.spaces)
             component_checks: list[tuple[str, list, str]] = [
                 ("views", schema.views, "view"),
                 ("containers", schema.containers, "container"),
@@ -76,7 +76,10 @@ class TestYAMLExporter:
             ]
             for dir_name, components, suffix in component_checks:
                 if components:
-                    expected_files.update(f"data_models/{dir_name}/{c.external_id}.{suffix}.yaml" for c in components)  # type: ignore[attr-defined]
+                    expected_files.update(
+                        f"{DMSAPIYAMLExporter.RESOURCE_DIR}/{dir_name}/{c.external_id}.{suffix}.yaml"
+                        for c in components
+                    )  # type: ignore[attr-defined]
 
             assert actual_files == expected_files
 

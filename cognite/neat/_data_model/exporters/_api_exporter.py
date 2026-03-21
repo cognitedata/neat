@@ -22,6 +22,9 @@ class DMSAPIExporter(DMSExporter[RequestSchema]):
 
 
 class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
+    # The name of the directory where Toolkit expects to find data modeling resources.
+    RESOURCE_DIR = "data_models"
+
     def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
         """Export the data model to a YAML files or zip file in API format.
 
@@ -44,7 +47,7 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
             directory: The directory to save the schema to.
         """
 
-        subdir = directory / "data_models"
+        subdir = directory / self.RESOURCE_DIR
         subdir.mkdir(parents=True, exist_ok=True)
 
         for file_path, yaml_content in self._generate_yaml_entries(data_model):
@@ -71,7 +74,7 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
 
         with zipfile.ZipFile(zip_file, "w") as zip_ref:
             for file_path, yaml_content in self._generate_yaml_entries(data_model):
-                zip_ref.writestr(f"data_models/{file_path}", yaml_content)
+                zip_ref.writestr(f"{self.RESOURCE_DIR}/{file_path}", yaml_content)
 
     def _generate_yaml_entries(self, data_model: RequestSchema) -> Iterator[tuple[str, str]]:
         """Generate file paths and YAML content for all data model components.
