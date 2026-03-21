@@ -6,7 +6,17 @@ from unittest.mock import MagicMock
 import yaml
 
 from cognite.neat._data_model.exporters import DMSAPIJSONExporter, DMSAPIYAMLExporter
-from cognite.neat._data_model.models.dms import RequestSchema
+from cognite.neat._data_model.models.dms import (
+    ContainerPropertyDefinition,
+    ContainerReference,
+    ContainerRequest,
+    DataModelRequest,
+    RequestSchema,
+    TextProperty,
+    ViewCorePropertyRequest,
+    ViewReference,
+    ViewRequest,
+)
 
 
 class TestYAMLExporter:
@@ -82,6 +92,44 @@ class TestYAMLExporter:
                     )  # type: ignore[attr-defined]
 
             assert actual_files == expected_files
+
+    def test_export_with_system_space(self, tmp_path: Path) -> None:
+        my_view = ViewReference(space="my_space", external_id="MyView", version="v1")
+        cdm_container = ContainerReference(
+            space="cdf_cdm",
+            external_id="CogniteDescribable",
+        )
+        schema = RequestSchema(
+            dataModel=DataModelRequest(
+                space="my_model",
+                externalId="my_external_id",
+                version="v1",
+                views=[my_view],
+            ),
+            views=[
+                ViewRequest(
+                    **my_view.model_dump(by_alias=True),
+                    properties={
+                        "name": ViewCorePropertyRequest(container=cdm_container, containerPropertyIdentifier="name")
+                    },
+                )
+            ],
+            containers=[
+                ContainerRequest(
+                    **cdm_container.model_dump(by_alias=True),
+                    properties={"name": ContainerPropertyDefinition(type=TextProperty())},
+                )
+            ],
+        )
+        my_module = tmp_path / "my_module"
+        DMSAPIYAMLExporter().export_to_file(schema, my_module)
+
+        data_model_files = list(my_module.rglob("*.datamodel.yaml"))
+        assert len(data_model_files) == 1, "Expected exactly one datamodel.yaml file"
+        view_files = list(my_module.rglob("*.view.yaml"))
+        assert len(view_files) == 1, "Expected exactly one view.yaml file"
+        container_files = list(my_module.rglob("*.container.yaml"))
+        assert len(container_files) == 0, "The system space component should be skipped."
 
 
 class TestDMSAPIJSONExporter:

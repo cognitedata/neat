@@ -25,6 +25,9 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
     # The name of the directory where Toolkit expects to find data modeling resources.
     RESOURCE_DIR = "data_modeling"
 
+    def __init__(self, exclude_space_prefix: str = "cdf_") -> None:
+        self._exclude_space_prefix = exclude_space_prefix
+
     def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
         """Export the data model to a YAML files or zip file in API format.
 
@@ -34,10 +37,12 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
 
         """
 
-        if file_path.is_dir():
+        if file_path.suffix == ".zip":
+            self._export_to_zip_file(data_model, file_path)
+        elif file_path.suffix == "":
             self._export_to_directory(data_model, file_path)
         else:
-            self._export_to_zip_file(data_model, file_path)
+            raise NotImplementedError(f"Filetype {file_path.suffix} is not supported.")
 
     def _export_to_directory(self, data_model: RequestSchema, directory: Path) -> None:
         """Save the schema to a directory as YAML files. This is compatible with the Cognite-Toolkit convention.
