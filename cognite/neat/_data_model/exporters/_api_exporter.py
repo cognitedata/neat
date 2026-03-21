@@ -11,6 +11,7 @@ from cognite.neat._data_model.models.dms import DataModelRequest, RequestSchema,
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._references import NodeReference
 from cognite.neat._data_model.models.dms._views import ViewRequest
+from cognite.neat._exceptions import NeatException
 
 
 class DMSAPIExporter(DMSExporter[RequestSchema]):
@@ -94,6 +95,8 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
             Tuples of (file_path, yaml_content) for each component.
             File paths are relative to the data_models directory.
         """
+        if self._skip_component(data_model.data_model):
+            raise NeatException(f"You cannot export data models in space {data_model.data_model.space!r}.")
 
         def _dump(item: BaseModel) -> str:
             return yaml.safe_dump(item.model_dump(mode="json", by_alias=True, exclude_none=True), sort_keys=False)
@@ -105,8 +108,7 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
             yield f"{space.space}.space.yaml", _dump(space)
 
         # Export data model
-        if not self._skip_component(data_model.data_model):
-            yield f"{data_model.data_model.external_id}.datamodel.yaml", _dump(data_model.data_model)
+        yield f"{data_model.data_model.external_id}.datamodel.yaml", _dump(data_model.data_model)
 
         component_configs: list[tuple[str, list[ViewRequest] | list[ContainerRequest] | list[NodeReference]]] = [
             ("views", data_model.views),
