@@ -79,7 +79,7 @@ class PluginManager:
                 if plugin_type == type_
             }
             if name is None
-            else self._plugins.get((name, type_), None)
+            else self._plugins.get((name, type_), None)  # type: ignore[arg-type]
         )
 
     @classmethod

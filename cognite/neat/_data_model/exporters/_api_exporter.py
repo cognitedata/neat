@@ -1,16 +1,17 @@
 import warnings
 import zipfile
-from collections.abc import Iterator
+from collections.abc import Iterator, Set
 from pathlib import Path
 
 import yaml
 from pydantic import BaseModel
 
 from cognite.neat._data_model.exporters._base import DMSExporter, DMSFileExporter
-from cognite.neat._data_model.models.dms import RequestSchema
+from cognite.neat._data_model.models.dms import DataModelRequest, RequestSchema, SpaceRequest
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._references import NodeReference
 from cognite.neat._data_model.models.dms._views import ViewRequest
+from cognite.neat._exceptions import NeatException
 
 
 class DMSAPIExporter(DMSExporter[RequestSchema]):
@@ -22,6 +23,12 @@ class DMSAPIExporter(DMSExporter[RequestSchema]):
 
 
 class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
+    # The name of the directory where Toolkit expects to find data modeling resources.
+    RESOURCE_DIR = "data_modeling"
+
+    def __init__(self, exclude_space_prefix: Set[str] | None = frozenset({"cdf_"})) -> None:
+        self._exclude_space_prefixes = exclude_space_prefix
+
     def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
         """Export the data model to a YAML files or zip file in API format.
 
@@ -31,10 +38,12 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
 
         """
 
-        if file_path.is_dir():
+        if file_path.suffix == ".zip":
+            self._export_to_zip_file(data_model, file_path)
+        elif file_path.suffix == "":
             self._export_to_directory(data_model, file_path)
         else:
-            self._export_to_zip_file(data_model, file_path)
+            raise NotImplementedError(f"Filetype {file_path.suffix} is not supported.")
 
     def _export_to_directory(self, data_model: RequestSchema, directory: Path) -> None:
         """Save the schema to a directory as YAML files. This is compatible with the Cognite-Toolkit convention.
@@ -44,7 +53,7 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
             directory: The directory to save the schema to.
         """
 
-        subdir = directory / "data_models"
+        subdir = directory / self.RESOURCE_DIR
         subdir.mkdir(parents=True, exist_ok=True)
 
         for file_path, yaml_content in self._generate_yaml_entries(data_model):
@@ -71,7 +80,7 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
 
         with zipfile.ZipFile(zip_file, "w") as zip_ref:
             for file_path, yaml_content in self._generate_yaml_entries(data_model):
-                zip_ref.writestr(f"data_models/{file_path}", yaml_content)
+                zip_ref.writestr(f"{self.RESOURCE_DIR}/{file_path}", yaml_content)
 
     def _generate_yaml_entries(self, data_model: RequestSchema) -> Iterator[tuple[str, str]]:
         """Generate file paths and YAML content for all data model components.
@@ -86,12 +95,16 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
             Tuples of (file_path, yaml_content) for each component.
             File paths are relative to the data_models directory.
         """
+        if self._skip_component(data_model.data_model):
+            raise NeatException(f"You cannot export data models in space {data_model.data_model.space!r}.")
 
         def _dump(item: BaseModel) -> str:
-            return yaml.safe_dump(item.model_dump(mode="json", by_alias=True), sort_keys=False)
+            return yaml.safe_dump(item.model_dump(mode="json", by_alias=True, exclude_none=True), sort_keys=False)
 
         # Export spaces
         for space in data_model.spaces:
+            if self._skip_component(space):
+                continue
             yield f"{space.space}.space.yaml", _dump(space)
 
         # Export data model
@@ -106,7 +119,16 @@ class DMSAPIYAMLExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
         for dir_prefix, components in component_configs:
             file_suffix = dir_prefix.removesuffix("s")
             for component in components:
+                if self._skip_component(component):
+                    continue
                 yield f"{dir_prefix}/{component.external_id}.{file_suffix}.yaml", _dump(component)
+
+    def _skip_component(
+        self, component: SpaceRequest | DataModelRequest | ViewRequest | ContainerRequest | NodeReference
+    ) -> bool:
+        return self._exclude_space_prefixes is not None and any(
+            component.space.startswith(prefix) for prefix in self._exclude_space_prefixes
+        )
 
 
 class DMSAPIJSONExporter(DMSAPIExporter, DMSFileExporter[RequestSchema]):
