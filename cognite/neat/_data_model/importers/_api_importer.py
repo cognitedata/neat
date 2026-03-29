@@ -26,7 +26,7 @@ from cognite.neat._exceptions import (
 )
 from cognite.neat._issues import ConsistencyError, ModelSyntaxError
 from cognite.neat._utils.http_client import FailedRequestMessage
-from cognite.neat._utils.text import humanize_collection
+from cognite.neat._utils.text import humanize_collection, quote_int_value_by_key_in_yaml
 from cognite.neat._utils.validation import ValidationContext, humanize_validation_error
 
 
@@ -122,7 +122,12 @@ class DMSAPIImporter(DMSImporter):
         """Create a DMSTableImporter from a YAML file."""
         source = cls._display_name(yaml_file)
         if yaml_file.suffix.lower() in {".yaml", ".yml", ".json"}:
-            return cls(yaml.safe_load(yaml_file.read_text(encoding=cls.ENCODING)))
+            yaml_content = yaml_file.read_text(encoding=cls.ENCODING)
+            # DataModels and Views have `version` that is often given as an integer by the user.
+            # This ensures that the version is always read as a string, even if the user forgets to
+            # quote it in the YAML file.
+            fixed_content = quote_int_value_by_key_in_yaml(yaml_content, "version")
+            return cls(yaml.safe_load(fixed_content))
         elif yaml_file.is_dir():
             return cls(cls._read_yaml_files(yaml_file, data_model_file))
         raise FileReadException(source.as_posix(), f"Unsupported file type: {source.suffix}")
@@ -151,7 +156,13 @@ class DMSAPIImporter(DMSImporter):
                 continue
             stem = yaml_file.stem.casefold()
 
-            data = yaml.safe_load(yaml_file.read_text(encoding=cls.ENCODING))
+            yaml_content = yaml_file.read_text(encoding=cls.ENCODING)
+            if stem.endswith("datamodel") or stem.endswith("view"):
+                # DataModels and Views have `version` that is often given as an integer by the user.
+                # This ensures that the version is always read as a string, even if the user forgets to
+                # quote it in the YAML file.
+                yaml_content = quote_int_value_by_key_in_yaml(yaml_content, "version")
+            data = yaml.safe_load(yaml_content)
             list_data = data if isinstance(data, list) else [data]
 
             if stem.endswith("datamodel"):
