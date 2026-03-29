@@ -74,7 +74,7 @@ def split_on_capitals(text: str) -> list[str]:
 def quote_int_value_by_key_in_yaml(content: str, key: str) -> str:
     """Quote a value in a yaml string"""
     # This pattern will match the key if it is not already quoted
-    pattern = rf"^(\s*-?\s*)?{key}:\s*(?!.*['\":])([\d_]+)$"
-    replacement = rf'\1{key}: "\2"'
+    pattern = rf"^(\s*-?\s*{key}:\s*)([\d_]+)(.*)$"
+    replacement = r'\1"\2"\3'
 
     return re.sub(pattern, replacement, content, flags=re.MULTILINE)

@@ -105,11 +105,11 @@ properties:
         id="Version property untouched",
     )
     yield pytest.param(
-        """version: 1_0_0 # My comment""", """version: '1_0_0' # My comment""", id="Handle comment after version"
+        """version: 1_0_0 # My comment""", """version: "1_0_0" # My comment""", id="Handle comment after version"
     )
     yield pytest.param(
         """version: 1 # My "quoted" comment""",
-        """version: '1' # My "quoted" comment""",
+        """version: "1" # My "quoted" comment""",
         id="Handle comment with quotes after version",
     )
 
