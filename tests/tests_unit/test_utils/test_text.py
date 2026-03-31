@@ -113,6 +113,72 @@ properties:
         id="Handle comment with quotes after version",
     )
 
+    yield pytest.param(
+        """space: my_space
+externalID: myModel
+version: 1.0
+""",
+        """space: my_space
+externalID: myModel
+version: 1.0
+""",
+        id="version float stays unchanged",
+    )
+    yield pytest.param(
+        """space: my_space
+externalID: myModel
+version: 1.0.0
+""",
+        """space: my_space
+externalID: myModel
+version: 1.0.0
+""",
+        id="version dotted triple unchanged",
+    )
+    yield pytest.param(
+        """version: 1.0 # release note""",
+        """version: 1.0 # release note""",
+        id="version float with comment unchanged",
+    )
+    yield pytest.param(
+        """space: my_space
+externalID: myModel
+version: v1
+""",
+        """space: my_space
+externalID: myModel
+version: v1
+""",
+        id="version alphanumeric unchanged",
+    )
+    yield pytest.param(
+        """space: my_space
+externalID: myModel
+version: 1.0.0-beta
+""",
+        """space: my_space
+externalID: myModel
+version: 1.0.0-beta
+""",
+        id="version semver prerelease unchanged",
+    )
+    yield pytest.param(
+        "version: 1e2",
+        "version: 1e2",
+        id="version scientific notation unchanged",
+    )
+    yield pytest.param(
+        """space: s
+externalId: M
+version:
+""",
+        """space: s
+externalId: M
+version:
+""",
+        id="version empty same line null unchanged",
+    )
+
 
 class TestQuoteKeyInYAML:
     @pytest.mark.parametrize("raw, expected", list(quote_key_in_yaml_test_cases()))
