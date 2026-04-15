@@ -231,8 +231,7 @@ class TestContainerPropertyDiffer:
             new_container,
             neat_client.containers,
             field_path=f"properties.{LISTABLE_INT_PROPERTY_ID}.autoIncrement",
-            expect_500=True,
-            in_error_message="Internal server error",
+            in_error_message="Cannot change autoIncrement",
         )
 
     def test_diff_property_default_value(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
@@ -415,8 +414,7 @@ class TestContainerPropertyDiffer:
             new_container,
             neat_client.containers,
             field_path=f"properties.{TEXT_PROPERTY_ID}.type.collation",
-            expect_500=True,
-            in_error_message="Internal server error",
+            in_error_message="Cannot change collation for property",
         )
 
     def test_diff_text_property_max_text_size_increase(
