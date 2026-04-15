@@ -60,9 +60,6 @@ def test_run_toolkit_validation_with_empty_modules(tmp_path: Path, monkeypatch: 
     # The NeatRuleSet.validate() method iterates over BuiltModule resources looking for DataModel resources.
     # Without modules (and without a client), it should simply return no insights.
 
-    # Change to a directory without cdf.toml to avoid toolkit version mismatch error
-    monkeypatch.chdir(tmp_path)
-
     rule = NeatRuleSet(modules=[])
 
     result = list(rule.validate())
@@ -76,8 +73,6 @@ def test_run_toolkit_validation_with_data_model(
     valid_dms_toolkit_yaml_format: str,
 ) -> None:
     """Tests that NeatRuleSet.validate() validates a data model file and returns insights."""
-    # Change to a directory without cdf.toml to avoid toolkit version mismatch error
-    monkeypatch.chdir(tmp_path)
 
     # Create the data model directory structure
     data_model_dir = tmp_path / "data_modeling"
