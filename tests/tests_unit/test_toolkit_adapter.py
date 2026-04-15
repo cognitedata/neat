@@ -3,10 +3,9 @@ import pytest
 from cognite.neat import _toolkit_adapter
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model._snapshot import SchemaSnapshot
-from cognite.neat._data_model.importers import DMSAPIImporter
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
-from cognite.neat._data_model.rules.dms import DmsDataModelRulesOrchestrator
 from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError, Recommendation
+from cognite.neat._toolkit_adapter import DMSAPIImporter, DmsDataModelRulesOrchestrator
 
 
 @pytest.mark.parametrize(
