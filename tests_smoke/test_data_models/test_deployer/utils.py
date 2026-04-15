@@ -21,7 +21,6 @@ def assert_change(
     in_error_message: str | None = None,
     neat_override_breaking_changes: bool = False,
     expect_silent_ignore: bool = False,
-    expect_500: bool = False,
 ) -> None:
     """Asserts that the change between current_resource and new_resource is detected on the given field_path.
 
@@ -40,7 +39,6 @@ def assert_change(
             breaking. This is used for changes that we in the Neat team have decided to consider BREAKING, even
             though they are not technically breaking from a CDF API perspective.
         expect_silent_ignore (bool): If True, the change is expected to be silently ignored by the API.
-        expect_500 (bool): If True, the change is expected to cause a 500 Internal Server Error from the API.
 
     """
     resource_name = type(current_resource).__name__.removesuffix("Request")
@@ -71,10 +69,10 @@ def assert_change(
             f"{diff.field_path}'. "
         )
 
-    if (diff.severity == SeverityType.BREAKING and not neat_override_breaking_changes) or expect_500:
+    if diff.severity == SeverityType.BREAKING and not neat_override_breaking_changes:
         if in_error_message is None:
             in_error_message = field_path.rsplit(".", maxsplit=1)[-1]
-        assert_breaking_change(new_resource, api, in_error_message, field_path, expect_500)
+        assert_breaking_change(new_resource, api, in_error_message, field_path)
     else:
         # Both WARNING and SAFE are allowed changes
         assert_allowed_change(new_resource, api, field_path, expect_silent_ignore)
@@ -85,7 +83,6 @@ def assert_breaking_change(
     api: ViewsAPI | ContainersAPI | DataModelsAPI,
     in_error_message: str,
     field_path: str,
-    expect_500: bool = False,
 ) -> None:
     resource_name = type(new_resource).__name__.removesuffix("Request")
     try:
@@ -107,17 +104,12 @@ def assert_breaking_change(
                 f"The API response should be a FailedResponse when rejecting a breaking {resource_name} change, "
                 f"but got {type(response).__name__}: {response!s}. The field changed was '{field_path}'. "
             ) from None
-        if response.error.code != 400 and not expect_500:
+        if response.error.code != 400:
             raise AssertionError(
                 f"Expected HTTP 400 Bad Request for breaking {resource_name} change, got {response.error.code} with "
                 f"message: {response.error.message}. The field changed was '{field_path}'. "
             ) from None
-        if response.error.code != 500 and expect_500:
-            raise AssertionError(
-                f"Expected HTTP 500 Internal Server Error for breaking {resource_name} change, "
-                f"got {response.error.code} with "
-                f"message: {response.error.message}. The field changed was '{field_path}'. "
-            ) from None
+
         # The API considers the type change if the list property is changed
         if in_error_message not in response.error.message:
             raise AssertionError(
