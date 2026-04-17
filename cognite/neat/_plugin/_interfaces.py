@@ -34,3 +34,25 @@ class PhysicalDataModelReaderPlugin(NeatPlugin):
         """
 
         raise NotImplementedError()
+
+
+class PhysicalDataModelWriterPlugin(NeatPlugin):
+    """This class is used an interface for data model export plugins.
+    Any plugin that is used for exporting data models should inherit from this class.
+    It is expected to implement the `configure` method which returns a configured exporter.
+
+    _entry_point not to be changed by any consecutive plugin, as it is used for plugin registration and retrieval
+    """
+
+    _entry_point: ClassVar[str] = "cognite.neat.plugin.data_model.writers"
+
+    def configure(self, **kwargs: Any) -> Any:
+        """Return a configure plugin for data model export.
+        Args:
+            **kwargs (Any): Keyword arguments for plugin configuration.
+                            The specific arguments depend on the plugin implementation.
+        Returns:
+            Any: An instance of typically subclassed exporter, specialized for given plugin
+        """
+
+        raise NotImplementedError()
