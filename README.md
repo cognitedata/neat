@@ -13,7 +13,7 @@
 
 
 There was no easy way to make knowledge graphs, especially data models, and onboard them to
-[Cognite Data Fusion](https://www.cognite.com/en/product/cognite_data_fusion_industrial_dataops_platform), so we have built NEAT!
+[Cognite Data Fusion](https://www.cognite.com/en/product/cognite_data_fusion_industrial_dataops_platform), so we have built NEAT.
 
 
 NEAT is great for data model development, validation and deployment. It comes with an evergrowing library of validators,
