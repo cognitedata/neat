@@ -1,4 +1,15 @@
-from ._interfaces import NeatPlugin, PhysicalDataModelReaderPlugin
+from ._interfaces import (
+    NeatPlugin,
+    PhysicalDataModelFileWriterPlugin,
+    PhysicalDataModelReaderPlugin,
+    PhysicalDataModelWriterPlugin,
+)
 from ._manager import get_plugin_manager
 
-__all__ = ["NeatPlugin", "PhysicalDataModelReaderPlugin", "get_plugin_manager"]
+__all__ = [
+    "NeatPlugin",
+    "PhysicalDataModelFileWriterPlugin",
+    "PhysicalDataModelReaderPlugin",
+    "PhysicalDataModelWriterPlugin",
+    "get_plugin_manager",
+]
