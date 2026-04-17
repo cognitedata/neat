@@ -22,6 +22,7 @@ from cognite.neat._data_model.models.dms import DataModelReference
 from cognite.neat._data_model.rules.dms import DmsDataModelRulesOrchestrator
 from cognite.neat._exceptions import UserInputError
 from cognite.neat._plugin import PhysicalDataModelReaderPlugin, get_plugin_manager
+from cognite.neat._plugin._interfaces import PhysicalDataModelFileWriterPlugin, PhysicalDataModelWriterPlugin
 from cognite.neat._state_machine import PhysicalState
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
@@ -264,6 +265,16 @@ class WritePhysicalDataModel:
         self._client = client
         self._config = config
 
+        if self._config.alpha.enable_plugins and (
+            plugins := get_plugin_manager().get(PhysicalDataModelFileWriterPlugin)
+        ):
+            for plugin_cls in plugins.values():
+                print(
+                    f"Attaching external plugin {plugin_cls.method_name} as method "
+                    f"to .physical_data_model.write.{plugin_cls.method_name}\n"
+                )
+                setattr(self, plugin_cls.method_name, self._create_method(plugin_cls))  # type: ignore
+
     def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
         """Write physical data model to YAML file
 
@@ -354,6 +365,60 @@ class WritePhysicalDataModel:
         )
         on_success = SchemaDeployer(self._client, options)
         return self._store.write_physical(writer, on_success)
+
+    @classmethod
+    def _create_method(cls, plugin_cls: type[PhysicalDataModelWriterPlugin]) -> Callable:
+        """Creates method from external plugin by wrapping it in the writer format
+
+        Args:
+            plugin_cls (type[PhysicalDataModelWriterPlugin]): external plugin class
+        """
+
+        plugin = plugin_cls().configure
+
+        def wrapper(self: WritePhysicalDataModel, io: Any, *args: Any, **kwargs: Any) -> None:
+            writer = plugin(*args, **kwargs)
+            file_path = NeatReader.create(io).materialize_path()
+
+            return self._store.write_physical(writer, file_path=file_path)
+
+        # Rebuild signature to include self, original parameters and fix parameter
+        signature = inspect.signature(plugin)
+
+        params = [
+            inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD),
+            inspect.Parameter("io", inspect.Parameter.POSITIONAL_OR_KEYWORD),
+            *signature.parameters.values(),
+        ]
+
+        wrapper.__signature__ = signature.replace(parameters=params)  # type: ignore[attr-defined]
+        wrapper.__doc__ = cls._modify_docstring_for_io(plugin.__doc__)
+        wrapper.__name__ = plugin_cls.method_name
+
+        return wrapper
+
+    @staticmethod
+    def _modify_docstring_for_io(docstring: str | None) -> str | None:
+        """Modify plugin docstring to include io parameter documentation.
+
+        Args:
+            docstring: The original plugin docstring.
+
+        Returns:
+            Modified docstring with io parameter docs, or original if no Args section.
+        """
+        if not docstring:
+            return docstring
+
+        args_index = docstring.find("Args:")
+        if args_index != -1:
+            insertion_point = args_index + len("Args:")
+            return (
+                docstring[:insertion_point]
+                + "\n\tio (Any): The file path or buffer to write to."
+                + docstring[insertion_point:]
+            )
+        return docstring
 
 
 def create(

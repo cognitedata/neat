@@ -18,6 +18,8 @@ dependencies = [
 # while ExternalDataModelReaderPlugin is name of class holding definition of plugin
 [project.entry-points."cognite.neat.plugin.data_model.readers"]
 external_excel = "src:ExternalDataModelReaderPlugin"
+[project.entry-points."cognite.neat.plugin.data_model.file_writers"]
+external_excel = "src:ExternalDataModelFileWriterPlugin"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
