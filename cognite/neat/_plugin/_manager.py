@@ -4,7 +4,7 @@ import warnings
 from importlib import metadata
 from typing import ClassVar, TypeVar, overload
 
-from ._interfaces import NeatPlugin, PhysicalDataModelReaderPlugin
+from ._interfaces import NeatPlugin, PhysicalDataModelFileWriterPlugin, PhysicalDataModelReaderPlugin
 
 T_ClassInstance = TypeVar("T_ClassInstance")
 
@@ -45,6 +45,7 @@ class PluginManager:
 
     _plugins_entry_points: ClassVar[dict[str, type[NeatPlugin]]] = {
         PhysicalDataModelReaderPlugin._entry_point: PhysicalDataModelReaderPlugin,
+        PhysicalDataModelFileWriterPlugin._entry_point: PhysicalDataModelFileWriterPlugin,
     }
 
     def __init__(self, plugins: dict[tuple[str, type[NeatPlugin]], type[NeatPlugin]]) -> None:
