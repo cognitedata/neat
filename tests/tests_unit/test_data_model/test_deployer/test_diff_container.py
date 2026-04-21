@@ -255,7 +255,7 @@ class TestContainerDiffer:
                     ),
                     ChangedField(
                         field_path=f"{CONTAINER_PROPERTY_ID}.autoIncrement",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value=False,
                         new_value=True,
                     ),
