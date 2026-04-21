@@ -106,7 +106,7 @@ class ContainerPropertyDiffer(ObjectDiffer[ContainerPropertyDefinition]):
         if current.auto_increment != new.auto_increment:
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.WARNING,
+                    item_severity=SeverityType.BREAKING,
                     field_path=self._get_path(f"{identifier}.autoIncrement"),
                     current_value=current.auto_increment,
                     new_value=new.auto_increment,
