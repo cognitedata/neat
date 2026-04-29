@@ -24,7 +24,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "cognite-sdk>=7.83.0, <8.0.0",
+    "cognite-sdk>=8.2.0, <9.0.0",
     "httpx>=0.28.1",
     "pydantic>=2.0.0, <3.0.0",
     "PyYAML>=6.0.1, <7.0.0",
@@ -108,7 +108,10 @@ dev = [
     "types-setuptools>=68, <69",
     "types-tqdm>=4, <5",
     "networkx-stubs>=0, <1",
-    "cognite-toolkit >= 0.7,< 0.8",
+    # Must taken out to avoid a catch 22. Toolkit cannot go to v8
+    # unless neat does it, thus neat cannot have Toolkit as a dev dependency until both
+    # are updated to v8.
+#    "cognite-toolkit >= 0.7,< 0.8",
     "tqdm>=4.67.1, <5",
     "deepdiff>=8.2.0, <9.0.0",
     "respx>=0.22.0",
