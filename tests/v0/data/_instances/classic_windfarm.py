@@ -64,6 +64,7 @@ DATASETS = [ds_source, ds_analysis, ds_maintenance]
 
 
 root = Asset(
+    root_id=4,
     external_id="Utsira",
     name="Utsira",
     description="Utsira wind farm",
@@ -77,6 +78,7 @@ root = Asset(
 )
 
 wind_turbine = Asset(
+    root_id=4,
     external_id="WT-01",
     name="WT-01",
     description="Wind turbine 01",
@@ -92,6 +94,7 @@ wind_turbine = Asset(
 )
 
 wind_turbine2 = Asset(
+    root_id=4,
     external_id="WT-02",
     name="WT-02",
     description="Wind turbine 02",
@@ -107,6 +110,7 @@ wind_turbine2 = Asset(
 )
 
 measurment_root = Asset(
+    root_id=4,
     external_id="Measurement",
     name="Measurement",
     description="Measurement",
@@ -120,6 +124,7 @@ measurment_root = Asset(
 )
 
 metmast = Asset(
+    root_id=4,
     external_id="MetMast",
     name="MetMast",
     description="Meteorological mast",
@@ -144,6 +149,8 @@ turbine_to_metmast = Relationship(
     target_type="Asset",
     data_set_id=ds_source.id,
     labels=[Label("metMast")],
+    created_time=0,
+    last_updated_time=1,
 )
 
 turbine_to_metmast2 = Relationship(
@@ -154,6 +161,8 @@ turbine_to_metmast2 = Relationship(
     target_type="Asset",
     data_set_id=ds_source.id,
     labels=[Label("metMast")],
+    created_time=0,
+    last_updated_time=1,
 )
 
 RELATIONSHIPS = [turbine_to_metmast, turbine_to_metmast2]
@@ -220,24 +229,28 @@ LABELS = [
         name="Power generating unit",
         description="Power generating unit",
         data_set_id=ds_source.id,
+        created_time=0,
     ),
     LabelDefinition(
         external_id="WindTurbine",
         name="Wind turbine",
         description="Wind turbine",
         data_set_id=ds_source.id,
+        created_time=0,
     ),
     LabelDefinition(
         external_id="metMast",
         name="Meteorological mast",
         description="Meteorological mast",
         data_set_id=ds_source.id,
+        created_time=0,
     ),
     LabelDefinition(
         external_id="Measurement",
         name="Measurement",
         description="Measurement",
         data_set_id=ds_source.id,
+        created_time=0,
     ),
 ]
 
@@ -336,6 +349,8 @@ data_sheet = FileMetadata(
     id=2,
     created_time=1,
     last_updated_time=2,
+    uploaded_time=3,
+    uploaded=True,
 )
 
 FILES = [data_sheet]

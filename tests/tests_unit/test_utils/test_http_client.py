@@ -41,7 +41,6 @@ def client_config() -> ClientConfig:
         client_name="test-client",
         project="test-project",
         base_url=BASE_URL,
-        max_workers=1,
         timeout=10,
         credentials=Token("abc"),
     )

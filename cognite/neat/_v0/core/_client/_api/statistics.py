@@ -1,8 +1,8 @@
 import itertools
 from typing import overload
 
+from cognite.client import CogniteClient
 from cognite.client._api_client import APIClient
-from cognite.client._cognite_client import CogniteClient
 from cognite.client.config import ClientConfig
 from cognite.client.data_classes.data_modeling.ids import _load_space_identifier
 from cognite.client.utils.useful_types import SequenceNotStr

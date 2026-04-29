@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes._base import CogniteObject, CogniteResource, CogniteResourceList
+from cognite.client.data_classes._base import CogniteResource, CogniteResourceList
 from typing_extensions import Self
 
 
@@ -43,7 +43,7 @@ class SpaceInstanceCountsList(CogniteResourceList):
 
 
 @dataclass
-class CountLimitPair(CogniteObject):
+class CountLimitPair(CogniteResource):
     count: int
     limit: int
 

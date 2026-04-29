@@ -14,7 +14,6 @@ class NeatClientConfig(ClientConfig):
             credentials=config.credentials,
             api_subversion=config.api_subversion,
             base_url=config.base_url,
-            max_workers=config.max_workers,
             headers=config.headers,
             timeout=config.timeout,
             file_transfer_timeout=config.file_transfer_timeout,
