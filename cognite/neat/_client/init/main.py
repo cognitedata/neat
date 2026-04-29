@@ -55,7 +55,6 @@ def create_client_config_from_env_vars(env_vars: ClientEnvironmentVariables) -> 
         client_name=CLIENT_NAME,
         project=env_vars.CDF_PROJECT,
         credentials=get_credentials(env_vars),
-        max_workers=env_vars.CDF_MAX_WORKERS,
         timeout=env_vars.CDF_CLIENT_TIMEOUT,
         base_url=env_vars.cdf_url,
     )
