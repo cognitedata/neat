@@ -103,6 +103,10 @@ class WorkbookCreator:
         containers = cast(str, TableDMS.model_fields["containers"].validation_alias)
         dropdown_source = "_dropdown_source"
 
+        @classmethod
+        def dropdown_sheets(cls) -> set[str]:
+            return {cls.properties, cls.views, cls.containers}
+
     # The following classes are used to refer to sheets and columns that are used
     # in dropdown creation.
     class PropertyColumns:
@@ -153,6 +157,8 @@ class WorkbookCreator:
         index_by_sheet_name_column: dict[tuple[str, str], int] = {}
         for sheet_name, table in tables.items():
             if not table and sheet_name not in TableDMS.required_sheets():
+                if sheet_name in self.Sheets.dropdown_sheets():
+                    self._add_dropdowns = False
                 continue
             worksheet = workbook.create_sheet(title=sheet_name)
             if sheet_name == self.Sheets.metadata:
