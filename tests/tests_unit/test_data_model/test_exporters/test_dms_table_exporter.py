@@ -1,9 +1,10 @@
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
 from cognite.neat._data_model._constants import DEFAULT_MAX_LIST_SIZE, DEFAULT_MAX_LIST_SIZE_DIRECT_RELATIONS
 from cognite.neat._data_model.exporters import DMSTableExporter
+from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookCreator
 from cognite.neat._data_model.exporters._table_exporter.writer import DMSTableWriter
 from cognite.neat._data_model.importers._table_importer.data_classes import (
     EntityTableFilter,
@@ -22,6 +23,7 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
 )
 from cognite.neat._data_model.models.entities import ParsedEntity
+from cognite.neat._utils.useful_types import DataModelTableType
 
 
 class TestDMSTableExporter:
@@ -158,3 +160,28 @@ class TestDMSTableWriter:
     def test_write_view_filter(self, filter: Filter | None, expected: TableViewFilter) -> None:
         writer = DMSTableWriter(self.DEFAULT_SPACE, self.DEFAULT_VERSION, skip_properties_in_other_spaces=True)
         assert writer.write_view_filter(filter) == expected
+
+
+def test_add_dropdowns_disabled_on_empty_dropdown_sheet() -> None:
+    """Test that _add_dropdowns is set to False when an empty dropdown sheet is detected."""
+
+    # Create minimal test data with empty Containers (which is a dropdown sheet)
+    tables = {
+        WorkbookCreator.Sheets.metadata: [{"Key": "space", "Value": "test"}],
+        WorkbookCreator.Sheets.properties: [{"View": "TestView", "View Property": "prop"}],
+        WorkbookCreator.Sheets.views: [{"View": "TestView"}],
+        WorkbookCreator.Sheets.containers: [],  # Empty dropdown sheet
+    }
+
+    workbook_creator = WorkbookCreator()
+    workbook = workbook_creator.create_workbook(cast(DataModelTableType, tables))
+
+    # Assert that _add_dropdowns was set to False due to empty Containers sheet
+    assert workbook_creator._add_dropdowns is False, (
+        "_add_dropdowns should be False when an empty dropdown sheet is detected"
+    )
+
+    # Assert that dropdown_source sheet was NOT created
+    assert WorkbookCreator.Sheets.dropdown_source not in workbook.sheetnames, (
+        "dropdown_source sheet should not be created when _add_dropdowns is False"
+    )
