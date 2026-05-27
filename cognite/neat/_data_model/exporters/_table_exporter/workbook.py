@@ -157,7 +157,7 @@ class WorkbookCreator:
         index_by_sheet_name_column: dict[tuple[str, str], int] = {}
         for sheet_name, table in tables.items():
             if not table and sheet_name not in TableDMS.required_sheets():
-                if sheet_name in self.Sheets.dropdown_sheets():
+                if sheet_name in self.Sheets.dropdown_sheets() and self._add_dropdowns:
                     self._add_dropdowns = False
                 continue
             worksheet = workbook.create_sheet(title=sheet_name)
