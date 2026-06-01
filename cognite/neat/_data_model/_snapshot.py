@@ -1,5 +1,8 @@
+from pathlib import Path
+import pickle
 import sys
 from datetime import datetime, timezone
+import time
 from typing import Any
 
 from pydantic import BaseModel, Field, field_serializer
@@ -18,6 +21,8 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
+
+from platformdirs import user_cache_path
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -131,3 +136,76 @@ class SchemaSnapshot(BaseModel, extra="ignore"):
             node_types={node_type: node_type for node_type in nodes},
             timestamp=now,
         )
+
+
+class SchemaCaching:
+    def __init__(self,client: NeatClient, max_cache_age_days: int = 1):
+        self._client = client
+        self._max_cache_age_days = max_cache_age_days
+
+    def create(self) -> None:
+        """Create the cache by fetching data from CDF."""
+        self._create_cache_directory()
+        snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
+        pickle.dump(snapshot, open(self.cache_file, 'wb'))
+        print("Cache is created.")
+
+
+    def read(self) -> SchemaSnapshot:
+        """Read the cache"""
+        if not self.cache_exists:
+            print("No cache found. Creating cache by fetching data models from CDF...")
+            self.create()
+
+        if not self.is_cache_valid:
+            print("Cache is outdated. Refreshing cache by fetching data models from CDF...")
+            self.update()
+
+        return pickle.load(open(self.cache_file, 'rb'))
+
+
+    def update(self) -> None:
+        """Update the cache."""
+        self.delete()
+        self.create()
+
+    def delete(self) -> None:
+        """Delete the cache."""
+        if self.cache_exists:
+            self.cache_file.unlink()
+            print("Cache is deleted.")
+        else:
+            print("No cache to delete.")
+
+    @property
+    def directory(self) -> Path:
+        """Directory where snapshots are stored."""
+
+        return user_cache_path("neat")
+
+    @property
+    def cache_file(self) -> Path:
+        """Path to the cache file."""
+        return self.directory / 'snapshot.pkl'
+
+    def _create_cache_directory(self) -> None:
+        """Create the cache directory if it does not exist."""
+        self.directory.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def cache_exists(self) -> bool:
+        """Check if a cached snapshot exists."""
+        return self.cache_file.exists()
+
+    @property
+    def is_cache_valid(self) -> bool:
+        """Check if the cached snapshot is still valid based on its age."""
+        if not self.cache_exists:
+            return False
+        now = time.time()
+
+        age_days = (now - self.cache_file.stat().st_mtime) / 86400
+        if age_days > self._max_cache_age_days:
+            return False
+
+        return True
