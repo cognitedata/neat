@@ -1,3 +1,5 @@
+from types import MethodType
+
 from cognite.client import ClientConfig, CogniteClient
 
 from cognite.neat import _version
@@ -54,6 +56,9 @@ class NeatSession:
         if self._config.alpha.enable_cdf_analysis:
             self.cdf = CDF(self._store, self._client, self._config)
 
+        if self._config.alpha.enable_caching:
+            self.refresh_cache = MethodType(refresh_cache, self)  # type: ignore[attr-defined]
+
         collector = Collector()
         if collector.can_collect:
             collector.collect("initSession", {"mode": self._config.modeling.mode})
@@ -84,3 +89,14 @@ class NeatSession:
             return self.physical_data_model._repr_html_()
 
         raise RuntimeError("Unknown session state, contact support.")
+
+
+def refresh_cache(
+    self: NeatSession,
+) -> None:
+    """Refresh the cache by fetching data from CDF.
+    This can be used if you want to manually refresh the cache before it expires.
+
+    """
+    if self._store._cache:
+        self._store._cache.update()
