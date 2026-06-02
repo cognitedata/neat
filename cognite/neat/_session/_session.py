@@ -1,4 +1,4 @@
-import json
+from types import MethodType
 
 from cognite.client import ClientConfig, CogniteClient
 
@@ -8,7 +8,6 @@ from cognite.neat._config import NeatConfig, PredefinedProfile
 from cognite.neat._session._usage_analytics._collector import Collector
 from cognite.neat._state_machine import EmptyState, PhysicalState
 from cognite.neat._store import NeatStore
-from cognite.neat._utils.http_client import ParametersRequest, SuccessResponse
 
 from ._cdf import CDF
 from ._issues import Issues
@@ -57,6 +56,9 @@ class NeatSession:
         if self._config.alpha.enable_cdf_analysis:
             self.cdf = CDF(self._store, self._client, self._config)
 
+        if self._config.alpha.enable_caching:
+            self.refresh_cache = MethodType(refresh_cache, self)  # type: ignore[attr-defined]
+
         collector = Collector()
         if collector.can_collect:
             collector.collect("initSession", {"mode": self._config.modeling.mode})
@@ -64,19 +66,9 @@ class NeatSession:
         self._welcome_message()
 
     def _welcome_message(self) -> None:
-        cdf_project = self._client.config.project
-        message = f"Neat session started for CDF project: '{cdf_project}'"
-        responses = self._client.http_client.request(
-            ParametersRequest(endpoint_url=self._client.config.create_api_url(""), method="GET")
-        )
-        if len(responses) == 1 and isinstance(response := responses[0], SuccessResponse):
-            organization = ""
-            try:
-                organization = json.loads(response.body)["organization"]
-            except (KeyError, ValueError):
-                ...
-            if organization:
-                message += f" (Organization: '{organization}')"
+        cdf_project = self._client.project
+        organization = self._client.organization
+        message = f"Neat session started for CDF project: '{cdf_project}' (Organization: '{organization}')"
 
         print(message)
         print(self._config)
@@ -97,3 +89,14 @@ class NeatSession:
             return self.physical_data_model._repr_html_()
 
         raise RuntimeError("Unknown session state, contact support.")
+
+
+def refresh_cache(
+    self: NeatSession,
+) -> None:
+    """Refresh the cache by fetching data from CDF.
+    This can be used if you want to manually refresh the cache before it expires.
+
+    """
+    if self._store._cache:
+        self._store._cache.update()

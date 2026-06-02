@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Literal, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic.functional_validators import model_validator
 
 from cognite.neat._exceptions import UserInputError
 from cognite.neat._issues import ConsistencyError, ModelSyntaxError
@@ -25,7 +26,7 @@ _AllProfiles: TypeAlias = PredefinedProfile | _PrivateProfiles
 
 
 class ConfigModel(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    model_config = ConfigDict(populate_by_name=True, validate_assignment=True, extra="allow")
 
 
 class ValidationConfig(ConfigModel):
@@ -128,9 +129,13 @@ class AlphaFlagConfig(ConfigModel):
         default=False, description="If enabled, external plugins can be attached to NeatSession."
     )
 
+    enable_caching: bool = Field(
+        default=False, description="If enabled, Neat will cache data models fetched from CDF to improve performance."
+    )
+
     def __setattr__(self, key: str, value: Any) -> None:
         """Set attribute value or raise AttributeError."""
-        if key in self.model_fields:
+        if key in self.model_fields or (self.enable_caching and key == "max_cache_age_days"):
             super().__setattr__(key, value)
         else:
             available_flags = humanize_collection(type(self).model_fields.keys())
@@ -144,6 +149,13 @@ class AlphaFlagConfig(ConfigModel):
             display = "Enabled" if value else "Disabled"
             lines.append(f"<li><b>{field_name}</b>: {display} - {field.description}</li>")
         return "<ul>" + "\n".join(lines) + "</ul>"
+
+    @model_validator(mode="after")
+    def _attach_max_cache_age(self) -> "AlphaFlagConfig":
+        """If caching is enabled, attach max_cache_age_days to the config."""
+        if self.enable_caching and not hasattr(self, "max_cache_age_days"):
+            object.__setattr__(self, "max_cache_age_days", 1)
+        return self
 
 
 class NeatConfig(ConfigModel):

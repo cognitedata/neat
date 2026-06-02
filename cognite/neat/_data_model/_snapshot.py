@@ -1,7 +1,10 @@
+import pickle
 import sys
+import time
 from datetime import datetime, timezone
 from typing import Any
 
+from platformdirs import user_cache_path
 from pydantic import BaseModel, Field, field_serializer
 from pydantic_core.core_schema import FieldSerializationInfo
 
@@ -131,3 +134,67 @@ class SchemaSnapshot(BaseModel, extra="ignore"):
             node_types={node_type: node_type for node_type in nodes},
             timestamp=now,
         )
+
+
+class SchemaCache:
+    def __init__(self, client: NeatClient, max_cache_age_days: int = 1):
+        self._client = client
+        self._max_cache_age_days = max_cache_age_days
+        self._directory = user_cache_path("neat")
+        self._file = self._directory / f"{client.organization}_{client.project}_snapshot.pkl"
+
+    def _create_cache_directory(self) -> None:
+        """Create the cache directory if it does not exist."""
+        self._directory.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def exists(self) -> bool:
+        """Check if cache exists."""
+        return self._file.exists()
+
+    @property
+    def is_valid(self) -> bool:
+        """Check if cached is still valid based on its age."""
+        if not self.exists:
+            return False
+        now = time.time()
+
+        age_days = (now - self._file.stat().st_mtime) / 86400
+        if age_days > self._max_cache_age_days:
+            return False
+
+        return True
+
+    def create(self) -> None:
+        """Create cache by fetching data from CDF."""
+        self._create_cache_directory()
+        snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
+        with self._file.open("wb") as f:
+            pickle.dump(snapshot, f)
+        print("Cache is created.")
+
+    def read(self) -> SchemaSnapshot:
+        """Read the cache"""
+        if not self.exists:
+            print("No cache found. Creating cache by fetching data models from CDF...")
+            self.create()
+
+        if not self.is_valid:
+            print("Cache is outdated. Refreshing cache by fetching data models from CDF...")
+            self.update()
+
+        with self._file.open("rb") as f:
+            return pickle.load(f)
+
+    def update(self) -> None:
+        """Update the cache."""
+        self.delete()
+        self.create()
+
+    def delete(self) -> None:
+        """Delete the cache."""
+        if self.exists:
+            self._file.unlink()
+            print("Cache is deleted.")
+        else:
+            print("No cache to delete.")
