@@ -138,30 +138,54 @@ class SchemaSnapshot(BaseModel, extra="ignore"):
         )
 
 
-class SchemaCaching:
+class SchemaCache:
     def __init__(self,client: NeatClient, max_cache_age_days: int = 1):
         self._client = client
         self._max_cache_age_days = max_cache_age_days
+        self._directory = user_cache_path("neat")
+        self._file = self._directory / f"{client.organization}_{client.project}_snapshot.pkl"
+
+    def _create_cache_directory(self) -> None:
+        """Create the cache directory if it does not exist."""
+        self._directory.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def exists(self) -> bool:
+        """Check if cache exists."""
+        return self._file.exists()
+
+    @property
+    def is_valid(self) -> bool:
+        """Check if cached is still valid based on its age."""
+        if not self.exists:
+            return False
+        now = time.time()
+
+        age_days = (now - self._file.stat().st_mtime) / 86400
+        if age_days > self._max_cache_age_days:
+            return False
+
+        return True
 
     def create(self) -> None:
-        """Create the cache by fetching data from CDF."""
+        """Create cache by fetching data from CDF."""
         self._create_cache_directory()
         snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
-        pickle.dump(snapshot, open(self.cache_file, 'wb'))
+        pickle.dump(snapshot, open(self._file, 'wb'))
         print("Cache is created.")
 
 
     def read(self) -> SchemaSnapshot:
         """Read the cache"""
-        if not self.cache_exists:
+        if not self.exists:
             print("No cache found. Creating cache by fetching data models from CDF...")
             self.create()
 
-        if not self.is_cache_valid:
+        if not self.is_valid:
             print("Cache is outdated. Refreshing cache by fetching data models from CDF...")
             self.update()
 
-        return pickle.load(open(self.cache_file, 'rb'))
+        return pickle.load(open(self._file, 'rb'))
 
 
     def update(self) -> None:
@@ -171,41 +195,8 @@ class SchemaCaching:
 
     def delete(self) -> None:
         """Delete the cache."""
-        if self.cache_exists:
-            self.cache_file.unlink()
+        if self.exists:
+            self._file.unlink()
             print("Cache is deleted.")
         else:
             print("No cache to delete.")
-
-    @property
-    def directory(self) -> Path:
-        """Directory where snapshots are stored."""
-
-        return user_cache_path("neat")
-
-    @property
-    def cache_file(self) -> Path:
-        """Path to the cache file."""
-        return self.directory / 'snapshot.pkl'
-
-    def _create_cache_directory(self) -> None:
-        """Create the cache directory if it does not exist."""
-        self.directory.mkdir(parents=True, exist_ok=True)
-
-    @property
-    def cache_exists(self) -> bool:
-        """Check if a cached snapshot exists."""
-        return self.cache_file.exists()
-
-    @property
-    def is_cache_valid(self) -> bool:
-        """Check if the cached snapshot is still valid based on its age."""
-        if not self.cache_exists:
-            return False
-        now = time.time()
-
-        age_days = (now - self.cache_file.stat().st_mtime) / 86400
-        if age_days > self._max_cache_age_days:
-            return False
-
-        return True

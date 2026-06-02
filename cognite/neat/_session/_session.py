@@ -8,7 +8,6 @@ from cognite.neat._config import NeatConfig, PredefinedProfile
 from cognite.neat._session._usage_analytics._collector import Collector
 from cognite.neat._state_machine import EmptyState, PhysicalState
 from cognite.neat._store import NeatStore
-from cognite.neat._utils.http_client import ParametersRequest, SuccessResponse
 
 from ._cdf import CDF
 from ._issues import Issues
@@ -64,19 +63,10 @@ class NeatSession:
         self._welcome_message()
 
     def _welcome_message(self) -> None:
-        cdf_project = self._client.config.project
-        message = f"Neat session started for CDF project: '{cdf_project}'"
-        responses = self._client.http_client.request(
-            ParametersRequest(endpoint_url=self._client.config.create_api_url(""), method="GET")
-        )
-        if len(responses) == 1 and isinstance(response := responses[0], SuccessResponse):
-            organization = ""
-            try:
-                organization = json.loads(response.body)["organization"]
-            except (KeyError, ValueError):
-                ...
-            if organization:
-                message += f" (Organization: '{organization}')"
+        cdf_project = self._client.project
+        organization = self._client.organization
+        message = (f"Neat session started for CDF project: '{cdf_project}'"
+                   f" (Organization: '{organization}')")
 
         print(message)
         print(self._config)
