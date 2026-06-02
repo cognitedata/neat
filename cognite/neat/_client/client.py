@@ -32,11 +32,10 @@ class NeatClient:
     def organization(self) -> str:
         """Get the organization associated with the Cognite project."""
 
-        organization : str = "unknown"
+        organization: str = "unknown"
 
         responses = self.http_client.request(
-            ParametersRequest(endpoint_url=self.config.create_api_url(""),
-                              method="GET")
+            ParametersRequest(endpoint_url=self.config.create_api_url(""), method="GET")
         )
 
         if len(responses) == 1 and isinstance(response := responses[0], SuccessResponse):

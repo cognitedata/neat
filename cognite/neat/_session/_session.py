@@ -1,5 +1,3 @@
-import json
-
 from cognite.client import ClientConfig, CogniteClient
 
 from cognite.neat import _version
@@ -65,8 +63,7 @@ class NeatSession:
     def _welcome_message(self) -> None:
         cdf_project = self._client.project
         organization = self._client.organization
-        message = (f"Neat session started for CDF project: '{cdf_project}'"
-                   f" (Organization: '{organization}')")
+        message = f"Neat session started for CDF project: '{cdf_project}' (Organization: '{organization}')"
 
         print(message)
         print(self._config)

@@ -1,10 +1,10 @@
-from pathlib import Path
 import pickle
 import sys
-from datetime import datetime, timezone
 import time
+from datetime import datetime, timezone
 from typing import Any
 
+from platformdirs import user_cache_path
 from pydantic import BaseModel, Field, field_serializer
 from pydantic_core.core_schema import FieldSerializationInfo
 
@@ -21,8 +21,6 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
-
-from platformdirs import user_cache_path
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -139,7 +137,7 @@ class SchemaSnapshot(BaseModel, extra="ignore"):
 
 
 class SchemaCache:
-    def __init__(self,client: NeatClient, max_cache_age_days: int = 1):
+    def __init__(self, client: NeatClient, max_cache_age_days: int = 1):
         self._client = client
         self._max_cache_age_days = max_cache_age_days
         self._directory = user_cache_path("neat")
@@ -171,9 +169,8 @@ class SchemaCache:
         """Create cache by fetching data from CDF."""
         self._create_cache_directory()
         snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
-        pickle.dump(snapshot, open(self._file, 'wb'))
+        pickle.dump(snapshot, self._file.open("wb"))
         print("Cache is created.")
-
 
     def read(self) -> SchemaSnapshot:
         """Read the cache"""
@@ -185,8 +182,7 @@ class SchemaCache:
             print("Cache is outdated. Refreshing cache by fetching data models from CDF...")
             self.update()
 
-        return pickle.load(open(self._file, 'rb'))
-
+        return pickle.load(self._file.open("rb"))
 
     def update(self) -> None:
         """Update the cache."""

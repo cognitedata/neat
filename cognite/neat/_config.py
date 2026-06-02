@@ -26,7 +26,7 @@ _AllProfiles: TypeAlias = PredefinedProfile | _PrivateProfiles
 
 
 class ConfigModel(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True, extra='allow')
+    model_config = ConfigDict(populate_by_name=True, validate_assignment=True, extra="allow")
 
 
 class ValidationConfig(ConfigModel):
@@ -130,8 +130,7 @@ class AlphaFlagConfig(ConfigModel):
     )
 
     enable_caching: bool = Field(
-        default=False,
-        description="If enabled, Neat will cache data models fetched from CDF to improve performance."
+        default=False, description="If enabled, Neat will cache data models fetched from CDF to improve performance."
     )
 
     def __setattr__(self, key: str, value: Any) -> None:
@@ -152,7 +151,7 @@ class AlphaFlagConfig(ConfigModel):
         return "<ul>" + "\n".join(lines) + "</ul>"
 
     @model_validator(mode="after")
-    def _attach_max_cache_age(self) -> "NeatConfig":
+    def _attach_max_cache_age(self) -> "AlphaFlagConfig":
         """If caching is enabled, attach max_cache_age_days to the config."""
         if self.enable_caching and not hasattr(self, "max_cache_age_days"):
             object.__setattr__(self, "max_cache_age_days", 1)
