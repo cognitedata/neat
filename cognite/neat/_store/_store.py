@@ -62,7 +62,7 @@ class NeatStore:
     @property
     def cdf_snapshot(self) -> SchemaSnapshot:
         if not self._cdf_snapshot:
-            self._cdf_snapshot = SchemaCache(self._client).read()
+            self._cdf_snapshot = SchemaCache(self._client, self._config.alpha.max_cache_age_days).read() if self._config.alpha.enable_caching else SchemaSnapshot.fetch_entire_cdf(self._client)
         return self._cdf_snapshot
 
     def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None, fix: bool = False) -> None:
@@ -142,7 +142,7 @@ class NeatStore:
             and not on_success.options.dry_run
         ):
             # Update CDF snapshot and space statistics after deployment
-            self._cdf_snapshot = SchemaCache(self._client).update()
+            self._cdf_snapshot = SchemaCache(self._client, self._config.alpha.max_cache_age_days).update() if self._config.alpha.enable_caching else SchemaSnapshot.fetch_entire_cdf(self._client)
             self._cdf_space_statistics = self._client.statistics.space_statistics(
                 [space.space for space in self.cdf_snapshot.spaces.keys()]
             )
