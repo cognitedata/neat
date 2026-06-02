@@ -135,7 +135,7 @@ class AlphaFlagConfig(ConfigModel):
 
     def __setattr__(self, key: str, value: Any) -> None:
         """Set attribute value or raise AttributeError."""
-        if key in self.model_fields:
+        if key in self.model_fields or (self.enable_caching and key == "max_cache_age_days"):
             super().__setattr__(key, value)
         else:
             available_flags = humanize_collection(type(self).model_fields.keys())
