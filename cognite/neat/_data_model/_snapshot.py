@@ -169,7 +169,8 @@ class SchemaCache:
         """Create cache by fetching data from CDF."""
         self._create_cache_directory()
         snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
-        pickle.dump(snapshot, self._file.open("wb"))
+        with self._file.open("wb") as f:
+            pickle.dump(snapshot, f)
         print("Cache is created.")
 
     def read(self) -> SchemaSnapshot:
@@ -182,7 +183,8 @@ class SchemaCache:
             print("Cache is outdated. Refreshing cache by fetching data models from CDF...")
             self.update()
 
-        return pickle.load(self._file.open("rb"))
+        with self._file.open("rb") as f:
+            return pickle.load(f)
 
     def update(self) -> None:
         """Update the cache."""
