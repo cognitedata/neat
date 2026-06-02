@@ -289,7 +289,7 @@ def test_schemas() -> dict:
 def mock_client() -> MagicMock:
     """Create a mock NeatClient."""
     client = MagicMock(spec=NeatClient)
-    client.organization = "tes`t_org"
+    client.organization = "test_org"
     client.project = "test_project"
     return client
 
