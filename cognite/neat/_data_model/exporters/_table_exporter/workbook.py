@@ -312,7 +312,7 @@ class WorkbookCreator:
         self._add_validation(
             container_sheet,
             self.DropdownSourceColumns.used_for,
-            3,  # node, edge, all
+            4,  # node, edge, record, all
             index_by_sheet_name_column[(self.Sheets.containers, self.ContainerColumns.used_for)],
             self._max_containers,
         )
@@ -382,7 +382,7 @@ class WorkbookCreator:
         for i, value in enumerate([True, False, None], 1):
             dropdown_sheet.cell(row=i, column=self.DropdownSourceColumns.in_model, value=value)
 
-        for i, value in enumerate(["node", "edge", "all"], 1):
+        for i, value in enumerate(["node", "edge", "record", "all"], 1):
             dropdown_sheet.cell(row=i, column=self.DropdownSourceColumns.used_for, value=value)
 
         dropdown_sheet.sheet_state = "hidden"

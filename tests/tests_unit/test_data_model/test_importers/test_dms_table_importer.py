@@ -1122,7 +1122,8 @@ def invalid_dms_table_formats() -> Iterable[tuple]:
             "In table 'Properties' row 1 column 'Index' -> btree.cursorable input should be "
             "a valid boolean. Got 'invalid' of type str.",
             "In table 'Views' row 1 the column 'View' cannot be empty.",
-            "In table 'Containers' row 1 column 'Used For' input should be 'node', 'edge' or 'all'. Got 'Instances'.",
+            "In table 'Containers' row 1 column 'Used For' input should be 'node', 'edge', 'record' or 'all'. "
+            "Got 'Instances'.",
             (
                 "In table 'Containers' row 1 column 'Constraint' the constraint 'describablePresent' on container"
                 " 'CogniteDescribable' has an invalid type 'requiresssss'. "

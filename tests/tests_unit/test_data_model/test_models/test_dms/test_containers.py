@@ -105,7 +105,7 @@ def container_strategy(draw: Callable) -> dict[str, Any]:
         externalId=draw(st.from_regex(DM_EXTERNAL_ID_PATTERN, fullmatch=True).filter(lambda s: 1 <= len(s) <= 255)),
         name=draw(st.one_of(st.none(), st.text(max_size=255))),
         description=draw(st.one_of(st.none(), st.text(max_size=1024))),
-        usedFor=draw(st.one_of(st.none(), st.sampled_from(["node", "edge", "all"]))),
+        usedFor=draw(st.one_of(st.none(), st.sampled_from(["node", "edge", "record", "all"]))),
         properties=properties,
         isGlobal=draw(st.booleans()),
         createdTime=draw(st.integers(min_value=0)),
@@ -286,7 +286,7 @@ def invalid_container_definition_test_cases() -> Iterator:
         {"externalId": "MyContainer", "name": "way too long name" * 100, "usedFor": "not-instance", "properties": {}},
         {
             "In field 'name', string should have at most 255 characters.",
-            "In field 'usedFor', input should be 'node', 'edge' or 'all'. Got 'not-instance'.",
+            "In field 'usedFor', input should be 'node', 'edge', 'record' or 'all'. Got 'not-instance'.",
             "Missing required field: 'space'.",
         },
         id="Multiple Issues. Missing required field, invalid name length, invalid value, and not properties",

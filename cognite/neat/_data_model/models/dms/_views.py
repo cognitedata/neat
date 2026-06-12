@@ -158,7 +158,9 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
         description="Does the view support queries, i.e. is it queryable? You can query a view if "
         "it either has a filter or at least one property mapped to a container."
     )
-    used_for: Literal["node", "edge", "all"] = Field(description="Should this operation apply to nodes, edges or both.")
+    used_for: Literal["node", "edge", "record", "all"] = Field(
+        description="Should this operation apply to nodes, edges or both."
+    )
     is_global: bool = Field(description="Is this a global view.")
     mapped_containers: list[ContainerReference] = Field(
         description="List of containers with properties mapped by this view."
