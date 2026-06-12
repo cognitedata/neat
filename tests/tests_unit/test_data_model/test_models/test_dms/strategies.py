@@ -133,7 +133,7 @@ def view_strategy(draw: Callable) -> dict[str, Any]:
         version=draw(st.from_regex(DM_VERSION_PATTERN, fullmatch=True).filter(lambda s: len(s) <= 43)),
         name=draw(st.one_of(st.none(), st.text(max_size=255))),
         description=draw(st.one_of(st.none(), st.text(max_size=1024))),
-        usedFor=draw(st.sampled_from(["node", "edge", "all"])),
+        usedFor=draw(st.sampled_from(["node", "edge", "record", "all"])),
         properties=properties,
         isGlobal=draw(st.booleans()),
         createdTime=draw(st.integers(min_value=0)),
