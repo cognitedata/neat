@@ -1398,7 +1398,13 @@
   description: CogniteVisualizable defines the standard way to reference a related
     3D resource
   externalId: CogniteVisualizable
-  indexes: {}
+  indexes:
+    object3D:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - object3D
   name: null
   properties:
     object3D:
@@ -1418,7 +1424,13 @@
 - constraints: {}
   description: null
   externalId: Cognite360Image
-  indexes: {}
+  indexes:
+    collection360:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - collection360
   name: null
   properties:
     collection360:
@@ -1848,7 +1860,13 @@
 - constraints: {}
   description: null
   externalId: CogniteCADNode
-  indexes: {}
+  indexes:
+    object3D:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - object3D
   name: null
   properties:
     cadNodeReference:
@@ -2063,7 +2081,13 @@
 - constraints: {}
   description: null
   externalId: CognitePointCloudVolume
-  indexes: {}
+  indexes:
+    object3D:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - object3D
   name: null
   properties:
     formatVersion:
