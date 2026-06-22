@@ -136,3 +136,7 @@ views:
   externalId: CogniteUnit
   version: v1
   type: view
+- space: cdf_cdm
+  externalId: CogniteStateSet
+  version: v1
+  type: view

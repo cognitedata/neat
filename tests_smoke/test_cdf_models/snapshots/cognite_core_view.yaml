@@ -1,11 +1,11 @@
 - description: 'The describable core concept is used as a standard way of holding
-    the bare minimum of information about the instance
+    the bare minimum of information about the instance.
 
     '
   externalId: CogniteDescribable
   filter: null
   implements: []
-  name: null
+  name: Describable
   properties:
     aliases:
       container:
@@ -13,8 +13,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     description:
       container:
@@ -22,8 +22,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     name:
       container:
@@ -31,8 +31,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     tags:
       container:
@@ -40,16 +40,19 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
   space: cdf_cdm
   version: v1
-- description: null
+- description: 'The CogniteSourceable core concept is used to standardize the way
+    source information is stored.
+
+    '
   externalId: CogniteSourceable
   filter: null
   implements: []
-  name: null
+  name: Sourceable
   properties:
     source:
       container:
@@ -57,8 +60,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: source
-      description: Direct relation to a source system
-      name: null
+      description: A direct relation to a source system instance.
+      name: Source
       source:
         externalId: CogniteSourceSystem
         space: cdf_cdm
@@ -72,7 +75,7 @@
       containerPropertyIdentifier: sourceContext
       description: Context of the source id. For systems where the sourceId is globally
         unique, the sourceContext is expected to not be set.
-      name: null
+      name: Source context
       source: null
     sourceCreatedTime:
       container:
@@ -80,8 +83,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedTime
-      description: When the instance was created in source system (if available)
-      name: null
+      description: The time the instance was created in the source system (if available).
+      name: Source created
       source: null
     sourceCreatedUser:
       container:
@@ -89,9 +92,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedUser
-      description: User identifier from the source system on who created the source
-        data. This identifier is not guaranteed to match the user identifiers in CDF
-      name: null
+      description: The user identifier from the source system who created the source
+        data. This identifier is not guaranteed to match user identifiers in Cognite
+        Data Fusion.
+      name: Source created by
       source: null
     sourceId:
       container:
@@ -99,8 +103,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceId
-      description: Identifier from the source system
-      name: null
+      description: The identifier in the source system.
+      name: Source ID
       source: null
     sourceUpdatedTime:
       container:
@@ -108,8 +112,9 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedTime
-      description: When the instance was last updated in the source system (if available)
-      name: null
+      description: The time the instance was last updated in the source system (if
+        available).
+      name: Source last updated
       source: null
     sourceUpdatedUser:
       container:
@@ -117,10 +122,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedUser
-      description: User identifier from the source system on who last updated the
-        source data. This identifier is not guaranteed to match the user identifiers
-        in CDF
-      name: null
+      description: The user identifier from the source system who last updated the
+        source data. This identifier is not guaranteed to match user identifiers in
+        Cognite Data Fusion.
+      name: Source last updated by
       source: null
   space: cdf_cdm
   version: v1
@@ -133,7 +138,7 @@
     space: cdf_cdm
     type: view
     version: v1
-  name: null
+  name: Source system
   properties:
     aliases:
       container:
@@ -141,8 +146,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     description:
       container:
@@ -150,8 +155,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     manufacturer:
       container:
@@ -159,8 +164,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: manufacturer
-      description: Manufacturer of the source system
-      name: null
+      description: The manufacturer of the source system.
+      name: Manufacturer
       source: null
     name:
       container:
@@ -168,8 +173,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     tags:
       container:
@@ -177,8 +182,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     version:
       container:
@@ -186,8 +191,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: version
-      description: Version identifier for the source system
-      name: null
+      description: The version identifier for the source system.
+      name: Version
       source: null
   space: cdf_cdm
   version: v1
@@ -196,7 +201,7 @@
   externalId: CogniteSchedulable
   filter: null
   implements: []
-  name: null
+  name: Schedulable
   properties:
     endTime:
       container:
@@ -204,8 +209,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: endTime
-      description: The actual end time of an activity (or similar that extends this)
-      name: null
+      description: The actual end time of an activity (or similar that extends this).
+      name: End time
       source: null
     scheduledEndTime:
       container:
@@ -213,8 +218,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: scheduledEndTime
-      description: The planned end time of an activity (or similar that extends this)
-      name: null
+      description: The planned end time of an activity (or similar that extends this).
+      name: Scheduled end time
       source: null
     scheduledStartTime:
       container:
@@ -223,8 +228,8 @@
         type: container
       containerPropertyIdentifier: scheduledStartTime
       description: The planned start time of an activity (or similar that extends
-        this)
-      name: null
+        this).
+      name: Scheduled start time
       source: null
     startTime:
       container:
@@ -232,17 +237,17 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: startTime
-      description: The actual start time of an activity (or similar that extends this)
-      name: null
+      description: The actual start time of an activity (or similar that extends this).
+      name: Start time
       source: null
   space: cdf_cdm
   version: v1
 - description: CogniteVisualizable defines the standard way to reference a related
-    3D resource
+    3D resource.
   externalId: CogniteVisualizable
   filter: null
   implements: []
-  name: null
+  name: Visualizable
   properties:
     object3D:
       container:
@@ -250,8 +255,9 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: object3D
-      description: Direct relation to an Object3D instance representing the 3D resource
-      name: null
+      description: Direct relation to a Cognite3DObject instance representing the
+        3D resource.
+      name: 3D object
       source:
         externalId: Cognite3DObject
         space: cdf_cdm
@@ -471,8 +477,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     asset:
       connectionType: single_reverse_direct_relation
@@ -512,8 +518,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     images360:
       connectionType: multi_edge_connection
@@ -540,8 +546,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     pointCloudVolumes:
       connectionType: multi_reverse_direct_relation
@@ -566,8 +572,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     xMax:
       container:
@@ -642,8 +648,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     description:
       container:
@@ -651,8 +657,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     name:
       container:
@@ -660,8 +666,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     tags:
       container:
@@ -669,8 +675,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     thumbnail:
       container:
@@ -727,8 +733,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     description:
       container:
@@ -736,8 +742,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     name:
       container:
@@ -745,8 +751,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     revisions:
       connectionType: multi_reverse_direct_relation
@@ -770,8 +776,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     thumbnail:
       container:
@@ -879,8 +885,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     description:
       container:
@@ -888,8 +894,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     name:
       container:
@@ -897,8 +903,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     revisions:
       connectionType: multi_reverse_direct_relation
@@ -922,8 +928,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     thumbnail:
       container:
@@ -980,8 +986,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     collections:
       connectionType: multi_reverse_direct_relation
@@ -1005,8 +1011,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     name:
       container:
@@ -1014,8 +1020,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     tags:
       container:
@@ -1023,8 +1029,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     thumbnail:
       container:
@@ -1225,8 +1231,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     description:
       container:
@@ -1234,8 +1240,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     model3D:
       container:
@@ -1256,8 +1262,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     published:
       container:
@@ -1283,8 +1289,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     type:
       container:
@@ -1313,8 +1319,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     cadNodeReference:
       container:
@@ -1331,8 +1337,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     model3D:
       container:
@@ -1353,8 +1359,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     object3D:
       container:
@@ -1402,8 +1408,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     treeIndexes:
       container:
@@ -1435,8 +1441,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     description:
       container:
@@ -1444,8 +1450,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     formatVersion:
       container:
@@ -1476,8 +1482,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     object3D:
       container:
@@ -1511,8 +1517,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     volume:
       container:
@@ -1793,8 +1799,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     description:
       container:
@@ -1802,8 +1808,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     groupType:
       container:
@@ -1820,8 +1826,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     tags:
       container:
@@ -1829,8 +1835,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
   space: cdf_cdm
   version: v1
@@ -1858,8 +1864,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     confidence:
       container:
@@ -1867,8 +1873,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: confidence
-      description: The confidence that the annotation is a good match
-      name: null
+      description: The confidence that the annotation is a good match.
+      name: Confidence
       source: null
     description:
       container:
@@ -1876,8 +1882,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     formatVersion:
       container:
@@ -1894,8 +1900,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     polygon:
       container:
@@ -1912,8 +1918,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: source
-      description: Direct relation to a source system
-      name: null
+      description: A direct relation to a source system instance.
+      name: Source
       source:
         externalId: CogniteSourceSystem
         space: cdf_cdm
@@ -1927,7 +1933,7 @@
       containerPropertyIdentifier: sourceContext
       description: Context of the source id. For systems where the sourceId is globally
         unique, the sourceContext is expected to not be set.
-      name: null
+      name: Source context
       source: null
     sourceCreatedTime:
       container:
@@ -1935,8 +1941,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedTime
-      description: When the instance was created in source system (if available)
-      name: null
+      description: The time the instance was created in the source system (if available).
+      name: Source created
       source: null
     sourceCreatedUser:
       container:
@@ -1944,9 +1950,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedUser
-      description: User identifier from the source system on who created the source
-        data. This identifier is not guaranteed to match the user identifiers in CDF
-      name: null
+      description: The user identifier from the source system who created the source
+        data. This identifier is not guaranteed to match user identifiers in Cognite
+        Data Fusion.
+      name: Source created by
       source: null
     sourceId:
       container:
@@ -1954,8 +1961,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceId
-      description: Identifier from the source system
-      name: null
+      description: The identifier in the source system.
+      name: Source ID
       source: null
     sourceUpdatedTime:
       container:
@@ -1963,8 +1970,9 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedTime
-      description: When the instance was last updated in the source system (if available)
-      name: null
+      description: The time the instance was last updated in the source system (if
+        available).
+      name: Source last updated
       source: null
     sourceUpdatedUser:
       container:
@@ -1972,10 +1980,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedUser
-      description: User identifier from the source system on who last updated the
-        source data. This identifier is not guaranteed to match the user identifiers
-        in CDF
-      name: null
+      description: The user identifier from the source system who last updated the
+        source data. This identifier is not guaranteed to match user identifiers in
+        Cognite Data Fusion.
+      name: Source last updated by
       source: null
     status:
       container:
@@ -1983,8 +1991,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: status
-      description: The status of the annotation
-      name: null
+      description: The status of the annotation.
+      name: Status
       source: null
     tags:
       container:
@@ -1992,13 +2000,13 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
   space: cdf_cdm
   version: v1
 - description: Assets represent systems that support industrial functions or processes.
-    Assets are often called 'functional location'.
+    Assets are often called 'functional locations'.
   externalId: CogniteAsset
   filter: null
   implements:
@@ -2038,8 +2046,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     assetClass:
       container:
@@ -2077,8 +2085,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     equipment:
       connectionType: multi_reverse_direct_relation
@@ -2118,8 +2126,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     object3D:
       container:
@@ -2127,8 +2135,9 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: object3D
-      description: Direct relation to an Object3D instance representing the 3D resource
-      name: null
+      description: Direct relation to a Cognite3DObject instance representing the
+        3D resource.
+      name: 3D object
       source:
         externalId: Cognite3DObject
         space: cdf_cdm
@@ -2191,8 +2200,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: source
-      description: Direct relation to a source system
-      name: null
+      description: A direct relation to a source system instance.
+      name: Source
       source:
         externalId: CogniteSourceSystem
         space: cdf_cdm
@@ -2206,7 +2215,7 @@
       containerPropertyIdentifier: sourceContext
       description: Context of the source id. For systems where the sourceId is globally
         unique, the sourceContext is expected to not be set.
-      name: null
+      name: Source context
       source: null
     sourceCreatedTime:
       container:
@@ -2214,8 +2223,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedTime
-      description: When the instance was created in source system (if available)
-      name: null
+      description: The time the instance was created in the source system (if available).
+      name: Source created
       source: null
     sourceCreatedUser:
       container:
@@ -2223,9 +2232,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedUser
-      description: User identifier from the source system on who created the source
-        data. This identifier is not guaranteed to match the user identifiers in CDF
-      name: null
+      description: The user identifier from the source system who created the source
+        data. This identifier is not guaranteed to match user identifiers in Cognite
+        Data Fusion.
+      name: Source created by
       source: null
     sourceId:
       container:
@@ -2233,8 +2243,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceId
-      description: Identifier from the source system
-      name: null
+      description: The identifier in the source system.
+      name: Source ID
       source: null
     sourceUpdatedTime:
       container:
@@ -2242,8 +2252,9 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedTime
-      description: When the instance was last updated in the source system (if available)
-      name: null
+      description: The time the instance was last updated in the source system (if
+        available).
+      name: Source last updated
       source: null
     sourceUpdatedUser:
       container:
@@ -2251,10 +2262,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedUser
-      description: User identifier from the source system on who last updated the
-        source data. This identifier is not guaranteed to match the user identifiers
-        in CDF
-      name: null
+      description: The user identifier from the source system who last updated the
+        source data. This identifier is not guaranteed to match user identifiers in
+        Cognite Data Fusion.
+      name: Source last updated by
       source: null
     tags:
       container:
@@ -2262,8 +2273,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     timeSeries:
       connectionType: multi_reverse_direct_relation
@@ -2287,7 +2298,7 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: type
-      description: Specifies the type of the asset. It's a direct relation to CogniteAssetType.
+      description: Specifies the type of the asset.
       name: Asset type
       source:
         externalId: CogniteAssetType
@@ -2312,8 +2323,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     code:
       container:
@@ -2330,8 +2341,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     name:
       container:
@@ -2339,8 +2350,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     standard:
       container:
@@ -2357,8 +2368,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
   space: cdf_cdm
   version: v1
@@ -2378,8 +2389,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     assetClass:
       container:
@@ -2387,8 +2398,7 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: assetClass
-      description: Specifies the class the type belongs to. It's a direct relation
-        to CogniteAssetClass.
+      description: Specifies the class the type belongs to.
       name: Asset class
       source:
         externalId: CogniteAssetClass
@@ -2410,8 +2420,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     name:
       container:
@@ -2419,8 +2429,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     standard:
       container:
@@ -2437,8 +2447,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
   space: cdf_cdm
   version: v1
@@ -2478,8 +2488,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     asset:
       container:
@@ -2500,8 +2510,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     equipmentType:
       container:
@@ -2509,8 +2519,7 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: equipmentType
-      description: Specifies the type of the equipment. It's a direct relation to
-        CogniteEquipmentType.
+      description: Specifies the type of the equipment.
       name: Equipment type
       source:
         externalId: CogniteEquipmentType
@@ -2545,8 +2554,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     serialNumber:
       container:
@@ -2563,8 +2572,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: source
-      description: Direct relation to a source system
-      name: null
+      description: A direct relation to a source system instance.
+      name: Source
       source:
         externalId: CogniteSourceSystem
         space: cdf_cdm
@@ -2578,7 +2587,7 @@
       containerPropertyIdentifier: sourceContext
       description: Context of the source id. For systems where the sourceId is globally
         unique, the sourceContext is expected to not be set.
-      name: null
+      name: Source context
       source: null
     sourceCreatedTime:
       container:
@@ -2586,8 +2595,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedTime
-      description: When the instance was created in source system (if available)
-      name: null
+      description: The time the instance was created in the source system (if available).
+      name: Source created
       source: null
     sourceCreatedUser:
       container:
@@ -2595,9 +2604,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedUser
-      description: User identifier from the source system on who created the source
-        data. This identifier is not guaranteed to match the user identifiers in CDF
-      name: null
+      description: The user identifier from the source system who created the source
+        data. This identifier is not guaranteed to match user identifiers in Cognite
+        Data Fusion.
+      name: Source created by
       source: null
     sourceId:
       container:
@@ -2605,8 +2615,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceId
-      description: Identifier from the source system
-      name: null
+      description: The identifier in the source system.
+      name: Source ID
       source: null
     sourceUpdatedTime:
       container:
@@ -2614,8 +2624,9 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedTime
-      description: When the instance was last updated in the source system (if available)
-      name: null
+      description: The time the instance was last updated in the source system (if
+        available).
+      name: Source last updated
       source: null
     sourceUpdatedUser:
       container:
@@ -2623,10 +2634,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedUser
-      description: User identifier from the source system on who last updated the
-        source data. This identifier is not guaranteed to match the user identifiers
-        in CDF
-      name: null
+      description: The user identifier from the source system who last updated the
+        source data. This identifier is not guaranteed to match user identifiers in
+        Cognite Data Fusion.
+      name: Source last updated by
       source: null
     tags:
       container:
@@ -2634,8 +2645,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     timeSeries:
       connectionType: multi_reverse_direct_relation
@@ -2671,8 +2682,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     code:
       container:
@@ -2689,8 +2700,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     equipmentClass:
       container:
@@ -2698,7 +2709,7 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: equipmentClass
-      description: Represents the class of equipment.
+      description: The class of equipment.
       name: Equipment class
       source: null
     name:
@@ -2707,8 +2718,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     standard:
       container:
@@ -2717,7 +2728,7 @@
         type: container
       containerPropertyIdentifier: standard
       description: An identifier for the standard this equipment type is sourced from,
-        for example, ISO14224.
+        for example, ISO 14224.
       name: Standard
       source: null
     standardReference:
@@ -2735,8 +2746,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
   space: cdf_cdm
   version: v1
@@ -2760,8 +2771,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     assets:
       container:
@@ -2796,8 +2807,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     directory:
       container:
@@ -2806,7 +2817,7 @@
         type: container
       containerPropertyIdentifier: directory
       description: Contains the path elements from the source (if the source system
-        has a file system hierarchy or similar.)
+        has a file system hierarchy or similar).
       name: Directory
       source: null
     equipment:
@@ -2851,8 +2862,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     source:
       container:
@@ -2860,8 +2871,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: source
-      description: Direct relation to a source system
-      name: null
+      description: A direct relation to a source system instance.
+      name: Source
       source:
         externalId: CogniteSourceSystem
         space: cdf_cdm
@@ -2875,7 +2886,7 @@
       containerPropertyIdentifier: sourceContext
       description: Context of the source id. For systems where the sourceId is globally
         unique, the sourceContext is expected to not be set.
-      name: null
+      name: Source context
       source: null
     sourceCreatedTime:
       container:
@@ -2883,8 +2894,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedTime
-      description: When the instance was created in source system (if available)
-      name: null
+      description: The time the instance was created in the source system (if available).
+      name: Source created
       source: null
     sourceCreatedUser:
       container:
@@ -2892,9 +2903,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedUser
-      description: User identifier from the source system on who created the source
-        data. This identifier is not guaranteed to match the user identifiers in CDF
-      name: null
+      description: The user identifier from the source system who created the source
+        data. This identifier is not guaranteed to match user identifiers in Cognite
+        Data Fusion.
+      name: Source created by
       source: null
     sourceId:
       container:
@@ -2902,8 +2914,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceId
-      description: Identifier from the source system
-      name: null
+      description: The identifier in the source system.
+      name: Source ID
       source: null
     sourceUpdatedTime:
       container:
@@ -2911,8 +2923,9 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedTime
-      description: When the instance was last updated in the source system (if available)
-      name: null
+      description: The time the instance was last updated in the source system (if
+        available).
+      name: Source last updated
       source: null
     sourceUpdatedUser:
       container:
@@ -2920,10 +2933,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedUser
-      description: User identifier from the source system on who last updated the
-        source data. This identifier is not guaranteed to match the user identifiers
-        in CDF
-      name: null
+      description: The user identifier from the source system who last updated the
+        source data. This identifier is not guaranteed to match user identifiers in
+        Cognite Data Fusion.
+      name: Source last updated by
       source: null
     tags:
       container:
@@ -2931,8 +2944,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     uploadedTime:
       container:
@@ -2962,8 +2975,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     code:
       container:
@@ -2972,7 +2985,7 @@
         type: container
       containerPropertyIdentifier: code
       description: An identifier for the category, for example, 'AA' for Accounting
-        (from Norsok.)
+        (from NORSOK).
       name: Code
       source: null
     description:
@@ -2981,8 +2994,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     name:
       container:
@@ -2990,8 +3003,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     standard:
       container:
@@ -3000,7 +3013,7 @@
         type: container
       containerPropertyIdentifier: standard
       description: The name of the standard the category originates from, for example,
-        'Norsok'.
+        'NORSOK'.
       name: Standard
       source: null
     standardReference:
@@ -3018,8 +3031,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
   space: cdf_cdm
   version: v1
@@ -3048,8 +3061,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     assets:
       container:
@@ -3070,8 +3083,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     endTime:
       container:
@@ -3079,8 +3092,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: endTime
-      description: The actual end time of an activity (or similar that extends this)
-      name: null
+      description: The actual end time of an activity (or similar that extends this).
+      name: End time
       source: null
     equipment:
       container:
@@ -3101,8 +3114,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     scheduledEndTime:
       container:
@@ -3110,8 +3123,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: scheduledEndTime
-      description: The planned end time of an activity (or similar that extends this)
-      name: null
+      description: The planned end time of an activity (or similar that extends this).
+      name: Scheduled end time
       source: null
     scheduledStartTime:
       container:
@@ -3120,8 +3133,8 @@
         type: container
       containerPropertyIdentifier: scheduledStartTime
       description: The planned start time of an activity (or similar that extends
-        this)
-      name: null
+        this).
+      name: Scheduled start time
       source: null
     source:
       container:
@@ -3129,8 +3142,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: source
-      description: Direct relation to a source system
-      name: null
+      description: A direct relation to a source system instance.
+      name: Source
       source:
         externalId: CogniteSourceSystem
         space: cdf_cdm
@@ -3144,7 +3157,7 @@
       containerPropertyIdentifier: sourceContext
       description: Context of the source id. For systems where the sourceId is globally
         unique, the sourceContext is expected to not be set.
-      name: null
+      name: Source context
       source: null
     sourceCreatedTime:
       container:
@@ -3152,8 +3165,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedTime
-      description: When the instance was created in source system (if available)
-      name: null
+      description: The time the instance was created in the source system (if available).
+      name: Source created
       source: null
     sourceCreatedUser:
       container:
@@ -3161,9 +3174,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedUser
-      description: User identifier from the source system on who created the source
-        data. This identifier is not guaranteed to match the user identifiers in CDF
-      name: null
+      description: The user identifier from the source system who created the source
+        data. This identifier is not guaranteed to match user identifiers in Cognite
+        Data Fusion.
+      name: Source created by
       source: null
     sourceId:
       container:
@@ -3171,8 +3185,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceId
-      description: Identifier from the source system
-      name: null
+      description: The identifier in the source system.
+      name: Source ID
       source: null
     sourceUpdatedTime:
       container:
@@ -3180,8 +3194,9 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedTime
-      description: When the instance was last updated in the source system (if available)
-      name: null
+      description: The time the instance was last updated in the source system (if
+        available).
+      name: Source last updated
       source: null
     sourceUpdatedUser:
       container:
@@ -3189,10 +3204,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedUser
-      description: User identifier from the source system on who last updated the
-        source data. This identifier is not guaranteed to match the user identifiers
-        in CDF
-      name: null
+      description: The user identifier from the source system who last updated the
+        source data. This identifier is not guaranteed to match user identifiers in
+        Cognite Data Fusion.
+      name: Source last updated by
       source: null
     startTime:
       container:
@@ -3200,8 +3215,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: startTime
-      description: The actual start time of an activity (or similar that extends this)
-      name: null
+      description: The actual start time of an activity (or similar that extends this).
+      name: Start time
       source: null
     tags:
       container:
@@ -3209,8 +3224,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     timeSeries:
       container:
@@ -3264,8 +3279,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     assets:
       container:
@@ -3286,8 +3301,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     equipment:
       container:
@@ -3309,6 +3324,7 @@
         type: container
       containerPropertyIdentifier: isStep
       description: Specifies whether the time series is a step time series or not.
+        It is only in effect when the type is 'numeric'.
       name: Is step
       source: null
     name:
@@ -3317,8 +3333,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     source:
       container:
@@ -3326,8 +3342,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: source
-      description: Direct relation to a source system
-      name: null
+      description: A direct relation to a source system instance.
+      name: Source
       source:
         externalId: CogniteSourceSystem
         space: cdf_cdm
@@ -3341,7 +3357,7 @@
       containerPropertyIdentifier: sourceContext
       description: Context of the source id. For systems where the sourceId is globally
         unique, the sourceContext is expected to not be set.
-      name: null
+      name: Source context
       source: null
     sourceCreatedTime:
       container:
@@ -3349,8 +3365,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedTime
-      description: When the instance was created in source system (if available)
-      name: null
+      description: The time the instance was created in the source system (if available).
+      name: Source created
       source: null
     sourceCreatedUser:
       container:
@@ -3358,9 +3374,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedUser
-      description: User identifier from the source system on who created the source
-        data. This identifier is not guaranteed to match the user identifiers in CDF
-      name: null
+      description: The user identifier from the source system who created the source
+        data. This identifier is not guaranteed to match user identifiers in Cognite
+        Data Fusion.
+      name: Source created by
       source: null
     sourceId:
       container:
@@ -3368,8 +3385,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceId
-      description: Identifier from the source system
-      name: null
+      description: The identifier in the source system.
+      name: Source ID
       source: null
     sourceUnit:
       container:
@@ -3386,8 +3403,9 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedTime
-      description: When the instance was last updated in the source system (if available)
-      name: null
+      description: The time the instance was last updated in the source system (if
+        available).
+      name: Source last updated
       source: null
     sourceUpdatedUser:
       container:
@@ -3395,10 +3413,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedUser
-      description: User identifier from the source system on who last updated the
-        source data. This identifier is not guaranteed to match the user identifiers
-        in CDF
-      name: null
+      description: The user identifier from the source system who last updated the
+        source data. This identifier is not guaranteed to match user identifiers in
+        Cognite Data Fusion.
+      name: Source last updated by
       source: null
     stateSet:
       container:
@@ -3416,8 +3434,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
     type:
       container:
@@ -3425,7 +3443,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: type
-      description: Specifies the data type of the data points.
+      description: 'Specifies the data type of the data points. Valid values: ''numeric'',
+        ''string'', ''state''.'
       name: Type
       source: null
     unit:
@@ -3443,7 +3462,7 @@
         version: v1
   space: cdf_cdm
   version: v1
-- description: Annotation represents contextualization results or links
+- description: Annotation represents contextualization results or links.
   externalId: CogniteAnnotation
   filter: null
   implements:
@@ -3455,7 +3474,7 @@
     space: cdf_cdm
     type: view
     version: v1
-  name: null
+  name: Annotation
   properties:
     aliases:
       container:
@@ -3463,8 +3482,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     confidence:
       container:
@@ -3472,8 +3491,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: confidence
-      description: The confidence that the annotation is a good match
-      name: null
+      description: The confidence that the annotation is a good match.
+      name: Confidence
       source: null
     description:
       container:
@@ -3481,8 +3500,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     name:
       container:
@@ -3490,8 +3509,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     source:
       container:
@@ -3499,8 +3518,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: source
-      description: Direct relation to a source system
-      name: null
+      description: A direct relation to a source system instance.
+      name: Source
       source:
         externalId: CogniteSourceSystem
         space: cdf_cdm
@@ -3514,7 +3533,7 @@
       containerPropertyIdentifier: sourceContext
       description: Context of the source id. For systems where the sourceId is globally
         unique, the sourceContext is expected to not be set.
-      name: null
+      name: Source context
       source: null
     sourceCreatedTime:
       container:
@@ -3522,8 +3541,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedTime
-      description: When the instance was created in source system (if available)
-      name: null
+      description: The time the instance was created in the source system (if available).
+      name: Source created
       source: null
     sourceCreatedUser:
       container:
@@ -3531,9 +3550,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedUser
-      description: User identifier from the source system on who created the source
-        data. This identifier is not guaranteed to match the user identifiers in CDF
-      name: null
+      description: The user identifier from the source system who created the source
+        data. This identifier is not guaranteed to match user identifiers in Cognite
+        Data Fusion.
+      name: Source created by
       source: null
     sourceId:
       container:
@@ -3541,8 +3561,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceId
-      description: Identifier from the source system
-      name: null
+      description: The identifier in the source system.
+      name: Source ID
       source: null
     sourceUpdatedTime:
       container:
@@ -3550,8 +3570,9 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedTime
-      description: When the instance was last updated in the source system (if available)
-      name: null
+      description: The time the instance was last updated in the source system (if
+        available).
+      name: Source last updated
       source: null
     sourceUpdatedUser:
       container:
@@ -3559,10 +3580,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedUser
-      description: User identifier from the source system on who last updated the
-        source data. This identifier is not guaranteed to match the user identifiers
-        in CDF
-      name: null
+      description: The user identifier from the source system who last updated the
+        source data. This identifier is not guaranteed to match user identifiers in
+        Cognite Data Fusion.
+      name: Source last updated by
       source: null
     status:
       container:
@@ -3570,8 +3591,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: status
-      description: The status of the annotation
-      name: null
+      description: The status of the annotation.
+      name: Status
       source: null
     tags:
       container:
@@ -3579,12 +3600,13 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
   space: cdf_cdm
   version: v1
-- description: Annotation for diagrams
+- description: Represents an annotation on a diagram, with bounding box coordinates
+    for the annotated region.
   externalId: CogniteDiagramAnnotation
   filter: null
   implements:
@@ -3600,7 +3622,7 @@
     space: cdf_cdm
     type: view
     version: v1
-  name: null
+  name: Diagram annotation
   properties:
     aliases:
       container:
@@ -3608,8 +3630,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     confidence:
       container:
@@ -3617,8 +3639,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: confidence
-      description: The confidence that the annotation is a good match
-      name: null
+      description: The confidence that the annotation is a good match.
+      name: Confidence
       source: null
     description:
       container:
@@ -3626,8 +3648,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     endNodePageNumber:
       container:
@@ -3636,10 +3658,10 @@
         type: container
       containerPropertyIdentifier: endNodePageNumber
       description: 'The number of the page on which this annotation is located in
-        the endNode File if an endNode is present. The first page has number 1
+        the endNode file if an endNode is present. The first page has number 1.
 
         '
-      name: null
+      name: End node page number
       source: null
     endNodeText:
       container:
@@ -3648,10 +3670,10 @@
         type: container
       containerPropertyIdentifier: endNodeText
       description: 'The text extracted from within the bounding box on the endNode.
-        Only applicable if an endNode is defined
+        Only applicable if an endNode is defined.
 
         '
-      name: null
+      name: End node text
       source: null
     endNodeXMax:
       container:
@@ -3659,12 +3681,12 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: endNodeXMax
-      description: 'Value between [0,1]. Maximum abscissa of the bounding box (right
-        edge). Must be strictly more than endNodeXMin. Only applicable if an endNode
-        is defined
+      description: 'A value between [0,1]. The maximum abscissa of the bounding box
+        (right edge). Must be strictly more than endNodeXMin. Only applicable if an
+        endNode is defined.
 
         '
-      name: null
+      name: End node X max
       source: null
     endNodeXMin:
       container:
@@ -3672,12 +3694,12 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: endNodeXMin
-      description: 'Value between [0,1]. Minimum abscissa of the bounding box (left
-        edge). Must be strictly less than endNodeXMax. Only applicable if an endNode
-        is defined
+      description: 'A value between [0,1]. The minimum abscissa of the bounding box
+        (left edge). Must be strictly less than endNodeXMax. Only applicable if an
+        endNode is defined.
 
         '
-      name: null
+      name: End node X min
       source: null
     endNodeYMax:
       container:
@@ -3685,12 +3707,12 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: endNodeYMax
-      description: 'Value between [0,1]. Maximum ordinate of the bounding box (top
-        edge). Must be strictly more than endNodeYMin. Only applicable if an endNode
-        is defined
+      description: 'A value between [0,1]. The maximum ordinate of the bounding box
+        (top edge). Must be strictly more than endNodeYMin. Only applicable if an
+        endNode is defined.
 
         '
-      name: null
+      name: End node Y max
       source: null
     endNodeYMin:
       container:
@@ -3698,12 +3720,12 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: endNodeYMin
-      description: 'Value between [0,1]. Minimum ordinate of the bounding box (bottom
-        edge). Must be strictly less than endNodeYMax. Only applicable if an endNode
-        is defined
+      description: 'A value between [0,1]. The minimum ordinate of the bounding box
+        (bottom edge). Must be strictly less than endNodeYMax. Only applicable if
+        an endNode is defined.
 
         '
-      name: null
+      name: End node Y min
       source: null
     name:
       container:
@@ -3711,8 +3733,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     source:
       container:
@@ -3720,8 +3742,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: source
-      description: Direct relation to a source system
-      name: null
+      description: A direct relation to a source system instance.
+      name: Source
       source:
         externalId: CogniteSourceSystem
         space: cdf_cdm
@@ -3735,7 +3757,7 @@
       containerPropertyIdentifier: sourceContext
       description: Context of the source id. For systems where the sourceId is globally
         unique, the sourceContext is expected to not be set.
-      name: null
+      name: Source context
       source: null
     sourceCreatedTime:
       container:
@@ -3743,8 +3765,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedTime
-      description: When the instance was created in source system (if available)
-      name: null
+      description: The time the instance was created in the source system (if available).
+      name: Source created
       source: null
     sourceCreatedUser:
       container:
@@ -3752,9 +3774,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceCreatedUser
-      description: User identifier from the source system on who created the source
-        data. This identifier is not guaranteed to match the user identifiers in CDF
-      name: null
+      description: The user identifier from the source system who created the source
+        data. This identifier is not guaranteed to match user identifiers in Cognite
+        Data Fusion.
+      name: Source created by
       source: null
     sourceId:
       container:
@@ -3762,8 +3785,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceId
-      description: Identifier from the source system
-      name: null
+      description: The identifier in the source system.
+      name: Source ID
       source: null
     sourceUpdatedTime:
       container:
@@ -3771,8 +3794,9 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedTime
-      description: When the instance was last updated in the source system (if available)
-      name: null
+      description: The time the instance was last updated in the source system (if
+        available).
+      name: Source last updated
       source: null
     sourceUpdatedUser:
       container:
@@ -3780,10 +3804,10 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceUpdatedUser
-      description: User identifier from the source system on who last updated the
-        source data. This identifier is not guaranteed to match the user identifiers
-        in CDF
-      name: null
+      description: The user identifier from the source system who last updated the
+        source data. This identifier is not guaranteed to match user identifiers in
+        Cognite Data Fusion.
+      name: Source last updated by
       source: null
     startNodePageNumber:
       container:
@@ -3792,10 +3816,10 @@
         type: container
       containerPropertyIdentifier: startNodePageNumber
       description: 'The number of the page on which this annotation is located in
-        `startNode` File. The first page has number 1
+        startNode file. The first page has number 1.
 
         '
-      name: null
+      name: Start node page number
       source: null
     startNodeText:
       container:
@@ -3803,8 +3827,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: startNodeText
-      description: The text extracted from within the bounding box on the startNode
-      name: null
+      description: The text extracted from within the bounding box on the startNode.
+      name: Start node text
       source: null
     startNodeXMax:
       container:
@@ -3812,11 +3836,11 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: startNodeXMax
-      description: 'Value between [0,1]. Maximum abscissa of the bounding box (right
-        edge). Must be strictly more than startNodeXMin
+      description: 'A value between [0,1]. The maximum abscissa of the bounding box
+        (right edge). Must be strictly more than startNodeXMin.
 
         '
-      name: null
+      name: Start node X max
       source: null
     startNodeXMin:
       container:
@@ -3824,11 +3848,11 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: startNodeXMin
-      description: 'Value between [0,1]. Minimum abscissa of the bounding box (left
-        edge). Must be strictly less than startNodeXMax
+      description: 'A value between [0,1]. The minimum abscissa of the bounding box
+        (left edge). Must be strictly less than startNodeXMax.
 
         '
-      name: null
+      name: Start node X min
       source: null
     startNodeYMax:
       container:
@@ -3836,11 +3860,11 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: startNodeYMax
-      description: 'Value between [0,1]. Maximum ordinate of the bounding box (top
-        edge). Must be strictly more than startNodeYMin
+      description: 'A value between [0,1]. The maximum ordinate of the bounding box
+        (top edge). Must be strictly more than startNodeYMin.
 
         '
-      name: null
+      name: Start node Y max
       source: null
     startNodeYMin:
       container:
@@ -3848,11 +3872,11 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: startNodeYMin
-      description: 'Value between [0,1]. Minimum ordinate of the bounding box (bottom
-        edge). Must be strictly less than startNodeYMax
+      description: 'A value between [0,1]. The minimum ordinate of the bounding box
+        (bottom edge). Must be strictly less than startNodeYMax.
 
         '
-      name: null
+      name: Start node Y min
       source: null
     status:
       container:
@@ -3860,8 +3884,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: status
-      description: The status of the annotation
-      name: null
+      description: The status of the annotation.
+      name: Status
       source: null
     tags:
       container:
@@ -3869,12 +3893,12 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
   space: cdf_cdm
   version: v1
-- description: Represents a single unit of measurement
+- description: Represents a single unit of measurement.
   externalId: CogniteUnit
   filter: null
   implements:
@@ -3882,7 +3906,7 @@
     space: cdf_cdm
     type: view
     version: v1
-  name: null
+  name: Unit
   properties:
     aliases:
       container:
@@ -3890,8 +3914,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: aliases
-      description: Alternative names for the node
-      name: null
+      description: Alternative names for the instance.
+      name: Aliases
       source: null
     description:
       container:
@@ -3899,8 +3923,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: description
-      description: Description of the instance
-      name: null
+      description: The description of the instance.
+      name: Description
       source: null
     name:
       container:
@@ -3908,8 +3932,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: name
-      description: Name of the instance
-      name: null
+      description: The name of the instance.
+      name: Name
       source: null
     quantity:
       container:
@@ -3917,8 +3941,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: quantity
-      description: Specifies the physical quantity the unit measures
-      name: null
+      description: Specifies the physical quantity the unit measures.
+      name: Quantity
       source: null
     source:
       container:
@@ -3926,8 +3950,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: source
-      description: Source of the unit definition
-      name: null
+      description: The source of the unit specification.
+      name: Source
       source: null
     sourceReference:
       container:
@@ -3935,8 +3959,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: sourceReference
-      description: Reference to the source of the unit definition
-      name: null
+      description: A reference to the source of the unit specification.
+      name: Source reference
       source: null
     symbol:
       container:
@@ -3944,8 +3968,8 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: symbol
-      description: The symbol for the unit of measurement
-      name: null
+      description: The symbol for the unit of measurement.
+      name: Symbol
       source: null
     tags:
       container:
@@ -3953,8 +3977,143 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: tags
-      description: Text based labels for generic use, limited to 1000
-      name: null
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
+      source: null
+  space: cdf_cdm
+  version: v1
+- description: Represents a set of valid states for state time series.
+  externalId: CogniteStateSet
+  filter: null
+  implements:
+  - externalId: CogniteDescribable
+    space: cdf_cdm
+    type: view
+    version: v1
+  - externalId: CogniteSourceable
+    space: cdf_cdm
+    type: view
+    version: v1
+  name: State set
+  properties:
+    aliases:
+      container:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+      containerPropertyIdentifier: aliases
+      description: Alternative names for the instance.
+      name: Aliases
+      source: null
+    description:
+      container:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+      containerPropertyIdentifier: description
+      description: The description of the instance.
+      name: Description
+      source: null
+    name:
+      container:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+      containerPropertyIdentifier: name
+      description: The name of the instance.
+      name: Name
+      source: null
+    source:
+      container:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+      containerPropertyIdentifier: source
+      description: A direct relation to a source system instance.
+      name: Source
+      source:
+        externalId: CogniteSourceSystem
+        space: cdf_cdm
+        type: view
+        version: v1
+    sourceContext:
+      container:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+      containerPropertyIdentifier: sourceContext
+      description: Context of the source id. For systems where the sourceId is globally
+        unique, the sourceContext is expected to not be set.
+      name: Source context
+      source: null
+    sourceCreatedTime:
+      container:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+      containerPropertyIdentifier: sourceCreatedTime
+      description: The time the instance was created in the source system (if available).
+      name: Source created
+      source: null
+    sourceCreatedUser:
+      container:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+      containerPropertyIdentifier: sourceCreatedUser
+      description: The user identifier from the source system who created the source
+        data. This identifier is not guaranteed to match user identifiers in Cognite
+        Data Fusion.
+      name: Source created by
+      source: null
+    sourceId:
+      container:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+      containerPropertyIdentifier: sourceId
+      description: The identifier in the source system.
+      name: Source ID
+      source: null
+    sourceUpdatedTime:
+      container:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+      containerPropertyIdentifier: sourceUpdatedTime
+      description: The time the instance was last updated in the source system (if
+        available).
+      name: Source last updated
+      source: null
+    sourceUpdatedUser:
+      container:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+      containerPropertyIdentifier: sourceUpdatedUser
+      description: The user identifier from the source system who last updated the
+        source data. This identifier is not guaranteed to match user identifiers in
+        Cognite Data Fusion.
+      name: Source last updated by
+      source: null
+    states:
+      container:
+        externalId: CogniteStateSet
+        space: cdf_cdm
+        type: container
+      containerPropertyIdentifier: states
+      description: A list of valid states. Each state contains a numeric value and
+        a string value.
+      name: States
+      source: null
+    tags:
+      container:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+      containerPropertyIdentifier: tags
+      description: 'A list of tags for the instance. Max: 1000.'
+      name: Tags
       source: null
   space: cdf_cdm
   version: v1
