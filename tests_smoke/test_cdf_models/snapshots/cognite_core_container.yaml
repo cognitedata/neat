@@ -17,7 +17,8 @@
         externalId: CogniteSourceable
         space: cdf_cdm
         type: container
-  description: Represent an activity
+  description: Represents activities. Activities typically happen over a period and
+    have a start and end time.
   externalId: CogniteActivity
   indexes: {}
   name: null
@@ -25,10 +26,9 @@
     assets:
       autoIncrement: false
       defaultValue: null
-      description: List of assets this activity relates to/has been contextualized
-        to
+      description: A list of assets the activity is related to.
       immutable: false
-      name: null
+      name: Assets
       nullable: true
       type:
         container: null
@@ -38,9 +38,9 @@
     equipment:
       autoIncrement: false
       defaultValue: null
-      description: The list of equipment this activity relates to
+      description: A list of equipment the activity is related to.
       immutable: false
-      name: null
+      name: Equipment
       nullable: true
       type:
         container: null
@@ -50,9 +50,9 @@
     timeSeries:
       autoIncrement: false
       defaultValue: null
-      description: The list of time series this activity relates to
+      description: A list of time series the activity is related to.
       immutable: false
-      name: null
+      name: Time series
       nullable: true
       type:
         container: null
@@ -74,7 +74,7 @@
         externalId: CogniteSourceable
         space: cdf_cdm
         type: container
-  description: Annotation represents contextualization results or links
+  description: Annotation represents contextualization results or links.
   externalId: CogniteAnnotation
   indexes: {}
   name: null
@@ -82,9 +82,9 @@
     confidence:
       autoIncrement: false
       defaultValue: null
-      description: The confidence that the annotation is a good match
+      description: The confidence that the annotation is a good match.
       immutable: false
-      name: null
+      name: Confidence
       nullable: true
       type:
         list: false
@@ -94,9 +94,9 @@
     status:
       autoIncrement: false
       defaultValue: null
-      description: The status of the annotation
+      description: The status of the annotation.
       immutable: false
-      name: null
+      name: Status
       nullable: true
       type:
         type: enum
@@ -132,8 +132,10 @@
         externalId: CogniteVisualizable
         space: cdf_cdm
         type: container
-  description: The asset is the bare bone representation of assets in our asset centric
-    world
+  description: 'Assets represent systems that support industrial functions or processes.
+    Assets are often called ''functional locations''.
+
+    '
   externalId: CogniteAsset
   indexes:
     parent:
@@ -159,9 +161,9 @@
     assetClass:
       autoIncrement: false
       defaultValue: null
-      description: Class of asset, direct relation to AssetClass
+      description: Specifies the class of the asset. It's a direct relation to CogniteAssetClass.
       immutable: false
-      name: null
+      name: Asset class
       nullable: true
       type:
         container:
@@ -173,9 +175,9 @@
     assetHierarchy_parent:
       autoIncrement: false
       defaultValue: null
-      description: Direct relation to closest (for ease of navigation)
+      description: The parent of the asset.
       immutable: false
-      name: null
+      name: Parent
       nullable: true
       type:
         container: null
@@ -185,9 +187,11 @@
     assetHierarchy_path:
       autoIncrement: false
       defaultValue: null
-      description: Automatically populated list of ancestors to enable subtree filtering
+      description: An automatically updated ordered list of this asset's ancestors,
+        starting with the root asset. Enables subtree filtering to find all assets
+        under a parent.
       immutable: false
-      name: null
+      name: Path
       nullable: true
       type:
         container: null
@@ -197,9 +201,9 @@
     assetHierarchy_path_last_updated_time:
       autoIncrement: false
       defaultValue: null
-      description: Last time the path was updated for this asset
+      description: The last time the path was updated for this asset.
       immutable: false
-      name: null
+      name: Path last updated time
       nullable: true
       type:
         list: false
@@ -208,10 +212,10 @@
     assetHierarchy_root:
       autoIncrement: false
       defaultValue: null
-      description: Direct relation to the root of the asset hierarchy (primarily an
-        optimization/convenience)
+      description: An automatically updated reference to the top-level asset of the
+        hierarchy.
       immutable: false
-      name: null
+      name: Root
       nullable: true
       type:
         container: null
@@ -221,9 +225,9 @@
     type:
       autoIncrement: false
       defaultValue: null
-      description: Type of asset, direct relation to AssetType
+      description: Specifies the type of the asset.
       immutable: false
-      name: null
+      name: Asset type
       nullable: true
       type:
         container:
@@ -247,7 +251,7 @@
       properties:
       - code
       - standard
-  description: This identifies the class of an asset
+  description: Represents the class of an asset.
   externalId: CogniteAssetClass
   indexes: {}
   name: null
@@ -255,9 +259,9 @@
     code:
       autoIncrement: false
       defaultValue: null
-      description: A unique identifier for the class of asset
+      description: A unique identifier for the class of asset.
       immutable: false
-      name: null
+      name: Code
       nullable: true
       type:
         collation: ucs_basic
@@ -268,9 +272,9 @@
     standard:
       autoIncrement: false
       defaultValue: null
-      description: Textual string for which standard the code is from
+      description: A text string to specify which standard the class is from.
       immutable: false
-      name: null
+      name: Standard
       nullable: true
       type:
         collation: ucs_basic
@@ -287,7 +291,7 @@
         externalId: CogniteDescribable
         space: cdf_cdm
         type: container
-  description: This identifies the type of an asset
+  description: Represents the type of an asset.
   externalId: CogniteAssetType
   indexes:
     code:
@@ -308,9 +312,9 @@
     assetClass:
       autoIncrement: false
       defaultValue: null
-      description: Class of this type, direct relation to CogniteAssetClass
+      description: Specifies the class the type belongs to.
       immutable: false
-      name: null
+      name: Asset class
       nullable: true
       type:
         container:
@@ -322,9 +326,9 @@
     code:
       autoIncrement: false
       defaultValue: null
-      description: Identifier for the type of asset
+      description: A unique identifier for the type of asset.
       immutable: false
-      name: null
+      name: Code
       nullable: true
       type:
         collation: ucs_basic
@@ -335,9 +339,9 @@
     standard:
       autoIncrement: false
       defaultValue: null
-      description: Textual string for which standard the code is from
+      description: A text string to specify which standard the type is from.
       immutable: false
-      name: null
+      name: Standard
       nullable: true
       type:
         collation: ucs_basic
@@ -363,7 +367,7 @@
     aliases:
       autoIncrement: false
       defaultValue: null
-      description: Alternative names (aliases)
+      description: Alternative names for the instance.
       immutable: false
       name: Aliases
       nullable: true
@@ -376,7 +380,7 @@
     description:
       autoIncrement: false
       defaultValue: null
-      description: Holds a description of the instance
+      description: The description of the instance.
       immutable: false
       name: Description
       nullable: true
@@ -389,7 +393,7 @@
     name:
       autoIncrement: false
       defaultValue: null
-      description: Holds a name of the instance where that is applicable
+      description: The name of the instance.
       immutable: false
       name: Name
       nullable: true
@@ -402,7 +406,7 @@
     tags:
       autoIncrement: false
       defaultValue: null
-      description: Instance tags (limited to 1000 tags)
+      description: 'A list of tags for the instance. Max: 1000.'
       immutable: false
       name: Tags
       nullable: true
@@ -433,7 +437,8 @@
         externalId: CogniteSourceable
         space: cdf_cdm
         type: container
-  description: null
+  description: Represents an annotation on a diagram, with bounding box coordinates
+    for the annotated region.
   externalId: CogniteDiagramAnnotation
   indexes: {}
   name: null
@@ -442,11 +447,11 @@
       autoIncrement: false
       defaultValue: null
       description: 'The number of the page on which this annotation is located in
-        the endNode File if an endNode is present. The first page has number 1
+        the endNode file if an endNode is present. The first page has number 1.
 
         '
       immutable: false
-      name: null
+      name: End node page number
       nullable: true
       type:
         list: false
@@ -456,11 +461,11 @@
       autoIncrement: false
       defaultValue: null
       description: 'The text extracted from within the bounding box on the endNode.
-        Only applicable if an endNode is defined
+        Only applicable if an endNode is defined.
 
         '
       immutable: false
-      name: null
+      name: End node text
       nullable: true
       type:
         collation: ucs_basic
@@ -471,13 +476,13 @@
     endNodeXMax:
       autoIncrement: false
       defaultValue: null
-      description: 'Value between [0,1]. Maximum abscissa of the bounding box (right
-        edge). Must be strictly more than endNodeXMin. Only applicable if an endNode
-        is defined
+      description: 'A value between [0,1]. The maximum abscissa of the bounding box
+        (right edge). Must be strictly more than endNodeXMin. Only applicable if an
+        endNode is defined.
 
         '
       immutable: false
-      name: null
+      name: End node X max
       nullable: true
       type:
         list: false
@@ -487,13 +492,13 @@
     endNodeXMin:
       autoIncrement: false
       defaultValue: null
-      description: 'Value between [0,1]. Minimum abscissa of the bounding box (left
-        edge). Must be strictly less than endNodeXMax. Only applicable if an endNode
-        is defined
+      description: 'A value between [0,1]. The minimum abscissa of the bounding box
+        (left edge). Must be strictly less than endNodeXMax. Only applicable if an
+        endNode is defined.
 
         '
       immutable: false
-      name: null
+      name: End node X min
       nullable: true
       type:
         list: false
@@ -503,13 +508,13 @@
     endNodeYMax:
       autoIncrement: false
       defaultValue: null
-      description: 'Value between [0,1]. Maximum ordinate of the bounding box (top
-        edge). Must be strictly more than endNodeYMin. Only applicable if an endNode
-        is defined
+      description: 'A value between [0,1]. The maximum ordinate of the bounding box
+        (top edge). Must be strictly more than endNodeYMin. Only applicable if an
+        endNode is defined.
 
         '
       immutable: false
-      name: null
+      name: End node Y max
       nullable: true
       type:
         list: false
@@ -519,13 +524,13 @@
     endNodeYMin:
       autoIncrement: false
       defaultValue: null
-      description: 'Value between [0,1]. Minimum ordinate of the bounding box (bottom
-        edge). Must be strictly less than endNodeYMax. Only applicable if an endNode
-        is defined
+      description: 'A value between [0,1]. The minimum ordinate of the bounding box
+        (bottom edge). Must be strictly less than endNodeYMax. Only applicable if
+        an endNode is defined.
 
         '
       immutable: false
-      name: null
+      name: End node Y min
       nullable: true
       type:
         list: false
@@ -536,11 +541,11 @@
       autoIncrement: false
       defaultValue: null
       description: 'The number of the page on which this annotation is located in
-        `startNode` File. The first page has number 1
+        startNode file. The first page has number 1.
 
         '
       immutable: false
-      name: null
+      name: Start node page number
       nullable: true
       type:
         list: false
@@ -549,9 +554,9 @@
     startNodeText:
       autoIncrement: false
       defaultValue: null
-      description: The text extracted from within the bounding box on the startNode
+      description: The text extracted from within the bounding box on the startNode.
       immutable: false
-      name: null
+      name: Start node text
       nullable: true
       type:
         collation: ucs_basic
@@ -562,12 +567,12 @@
     startNodeXMax:
       autoIncrement: false
       defaultValue: null
-      description: 'Value between [0,1]. Maximum abscissa of the bounding box (right
-        edge). Must be strictly more than startNodeXMin
+      description: 'A value between [0,1]. The maximum abscissa of the bounding box
+        (right edge). Must be strictly more than startNodeXMin.
 
         '
       immutable: false
-      name: null
+      name: Start node X max
       nullable: true
       type:
         list: false
@@ -577,12 +582,12 @@
     startNodeXMin:
       autoIncrement: false
       defaultValue: null
-      description: 'Value between [0,1]. Minimum abscissa of the bounding box (left
-        edge). Must be strictly less than startNodeXMax
+      description: 'A value between [0,1]. The minimum abscissa of the bounding box
+        (left edge). Must be strictly less than startNodeXMax.
 
         '
       immutable: false
-      name: null
+      name: Start node X min
       nullable: true
       type:
         list: false
@@ -592,12 +597,12 @@
     startNodeYMax:
       autoIncrement: false
       defaultValue: null
-      description: 'Value between [0,1]. Maximum ordinate of the bounding box (top
-        edge). Must be strictly more than startNodeYMin
+      description: 'A value between [0,1]. The maximum ordinate of the bounding box
+        (top edge). Must be strictly more than startNodeYMin.
 
         '
       immutable: false
-      name: null
+      name: Start node Y max
       nullable: true
       type:
         list: false
@@ -607,12 +612,12 @@
     startNodeYMin:
       autoIncrement: false
       defaultValue: null
-      description: 'Value between [0,1]. Minimum ordinate of the bounding box (bottom
-        edge). Must be strictly less than startNodeYMax
+      description: 'A value between [0,1]. The minimum ordinate of the bounding box
+        (bottom edge). Must be strictly less than startNodeYMax.
 
         '
       immutable: false
-      name: null
+      name: Start node Y min
       nullable: true
       type:
         list: false
@@ -634,7 +639,7 @@
         externalId: CogniteSourceable
         space: cdf_cdm
         type: container
-  description: Represent a physical piece of equipment
+  description: Equipment represents physical supplies or devices.
   externalId: CogniteEquipment
   indexes:
     asset:
@@ -660,9 +665,9 @@
     asset:
       autoIncrement: false
       defaultValue: null
-      description: The asset this equipment is associated with
+      description: The asset the equipment is related to.
       immutable: false
-      name: null
+      name: Asset
       nullable: true
       type:
         container: null
@@ -672,9 +677,9 @@
     equipmentType:
       autoIncrement: false
       defaultValue: null
-      description: Type of this equipment, direct relation to EquipmentType
+      description: Specifies the type of the equipment.
       immutable: false
-      name: null
+      name: Equipment type
       nullable: true
       type:
         container:
@@ -686,9 +691,9 @@
     files:
       autoIncrement: false
       defaultValue: null
-      description: List of files this equipment relates to
+      description: A list of files the equipment relates to.
       immutable: false
-      name: null
+      name: Files
       nullable: true
       type:
         container: null
@@ -698,9 +703,9 @@
     manufacturer:
       autoIncrement: false
       defaultValue: null
-      description: Manufacturer of the equipment
+      description: The manufacturer of the equipment.
       immutable: false
-      name: null
+      name: Manufacturer
       nullable: true
       type:
         collation: ucs_basic
@@ -712,9 +717,9 @@
       autoIncrement: false
       defaultValue: null
       description: Direct relation to a 3D model representing this equipment (such
-        as a manufacturer model)
+        as a manufacturer model).
       immutable: false
-      name: null
+      name: 3D model
       nullable: true
       type:
         container: null
@@ -724,9 +729,9 @@
     serialNumber:
       autoIncrement: false
       defaultValue: null
-      description: Serial number of the equipment
+      description: The serial number of the equipment.
       immutable: false
-      name: null
+      name: Serial number
       nullable: true
       type:
         collation: ucs_basic
@@ -749,7 +754,7 @@
       properties:
       - code
       - standard
-  description: This identifies the type of an equipment
+  description: Represents the type of equipment.
   externalId: CogniteEquipmentType
   indexes: {}
   name: null
@@ -757,9 +762,9 @@
     code:
       autoIncrement: false
       defaultValue: null
-      description: A unique identifier for the type of equipment
+      description: A unique identifier for the type of equipment.
       immutable: false
-      name: null
+      name: Code
       nullable: true
       type:
         collation: ucs_basic
@@ -770,9 +775,9 @@
     equipmentClass:
       autoIncrement: false
       defaultValue: null
-      description: Class of equipment
+      description: The class of equipment.
       immutable: false
-      name: null
+      name: Equipment class
       nullable: true
       type:
         collation: ucs_basic
@@ -783,10 +788,10 @@
     standard:
       autoIncrement: false
       defaultValue: null
-      description: Standard identifier this equipment is sourced from, such as ISO14224
-        or similar
+      description: An identifier for the standard this equipment type is sourced from,
+        for example, ISO 14224.
       immutable: false
-      name: null
+      name: Standard
       nullable: true
       type:
         collation: ucs_basic
@@ -797,9 +802,9 @@
     standardReference:
       autoIncrement: false
       defaultValue: null
-      description: Reference to the source of the equipment specification
+      description: A reference to the source of the equipment standard.
       immutable: false
-      name: null
+      name: Standard reference
       nullable: true
       type:
         collation: ucs_basic
@@ -822,7 +827,7 @@
         externalId: CogniteSourceable
         space: cdf_cdm
         type: container
-  description: This concept models the underlying file from the Files resource type
+  description: Represents files.
   externalId: CogniteFile
   indexes: {}
   name: null
@@ -830,9 +835,9 @@
     assets:
       autoIncrement: false
       defaultValue: null
-      description: List of assets this file relates to
+      description: A list of assets this file is related to.
       immutable: false
-      name: null
+      name: Assets
       nullable: true
       type:
         container: null
@@ -842,10 +847,10 @@
     category:
       autoIncrement: false
       defaultValue: null
-      description: Direct relation to an instance of FileCategory representing the
-        detected categorization/class of the file
+      description: Specifies the detected category the file belongs to. It's a direct
+        relation to an instance of CogniteFileCategory.
       immutable: false
-      name: null
+      name: Category
       nullable: true
       type:
         container: null
@@ -855,10 +860,10 @@
     directory:
       autoIncrement: false
       defaultValue: null
-      description: Contains the path elements from the source (for when the source
-        system has a file system hierarchy or similar)
+      description: Contains the path elements from the source (if the source system
+        has a file system hierarchy or similar).
       immutable: false
-      name: null
+      name: Directory
       nullable: true
       type:
         collation: ucs_basic
@@ -869,9 +874,10 @@
     isUploaded:
       autoIncrement: false
       defaultValue: false
-      description: Whether the file content has been uploaded to Cognite Data Fusion
+      description: Specifies if the file content has been uploaded to Cognite Data
+        Fusion or not.
       immutable: false
-      name: null
+      name: Is uploaded
       nullable: true
       type:
         list: false
@@ -880,9 +886,9 @@
     mimeType:
       autoIncrement: false
       defaultValue: null
-      description: MIME type of the file
+      description: The MIME type of the file.
       immutable: false
-      name: null
+      name: MIME type
       nullable: true
       type:
         collation: ucs_basic
@@ -893,9 +899,9 @@
     uploadedTime:
       autoIncrement: false
       defaultValue: null
-      description: When the file was uploaded to CDF
+      description: The time the file upload completed.
       immutable: false
-      name: null
+      name: Uploaded time
       nullable: true
       type:
         list: false
@@ -916,7 +922,8 @@
       properties:
       - code
       - standard
-  description: Specifies the category for a file (as a result of categorization/classification))
+  description: Represents the categories of files as determined by contextualization
+    or categorization.
   externalId: CogniteFileCategory
   indexes: {}
   name: null
@@ -924,9 +931,10 @@
     code:
       autoIncrement: false
       defaultValue: null
-      description: Class name for the type of file
+      description: An identifier for the category, for example, 'AA' for Accounting
+        (from NORSOK).
       immutable: false
-      name: null
+      name: Code
       nullable: false
       type:
         collation: ucs_basic
@@ -937,10 +945,10 @@
     standard:
       autoIncrement: false
       defaultValue: null
-      description: Standard identifier this category is sourced from, such as NORSOK
-        or similar
+      description: The name of the standard the category originates from, for example,
+        'NORSOK'.
       immutable: false
-      name: null
+      name: Standard
       nullable: true
       type:
         collation: ucs_basic
@@ -951,9 +959,9 @@
     standardReference:
       autoIncrement: false
       defaultValue: null
-      description: Reference to the source of the category standard
+      description: A reference to the source of the category standard.
       immutable: false
-      name: null
+      name: Standard reference
       nullable: true
       type:
         collation: ucs_basic
@@ -965,7 +973,7 @@
   usedFor: node
 - constraints: {}
   description: CogniteSchedulable represents the metadata about when an activity (or
-    similar) starts and ends
+    similar) starts and ends.
   externalId: CogniteSchedulable
   indexes:
     endTime:
@@ -997,7 +1005,7 @@
     endTime:
       autoIncrement: false
       defaultValue: null
-      description: The actual end time of an activity (or similar that extends this)
+      description: The actual end time of an activity (or similar that extends this).
       immutable: false
       name: End time
       nullable: true
@@ -1008,7 +1016,7 @@
     scheduledEndTime:
       autoIncrement: false
       defaultValue: null
-      description: The planned end time of an activity (or similar that extends this)
+      description: The planned end time of an activity (or similar that extends this).
       immutable: false
       name: Scheduled end time
       nullable: true
@@ -1020,7 +1028,7 @@
       autoIncrement: false
       defaultValue: null
       description: The planned start time of an activity (or similar that extends
-        this)
+        this).
       immutable: false
       name: Scheduled start time
       nullable: true
@@ -1031,7 +1039,7 @@
     startTime:
       autoIncrement: false
       defaultValue: null
-      description: The actual start time of an activity (or similar that extends this)
+      description: The actual start time of an activity (or similar that extends this).
       immutable: false
       name: Start time
       nullable: true
@@ -1051,7 +1059,7 @@
     manufacturer:
       autoIncrement: false
       defaultValue: null
-      description: Manufacturer of the source system
+      description: The manufacturer of the source system.
       immutable: false
       name: Manufacturer
       nullable: true
@@ -1064,7 +1072,7 @@
     version:
       autoIncrement: false
       defaultValue: null
-      description: Version identifier for the source system
+      description: The version identifier for the source system.
       immutable: false
       name: Version
       nullable: true
@@ -1110,7 +1118,7 @@
     source:
       autoIncrement: false
       defaultValue: null
-      description: Direct relation to source system instance
+      description: A direct relation to a source system instance.
       immutable: false
       name: Source
       nullable: true
@@ -1138,7 +1146,7 @@
     sourceCreatedTime:
       autoIncrement: false
       defaultValue: null
-      description: When the instance was created in source system (if available)
+      description: The time the instance was created in the source system (if available).
       immutable: false
       name: Source created
       nullable: true
@@ -1149,8 +1157,9 @@
     sourceCreatedUser:
       autoIncrement: false
       defaultValue: null
-      description: User identifier from the source system on who created the source
-        data. This identifier is not guaranteed to match user identifiers in CDF
+      description: The user identifier from the source system who created the source
+        data. This identifier is not guaranteed to match user identifiers in Cognite
+        Data Fusion.
       immutable: false
       name: Source created by
       nullable: true
@@ -1163,7 +1172,7 @@
     sourceId:
       autoIncrement: false
       defaultValue: null
-      description: Identifier in the source system
+      description: The identifier in the source system.
       immutable: false
       name: Source ID
       nullable: true
@@ -1176,7 +1185,8 @@
     sourceUpdatedTime:
       autoIncrement: false
       defaultValue: null
-      description: When the instance was last updated in the source system (if available)
+      description: The time the instance was last updated in the source system (if
+        available).
       immutable: false
       name: Source last updated
       nullable: true
@@ -1187,9 +1197,9 @@
     sourceUpdatedUser:
       autoIncrement: false
       defaultValue: null
-      description: User identifier from the source system on who last updated the
+      description: The user identifier from the source system who last updated the
         source data. This identifier is not guaranteed to match user identifiers in
-        CDF
+        Cognite Data Fusion.
       immutable: false
       name: Source last updated by
       nullable: true
@@ -1214,7 +1224,39 @@
         externalId: CogniteSourceable
         space: cdf_cdm
         type: container
-  description: null
+  description: Represents a set of valid states for state time series.
+  externalId: CogniteStateSet
+  indexes: {}
+  name: null
+  properties:
+    states:
+      autoIncrement: false
+      defaultValue: null
+      description: A list of valid states. Each state contains a numeric value and
+        a string value.
+      immutable: false
+      name: States
+      nullable: false
+      type:
+        list: true
+        maxListSize: null
+        type: json
+  space: cdf_cdm
+  usedFor: node
+- constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+    sourceablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+  description: Represents a series of data points in time order.
   externalId: CogniteTimeSeries
   indexes:
     stateSet:
@@ -1228,9 +1270,9 @@
     assets:
       autoIncrement: false
       defaultValue: null
-      description: List of assets this time series is related to/contextualized to
+      description: A list of assets the time series is related to.
       immutable: false
-      name: null
+      name: Assets
       nullable: true
       type:
         container: null
@@ -1240,9 +1282,9 @@
     equipment:
       autoIncrement: false
       defaultValue: null
-      description: List of equipment that related to this time series.
+      description: A list of equipment the time series is related to.
       immutable: false
-      name: null
+      name: Equipment
       nullable: true
       type:
         container: null
@@ -1252,9 +1294,10 @@
     isStep:
       autoIncrement: false
       defaultValue: false
-      description: null
+      description: Specifies whether the time series is a step time series or not.
+        It is only in effect when the type is 'numeric'.
       immutable: false
-      name: null
+      name: Is step
       nullable: false
       type:
         list: false
@@ -1263,9 +1306,9 @@
     sourceUnit:
       autoIncrement: false
       defaultValue: null
-      description: Unit as specified in the source system
+      description: The unit specified in the source system.
       immutable: false
-      name: null
+      name: Source unit
       nullable: true
       type:
         collation: ucs_basic
@@ -1276,9 +1319,10 @@
     stateSet:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: The state set of the time series. It is only in effect when the
+        type is 'state'.
       immutable: false
-      name: null
+      name: State set
       nullable: true
       type:
         container:
@@ -1290,9 +1334,10 @@
     type:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: 'Specifies the data type of the data points. Valid values: ''numeric'',
+        ''string'', ''state''.'
       immutable: true
-      name: null
+      name: Type
       nullable: false
       type:
         type: enum
@@ -1310,9 +1355,9 @@
     unit:
       autoIncrement: false
       defaultValue: null
-      description: Unit of the time series
+      description: The unit of the time series.
       immutable: false
-      name: null
+      name: Unit
       nullable: true
       type:
         container:
@@ -1330,7 +1375,7 @@
         externalId: CogniteDescribable
         space: cdf_cdm
         type: container
-  description: Represents a single unit of measurement
+  description: Represents a single unit of measurement.
   externalId: CogniteUnit
   indexes: {}
   name: null
@@ -1338,9 +1383,9 @@
     quantity:
       autoIncrement: false
       defaultValue: null
-      description: Specifies the physical quantity the unit measures
+      description: Specifies the physical quantity the unit measures.
       immutable: false
-      name: null
+      name: Quantity
       nullable: true
       type:
         collation: ucs_basic
@@ -1351,9 +1396,9 @@
     source:
       autoIncrement: false
       defaultValue: null
-      description: Source of the unit definition
+      description: The source of the unit specification.
       immutable: false
-      name: null
+      name: Source
       nullable: true
       type:
         collation: ucs_basic
@@ -1364,9 +1409,9 @@
     sourceReference:
       autoIncrement: false
       defaultValue: null
-      description: Reference to the source of the unit definition
+      description: A reference to the source of the unit specification.
       immutable: false
-      name: null
+      name: Source reference
       nullable: true
       type:
         collation: ucs_basic
@@ -1377,9 +1422,9 @@
     symbol:
       autoIncrement: false
       defaultValue: null
-      description: The symbol for the unit of measurement
+      description: The symbol for the unit of measurement.
       immutable: false
-      name: null
+      name: Symbol
       nullable: true
       type:
         collation: ucs_basic
@@ -1396,7 +1441,7 @@
       properties:
       - object3D
   description: CogniteVisualizable defines the standard way to reference a related
-    3D resource
+    3D resource.
   externalId: CogniteVisualizable
   indexes:
     object3D:
@@ -1410,7 +1455,8 @@
     object3D:
       autoIncrement: false
       defaultValue: null
-      description: Direct relation to an Object3D instance representing the 3D resource
+      description: Direct relation to a Cognite3DObject instance representing the
+        3D resource.
       immutable: false
       name: 3D object
       nullable: true
