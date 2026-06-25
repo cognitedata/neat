@@ -123,7 +123,8 @@ class View(Resource, APIResource[ViewReference], ABC):
 
 class ViewRequest(View):
     properties: dict[str, ViewRequestProperty] = Field(
-        description="View with included properties and expected edges, indexed by a unique space-local identifier."
+        default_factory=dict,
+        description="View with included properties and expected edges, indexed by a unique space-local identifier.",
     )
 
     @field_validator("properties", mode="after")

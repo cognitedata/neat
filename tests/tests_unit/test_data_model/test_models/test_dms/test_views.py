@@ -286,6 +286,17 @@ class TestViewRequests:
             ViewRequest.model_validate(data)
         assert {humanize_validation_error(error) for error in excinfo.value.errors()} == expected_errors
 
+    def test_view_without_properties_key_is_valid(self) -> None:
+        view = ViewRequest.model_validate(
+            {
+                "space": "my_space",
+                "externalId": "MyView",
+                "version": "1",
+                "implements": [{"space": "my_space", "externalId": "ParentView", "version": "1"}],
+            }
+        )
+        assert view.properties == {}
+
 
 class TestViewResponse:
     @settings(max_examples=1)
