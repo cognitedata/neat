@@ -38,12 +38,12 @@ class ViewSpaceVersionInconsistentWithDataModel(DataModelRule):
             issue_description = ""
 
             if view_ref.space not in COGNITE_SPACES:
-                # notify about inconsistent space
-                if view_ref.space != space:
+                # notify about inconsistent space, but skip views in governed spaces
+                if view_ref.space != space and view_ref.space not in self.validation_resources.governed_spaces:
                     issue_description = f"space (view: {view_ref.space}, data model: {space})"
 
                 # or version if spaces are same
-                elif view_ref.version != version:
+                elif view_ref.space == space and view_ref.version != version:
                     issue_description = f"version (view: {view_ref.version}, data model: {version})"
 
             if issue_description:

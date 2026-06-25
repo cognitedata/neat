@@ -1,5 +1,13 @@
+from datetime import datetime, timezone
 from typing import cast
 
+from cognite.neat._data_model._analysis import ValidationResources
+from cognite.neat._data_model._snapshot import SchemaSnapshot
+from cognite.neat._data_model.models.dms import (
+    DataModelRequest,
+    ViewReference,
+    ViewRequest,
+)
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.rules.dms import (
     ConnectionValueTypeUndefined,
@@ -13,6 +21,7 @@ from cognite.neat._data_model.rules.dms import (
     ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
+from cognite.neat._data_model.rules.dms._consistency import ViewSpaceVersionInconsistentWithDataModel as ConsistencyRule
 from cognite.neat._data_model.rules.dms._containers import RequiredContainerDoesNotExist
 from cognite.neat._data_model.rules.dms._limits import ViewPropertyCountIsOutOfLimits
 from cognite.neat._issues import IssueList
@@ -270,3 +279,67 @@ class TestValidators:
                 if expected_item in issue.message:
                     found_missing_items.add(expected_item)
         assert found_missing_items == expected_missing_items
+
+
+class TestConsistencyRuleGovernedSpaces:
+    """Tests that NEAT-DMS-CONSISTENCY-001 respects governed spaces."""
+
+    DATA_MODEL_SPACE = "model_space"
+    DATA_MODEL_VERSION = "v1"
+
+    def _make_view_ref(self, space: str, external_id: str, version: str = "v1") -> ViewReference:
+        return ViewReference(space=space, external_id=external_id, version=version)
+
+    def _make_validation_resources(
+        self, view_refs: list[ViewReference], governed_spaces: set[str]
+    ) -> ValidationResources:
+        data_model = DataModelRequest(
+            space=self.DATA_MODEL_SPACE,
+            externalId="TestModel",
+            version=self.DATA_MODEL_VERSION,
+            views=view_refs,
+        )
+        dm_ref = data_model.as_reference()
+        views = {
+            ref: ViewRequest(space=ref.space, externalId=ref.external_id, version=ref.version) for ref in view_refs
+        }
+        local = SchemaSnapshot(
+            timestamp=datetime.now(timezone.utc),
+            data_model={dm_ref: data_model},
+            views=views,
+        )
+        return ValidationResources(
+            modus_operandi="rebuild",
+            local=local,
+            cdf=SchemaSnapshot(),
+            limits=SchemaLimits(),
+            governed_spaces=governed_spaces,
+        )
+
+    def test_view_in_governed_space_does_not_fire(self) -> None:
+        governed_space = "enterprise_space"
+        view_refs = [self._make_view_ref(governed_space, "MyView")]
+        resources = self._make_validation_resources(view_refs, governed_spaces={self.DATA_MODEL_SPACE, governed_space})
+
+        issues = ConsistencyRule(resources).validate()
+
+        assert issues == []
+
+    def test_view_in_non_governed_space_fires(self) -> None:
+        foreign_space = "external_space"
+        view_refs = [self._make_view_ref(foreign_space, "MyView")]
+        resources = self._make_validation_resources(view_refs, governed_spaces={self.DATA_MODEL_SPACE})
+
+        issues = ConsistencyRule(resources).validate()
+
+        assert len(issues) == 1
+        assert foreign_space in issues[0].message
+
+    def test_version_mismatch_in_model_space_still_fires(self) -> None:
+        view_refs = [self._make_view_ref(self.DATA_MODEL_SPACE, "MyView", version="v2")]
+        resources = self._make_validation_resources(view_refs, governed_spaces={self.DATA_MODEL_SPACE})
+
+        issues = ConsistencyRule(resources).validate()
+
+        assert len(issues) == 1
+        assert "version" in issues[0].message
