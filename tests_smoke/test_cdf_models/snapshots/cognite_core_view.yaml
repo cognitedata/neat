@@ -818,7 +818,7 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: model3D
-      description: null
+      description: Direct relation to the model this revision belongs to.
       name: null
       source:
         externalId: Cognite3DModel
@@ -831,7 +831,7 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: published
-      description: null
+      description: Whether this revision is published and visible to end users.
       name: null
       source: null
     status:
@@ -840,7 +840,8 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: status
-      description: null
+      description: 'Processing status of the revision. Valid values: Queued, Processing,
+        Done, or Failed'
       name: null
       source: null
     type:
@@ -849,7 +850,8 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: type
-      description: null
+      description: 'The type of 3D model this is a revision of. Valid values: CAD,
+        PointCloud, or Image360.'
       name: null
       source: null
   space: cdf_cdm
@@ -1056,7 +1058,7 @@
       source: null
   space: cdf_cdm
   version: v1
-- description: ''
+- description: Represents revision data for CAD models.
   externalId: CogniteCADRevision
   filter:
     and:
@@ -1083,7 +1085,7 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: model3D
-      description: .
+      description: Direct relation to the model this revision belongs to.
       name: null
       source:
         externalId: CogniteCADModel
@@ -1096,7 +1098,7 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: published
-      description: null
+      description: Whether this revision is published and visible to end users.
       name: null
       source: null
     revisionId:
@@ -1114,7 +1116,8 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: status
-      description: null
+      description: 'Processing status of the revision. Valid values: Queued, Processing,
+        Done, or Failed'
       name: null
       source: null
     type:
@@ -1123,7 +1126,8 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: type
-      description: null
+      description: 'The type of 3D model this is a revision of. Valid values: CAD,
+        PointCloud, or Image360.'
       name: null
       source: null
   space: cdf_cdm
@@ -1155,7 +1159,7 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: model3D
-      description: .
+      description: Direct relation to the model this revision belongs to.
       name: null
       source:
         externalId: CognitePointCloudModel
@@ -1168,7 +1172,7 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: published
-      description: null
+      description: Whether this revision is published and visible to end users.
       name: null
       source: null
     revisionId:
@@ -1186,7 +1190,8 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: status
-      description: null
+      description: 'Processing status of the revision. Valid values: Queued, Processing,
+        Done, or Failed'
       name: null
       source: null
     type:
@@ -1195,7 +1200,8 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: type
-      description: null
+      description: 'The type of 3D model this is a revision of. Valid values: CAD,
+        PointCloud, or Image360.'
       name: null
       source: null
   space: cdf_cdm
@@ -1249,7 +1255,7 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: model3D
-      description: ''
+      description: Direct relation to the model this revision belongs to.
       name: null
       source:
         externalId: Cognite360ImageModel
@@ -1271,7 +1277,7 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: published
-      description: null
+      description: Whether this revision is published and visible to end users.
       name: null
       source: null
     status:
@@ -1280,7 +1286,8 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: status
-      description: null
+      description: 'Processing status of the revision. Valid values: Queued, Processing,
+        Done, or Failed'
       name: null
       source: null
     tags:
@@ -1298,7 +1305,8 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: type
-      description: null
+      description: 'The type of 3D model this is a revision of. Valid values: CAD,
+        PointCloud, or Image360.'
       name: null
       source: null
   space: cdf_cdm
@@ -1459,8 +1467,9 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: formatVersion
-      description: "Specifies the version the \u2018volume\u2019 field is following.\
-        \ Volume definition is today 9 floats (property volume)\n"
+      description: 'Version identifier for the encoding of the volume field.
+
+        '
       name: null
       source: null
     model3D:
@@ -1526,8 +1535,7 @@
         space: cdf_cdm_3d
         type: container
       containerPropertyIdentifier: volume
-      description: Relevant coordinates for the volume type, 9 floats in total, that
-        defines the volume
+      description: Numerical representation of a 3D volume.
       name: null
       source: null
     volumeReferences:
@@ -1551,7 +1559,7 @@
       source: null
   space: cdf_cdm
   version: v1
-- description: ''
+- description: "Represents a 360\xB0 image capture."
   externalId: Cognite360Image
   filter: null
   implements:
@@ -1840,7 +1848,8 @@
       source: null
   space: cdf_cdm
   version: v1
-- description: ''
+- description: This concept defines edges connecting Cognite360Image to Cognite3DObject.
+    The status is always approved.
   externalId: Cognite360ImageAnnotation
   filter: null
   implements:

@@ -1468,7 +1468,8 @@
   space: cdf_cdm
   usedFor: node
 - constraints: {}
-  description: null
+  description: Stores capture metadata for a Cognite360Image, such as its collection,
+    station group, and timestamp.
   externalId: Cognite360Image
   indexes:
     collection360:
@@ -1482,7 +1483,8 @@
     collection360:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to the Cognite360ImageCollection this image belongs
+        to.
       immutable: false
       name: null
       nullable: true
@@ -1496,7 +1498,8 @@
     group3d:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to the Cognite3DGroup (station) grouping Cognite360Image
+        instances at the same physical location.
       immutable: false
       name: null
       nullable: true
@@ -1521,7 +1524,8 @@
   space: cdf_cdm_3d
   usedFor: node
 - constraints: {}
-  description: null
+  description: "Stores polygon data for Cognite360ImageAnnotation edges, linking a\
+    \ 360\xB0 image to a Cognite3DObject."
   externalId: Cognite360ImageAnnotation
   indexes: {}
   name: null
@@ -1529,7 +1533,7 @@
     formatVersion:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Specifies the storage representation for the polygon.
       immutable: false
       name: null
       nullable: true
@@ -1542,7 +1546,7 @@
     polygon:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: List of floats representing the polygon; format depends on formatVersion.
       immutable: false
       name: null
       nullable: true
@@ -1554,7 +1558,7 @@
   space: cdf_cdm_3d
   usedFor: edge
 - constraints: {}
-  description: null
+  description: Stores group type data for a Cognite3DGroup.
   externalId: Cognite3DGroup
   indexes: {}
   name: null
@@ -1562,7 +1566,7 @@
     groupType:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: 'The type of 3D group. Valid value: Station360.'
       immutable: false
       name: null
       nullable: true
@@ -1576,7 +1580,7 @@
   space: cdf_cdm_3d
   usedFor: node
 - constraints: {}
-  description: null
+  description: Stores properties for a Cognite3DModel, such as model type and thumbnail.
   externalId: Cognite3DModel
   indexes: {}
   name: null
@@ -1584,7 +1588,8 @@
     thumbnail:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to a CogniteFile used as a thumbnail image for
+        the 3D model.
       immutable: false
       name: null
       nullable: true
@@ -1598,7 +1603,7 @@
     type:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: 'The type of 3D model. Valid values: CAD, PointCloud, or Image360.'
       immutable: false
       name: null
       nullable: true
@@ -1618,7 +1623,8 @@
   space: cdf_cdm_3d
   usedFor: node
 - constraints: {}
-  description: null
+  description: Stores the axis-aligned bounding box for a virtual representation of
+    a physical object in 3D space.
   externalId: Cognite3DObject
   indexes: {}
   name: null
@@ -1626,7 +1632,7 @@
     xMax:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Highest X value of the axis-aligned bounding box.
       immutable: false
       name: null
       nullable: true
@@ -1638,7 +1644,7 @@
     xMin:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Lowest X value of the axis-aligned bounding box.
       immutable: false
       name: null
       nullable: true
@@ -1650,7 +1656,7 @@
     yMax:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Highest Y value of the axis-aligned bounding box.
       immutable: false
       name: null
       nullable: true
@@ -1662,7 +1668,7 @@
     yMin:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Lowest Y value of the axis-aligned bounding box.
       immutable: false
       name: null
       nullable: true
@@ -1674,7 +1680,7 @@
     zMax:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Highest Z value of the axis-aligned bounding box.
       immutable: false
       name: null
       nullable: true
@@ -1686,7 +1692,7 @@
     zMin:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Lowest Z value of the axis-aligned bounding box.
       immutable: false
       name: null
       nullable: true
@@ -1698,7 +1704,7 @@
   space: cdf_cdm_3d
   usedFor: node
 - constraints: {}
-  description: null
+  description: Stores shared revision properties for 3D models.
   externalId: Cognite3DRevision
   indexes: {}
   name: null
@@ -1706,7 +1712,7 @@
     model3D:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to the model this revision belongs to.
       immutable: false
       name: null
       nullable: true
@@ -1720,7 +1726,7 @@
     published:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Whether this revision is published and visible to end users.
       immutable: false
       name: null
       nullable: true
@@ -1731,7 +1737,7 @@
     sourceFile:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to the source file used to create this revision.
       immutable: false
       name: null
       nullable: true
@@ -1745,7 +1751,8 @@
     status:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: 'Processing status of the revision. Valid values: Queued, Processing,
+        Done, or Failed.'
       immutable: false
       name: null
       nullable: true
@@ -1768,7 +1775,8 @@
     type:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: 'The type of 3D model this is a revision of. Valid values: CAD,
+        PointCloud, or Image360.'
       immutable: false
       name: null
       nullable: true
@@ -1788,7 +1796,8 @@
   space: cdf_cdm_3d
   usedFor: node
 - constraints: {}
-  description: null
+  description: Stores translation, Euler rotation, and scale values for a Cognite3DTransformation
+    in CDF coordinate space (Z-axis up).
   externalId: Cognite3DTransformation
   indexes: {}
   name: null
@@ -1796,7 +1805,7 @@
     eulerRotationX:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Rotation around the X-axis in radians.
       immutable: false
       name: null
       nullable: true
@@ -1808,7 +1817,7 @@
     eulerRotationY:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Rotation around the Y-axis in radians.
       immutable: false
       name: null
       nullable: true
@@ -1820,7 +1829,7 @@
     eulerRotationZ:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Rotation around the Z-axis in radians.
       immutable: false
       name: null
       nullable: true
@@ -1832,7 +1841,7 @@
     scaleX:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Scale factor applied to the object along the X-axis.
       immutable: false
       name: null
       nullable: true
@@ -1844,7 +1853,7 @@
     scaleY:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Scale factor applied to the object along the Y-axis.
       immutable: false
       name: null
       nullable: true
@@ -1856,7 +1865,7 @@
     scaleZ:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Scale factor applied to the object along the Z-axis.
       immutable: false
       name: null
       nullable: true
@@ -1868,7 +1877,7 @@
     translationX:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Displacement of the object along the X-axis.
       immutable: false
       name: null
       nullable: true
@@ -1880,7 +1889,7 @@
     translationY:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Displacement of the object along the Y-axis.
       immutable: false
       name: null
       nullable: true
@@ -1892,7 +1901,7 @@
     translationZ:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Displacement of the object along the Z-axis.
       immutable: false
       name: null
       nullable: true
@@ -1904,7 +1913,8 @@
   space: cdf_cdm_3d
   usedFor: all
 - constraints: {}
-  description: null
+  description: Stores contextualization data for a CogniteCADNode, including references
+    to the associated 3D object, model, and positions within revision hierarchies.
   externalId: CogniteCADNode
   indexes:
     object3D:
@@ -1918,7 +1928,7 @@
     cadNodeReference:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Reference to a node within a CAD model from the 3D API.
       immutable: false
       name: null
       nullable: true
@@ -1931,7 +1941,7 @@
     model3D:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to the Cognite3DModel this node belongs to.
       immutable: false
       name: null
       nullable: true
@@ -1945,7 +1955,7 @@
     object3D:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to the Cognite3DObject for this node.
       immutable: false
       name: null
       nullable: true
@@ -1959,7 +1969,8 @@
     revisions:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: List of direct relations to Cognite3DRevision instances in which
+        this node appears.
       immutable: false
       name: null
       nullable: true
@@ -1973,7 +1984,8 @@
     subTreeSizes:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Subtree sizes in the same order as revisions, used by Reveal to
+        determine how many child nodes exist below this node in the hierarchy.
       immutable: false
       name: null
       nullable: true
@@ -1984,7 +1996,8 @@
     treeIndexes:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Tree indexes in the same order as revisions, used by Reveal to
+        map nodes to positions in the backing 3D model.
       immutable: false
       name: null
       nullable: true
@@ -1995,7 +2008,7 @@
   space: cdf_cdm_3d
   usedFor: node
 - constraints: {}
-  description: null
+  description: Stores the 3D API revision identifier for a CogniteCADRevision.
   externalId: CogniteCADRevision
   indexes: {}
   name: null
@@ -2003,7 +2016,7 @@
     revisionId:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: The 3D API revision identifier for this CAD model revision.
       immutable: false
       name: null
       nullable: true
@@ -2014,7 +2027,8 @@
   space: cdf_cdm_3d
   usedFor: node
 - constraints: {}
-  description: null
+  description: "Stores references to the six face images of a CogniteCubeMap surrounding\
+    \ a 360\xB0 image scene."
   externalId: CogniteCubeMap
   indexes: {}
   name: null
@@ -2022,7 +2036,8 @@
     back:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to a CogniteFile holding the back projection of
+        the cube map.
       immutable: false
       name: null
       nullable: true
@@ -2036,7 +2051,8 @@
     bottom:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to a CogniteFile holding the bottom projection
+        of the cube map.
       immutable: false
       name: null
       nullable: true
@@ -2050,7 +2066,8 @@
     front:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to a CogniteFile holding the front projection of
+        the cube map.
       immutable: false
       name: null
       nullable: true
@@ -2064,7 +2081,8 @@
     left:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to a CogniteFile holding the left projection of
+        the cube map.
       immutable: false
       name: null
       nullable: true
@@ -2078,7 +2096,8 @@
     right:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to a CogniteFile holding the right projection of
+        the cube map.
       immutable: false
       name: null
       nullable: true
@@ -2092,7 +2111,8 @@
     top:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to a CogniteFile holding the top projection of
+        the cube map.
       immutable: false
       name: null
       nullable: true
@@ -2106,7 +2126,7 @@
   space: cdf_cdm_3d
   usedFor: node
 - constraints: {}
-  description: null
+  description: Stores the 3D API revision identifier for a CognitePointCloudRevision.
   externalId: CognitePointCloudRevision
   indexes: {}
   name: null
@@ -2114,7 +2134,7 @@
     revisionId:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: The 3D API revision identifier for this point cloud model revision.
       immutable: false
       name: null
       nullable: true
@@ -2125,7 +2145,8 @@
   space: cdf_cdm_3d
   usedFor: node
 - constraints: {}
-  description: null
+  description: Stores volume geometry and references for a CognitePointCloudVolume,
+    defining a contextualized region within a point cloud.
   externalId: CognitePointCloudVolume
   indexes:
     object3D:
@@ -2139,7 +2160,7 @@
     formatVersion:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Version identifier for the encoding of the volume field.
       immutable: false
       name: null
       nullable: true
@@ -2152,7 +2173,7 @@
     model3D:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to the Cognite3DModel this volume belongs to.
       immutable: false
       name: null
       nullable: true
@@ -2166,7 +2187,7 @@
     object3D:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Direct relation to the Cognite3DObject grouping for this volume.
       immutable: false
       name: null
       nullable: true
@@ -2180,7 +2201,8 @@
     revisions:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: List of direct relations to Cognite3DRevision instances containing
+        this volume.
       immutable: false
       name: null
       nullable: true
@@ -2194,7 +2216,7 @@
     volume:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Numerical representation of a 3D volume.
       immutable: false
       name: null
       nullable: true
@@ -2206,7 +2228,8 @@
     volumeReferences:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: Unique volume metric hashes used to access the 3D specialized data
+        storage.
       immutable: false
       name: null
       nullable: true
@@ -2219,7 +2242,7 @@
     volumeType:
       autoIncrement: false
       defaultValue: null
-      description: null
+      description: 'Geometric shape of the volume. Valid values: Cylinder or Box.'
       immutable: false
       name: null
       nullable: true
