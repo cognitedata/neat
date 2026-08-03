@@ -50,3 +50,11 @@ views:
     externalId: ReverseToListDirectView
     version: v1
     type: view
+  - space: my_space
+    externalId: CyclicViewA
+    version: v1
+    type: view
+  - space: my_space
+    externalId: CyclicViewB
+    version: v1
+    type: view

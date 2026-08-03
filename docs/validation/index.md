@@ -1,4 +1,4 @@
-**Neat supports 38 validation rules** for data modeling. These rules are learned
+**Neat supports 39 validation rules** for data modeling. These rules are learned
  from best practice, knowledge of the Cognite Data Fusion data modeling service, and practical experience from
  helping customers build and maintain their data models.
 
@@ -36,6 +36,7 @@ Validators for connections in data model specifications.
 | NEAT-DMS-CONNECTIONS-REVERSE-007 | [ReverseConnectionTargetMissing](neat-dms-connections-reverse-007.md) | Validates that the direct connection in reverse connection pair have target views specified. |
 | NEAT-DMS-CONNECTIONS-REVERSE-008 | [ReverseConnectionPointsToAncestor](neat-dms-connections-reverse-008.md) | Validates that direct connections point to specific views rather than ancestors. |
 | NEAT-DMS-CONNECTIONS-REVERSE-009 | [ReverseConnectionTargetMismatch](neat-dms-connections-reverse-009.md) | Validates that direct connections point to the correct target views. |
+| NEAT-DMS-CONNECTIONS-REVERSE-010 | [ReverseConnectionThroughPropertyIsReverse](neat-dms-connections-reverse-010.md) | Validates that reverse connections do not point through other reverse direct relations. |
 
 ### Consistency (NEAT-DMS-CONSISTENCY)
 

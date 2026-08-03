@@ -378,3 +378,61 @@
           version: v1
           type: view
         identifier: listDirectRelationTarget
+- space: my_space
+  externalId: CyclicViewA
+  version: v1
+  properties:
+    cyclicDirectA:
+      container:
+        space: my_space
+        externalId: CyclicContainerA
+        type: container
+      containerPropertyIdentifier: cyclicDirectAStorage
+      source:
+        space: my_space
+        externalId: CyclicViewB
+        version: v1
+        type: view
+    cyclicReverseA:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: CyclicViewB
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: CyclicViewB
+          version: v1
+          type: view
+        identifier: cyclicReverseB
+- space: my_space
+  externalId: CyclicViewB
+  version: v1
+  properties:
+    cyclicDirectB:
+      container:
+        space: my_space
+        externalId: CyclicContainerB
+        type: container
+      containerPropertyIdentifier: cyclicDirectBStorage
+      source:
+        space: my_space
+        externalId: CyclicViewA
+        version: v1
+        type: view
+    cyclicReverseB:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: CyclicViewA
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: CyclicViewA
+          version: v1
+          type: view
+        identifier: cyclicReverseA
