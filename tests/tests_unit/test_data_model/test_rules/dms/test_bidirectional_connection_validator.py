@@ -127,7 +127,9 @@ def test_cyclic_reverse_relation_validator_message(
     orchestrator.run(data_model)
     by_code = orchestrator.issues.by_code()
 
-    if can_run_validator(ReverseConnectionThroughPropertyIsReverse.code, ReverseConnectionThroughPropertyIsReverse.issue_type):
+    if can_run_validator(
+        ReverseConnectionThroughPropertyIsReverse.code, ReverseConnectionThroughPropertyIsReverse.issue_type
+    ):
         cyclic_issues = by_code[ReverseConnectionThroughPropertyIsReverse.code]
         cyclic_messages = [issue.message for issue in cyclic_issues if "cyclicReverse" in issue.message]
 
