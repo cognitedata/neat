@@ -17,7 +17,6 @@ from cognite.neat._data_model.rules.dms import (
     ReverseConnectionSourceViewMissing,
     ReverseConnectionTargetMismatch,
     ReverseConnectionTargetMissing,
-    ReverseConnectionThroughPropertyIsReverse,
 )
 from tests.data import SNAPSHOT_CATALOG
 
@@ -28,14 +27,13 @@ PROBLEMS = {
         "reverseToViewWithoutProperties",
         "reverseThroughContainerDirectReferenceFailing",
     },
-    ReverseConnectionSourcePropertyWrongType: {"reverseToEdgeConnection"},
+    ReverseConnectionSourcePropertyWrongType: {"reverseToEdgeConnection", "cyclicReverseA", "cyclicReverseB"},
     ReverseConnectionContainerMissing: {"reverseToDirectConnectionWithoutContainer"},
     ReverseConnectionContainerPropertyMissing: {"reverseToDirectWhichDoesHaveStorage"},
     ReverseConnectionContainerPropertyWrongType: {"reverseToAttribute"},
     ReverseConnectionTargetMissing: {"reverseToAttribute", "reverseToDirectWithoutTyping"},
     ReverseConnectionPointsToAncestor: {"innerReflection"},
     ReverseConnectionTargetMismatch: {"reverseSourceToTargetViewConnection"},
-    ReverseConnectionThroughPropertyIsReverse: {"cyclicReverseA", "cyclicReverseB"},
 }
 
 
@@ -127,16 +125,12 @@ def test_cyclic_reverse_relation_validator_message(
     orchestrator.run(data_model)
     by_code = orchestrator.issues.by_code()
 
-    if can_run_validator(ReverseConnectionThroughPropertyIsReverse.code, ReverseConnectionThroughPropertyIsReverse.issue_type):
-        cyclic_issues = by_code[ReverseConnectionThroughPropertyIsReverse.code]
-        cyclic_messages = [issue.message for issue in cyclic_issues if "cyclicReverse" in issue.message]
+    if can_run_validator(ReverseConnectionSourcePropertyWrongType.code, ReverseConnectionSourcePropertyWrongType.issue_type):
+        wrong_type_issues = by_code[ReverseConnectionSourcePropertyWrongType.code]
+        cyclic_messages = [issue.message for issue in wrong_type_issues if "cyclicReverse" in issue.message]
 
         assert len(cyclic_messages) == 2
         for message in cyclic_messages:
             assert "reverse direct relation" in message
             assert "cycle of reverse connections" in message
             assert "cyclicReverseA" in message or "cyclicReverseB" in message
-
-        wrong_type_issues = by_code.get(ReverseConnectionSourcePropertyWrongType.code, [])
-        wrong_type_cyclic = [issue for issue in wrong_type_issues if "cyclicReverse" in issue.message]
-        assert wrong_type_cyclic == []

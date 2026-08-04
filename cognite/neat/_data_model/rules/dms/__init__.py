@@ -21,7 +21,6 @@ from ._connections import (
     ReverseConnectionSourceViewMissing,
     ReverseConnectionTargetMismatch,
     ReverseConnectionTargetMissing,
-    ReverseConnectionThroughPropertyIsReverse,
 )
 from ._consistency import ViewSpaceVersionInconsistentWithDataModel
 from ._containers import (
@@ -77,7 +76,6 @@ __all__ = [
     "ReverseConnectionSourceViewMissing",
     "ReverseConnectionTargetMismatch",
     "ReverseConnectionTargetMissing",
-    "ReverseConnectionThroughPropertyIsReverse",
     "SuboptimalRequiresConstraint",
     "UnresolvableQueryPerformance",
     "ViewContainerCountIsOutOfLimits",

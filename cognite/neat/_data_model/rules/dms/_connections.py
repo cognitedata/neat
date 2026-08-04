@@ -222,15 +222,19 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
 
     ## What it does
     Checks that the property referenced in a reverse connection's 'through' clause
-    is actually a direct connection property (not a primitive or other type).
+    is actually a direct connection property (not a primitive, edge, or reverse relation).
 
     ## Why is this bad?
     Reverse connections can only work with direct connection properties.
-    Using other property types breaks the bidirectional relationship.
+    Using other property types breaks the bidirectional relationship. Pointing through
+    another reverse direct relation never resolves to container storage, even when
+    containers have correct direct relation properties defined.
 
     ## Example
     If WindFarm has a reverse property `turbines` through `WindTurbine.name`,
     but `name` is a Text property (not a direct connection), the reverse connection is invalid.
+    If ViewA's reverse property points through ViewB's reverse property instead of a direct
+    relation, neither reverse connection maps down to a container.
     """
 
     code = f"{BASE_CODE}-REVERSE-003"
@@ -258,7 +262,28 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
             source_property = source_view_expanded.properties[through.identifier]
 
             if isinstance(source_property, ReverseDirectRelationProperty):
-                continue  # Handled by ReverseConnectionThroughPropertyIsReverse
+                cycle_path = self._find_reverse_cycle_path(target_view_ref, reverse_prop_name)
+                cycle_suffix = ""
+                if cycle_path:
+                    path_str = " -> ".join(f"{view!s}.{prop}" for view, prop in cycle_path)
+                    cycle_suffix = f"This forms a cycle of reverse connections: {path_str}."
+                errors.append(
+                    ConsistencyError(
+                        message=(
+                            f"Reverse connection '{reverse_prop_name}' in view {target_view_ref!s} "
+                            f"points through '{through.identifier}' in view {source_view_ref!s}, "
+                            f"but '{through.identifier}' is itself a reverse direct relation "
+                            f"(not a direct relation that maps to a container). "
+                            f"Reverse connections must reference a direct relation property. {cycle_suffix}"
+                        ),
+                        fix=(
+                            "Update the reverse connection to point through the corresponding "
+                            "direct relation property on the source view (not another reverse property)."
+                        ),
+                        code=self.code,
+                    )
+                )
+                continue
 
             if not isinstance(source_property, ViewCorePropertyRequest):
                 errors.append(
@@ -274,6 +299,44 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
                 )
 
         return errors
+
+    def _find_reverse_cycle_path(
+        self,
+        start_target_view: ViewReference,
+        start_reverse_prop: str,
+    ) -> list[tuple[ViewReference, str]] | None:
+        """Return the cycle path if reverse-through-reverse forms a cycle, else None."""
+        seen: list[tuple[ViewReference, str]] = []
+        current = (start_target_view, start_reverse_prop)
+
+        while True:
+            if current in seen:
+                return seen + [current]
+
+            mapping = self.validation_resources.reverse_to_direct_mapping.get(current)
+            if not mapping:
+                return None
+
+            source_view_ref, through = mapping
+            through = self.validation_resources.normalize_through_reference(source_view_ref, through)
+
+            source_view_expanded = self.validation_resources.expand_view_properties(source_view_ref)
+            if not source_view_expanded or not source_view_expanded.properties:
+                return None
+
+            if through.identifier not in source_view_expanded.properties:
+                return None
+
+            through_property = source_view_expanded.properties[through.identifier]
+
+            if isinstance(through_property, ViewCorePropertyRequest):
+                return None
+
+            if not isinstance(through_property, ReverseDirectRelationProperty):
+                return None
+
+            seen.append(current)
+            current = (source_view_ref, through.identifier)
 
 
 class ReverseConnectionContainerMissing(DataModelRule):
@@ -544,113 +607,3 @@ class ReverseConnectionTargetMismatch(DataModelRule):
                 )
 
         return recommendations
-
-
-class ReverseConnectionThroughPropertyIsReverse(DataModelRule):
-    """Validates that reverse connections do not point through other reverse direct relations.
-
-    ## What it does
-    Checks that the property referenced in a reverse connection's 'through' clause
-    is a direct relation property, not another reverse direct relation property.
-
-    ## Why is this bad?
-    Reverse direct relation properties do not map to a container; they rely on the
-    direct relation property they reverse. Pointing two reverse properties at each other
-    creates a cycle that never resolves to container storage, even when the containers
-    have correct direct relation properties defined.
-
-    ## Example
-    If ViewA has reverse property `items` through ViewB's reverse property `owners`,
-    and ViewB has reverse property `owners` through ViewA's reverse property `items`,
-    neither reverse connection maps down to a container direct relation.
-    """
-
-    code = f"{BASE_CODE}-REVERSE-010"
-    issue_type = ConsistencyError
-
-    def validate(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
-
-        for (target_view_ref, reverse_prop_name), (
-            source_view_ref,
-            through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
-            through = self.validation_resources.normalize_through_reference(source_view_ref, through)
-            source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
-
-            if not source_view:
-                continue  # Handled by ReverseConnectionSourceViewMissing
-
-            if not (source_view_expanded := self.validation_resources.expand_view_properties(source_view_ref)):
-                raise RuntimeError(f"{type(self).__name__}: View {source_view_ref!s} not found. This is a bug in NEAT.")
-
-            if not source_view_expanded.properties or through.identifier not in source_view_expanded.properties:
-                continue  # Handled by ReverseConnectionSourcePropertyMissing
-
-            source_property = source_view_expanded.properties[through.identifier]
-
-            if not isinstance(source_property, ReverseDirectRelationProperty):
-                continue
-
-            cycle_path = self._find_reverse_cycle_path(target_view_ref, reverse_prop_name)
-            cycle_suffix = ""
-            if cycle_path:
-                path_str = " -> ".join(f"{view!s}.{prop}" for view, prop in cycle_path)
-                cycle_suffix = f"This forms a cycle of reverse connections: {path_str}."
-
-            errors.append(
-                ConsistencyError(
-                    message=(
-                        f"Reverse connection '{reverse_prop_name}' in view {target_view_ref!s} "
-                        f"points through '{through.identifier}' in view {source_view_ref!s}, "
-                        f"but '{through.identifier}' is itself a reverse direct relation "
-                        f"(not a direct relation that maps to a container). "
-                        f"Reverse connections must reference a direct relation property. {cycle_suffix}"
-                    ),
-                    fix=(
-                        "Update the reverse connection to point through the corresponding "
-                        "direct relation property on the source view (not another reverse property)."
-                    ),
-                    code=self.code,
-                )
-            )
-
-        return errors
-
-    def _find_reverse_cycle_path(
-        self,
-        start_target_view: ViewReference,
-        start_reverse_prop: str,
-    ) -> list[tuple[ViewReference, str]] | None:
-        """Return the cycle path if reverse-through-reverse forms a cycle, else None."""
-        seen: list[tuple[ViewReference, str]] = []
-        current = (start_target_view, start_reverse_prop)
-
-        while True:
-            if current in seen:
-                return seen + [current]
-
-            mapping = self.validation_resources.reverse_to_direct_mapping.get(current)
-            if not mapping:
-                return None
-
-            source_view_ref, through = mapping
-            through = self.validation_resources.normalize_through_reference(source_view_ref, through)
-
-            source_view_expanded = self.validation_resources.expand_view_properties(source_view_ref)
-            if not source_view_expanded or not source_view_expanded.properties:
-                return None
-
-            if through.identifier not in source_view_expanded.properties:
-                return None
-
-            through_property = source_view_expanded.properties[through.identifier]
-
-            if isinstance(through_property, ViewCorePropertyRequest):
-                return None
-
-            if not isinstance(through_property, ReverseDirectRelationProperty):
-                return None
-
-            seen.append(current)
-            current = (source_view_ref, through.identifier)
