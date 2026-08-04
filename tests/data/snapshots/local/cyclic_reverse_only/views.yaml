@@ -1,0 +1,125 @@
+- space: my_space
+  externalId: SourceView
+  version: v1
+  name: Source view
+  description: Holds edge connection used by reverseToEdgeConnection
+  properties:
+    edgeConnection:
+      name: Edge to AnotherView
+      description: Edge connection (not a direct relation)
+      connectionType: single_edge_connection
+      source:
+        space: my_space
+        externalId: AnotherView
+        version: v1
+        type: view
+      type:
+        space: my_space
+        externalId: SourceView.edgeConnection
+      direction: outwards
+- space: my_space
+  externalId: TargetView
+  version: v1
+  name: Target view
+  description: Reverse through edge connection on SourceView
+  properties:
+    reverseToEdgeConnection:
+      name: Reverse through edge
+      description: REVERSE-003 generic case — through property is not a direct connection
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: SourceView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: SourceView
+          version: v1
+          type: view
+        identifier: edgeConnection
+- space: my_space
+  externalId: AnotherView
+  version: v1
+  name: Another view
+  description: Edge connection target
+  properties:
+    name:
+      name: Name
+      description: Text property
+      container:
+        space: my_space
+        externalId: AnotherContainer
+        type: container
+      containerPropertyIdentifier: nameStorage
+- space: my_space
+  externalId: CyclicViewA
+  version: v1
+  name: Cyclic view A
+  description: View A in cyclic reverse test
+  properties:
+    cyclicDirectA:
+      name: Direct to B
+      description: Valid direct relation to CyclicViewB
+      container:
+        space: my_space
+        externalId: CyclicContainerA
+        type: container
+      containerPropertyIdentifier: cyclicDirectAStorage
+      source:
+        space: my_space
+        externalId: CyclicViewB
+        version: v1
+        type: view
+    cyclicReverseA:
+      name: Reverse to B
+      description: REVERSE-003 cyclic case — through B's reverse property
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: CyclicViewB
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: CyclicViewB
+          version: v1
+          type: view
+        identifier: cyclicReverseB
+- space: my_space
+  externalId: CyclicViewB
+  version: v1
+  name: Cyclic view B
+  description: View B in cyclic reverse test
+  properties:
+    cyclicDirectB:
+      name: Direct to A
+      description: Valid direct relation to CyclicViewA
+      container:
+        space: my_space
+        externalId: CyclicContainerB
+        type: container
+      containerPropertyIdentifier: cyclicDirectBStorage
+      source:
+        space: my_space
+        externalId: CyclicViewA
+        version: v1
+        type: view
+    cyclicReverseB:
+      name: Reverse to A
+      description: REVERSE-003 cyclic case — through A's reverse property
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: CyclicViewA
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: CyclicViewA
+          version: v1
+          type: view
+        identifier: cyclicReverseA

@@ -28,6 +28,7 @@ LocalScenario: TypeAlias = Literal[
     "bi_directional_connections",
     "cyclic_implements",
     "cyclic_requires",
+    "cyclic_reverse_only",
     "requires_constraints",
     "uncategorized_validators",
 ]

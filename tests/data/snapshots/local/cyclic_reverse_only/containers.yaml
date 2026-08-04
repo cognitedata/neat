@@ -1,0 +1,27 @@
+- space: my_space
+  externalId: AnotherContainer
+  usedFor: node
+  properties:
+    nameStorage:
+      nullable: true
+      type:
+        type: text
+        list: false
+- space: my_space
+  externalId: CyclicContainerA
+  usedFor: node
+  properties:
+    cyclicDirectAStorage:
+      nullable: true
+      type:
+        type: direct
+        list: false
+- space: my_space
+  externalId: CyclicContainerB
+  usedFor: node
+  properties:
+    cyclicDirectBStorage:
+      nullable: true
+      type:
+        type: direct
+        list: false

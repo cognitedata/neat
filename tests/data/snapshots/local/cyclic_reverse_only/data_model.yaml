@@ -1,0 +1,26 @@
+space: my_space
+externalId: Reverse003TestModel
+version: v1
+name: REVERSE-003 validation cases
+description: All NEAT-DMS-CONNECTIONS-REVERSE-003 variants (non-direct through + cyclic reverse)
+views:
+  - space: my_space
+    externalId: SourceView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: TargetView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: AnotherView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: CyclicViewA
+    version: v1
+    type: view
+  - space: my_space
+    externalId: CyclicViewB
+    version: v1
+    type: view

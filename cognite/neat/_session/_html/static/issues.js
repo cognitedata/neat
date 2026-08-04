@@ -154,20 +154,18 @@ function renderGroupedItems(groupItems, key, isFixed) {
             }).join('')}
         `;
     } else {
-        itemsHtml = `
-            ${groupItems.map((issue, idx) => `
-                <div class="issue-item grouped">
-                    <div class="issue-number">#${idx + 1}</div>
-                    <div class="issue-message">${issue.message}</div>
-                </div>
-            `).join('')}
-            ${firstIssue.fix ? `
-                <div class="issue-fix grouped">
-                    <div class="issue-fix-label">💡 Suggested Fix</div>
-                    <div class="issue-fix-content">${firstIssue.fix}</div>
-                </div>
-            ` : ''}
-        `;
+        itemsHtml = groupItems.map((issue, idx) => `
+            <div class="issue-item grouped">
+                <div class="issue-number">#${idx + 1}</div>
+                <div class="issue-message">${issue.message}</div>
+                ${issue.fix ? `
+                    <div class="issue-fix grouped per-issue">
+                        <div class="issue-fix-label">💡 Suggested Fix</div>
+                        <div class="issue-fix-content">${issue.fix}</div>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
     }
 
     return `
