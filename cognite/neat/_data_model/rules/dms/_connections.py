@@ -311,7 +311,7 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
 
         while True:
             if current in seen:
-                return seen + [current]
+                return [*seen, current]
 
             mapping = self.validation_resources.all_reverse_connections.get(current)
             if not mapping:
