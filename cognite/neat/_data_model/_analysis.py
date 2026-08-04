@@ -354,14 +354,10 @@ class ValidationResources:
         return referenced_containers
 
     @cached_property
-    def reverse_to_direct_mapping(
-        self,
-    ) -> dict[tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]]:
-        """Get a mapping of reverse direct relations to their corresponding source view and 'through' property."""
+    def all_reverse_connections(self) -> ReverseToDirectMapping:
+        """All reverse direct relations and their source view / through references."""
 
-        bidirectional_connections: dict[
-            tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]
-        ] = {}
+        bidirectional_connections: ReverseToDirectMapping = {}
 
         if self.merged_data_model.views:
             for view_ref in self.merged_data_model.views:
@@ -374,7 +370,6 @@ class ValidationResources:
                 if not view.properties:
                     continue
                 for prop_ref, property_ in view.properties.items():
-                    # reverse direct relation
                     if isinstance(property_, ReverseDirectRelationProperty):
                         bidirectional_connections[(view_ref, prop_ref)] = (
                             property_.source,
@@ -382,6 +377,37 @@ class ValidationResources:
                         )
 
         return bidirectional_connections
+
+    def _through_property(
+        self,
+        source_view_ref: ViewReference,
+        through: ContainerDirectReference | ViewDirectReference,
+    ) -> ViewRequestProperty | None:
+        through_normalized = self.normalize_through_reference(source_view_ref, through)
+        source_view_expanded = self.expand_view_properties(through_normalized.source)
+        if not source_view_expanded or not source_view_expanded.properties:
+            return None
+        return source_view_expanded.properties.get(through_normalized.identifier)
+
+    def _is_reverse_through_reverse(
+        self,
+        source_view_ref: ViewReference,
+        through: ContainerDirectReference | ViewDirectReference,
+    ) -> bool:
+        through_property = self._through_property(source_view_ref, through)
+        return isinstance(through_property, ReverseDirectRelationProperty)
+
+    @cached_property
+    def reverse_to_direct_mapping(
+        self,
+    ) -> ReverseToDirectMapping:
+        """Reverse direct relations mapped to direct through properties (excludes reverse-through-reverse)."""
+
+        return {
+            key: value
+            for key, value in self.all_reverse_connections.items()
+            if not self._is_reverse_through_reverse(value[0], value[1])
+        }
 
     @staticmethod
     def normalize_through_reference(
@@ -503,6 +529,8 @@ class ValidationResources:
 
                     # reverse direct relation
                     elif isinstance(property_, ReverseDirectRelationProperty) and property_.source:
+                        if self._is_reverse_through_reverse(property_.source, property_.through):
+                            continue
                         connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
                     # edge property

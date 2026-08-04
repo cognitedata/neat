@@ -145,7 +145,7 @@ class ReverseConnectionSourceViewMissing(DataModelRule):
         for (target_view_ref, reverse_prop_name), (
             source_view_ref,
             through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
+        ) in self.validation_resources.all_reverse_connections.items():
             through = self.validation_resources.normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
@@ -190,7 +190,7 @@ class ReverseConnectionSourcePropertyMissing(DataModelRule):
         for (target_view_ref, reverse_prop_name), (
             source_view_ref,
             through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
+        ) in self.validation_resources.all_reverse_connections.items():
             through = self.validation_resources.normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
@@ -246,7 +246,7 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
         for (target_view_ref, reverse_prop_name), (
             source_view_ref,
             through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
+        ) in self.validation_resources.all_reverse_connections.items():
             through = self.validation_resources.normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
@@ -313,7 +313,7 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
             if current in seen:
                 return seen + [current]
 
-            mapping = self.validation_resources.reverse_to_direct_mapping.get(current)
+            mapping = self.validation_resources.all_reverse_connections.get(current)
             if not mapping:
                 return None
 
