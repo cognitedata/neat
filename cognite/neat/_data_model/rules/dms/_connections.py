@@ -286,9 +286,9 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
                         message=(
                             f"Source view {source_view_ref!s} property '{through.identifier}' "
                             f"used for configuring the reverse connection '{reverse_prop_name}' "
-                            f"in target view {target_view_ref!s} is not a direct connection property."
+                            f"in target view {target_view_ref!s} is not a direct relation property."
                         ),
-                        fix="Update view property to be a direct connection property",
+                        fix="Update view property to be a direct relation property",
                         code=self.code,
                     )
                 )

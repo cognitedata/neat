@@ -173,7 +173,7 @@ def test_reverse_003_fixture_variants(
     cyclic_issues = [i for i in issues if "cyclicReverse" in i.message]
     assert len(cyclic_issues) == 2
 
-    assert edge_issue.fix == "Update view property to be a direct connection property"
+    assert edge_issue.fix == "Update view property to be a direct relation property"
     cyclic_fix = (
         "Update the reverse connection to point through the corresponding "
         "direct relation property on the source view (not another reverse property)."
