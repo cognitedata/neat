@@ -27,7 +27,7 @@ PROBLEMS = {
         "reverseToViewWithoutProperties",
         "reverseThroughContainerDirectReferenceFailing",
     },
-    ReverseConnectionSourcePropertyWrongType: {"reverseToEdgeConnection"},
+    ReverseConnectionSourcePropertyWrongType: {"reverseToEdgeConnection", "cyclicReverseA", "cyclicReverseB"},
     ReverseConnectionContainerMissing: {"reverseToDirectConnectionWithoutContainer"},
     ReverseConnectionContainerPropertyMissing: {"reverseToDirectWhichDoesHaveStorage"},
     ReverseConnectionContainerPropertyWrongType: {"reverseToAttribute"},
@@ -101,3 +101,81 @@ def test_validation_deep(
                     break
 
     assert found_problematic_reversals == actual_problematic_reversal
+
+
+@pytest.mark.parametrize("profile", ["deep-additive", "legacy-additive"])
+def test_cyclic_reverse_relation_validator_message(
+    profile: Literal["deep-additive", "legacy-additive"],
+) -> None:
+    config = internal_profiles()[profile]
+    mode = config.modeling.mode
+    can_run_validator = config.validation.can_run_validator
+
+    local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+        "bi_directional_connections", "for_validators", modus_operandi=mode, include_cdm=False, format="snapshots"
+    )
+    data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
+
+    orchestrator = DmsDataModelRulesOrchestrator(
+        cdf_snapshot=cdf_snapshot,
+        limits=SchemaLimits(),
+        modus_operandi=mode,
+        can_run_validator=can_run_validator,
+    )
+    orchestrator.run(data_model)
+    by_code = orchestrator.issues.by_code()
+
+    if can_run_validator(
+        ReverseConnectionSourcePropertyWrongType.code, ReverseConnectionSourcePropertyWrongType.issue_type
+    ):
+        wrong_type_issues = by_code[ReverseConnectionSourcePropertyWrongType.code]
+        cyclic_messages = [issue.message for issue in wrong_type_issues if "cyclicReverse" in issue.message]
+
+        assert len(cyclic_messages) == 2
+        for message in cyclic_messages:
+            assert "reverse direct relation" in message
+            assert "not a direct relation that maps to a container" in message
+            assert "cyclicReverseA" in message or "cyclicReverseB" in message
+
+
+@pytest.mark.parametrize("profile", ["deep-additive", "legacy-additive"])
+def test_reverse_003_fixture_variants(
+    profile: Literal["deep-additive", "legacy-additive"],
+) -> None:
+    """Minimal fixture should surface all REVERSE-003 variants with distinct fix text."""
+    config = internal_profiles()[profile]
+    mode = config.modeling.mode
+    can_run_validator = config.validation.can_run_validator
+
+    local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+        "cyclic_reverse_only", "for_validators", modus_operandi=mode, include_cdm=False, format="snapshots"
+    )
+    data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
+
+    orchestrator = DmsDataModelRulesOrchestrator(
+        cdf_snapshot=cdf_snapshot,
+        limits=SchemaLimits(),
+        modus_operandi=mode,
+        can_run_validator=can_run_validator,
+    )
+    orchestrator.run(data_model)
+    by_code = orchestrator.issues.by_code()
+
+    if not can_run_validator(
+        ReverseConnectionSourcePropertyWrongType.code, ReverseConnectionSourcePropertyWrongType.issue_type
+    ):
+        return
+
+    issues = by_code[ReverseConnectionSourcePropertyWrongType.code]
+    assert len(issues) == 3
+
+    edge_issue = next(i for i in issues if "reverseToEdgeConnection" in i.message)
+    cyclic_issues = [i for i in issues if "cyclicReverse" in i.message]
+    assert len(cyclic_issues) == 2
+
+    assert edge_issue.fix == "Update view property to be a direct relation property"
+    cyclic_fix = (
+        "Update the reverse connection to point through the corresponding "
+        "direct relation property on the source view (not another reverse property)."
+    )
+    assert all(i.fix == cyclic_fix for i in cyclic_issues)

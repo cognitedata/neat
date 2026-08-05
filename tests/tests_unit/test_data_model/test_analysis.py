@@ -618,6 +618,28 @@ class TestValidationResources:
         }
         data_regression.check(serializable)
 
+    def test_reverse_to_direct_mapping_excludes_reverse_through_reverse(
+        self, scenarios: dict[str, ValidationResources]
+    ) -> None:
+        resources = scenarios["bi-directional-with-cdm"]
+        all_connections = resources.all_reverse_connections
+        filtered_mapping = resources.reverse_to_direct_mapping
+
+        cyclic_keys = {
+            (ViewReference(space="my_space", external_id="CyclicViewA", version="v1"), "cyclicReverseA"),
+            (ViewReference(space="my_space", external_id="CyclicViewB", version="v1"), "cyclicReverseB"),
+        }
+        assert cyclic_keys.issubset(all_connections.keys())
+        assert not cyclic_keys.intersection(filtered_mapping.keys())
+
+        end_node_types = resources.connection_end_node_types
+        assert (ViewReference(space="my_space", external_id="CyclicViewA", version="v1"), "cyclicReverseA") not in (
+            end_node_types
+        )
+        assert (ViewReference(space="my_space", external_id="CyclicViewB", version="v1"), "cyclicReverseB") not in (
+            end_node_types
+        )
+
 
 class TestValidationResourcesRequiresConstraints:
     """Tests for requires constraint recommendations."""

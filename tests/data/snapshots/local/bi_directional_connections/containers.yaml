@@ -95,3 +95,21 @@
       type:
         type: direct
         list: true
+- space: my_space
+  externalId: CyclicContainerA
+  usedFor: node
+  properties:
+    cyclicDirectAStorage:
+      nullable: true
+      type:
+        type: direct
+        list: false
+- space: my_space
+  externalId: CyclicContainerB
+  usedFor: node
+  properties:
+    cyclicDirectBStorage:
+      nullable: true
+      type:
+        type: direct
+        list: false

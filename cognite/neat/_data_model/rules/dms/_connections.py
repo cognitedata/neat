@@ -7,7 +7,10 @@ from cognite.neat._data_model.models.dms._references import (
     ViewDirectReference,
     ViewReference,
 )
-from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
+from cognite.neat._data_model.models.dms._view_property import (
+    ReverseDirectRelationProperty,
+    ViewCorePropertyRequest,
+)
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import ConsistencyError, Recommendation
 
@@ -142,7 +145,7 @@ class ReverseConnectionSourceViewMissing(DataModelRule):
         for (target_view_ref, reverse_prop_name), (
             source_view_ref,
             through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
+        ) in self.validation_resources.all_reverse_connections.items():
             through = self.validation_resources.normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
@@ -187,7 +190,7 @@ class ReverseConnectionSourcePropertyMissing(DataModelRule):
         for (target_view_ref, reverse_prop_name), (
             source_view_ref,
             through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
+        ) in self.validation_resources.all_reverse_connections.items():
             through = self.validation_resources.normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
@@ -219,15 +222,19 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
 
     ## What it does
     Checks that the property referenced in a reverse connection's 'through' clause
-    is actually a direct connection property (not a primitive or other type).
+    is actually a direct connection property (not a primitive, edge, or reverse relation).
 
     ## Why is this bad?
     Reverse connections can only work with direct connection properties.
-    Using other property types breaks the bidirectional relationship.
+    Using other property types breaks the bidirectional relationship. Pointing through
+    another reverse direct relation never resolves to container storage, even when
+    containers have correct direct relation properties defined.
 
     ## Example
     If WindFarm has a reverse property `turbines` through `WindTurbine.name`,
     but `name` is a Text property (not a direct connection), the reverse connection is invalid.
+    If ViewA's reverse property points through ViewB's reverse property instead of a direct
+    relation, neither reverse connection maps down to a container.
     """
 
     code = f"{BASE_CODE}-REVERSE-003"
@@ -239,7 +246,7 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
         for (target_view_ref, reverse_prop_name), (
             source_view_ref,
             through,
-        ) in self.validation_resources.reverse_to_direct_mapping.items():
+        ) in self.validation_resources.all_reverse_connections.items():
             through = self.validation_resources.normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
@@ -254,15 +261,34 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
 
             source_property = source_view_expanded.properties[through.identifier]
 
+            if isinstance(source_property, ReverseDirectRelationProperty):
+                errors.append(
+                    ConsistencyError(
+                        message=(
+                            f"Reverse connection '{reverse_prop_name}' in view {target_view_ref!s} "
+                            f"points through '{through.identifier}' in view {source_view_ref!s}, "
+                            f"but '{through.identifier}' is itself a reverse direct relation "
+                            f"(not a direct relation that maps to a container). "
+                            f"Reverse connections must reference a direct relation property."
+                        ),
+                        fix=(
+                            "Update the reverse connection to point through the corresponding "
+                            "direct relation property on the source view (not another reverse property)."
+                        ),
+                        code=self.code,
+                    )
+                )
+                continue
+
             if not isinstance(source_property, ViewCorePropertyRequest):
                 errors.append(
                     ConsistencyError(
                         message=(
                             f"Source view {source_view_ref!s} property '{through.identifier}' "
                             f"used for configuring the reverse connection '{reverse_prop_name}' "
-                            f"in target view {target_view_ref!s} is not a direct connection property."
+                            f"in target view {target_view_ref!s} is not a direct relation property."
                         ),
-                        fix="Update view property to be a direct connection property",
+                        fix="Update view property to be a direct relation property",
                         code=self.code,
                     )
                 )
