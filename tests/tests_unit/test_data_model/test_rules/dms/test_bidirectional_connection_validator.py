@@ -134,7 +134,7 @@ def test_cyclic_reverse_relation_validator_message(
         assert len(cyclic_messages) == 2
         for message in cyclic_messages:
             assert "reverse direct relation" in message
-            assert "cycle of reverse connections" in message
+            assert "not a direct relation that maps to a container" in message
             assert "cyclicReverseA" in message or "cyclicReverseB" in message
 
 

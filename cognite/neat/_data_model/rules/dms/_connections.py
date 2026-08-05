@@ -262,11 +262,6 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
             source_property = source_view_expanded.properties[through.identifier]
 
             if isinstance(source_property, ReverseDirectRelationProperty):
-                cycle_path = self._find_reverse_cycle_path(target_view_ref, reverse_prop_name)
-                cycle_suffix = ""
-                if cycle_path:
-                    path_str = " -> ".join(f"{view!s}.{prop}" for view, prop in cycle_path)
-                    cycle_suffix = f"This forms a cycle of reverse connections: {path_str}."
                 errors.append(
                     ConsistencyError(
                         message=(
@@ -274,7 +269,7 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
                             f"points through '{through.identifier}' in view {source_view_ref!s}, "
                             f"but '{through.identifier}' is itself a reverse direct relation "
                             f"(not a direct relation that maps to a container). "
-                            f"Reverse connections must reference a direct relation property. {cycle_suffix}"
+                            f"Reverse connections must reference a direct relation property."
                         ),
                         fix=(
                             "Update the reverse connection to point through the corresponding "
@@ -299,44 +294,6 @@ class ReverseConnectionSourcePropertyWrongType(DataModelRule):
                 )
 
         return errors
-
-    def _find_reverse_cycle_path(
-        self,
-        start_target_view: ViewReference,
-        start_reverse_prop: str,
-    ) -> list[tuple[ViewReference, str]] | None:
-        """Return the cycle path if reverse-through-reverse forms a cycle, else None."""
-        seen: list[tuple[ViewReference, str]] = []
-        current = (start_target_view, start_reverse_prop)
-
-        while True:
-            if current in seen:
-                return [*seen, current]
-
-            mapping = self.validation_resources.all_reverse_connections.get(current)
-            if not mapping:
-                return None
-
-            source_view_ref, through = mapping
-            through = self.validation_resources.normalize_through_reference(source_view_ref, through)
-
-            source_view_expanded = self.validation_resources.expand_view_properties(source_view_ref)
-            if not source_view_expanded or not source_view_expanded.properties:
-                return None
-
-            if through.identifier not in source_view_expanded.properties:
-                return None
-
-            through_property = source_view_expanded.properties[through.identifier]
-
-            if isinstance(through_property, ViewCorePropertyRequest):
-                return None
-
-            if not isinstance(through_property, ReverseDirectRelationProperty):
-                return None
-
-            seen.append(current)
-            current = (source_view_ref, through.identifier)
 
 
 class ReverseConnectionContainerMissing(DataModelRule):
