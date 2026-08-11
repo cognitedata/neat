@@ -1,0 +1,8 @@
+space: records_space
+externalId: Record
+properties:
+  status:
+    type:
+      type: enum
+      values:
+        A: {}

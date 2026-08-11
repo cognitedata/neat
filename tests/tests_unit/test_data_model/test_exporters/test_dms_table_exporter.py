@@ -13,6 +13,8 @@ from cognite.neat._data_model.importers._table_importer.data_classes import (
 )
 from cognite.neat._data_model.models.dms import (
     ContainerReference,
+    ContainerRequest,
+    DataModelRequest,
     DirectNodeRelation,
     EqualsFilterData,
     Filter,
@@ -20,7 +22,9 @@ from cognite.neat._data_model.models.dms import (
     InFilterData,
     ListablePropertyTypeDefinition,
     RequestSchema,
+    ViewCorePropertyRequest,
     ViewReference,
+    ViewRequest,
 )
 from cognite.neat._data_model.models.entities import ParsedEntity
 from cognite.neat._utils.useful_types import DataModelTableType
@@ -160,6 +164,38 @@ class TestDMSTableWriter:
     def test_write_view_filter(self, filter: Filter | None, expected: TableViewFilter) -> None:
         writer = DMSTableWriter(self.DEFAULT_SPACE, self.DEFAULT_VERSION, skip_properties_in_other_spaces=True)
         assert writer.write_view_filter(filter) == expected
+
+    def test_write_view_property_with_source_but_no_container_row(self) -> None:
+        schema = RequestSchema(
+            dataModel=DataModelRequest(space="dm_space", externalId="DM", version="v1", views=[]),
+            views=[
+                ViewRequest(
+                    space="dm_space",
+                    externalId="Delivery",
+                    version="v1",
+                    properties={
+                        "destinationCustomerLocation": ViewCorePropertyRequest(
+                            container=ContainerReference(space="dm_space", externalId="Delivery"),
+                            containerPropertyIdentifier="destinationCustomerLocation",
+                            source=ViewReference(space="other_space", externalId="Location", version="v1"),
+                        )
+                    },
+                )
+            ],
+            containers=[
+                ContainerRequest(space="dm_space", externalId="Delivery", properties={}),
+            ],
+        )
+
+        writer = DMSTableWriter("dm_space", "v1", skip_properties_in_other_spaces=False)
+        tables = writer.write_tables(schema)
+
+        exported = next(
+            prop for prop in tables.properties if prop.view_property == "destinationCustomerLocation"
+        )
+        assert exported.connection == ParsedEntity("", "direct", properties={})
+        assert exported.min_count == 0
+        assert exported.max_count == 1
 
 
 def test_add_dropdowns_disabled_on_empty_dropdown_sheet() -> None:
