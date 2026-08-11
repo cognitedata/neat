@@ -29,6 +29,19 @@ from cognite.neat._utils._reader import NeatReader
 
 from ._wrappers import session_wrapper
 
+_TOOLKIT_YAML_READ_NOTES = """
+    !!! note "Toolkit YAML import"
+        When ``format`` is ``\"toolkit\"``:
+
+        - ``{{ variable }}`` placeholders in module YAML are resolved from Toolkit config
+          (``default.config.yaml``, environment overlays such as ``config.dev.yaml``, and module overrides).
+          Use ``toolkit_env``, ``toolkit_config``, and ``toolkit_version`` to control resolution.
+        - Spaces present in the imported module YAML (from ``spaces``, ``views``, and ``containers``) are
+          automatically added to governed spaces metadata. Validators then treat those local module spaces
+          as NEAT-governed without enabling ``enable_governed_spaces`` in ``NeatConfig``. Explicit
+          ``governedSpaces`` from NEAT Excel metadata are not overridden.
+"""
+
 
 @session_wrapper
 class PhysicalDataModel:
@@ -341,7 +354,9 @@ class WritePhysicalDataModel:
 
         Args:
             io (Any): The file path or buffer to write to.
-            skip_other_spaces (bool): If true, only properties in the same space as the data model will be written.
+            skip_other_spaces (bool): If ``True`` (default), only view properties in the same space as the
+                data model are written to the Properties sheet. Set to ``False`` when exporting multi-space
+                toolkit modules where views and containers live in spaces other than the data model space.
 
         """
 
@@ -624,3 +639,11 @@ def cdf(
 
     """
     self._cdf(space=space, external_id=external_id, version=version, fix=False)
+
+
+for _yaml_reader in (yaml, read_yaml_alpha_fix, read_yaml_alpha_data_model_file):
+    if _yaml_reader.__doc__:
+        _yaml_reader.__doc__ += _TOOLKIT_YAML_READ_NOTES
+
+if ReadPhysicalDataModel._yaml.__doc__:
+    ReadPhysicalDataModel._yaml.__doc__ += _TOOLKIT_YAML_READ_NOTES
