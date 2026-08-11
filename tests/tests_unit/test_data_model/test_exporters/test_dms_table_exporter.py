@@ -175,9 +175,9 @@ class TestDMSTableWriter:
                     version="v1",
                     properties={
                         "destinationCustomerLocation": ViewCorePropertyRequest(
-                            container=ContainerReference(space="dm_space", externalId="Delivery"),
+                            container=ContainerReference(space="dm_space", external_id="Delivery"),
                             containerPropertyIdentifier="destinationCustomerLocation",
-                            source=ViewReference(space="other_space", externalId="Location", version="v1"),
+                            source=ViewReference(space="other_space", external_id="Location", version="v1"),
                         )
                     },
                 )

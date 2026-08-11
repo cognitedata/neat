@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,11 @@ import yaml
 
 from cognite.neat._data_model.models.dms import RequestSchema, SpaceRequest
 from cognite.neat._exceptions import FileReadException
+
+if sys.version_info >= (3, 11):
+    import tomllib as tomli
+else:
+    import tomli  # type: ignore
 
 _PLACEHOLDER_PATTERN = re.compile(r"\{\{\s*(\w+)\s*\}\}")
 
@@ -59,13 +65,8 @@ def parse_cdf_toml_hints(start_dir: Path) -> dict[str, str]:
         if not cdf_toml.exists():
             continue
         try:
-            try:
-                import tomllib
-            except ImportError:
-                import tomli as tomllib  # type: ignore[no-redef]
-
             with cdf_toml.open("rb") as file_handle:
-                data = tomllib.load(file_handle)
+                data = tomli.load(file_handle)
             cdf = data.get("cdf", {}) or {}
             hints: dict[str, str] = {}
             for key in hint_keys:
@@ -178,7 +179,7 @@ def flatten_variables_for_module(variables_root: dict[str, Any], module_path: Pa
     """Flatten Toolkit variables, applying module-specific overrides when available."""
     flat: dict[str, str] = {}
     for key, value in variables_root.items():
-        if key == "modules" or isinstance(value, (dict, list)):
+        if key == "modules" or isinstance(value, dict | list):
             continue
         if value is not None:
             flat[str(key)] = str(value)
@@ -194,7 +195,7 @@ def flatten_variables_for_module(variables_root: dict[str, Any], module_path: Pa
             break
         node = child
         for key, value in node.items():
-            if key == "modules" or isinstance(value, (dict, list)):
+            if key == "modules" or isinstance(value, dict | list):
                 continue
             if value is not None:
                 flat[str(key)] = str(value)
