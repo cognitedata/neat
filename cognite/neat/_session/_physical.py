@@ -136,8 +136,11 @@ class ReadPhysicalDataModel:
         self,
         io: Any,
         format: Literal["neat", "toolkit"] = "neat",
-        data_model_file: Path | None = None,
+        data_model_file: Path | str | None = None,
         fix: bool = False,
+        toolkit_env: str | None = None,
+        toolkit_config: Path | str | None = None,
+        toolkit_version: str | None = None,
     ) -> None:
         """Read physical data model from YAML file(s)
 
@@ -146,15 +149,31 @@ class ReadPhysicalDataModel:
             format (Literal["neat", "toolkit"]): The format of the input file(s).
                 - "neat": Neat's DMS table format.
                 - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+            data_model_file (str | Path | None): Optional data model YAML file name or path when reading a toolkit
+                directory. Only the file name is used for matching.
+            fix (bool): If True, automatically apply fixes for fixable issues.
+            toolkit_env (str | None): Toolkit environment name (e.g. ``dev``) for config overlay resolution.
+            toolkit_config (str | Path | None): Explicit Toolkit config YAML to merge on top of ``default.config.yaml``.
+            toolkit_version (str | None): Override ``version`` / ``viewVersion`` template variables.
         """
 
         path = NeatReader.create(io).materialize_path()
+        if data_model_file is not None:
+            data_model_file = Path(data_model_file)
+        if toolkit_config is not None:
+            toolkit_config = Path(toolkit_config)
 
         reader: DMSImporter
         if format == "neat":
             reader = DMSTableImporter.from_yaml(path)
         elif format == "toolkit":
-            reader = DMSAPIImporter.from_yaml(path, data_model_file=data_model_file)
+            reader = DMSAPIImporter.from_yaml(
+                path,
+                data_model_file=data_model_file,
+                toolkit_env=toolkit_env,
+                toolkit_config=toolkit_config,
+                toolkit_version=toolkit_version,
+            )
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
@@ -466,6 +485,9 @@ def yaml(
     self: ReadPhysicalDataModel,
     io: Any,
     format: Literal["neat", "toolkit"] = "neat",
+    toolkit_env: str | None = None,
+    toolkit_config: Path | str | None = None,
+    toolkit_version: str | None = None,
 ) -> None:
     """Read physical data model from YAML file(s)
 
@@ -474,9 +496,20 @@ def yaml(
         format (Literal["neat", "toolkit"]): The format of the input file(s).
             - "neat": Neat's DMS table format.
             - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+        toolkit_env (str | None): Toolkit environment name (e.g. ``dev``) for config overlay resolution.
+        toolkit_config (str | Path | None): Explicit Toolkit config YAML to merge on top of ``default.config.yaml``.
+        toolkit_version (str | None): Override ``version`` / ``viewVersion`` template variables.
 
     """
-    self._yaml(io=io, format=format, data_model_file=None, fix=False)
+    self._yaml(
+        io=io,
+        format=format,
+        data_model_file=None,
+        fix=False,
+        toolkit_env=toolkit_env,
+        toolkit_config=toolkit_config,
+        toolkit_version=toolkit_version,
+    )
 
 
 def read_yaml_alpha_fix(
@@ -484,6 +517,9 @@ def read_yaml_alpha_fix(
     io: Any,
     format: Literal["neat", "toolkit"] = "neat",
     fix: bool = False,
+    toolkit_env: str | None = None,
+    toolkit_config: Path | str | None = None,
+    toolkit_version: str | None = None,
 ) -> None:
     """Read physical data model from YAML file(s)
 
@@ -493,16 +529,29 @@ def read_yaml_alpha_fix(
             - "neat": Neat's DMS table format.
             - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
         fix (bool): If True, automatically apply fixes for fixable issues.
+        toolkit_env (str | None): Toolkit environment name (e.g. ``dev``) for config overlay resolution.
+        toolkit_config (str | Path | None): Explicit Toolkit config YAML to merge on top of ``default.config.yaml``.
+        toolkit_version (str | None): Override ``version`` / ``viewVersion`` template variables.
 
     """
-    self._yaml(io=io, format=format, fix=fix)
+    self._yaml(
+        io=io,
+        format=format,
+        fix=fix,
+        toolkit_env=toolkit_env,
+        toolkit_config=toolkit_config,
+        toolkit_version=toolkit_version,
+    )
 
 
 def read_yaml_alpha_data_model_file(
     self: ReadPhysicalDataModel,
     io: Any,
     format: Literal["neat", "toolkit"] = "neat",
-    data_model_file: Path | None = None,
+    data_model_file: Path | str | None = None,
+    toolkit_env: str | None = None,
+    toolkit_config: Path | str | None = None,
+    toolkit_version: str | None = None,
 ) -> None:
     """Read physical data model from YAML file(s)
 
@@ -511,12 +560,23 @@ def read_yaml_alpha_data_model_file(
         format (Literal["neat", "toolkit"]): The format of the input file(s).
             - "neat": Neat's DMS table format.
             - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-        data_model_file (str | None): Optional specific data model file to read. This is only applicable when format
-            is set to "toolkit", and when io contains multiple data model YAML files.
-            The value should match the file name of the data model YAML file to read.
+        data_model_file (str | Path | None): Optional specific data model file to read. This is only applicable when
+            format is set to "toolkit", and when io contains multiple data model YAML files.
+            A file name or full path may be given; only the file name is used for matching.
+        toolkit_env (str | None): Toolkit environment name (e.g. ``dev``) for config overlay resolution.
+        toolkit_config (str | Path | None): Explicit Toolkit config YAML to merge on top of ``default.config.yaml``.
+        toolkit_version (str | None): Override ``version`` / ``viewVersion`` template variables.
 
     """
-    self._yaml(io=io, format=format, data_model_file=data_model_file, fix=False)
+    self._yaml(
+        io=io,
+        format=format,
+        data_model_file=data_model_file,
+        fix=False,
+        toolkit_env=toolkit_env,
+        toolkit_config=toolkit_config,
+        toolkit_version=toolkit_version,
+    )
 
 
 def json(
