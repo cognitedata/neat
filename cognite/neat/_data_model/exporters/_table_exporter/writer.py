@@ -387,21 +387,45 @@ class DMSTableWriter:
         self, view: ViewRequest, prop_id: str, prop: ViewRequestProperty, container: ContainerProperties
     ) -> DMSProperty:
         container_properties: dict[str, Any] = {}
+        has_container_row = False
         if isinstance(prop, ViewCorePropertyRequest):
             identifier = (prop.container, prop.container_property_identifier)
             if identifier in container.properties_by_id:
                 container_properties = container.properties_by_id[identifier]
+                has_container_row = True
         view_properties: dict[str, Any] = dict(
             view=self._create_view_entity(view), view_property=prop_id, name=prop.name, description=prop.description
         )
-        if connection := self._write_view_property_connection(prop):
+        connection = self._write_view_property_connection(prop)
+        if (
+            connection is None
+            and isinstance(prop, ViewCorePropertyRequest)
+            and prop.source is not None
+            and not has_container_row
+        ):
+            connection = ParsedEntity("", "direct", properties={})
+        if connection is not None:
             view_properties["connection"] = connection
         if view_value_type := self._write_view_property_value_type(prop):
             view_properties["value_type"] = view_value_type
         view_min_count = self._write_view_property_min_count(prop)
+        if (
+            view_min_count is None
+            and isinstance(prop, ViewCorePropertyRequest)
+            and prop.source is not None
+            and not has_container_row
+        ):
+            view_min_count = 0
         if view_min_count is not None:
             view_properties["min_count"] = view_min_count
         view_max_count = self._write_view_property_max_count(prop)
+        if (
+            view_max_count == "container"
+            and isinstance(prop, ViewCorePropertyRequest)
+            and prop.source is not None
+            and not has_container_row
+        ):
+            view_max_count = 1
         if view_max_count != "container":
             view_properties["max_count"] = view_max_count
 

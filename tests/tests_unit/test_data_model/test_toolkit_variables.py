@@ -6,6 +6,7 @@ from cognite.neat._data_model.importers import DMSAPIImporter
 from cognite.neat._data_model.importers._toolkit_variables import (
     find_toolkit_project_root,
     load_toolkit_variables,
+    populate_toolkit_governed_spaces,
     resolve_toolkit_config_paths,
     substitute_toolkit_variables,
 )
@@ -116,3 +117,39 @@ class TestToolkitVariables:
         schema = importer.to_data_model()
         assert schema.data_model.space == "sp_test"
         assert schema.data_model.version == "v1.5.0"
+
+
+class TestToolkitGovernedSpaces:
+    def test_populates_governed_spaces_from_local_spaces(self, tmp_path: Path) -> None:
+        model_dir = tmp_path / "modules" / "mod" / "data_modeling" / "dm"
+        model_dir.mkdir(parents=True)
+
+        (model_dir / "Model.datamodel.yaml").write_text(
+            "space: dm_space\nexternalId: Model\nversion: v1\nviews: []\n",
+            encoding="utf-8",
+        )
+        (model_dir / "records.Space.yaml").write_text("space: records_space\n", encoding="utf-8")
+        (model_dir / "Record.container.yaml").write_text(
+            "space: records_space\nexternalId: Record\nproperties:\n  id:\n    type:\n      type: text\n",
+            encoding="utf-8",
+        )
+        (model_dir / "Record.view.yaml").write_text(
+            "space: records_space\nexternalId: Record\nversion: v1\nproperties:\n  id:\n"
+            "    container:\n      space: records_space\n      externalId: Record\n"
+            "      type: container\n    containerPropertyIdentifier: id\n",
+            encoding="utf-8",
+        )
+
+        schema = DMSAPIImporter.from_yaml(model_dir).to_data_model()
+        assert schema.governed_space_set() == {"dm_space", "records_space"}
+
+    def test_does_not_override_explicit_governed_spaces(self, tmp_path: Path) -> None:
+        from cognite.neat._data_model.models.dms import DataModelRequest, RequestSchema, SpaceRequest
+        from cognite.neat._data_model.models.dms._schema import SchemaExtra
+
+        schema = RequestSchema(
+            dataModel=DataModelRequest(space="dm_space", externalId="Model", version="v1", views=[]),
+            extra=SchemaExtra(governedSpaces=[SpaceRequest(space="explicit_space")]),
+        )
+        updated = populate_toolkit_governed_spaces(schema)
+        assert {space.space for space in updated.extra.governed_spaces} == {"explicit_space"}

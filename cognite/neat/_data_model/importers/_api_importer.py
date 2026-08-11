@@ -9,7 +9,10 @@ from cognite.neat._client import NeatClient
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.importers._base import DMSImporter
-from cognite.neat._data_model.importers._toolkit_variables import prepare_toolkit_yaml_content
+from cognite.neat._data_model.importers._toolkit_variables import (
+    populate_toolkit_governed_spaces,
+    prepare_toolkit_yaml_content,
+)
 from cognite.neat._data_model.models.dms import (
     DataModelReference,
     RequestSchema,
@@ -41,9 +44,9 @@ class DMSAPIImporter(DMSImporter):
 
     def to_data_model(self) -> RequestSchema:
         if isinstance(self._schema, RequestSchema):
-            return self._schema
+            return populate_toolkit_governed_spaces(self._schema)
         try:
-            return RequestSchema.model_validate(self._schema)
+            return populate_toolkit_governed_spaces(RequestSchema.model_validate(self._schema))
         except ValidationError as e:
             context = ValidationContext()
             errors = [
