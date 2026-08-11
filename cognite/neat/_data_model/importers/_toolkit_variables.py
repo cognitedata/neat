@@ -175,17 +175,29 @@ def module_path_under_toolkit(data_model_dir: Path, project_root: Path) -> Path 
     return Path(*parts[1:])
 
 
-def flatten_variables_for_module(variables_root: dict[str, Any], module_path: Path | None) -> dict[str, str]:
-    """Flatten Toolkit variables, applying module-specific overrides when available."""
-    flat: dict[str, str] = {}
-    for key, value in variables_root.items():
+def _collect_scalar_variables(node: dict[str, Any], flat: dict[str, str]) -> None:
+    """Collect scalar Toolkit variables from a config node, skipping nested module dicts."""
+    for key, value in node.items():
         if key == "modules" or isinstance(value, dict | list):
             continue
         if value is not None:
             flat[str(key)] = str(value)
 
+
+def flatten_variables_for_module(variables_root: dict[str, Any], module_path: Path | None) -> dict[str, str]:
+    """Flatten Toolkit variables, applying module-specific overrides when available."""
+    flat: dict[str, str] = {}
+    _collect_scalar_variables(variables_root, flat)
+
     modules = variables_root.get("modules")
-    if not isinstance(modules, dict) or module_path is None:
+    if not isinstance(modules, dict):
+        return flat
+
+    # Toolkit stores project-wide variables directly under ``variables.modules``,
+    # alongside per-module nested dicts (e.g. ``variables.modules.pidm``).
+    _collect_scalar_variables(modules, flat)
+
+    if module_path is None:
         return flat
 
     node: dict[str, Any] = modules
@@ -194,11 +206,7 @@ def flatten_variables_for_module(variables_root: dict[str, Any], module_path: Pa
         if not isinstance(child, dict):
             break
         node = child
-        for key, value in node.items():
-            if key == "modules" or isinstance(value, dict | list):
-                continue
-            if value is not None:
-                flat[str(key)] = str(value)
+        _collect_scalar_variables(node, flat)
     return flat
 
 
@@ -263,7 +271,8 @@ def substitute_toolkit_variables(content: str, variables: dict[str, str], *, sou
                 source,
                 f"Unresolved toolkit variable '{{{{ {name} }}}}'. "
                 f"Available variables: {available}. "
-                "Ensure default.config.yaml and the environment config are present, "
+                "Ensure Toolkit config files (for example default.config.yaml or config.<env>.yaml "
+                "referenced from cdf.toml) are present, "
                 "or pass toolkit_env / toolkit_config to read.yaml().",
             )
         return variables[name]

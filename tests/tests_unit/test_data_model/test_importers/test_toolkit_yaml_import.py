@@ -110,6 +110,27 @@ class TestToolkitYamlImport:
         assert schema.data_model.space == "sp_test"
         assert schema.data_model.version == "v1.5.0"
 
+    def test_load_globals_from_modules_level_without_default_config(self, tmp_path: Path) -> None:
+        """Match Toolkit projects that only ship config.<env>.yaml with globals under variables.modules."""
+        project = tmp_path / "project"
+        model_dir = project / "modules" / "pidm" / "data_models"
+        model_dir.mkdir(parents=True)
+        (project / "cdf.toml").write_text(
+            '[cdf]\ndefault_config_yaml = "config.dev.yaml"\n',
+            encoding="utf-8",
+        )
+        (project / "config.dev.yaml").write_text(
+            "variables:\n  modules:\n    dm_sol_pidm_version: v0.1.15\n",
+            encoding="utf-8",
+        )
+        (model_dir / "Model.datamodel.yaml").write_text(
+            "space: sp_pidm\nexternalId: Model\nversion: {{ dm_sol_pidm_version }}\nviews: []\n",
+            encoding="utf-8",
+        )
+
+        schema = _import_schema(model_dir)
+        assert schema.data_model.version == "v0.1.15"
+
     def test_repo_cdf_toml_does_not_hijack_unrelated_paths(self) -> None:
         assert find_toolkit_project_root(CYCLIC_REVERSE_ONLY) is None
 
