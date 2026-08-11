@@ -19,9 +19,7 @@ from cognite.neat._exceptions import FileReadException
 
 TOOLKIT_FIXTURE = Path(__file__).resolve().parents[3] / "data" / "toolkit_substitution"
 DATA_MODEL_DIR = TOOLKIT_FIXTURE / "modules" / "test" / "data_modeling" / "my_model"
-CYCLIC_REVERSE_ONLY = (
-    Path(__file__).resolve().parents[3] / "data" / "snapshots" / "local" / "cyclic_reverse_only"
-)
+CYCLIC_REVERSE_ONLY = Path(__file__).resolve().parents[3] / "data" / "snapshots" / "local" / "cyclic_reverse_only"
 
 
 def _import_schema(model_dir: Path, **kwargs: Any) -> RequestSchema:
@@ -54,8 +52,7 @@ class TestToolkitYamlImport:
             ),
             pytest.param(
                 {"toolkit_version": "9"},
-                lambda schema: schema.data_model.version == "9"
-                and all(view.version == "9" for view in schema.views),
+                lambda schema: schema.data_model.version == "9" and all(view.version == "9" for view in schema.views),
                 id="toolkit-version-override",
             ),
         ],

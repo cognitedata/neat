@@ -190,9 +190,7 @@ class TestDMSTableWriter:
         writer = DMSTableWriter("dm_space", "v1", skip_properties_in_other_spaces=False)
         tables = writer.write_tables(schema)
 
-        exported = next(
-            prop for prop in tables.properties if prop.view_property == "destinationCustomerLocation"
-        )
+        exported = next(prop for prop in tables.properties if prop.view_property == "destinationCustomerLocation")
         assert exported.connection == ParsedEntity("", "direct", properties={})
         assert exported.min_count == 0
         assert exported.max_count == 1
