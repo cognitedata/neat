@@ -1,3 +1,40 @@
+"""Toolkit template-variable resolution for NEAT YAML imports.
+
+NEAT cannot hard-depend on ``cognite-toolkit``, but Toolkit module YAML uses
+``{{ variable }}`` placeholders. This module reimplements the subset of Toolkit
+config resolution needed so ``format="toolkit"`` reads work without running
+``cdf build``.
+
+Strategy (pipeline)
+-------------------
+1. **Locate project** — Walk up from the data-model directory to find a Toolkit
+   project root (``default.config.yaml`` and/or ``cdf.toml`` above a ``modules/``
+   tree). Guard against unrelated repo-root ``cdf.toml`` files that are not
+   Toolkit projects for the path being read.
+
+2. **Resolve config chain** — Merge configs in Toolkit order:
+   ``default.config.yaml`` (base) then an environment overlay
+   (``config.<env>.yaml``, explicit ``toolkit_config``, or ``cdf.toml`` hints).
+   Prefer the organization directory from ``cdf.toml`` when present
+   (e.g. ``beyond-the-plant/config.dev.yaml``).
+
+3. **Flatten variables** — Build a flat ``name -> value`` map from the merged
+   ``variables:`` tree. Collect scalars at the root, at ``variables.modules``
+   (project-wide globals — common in ADA20/BTP-style configs), then walk the
+   module path for nested overrides (later wins).
+
+4. **Version aliases** — Ensure both ``version`` and ``viewVersion`` exist
+   (Toolkit YAML uses either). Explicit ``toolkit_version`` overrides both.
+
+5. **Substitute** — Replace ``{{ name }}`` in YAML text *before* parsing.
+   Unresolved names raise ``FileReadException`` with available variables listed.
+
+Performance note
+----------------
+Load config once per directory import via :class:`ToolkitProjectContext`, then
+reuse the flattened map for every YAML file under that directory.
+"""
+
 from __future__ import annotations
 
 import re
@@ -18,6 +55,7 @@ else:
 _PLACEHOLDER_PATTERN = re.compile(r"\{\{\s*(\w+)\s*\}\}")
 _CDF_HINT_KEYS = ("default_config_yaml", "default_env", "default_organization_dir")
 
+# Shared Args snippet for session ``read.yaml`` docstrings (keep public kwargs as three fields).
 TOOLKIT_READ_ARGS_DOC = """\
         toolkit_env (str | None): Toolkit environment name (e.g. ``dev``) for config overlay resolution.
         toolkit_config (str | Path | None): Explicit Toolkit config YAML to merge on top of ``default.config.yaml``.
@@ -26,7 +64,11 @@ TOOLKIT_READ_ARGS_DOC = """\
 
 @dataclass(frozen=True)
 class ToolkitReadOptions:
-    """Caller options for Toolkit template variable resolution."""
+    """Caller options for Toolkit template variable resolution.
+
+    Public session APIs expose ``toolkit_env`` / ``toolkit_config`` / ``toolkit_version``;
+    pack them once with :meth:`from_args` and thread this object through importers.
+    """
 
     env: str | None = None
     config: Path | None = None
@@ -52,7 +94,11 @@ class ToolkitReadOptions:
 
 @dataclass(frozen=True)
 class ToolkitProjectContext:
-    """Resolved Toolkit project config, loaded once per directory import."""
+    """Resolved Toolkit project config, loaded once per directory import.
+
+    Holds the merged ``variables:`` tree (still nested). Call :meth:`variables_for`
+    to flatten for a specific module path and apply version overrides.
+    """
 
     project_root: Path | None
     hints: dict[str, str] = field(default_factory=dict)
@@ -71,6 +117,7 @@ class ToolkitProjectContext:
         if not config_paths and options.config is not None:
             config_paths = [options.config]
 
+        # Deep-merge in chain order so env overlays win over default.config.yaml.
         merged_variables: dict[str, Any] = {}
         for config_path in config_paths:
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
@@ -93,6 +140,11 @@ class ToolkitProjectContext:
         return apply_version_overrides(flat, version)
 
 
+# ---------------------------------------------------------------------------
+# Project / config discovery
+# ---------------------------------------------------------------------------
+
+
 def _organization_dir(hints: dict[str, str] | None, project_root: Path | None = None) -> str | None:
     if hints is None and project_root is not None:
         hints = parse_cdf_toml_hints(project_root)
@@ -108,7 +160,11 @@ def _first_existing(roots: list[Path], relative: str) -> Path | None:
 
 
 def _path_under_toolkit_modules(start: Path, project_root: Path, hints: dict[str, str] | None = None) -> bool:
-    """Return True when *start* sits under a Toolkit ``modules/`` tree for *project_root*."""
+    """Return True when *start* sits under a Toolkit ``modules/`` tree for *project_root*.
+
+    Used so a repo-root ``cdf.toml`` alone does not claim unrelated paths (e.g. test
+    fixtures outside ``modules/``) as Toolkit projects.
+    """
     try:
         relative = start.resolve().relative_to(project_root.resolve())
     except ValueError:
@@ -130,13 +186,17 @@ def find_toolkit_project_root(start: Path) -> Path | None:
     for candidate in [current, *current.parents]:
         if (candidate / "default.config.yaml").exists():
             return candidate
+        # cdf.toml only counts when start is under that project's modules tree.
         if (candidate / "cdf.toml").exists() and _path_under_toolkit_modules(current, candidate):
             return candidate
     return None
 
 
 def parse_cdf_toml_hints(start_dir: Path) -> dict[str, str]:
-    """Read Toolkit project hints from the nearest ``cdf.toml`` upward."""
+    """Read Toolkit project hints from the nearest ``cdf.toml`` upward.
+
+    Only the ``[cdf]`` keys that affect config path / env selection are kept.
+    """
     for ancestor in [Path(start_dir), *list(Path(start_dir).parents)[:8]]:
         cdf_toml = ancestor / "cdf.toml"
         if not cdf_toml.exists():
@@ -172,7 +232,13 @@ def resolve_toolkit_config_paths(
     hints: dict[str, str] | None = None,
     options: ToolkitReadOptions | None = None,
 ) -> list[Path]:
-    """Resolve the ordered Toolkit config chain: base + environment overlay."""
+    """Resolve the ordered Toolkit config chain: base + environment overlay.
+
+    Selection order for the overlay when not passed explicitly:
+    1. ``config.<toolkit_env>.yaml``
+    2. ``config.dev.yaml`` if present (default env heuristic)
+    3. ``default_env`` / ``default_config_yaml`` from ``cdf.toml``
+    """
     options = options or ToolkitReadOptions()
     hints = hints if hints is not None else parse_cdf_toml_hints(project_root)
     search_roots = toolkit_config_search_roots(project_root, hints)
@@ -198,6 +264,11 @@ def resolve_toolkit_config_paths(
     return paths
 
 
+# ---------------------------------------------------------------------------
+# Variable flattening and substitution
+# ---------------------------------------------------------------------------
+
+
 def deep_merge_dict(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Recursively merge *override* into *base* (override wins on conflicts)."""
     merged = dict(base)
@@ -214,7 +285,11 @@ def module_path_under_toolkit(
     project_root: Path,
     hints: dict[str, str] | None = None,
 ) -> Path | None:
-    """Return the path under ``modules/`` for module-scoped variable resolution."""
+    """Return the path under ``modules/`` for module-scoped variable resolution.
+
+    Example: ``modules/btp/data_modeling/dm`` → ``btp/data_modeling/dm``, used to
+    walk ``variables.modules.btp...`` for nested overrides.
+    """
     try:
         relative = data_model_dir.resolve().relative_to(project_root.resolve())
     except ValueError:
@@ -240,7 +315,13 @@ def _collect_scalar_variables(node: dict[str, Any], flat: dict[str, str]) -> Non
 
 
 def flatten_variables_for_module(variables_root: dict[str, Any], module_path: Path | None) -> dict[str, str]:
-    """Flatten Toolkit variables, applying module-specific overrides when available."""
+    """Flatten Toolkit variables, applying module-specific overrides when available.
+
+    Layering (later overwrites earlier):
+    1. Scalars under ``variables:``
+    2. Scalars under ``variables.modules:`` (project globals next to nested module dicts)
+    3. Scalars along the module path under ``variables.modules.<...>``
+    """
     flat: dict[str, str] = {}
     _collect_scalar_variables(variables_root, flat)
 
@@ -248,8 +329,7 @@ def flatten_variables_for_module(variables_root: dict[str, Any], module_path: Pa
     if not isinstance(modules, dict):
         return flat
 
-    # Toolkit stores project-wide variables directly under ``variables.modules``,
-    # alongside per-module nested dicts (e.g. ``variables.modules.pidm``).
+    # Project-wide globals often live directly under variables.modules (ADA20/BTP).
     _collect_scalar_variables(modules, flat)
 
     if module_path is None:
@@ -316,7 +396,11 @@ def prepare_toolkit_yaml_content(
     variables: dict[str, str] | None = None,
     options: ToolkitReadOptions | None = None,
 ) -> str:
-    """Substitute Toolkit template variables in YAML source before parsing."""
+    """Substitute Toolkit template variables in YAML source before parsing.
+
+    Prefer passing a precomputed *variables* map when reading many files in one
+    directory so config is not reloaded per file.
+    """
     options = options or ToolkitReadOptions()
     if not options.substitute or "{{" not in content:
         return content
