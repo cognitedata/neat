@@ -9,6 +9,10 @@ from cognite.neat._client import NeatClient
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.importers._base import DMSImporter
+from cognite.neat._data_model.importers._toolkit_variables import (
+    ToolkitProjectContext,
+    prepare_toolkit_yaml_content,
+)
 from cognite.neat._data_model.models.dms import (
     DataModelReference,
     RequestSchema,
@@ -118,18 +122,47 @@ class DMSAPIImporter(DMSImporter):
         )
 
     @classmethod
-    def from_yaml(cls, yaml_file: Path, data_model_file: Path | None = None) -> "DMSAPIImporter":
+    def from_yaml(
+        cls,
+        yaml_file: Path,
+        data_model_file: Path | str | None = None,
+        *,
+        toolkit_env: str | None = None,
+        toolkit_config: Path | str | None = None,
+        toolkit_version: str | None = None,
+        substitute_toolkit_variables: bool = True,
+    ) -> "DMSAPIImporter":
         """Create a DMSTableImporter from a YAML file."""
+        if toolkit_config is not None:
+            toolkit_config = Path(toolkit_config)
         source = cls._display_name(yaml_file)
         if yaml_file.suffix.lower() in {".yaml", ".yml", ".json"}:
             yaml_content = yaml_file.read_text(encoding=cls.ENCODING)
+            yaml_content = prepare_toolkit_yaml_content(
+                yaml_content,
+                source=yaml_file,
+                data_model_dir=yaml_file.parent,
+                toolkit_env=toolkit_env,
+                toolkit_config=toolkit_config,
+                toolkit_version=toolkit_version,
+                enabled=substitute_toolkit_variables,
+            )
             # DataModels and Views have `version` that is often given as an integer by the user.
             # This ensures that the version is always read as a string, even if the user forgets to
             # quote it in the YAML file.
             fixed_content = quote_int_value_by_key_in_yaml(yaml_content, "version")
             return cls(yaml.safe_load(fixed_content))
         elif yaml_file.is_dir():
-            return cls(cls._read_yaml_files(yaml_file, data_model_file))
+            return cls(
+                cls._read_yaml_files(
+                    yaml_file,
+                    data_model_file,
+                    toolkit_env=toolkit_env,
+                    toolkit_config=toolkit_config,
+                    toolkit_version=toolkit_version,
+                    substitute_toolkit_variables=substitute_toolkit_variables,
+                )
+            )
         raise FileReadException(source.as_posix(), f"Unsupported file type: {source.suffix}")
 
     @classmethod
@@ -147,16 +180,39 @@ class DMSAPIImporter(DMSImporter):
         return source
 
     @classmethod
-    def _read_yaml_files(cls, directory: Path, data_model_file: Path | None = None) -> dict[str, Any]:
+    def _read_yaml_files(
+        cls,
+        directory: Path,
+        data_model_file: Path | str | None = None,
+        *,
+        toolkit_env: str | None = None,
+        toolkit_config: Path | str | None = None,
+        toolkit_version: str | None = None,
+        substitute_toolkit_variables: bool = True,
+    ) -> dict[str, Any]:
         """Read all YAML files in a directory and combine them into a single dictionary."""
         schema_data: dict[str, Any] = {}
         data_model: dict[str, Any] | None = None
+        data_model_file_name = Path(data_model_file).name if data_model_file is not None else None
+        variables = None
+        if substitute_toolkit_variables:
+            variables = ToolkitProjectContext.load(
+                directory,
+                toolkit_env=toolkit_env,
+                toolkit_config=toolkit_config,
+            ).variables_for(directory, toolkit_version)
         for yaml_file in directory.rglob("**/*"):
             if yaml_file.suffix.lower() not in {".yaml", ".yml", ".json"}:
                 continue
             stem = yaml_file.stem.casefold()
 
             yaml_content = yaml_file.read_text(encoding=cls.ENCODING)
+            yaml_content = prepare_toolkit_yaml_content(
+                yaml_content,
+                source=yaml_file,
+                variables=variables,
+                enabled=substitute_toolkit_variables,
+            )
             if stem.endswith("datamodel") or stem.endswith("view"):
                 # DataModels and Views have `version` that is often given as an integer by the user.
                 # This ensures that the version is always read as a string, even if the user forgets to
@@ -166,7 +222,7 @@ class DMSAPIImporter(DMSImporter):
             list_data = data if isinstance(data, list) else [data]
 
             if stem.endswith("datamodel"):
-                if data_model_file and yaml_file.name != data_model_file.name:
+                if data_model_file_name and yaml_file.name != data_model_file_name:
                     continue  # skip this file as it doesn't match the specified data model file
                 if data_model is not None and not data_model_file:
                     raise FileReadException(
