@@ -491,12 +491,12 @@ def yaml(
 ) -> None:
     """Read physical data model from YAML file(s)
 
-    Args:
-        io (Any): The file or directory path or buffer to read from.
-        format (Literal["neat", "toolkit"]): The format of the input file(s).
-            - "neat": Neat's DMS table format.
-            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-<<TOOLKIT_ARGS>>
+        Args:
+            io (Any): The file or directory path or buffer to read from.
+            format (Literal["neat", "toolkit"]): The format of the input file(s).
+                - "neat": Neat's DMS table format.
+                - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+    <<TOOLKIT_ARGS>>
 
     """
     self._yaml(
@@ -519,13 +519,13 @@ def read_yaml_alpha_fix(
 ) -> None:
     """Read physical data model from YAML file(s)
 
-    Args:
-        io (Any): The file or directory path or buffer to read from.
-        format (Literal["neat", "toolkit"]): The format of the input file(s).
-            - "neat": Neat's DMS table format.
-            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-        fix (bool): If True, automatically apply fixes for fixable issues.
-<<TOOLKIT_ARGS>>
+        Args:
+            io (Any): The file or directory path or buffer to read from.
+            format (Literal["neat", "toolkit"]): The format of the input file(s).
+                - "neat": Neat's DMS table format.
+                - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+            fix (bool): If True, automatically apply fixes for fixable issues.
+    <<TOOLKIT_ARGS>>
 
     """
     self._yaml(
@@ -547,15 +547,15 @@ def read_yaml_alpha_data_model_file(
 ) -> None:
     """Read physical data model from YAML file(s)
 
-    Args:
-        io (Any): The file or directory path or buffer to read from.
-        format (Literal["neat", "toolkit"]): The format of the input file(s).
-            - "neat": Neat's DMS table format.
-            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-        data_model_file (str | Path | None): Optional specific data model file to read. This is only applicable when
-            format is set to "toolkit", and when io contains multiple data model YAML files.
-            A file name or full path may be given; only the file name is used for matching.
-<<TOOLKIT_ARGS>>
+        Args:
+            io (Any): The file or directory path or buffer to read from.
+            format (Literal["neat", "toolkit"]): The format of the input file(s).
+                - "neat": Neat's DMS table format.
+                - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+            data_model_file (str | Path | None): Optional specific data model file to read. This is only applicable when
+                format is set to "toolkit", and when io contains multiple data model YAML files.
+                A file name or full path may be given; only the file name is used for matching.
+    <<TOOLKIT_ARGS>>
 
     """
     self._yaml(
