@@ -31,6 +31,11 @@ Strategy (pipeline)
 5. **Substitute** — Replace ``{{ name }}`` in YAML text *before* parsing.
    Unresolved names raise ``FileReadException`` with available variables listed.
 
+6. **Governed spaces** (toolkit directory imports) — Mark every space found in
+   the imported module as NEAT-governed so multi-space local YAML validates
+   against local containers/views instead of falling back to CDF. Explicit
+   Excel ``governedSpaces`` metadata is never overridden.
+
 Performance note
 ----------------
 Load config once per directory import via :class:`ToolkitProjectContext`, then
@@ -501,6 +506,11 @@ def prepare_toolkit_yaml_content(
     if variables is None:
         variables = load_toolkit_variables(data_model_dir or source.parent, options)
     return substitute_toolkit_variables(content, variables, source=str(source))
+
+
+# ---------------------------------------------------------------------------
+# Multi-space toolkit imports → NEAT governed spaces
+# ---------------------------------------------------------------------------
 
 
 def populate_toolkit_governed_spaces(schema: RequestSchema) -> RequestSchema:
