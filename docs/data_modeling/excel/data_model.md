@@ -19,3 +19,5 @@ neat.physical_data_model.read.excel("path/to/excel/file.xlsx")
 # Writing a data model to an Excel file
 neat.physical_data_model.write.excel("path/to/excel/file.xlsx")
 ```
+
+For multi-space toolkit models, pass `skip_other_spaces=False` to include view properties from spaces other than the data model space. See [Toolkit YAML](toolkit_yaml.md) for details.

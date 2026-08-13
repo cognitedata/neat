@@ -47,6 +47,7 @@ from typing import Any
 
 import yaml
 
+from cognite.neat._data_model.models.dms import RequestSchema, SpaceRequest
 from cognite.neat._exceptions import FileReadException
 
 if sys.version_info >= (3, 11):
@@ -500,3 +501,29 @@ def prepare_toolkit_yaml_content(
     if variables is None:
         variables = load_toolkit_variables(data_model_dir or source.parent, options)
     return substitute_toolkit_variables(content, variables, source=str(source))
+
+
+def populate_toolkit_governed_spaces(schema: RequestSchema) -> RequestSchema:
+    """Mark all spaces present in a toolkit module import as NEAT-governed.
+
+    Toolkit modules are multi-space by design (data model space plus domain spaces).
+    Without this, NEAT only governs the data model space and falls back to CDF for
+    views/containers in other spaces — which is surprising when reading local YAML.
+
+    Explicit ``governedSpaces`` from NEAT Excel metadata is left unchanged.
+    """
+    if schema.extra.governed_spaces:
+        return schema
+
+    space_ids = {schema.data_model.space}
+    space_ids.update(space.space for space in schema.spaces)
+    space_ids.update(view.space for view in schema.views)
+    space_ids.update(container.space for container in schema.containers)
+
+    additional = sorted(space_ids - {schema.data_model.space})
+    if not additional:
+        return schema
+
+    updated = schema.model_copy(deep=True)
+    updated.extra.governed_spaces = [SpaceRequest(space=space_id) for space_id in additional]
+    return updated

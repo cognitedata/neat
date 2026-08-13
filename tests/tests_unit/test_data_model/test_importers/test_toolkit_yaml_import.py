@@ -3,12 +3,18 @@ from typing import Any
 
 import pytest
 
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.importers import DMSAPIImporter
 from cognite.neat._data_model.importers._toolkit_variables import (
     find_toolkit_project_root,
+    populate_toolkit_governed_spaces,
     substitute_toolkit_variables,
 )
-from cognite.neat._data_model.models.dms import RequestSchema
+from cognite.neat._data_model.models.dms import DataModelRequest, RequestSchema, SpaceRequest
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
+from cognite.neat._data_model.models.dms._schema import SchemaExtra
+from cognite.neat._data_model.rules.dms._ai_readiness import EnumerationMissingName
+from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelRulesOrchestrator
 from cognite.neat._exceptions import FileReadException
 
 TOOLKIT_FIXTURE = Path(__file__).resolve().parents[3] / "data" / "toolkit_substitution"
@@ -21,7 +27,7 @@ def _import_schema(model_dir: Path, **kwargs: Any) -> RequestSchema:
 
 
 class TestToolkitYamlImport:
-    def test_import_resolves_variables(self) -> None:
+    def test_import_resolves_variables_and_derives_governed_spaces(self) -> None:
         assert find_toolkit_project_root(DATA_MODEL_DIR) == TOOLKIT_FIXTURE
 
         schema = _import_schema(DATA_MODEL_DIR)
@@ -29,6 +35,12 @@ class TestToolkitYamlImport:
         assert schema.data_model.space == "module_space"
         assert schema.data_model.external_id == "MyModel"
         assert schema.data_model.version == "1"
+        assert schema.governed_space_set() == {"module_space", "records_space"}
+
+        view_spaces = {view.space for view in schema.views}
+        container_spaces = {container.space for container in schema.containers}
+        assert view_spaces == {"module_space", "records_space"}
+        assert container_spaces == {"module_space", "records_space"}
 
     @pytest.mark.parametrize(
         ("kwargs", "assertions"),
@@ -253,3 +265,30 @@ class TestToolkitYamlImport:
     def test_substitute_unresolved_raises(self) -> None:
         with pytest.raises(FileReadException, match="Unresolved toolkit variable"):
             substitute_toolkit_variables("space: {{ missingVar }}", {}, source="test.yaml")
+
+    def test_populate_toolkit_governed_spaces_respects_explicit_metadata(self) -> None:
+        schema = RequestSchema(
+            dataModel=DataModelRequest(space="dm_space", externalId="Model", version="v1", views=[]),
+            extra=SchemaExtra(governedSpaces=[SpaceRequest(space="explicit_space")]),
+        )
+        updated = populate_toolkit_governed_spaces(schema)
+        assert {space.space for space in updated.extra.governed_spaces} == {"explicit_space"}
+
+    def test_import_validates_containers_in_derived_governed_spaces(self) -> None:
+        schema = _import_schema(DATA_MODEL_DIR)
+        orchestrator = DmsDataModelRulesOrchestrator(
+            cdf_snapshot=SchemaSnapshot(
+                data_model={},
+                views={},
+                containers={},
+                spaces={},
+                node_types={},
+            ),
+            limits=SchemaLimits(),
+            modus_operandi="additive",
+        )
+        orchestrator.run(schema)
+
+        enum_issues = orchestrator.issues.by_code().get(EnumerationMissingName.code, [])
+        assert len(enum_issues) == 1
+        assert "records_space:Record" in enum_issues[0].message
