@@ -18,6 +18,37 @@ else:
 _PLACEHOLDER_PATTERN = re.compile(r"\{\{\s*(\w+)\s*\}\}")
 _CDF_HINT_KEYS = ("default_config_yaml", "default_env", "default_organization_dir")
 
+TOOLKIT_READ_ARGS_DOC = """\
+        toolkit_env (str | None): Toolkit environment name (e.g. ``dev``) for config overlay resolution.
+        toolkit_config (str | Path | None): Explicit Toolkit config YAML to merge on top of ``default.config.yaml``.
+        toolkit_version (str | None): Override ``version`` / ``viewVersion`` template variables."""
+
+
+@dataclass(frozen=True)
+class ToolkitReadOptions:
+    """Caller options for Toolkit template variable resolution."""
+
+    env: str | None = None
+    config: Path | None = None
+    version: str | None = None
+    substitute: bool = True
+
+    @classmethod
+    def from_args(
+        cls,
+        toolkit_env: str | None = None,
+        toolkit_config: Path | str | None = None,
+        toolkit_version: str | None = None,
+        *,
+        substitute_toolkit_variables: bool = True,
+    ) -> ToolkitReadOptions:
+        return cls(
+            env=toolkit_env,
+            config=Path(toolkit_config) if toolkit_config is not None else None,
+            version=toolkit_version,
+            substitute=substitute_toolkit_variables,
+        )
+
 
 @dataclass(frozen=True)
 class ToolkitProjectContext:
@@ -29,26 +60,16 @@ class ToolkitProjectContext:
     merged_variables: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def load(
-        cls,
-        data_model_dir: Path,
-        *,
-        toolkit_env: str | None = None,
-        toolkit_config: Path | str | None = None,
-    ) -> ToolkitProjectContext:
+    def load(cls, data_model_dir: Path, options: ToolkitReadOptions | None = None) -> ToolkitProjectContext:
+        options = options or ToolkitReadOptions()
         project_root = find_toolkit_project_root(data_model_dir)
         if project_root is None:
             return cls(project_root=None)
 
         hints = parse_cdf_toml_hints(project_root)
-        config_paths = resolve_toolkit_config_paths(
-            project_root,
-            hints=hints,
-            toolkit_env=toolkit_env,
-            toolkit_config=toolkit_config,
-        )
-        if not config_paths and toolkit_config is not None:
-            config_paths = [Path(toolkit_config)]
+        config_paths = resolve_toolkit_config_paths(project_root, hints=hints, options=options)
+        if not config_paths and options.config is not None:
+            config_paths = [options.config]
 
         merged_variables: dict[str, Any] = {}
         for config_path in config_paths:
@@ -64,12 +85,26 @@ class ToolkitProjectContext:
             merged_variables=merged_variables,
         )
 
-    def variables_for(self, data_model_dir: Path, toolkit_version: str | None = None) -> dict[str, str]:
+    def variables_for(self, data_model_dir: Path, version: str | None = None) -> dict[str, str]:
         if self.project_root is None:
-            return apply_version_overrides({}, toolkit_version)
+            return apply_version_overrides({}, version)
         module_path = module_path_under_toolkit(data_model_dir, self.project_root, self.hints)
         flat = flatten_variables_for_module(self.merged_variables, module_path)
-        return apply_version_overrides(flat, toolkit_version)
+        return apply_version_overrides(flat, version)
+
+
+def _organization_dir(hints: dict[str, str] | None, project_root: Path | None = None) -> str | None:
+    if hints is None and project_root is not None:
+        hints = parse_cdf_toml_hints(project_root)
+    return (hints or {}).get("default_organization_dir")
+
+
+def _first_existing(roots: list[Path], relative: str) -> Path | None:
+    for root in roots:
+        candidate = root / relative
+        if candidate.exists():
+            return candidate
+    return None
 
 
 def _path_under_toolkit_modules(start: Path, project_root: Path, hints: dict[str, str] | None = None) -> bool:
@@ -83,7 +118,7 @@ def _path_under_toolkit_modules(start: Path, project_root: Path, hints: dict[str
     if parts and parts[0] == "modules":
         return True
 
-    org_dir = (hints if hints is not None else parse_cdf_toml_hints(project_root)).get("default_organization_dir")
+    org_dir = _organization_dir(hints, project_root)
     return bool(org_dir and len(parts) > 1 and parts[0] == org_dir and parts[1] == "modules")
 
 
@@ -123,7 +158,7 @@ def parse_cdf_toml_hints(start_dir: Path) -> dict[str, str]:
 
 def toolkit_config_search_roots(project_root: Path, hints: dict[str, str] | None = None) -> list[Path]:
     """Return Toolkit config directories, preferring the organization directory from ``cdf.toml``."""
-    org_dir = (hints if hints is not None else parse_cdf_toml_hints(project_root)).get("default_organization_dir")
+    org_dir = _organization_dir(hints, project_root)
     if org_dir:
         org_root = project_root / org_dir
         if org_root.is_dir():
@@ -135,49 +170,31 @@ def resolve_toolkit_config_paths(
     project_root: Path,
     *,
     hints: dict[str, str] | None = None,
-    toolkit_env: str | None = None,
-    toolkit_config: Path | str | None = None,
+    options: ToolkitReadOptions | None = None,
 ) -> list[Path]:
     """Resolve the ordered Toolkit config chain: base + environment overlay."""
-    if toolkit_config is not None:
-        toolkit_config = Path(toolkit_config)
+    options = options or ToolkitReadOptions()
     hints = hints if hints is not None else parse_cdf_toml_hints(project_root)
-    paths: list[Path] = []
     search_roots = toolkit_config_search_roots(project_root, hints)
 
-    for root in search_roots:
-        default_config = root / "default.config.yaml"
-        if default_config.exists():
-            paths.append(default_config)
-            break
+    paths: list[Path] = []
+    if default_config := _first_existing(search_roots, "default.config.yaml"):
+        paths.append(default_config)
 
-    env = toolkit_env
+    env = options.env
+    if env is None and _first_existing(search_roots, "config.dev.yaml"):
+        env = "dev"
     if env is None:
-        for root in search_roots:
-            if (root / "config.dev.yaml").exists():
-                env = "dev"
-                break
-    if env is None and hints.get("default_env"):
-        env = hints["default_env"]
+        env = hints.get("default_env")
 
-    overlay = toolkit_config
+    overlay = options.config
     if overlay is None and env:
-        for root in search_roots:
-            candidate = root / f"config.{env}.yaml"
-            if candidate.exists():
-                overlay = candidate
-                break
+        overlay = _first_existing(search_roots, f"config.{env}.yaml")
     if overlay is None and hints.get("default_config_yaml"):
-        for root in search_roots:
-            candidate = root / hints["default_config_yaml"]
-            if candidate.exists():
-                overlay = candidate
-                break
+        overlay = _first_existing(search_roots, hints["default_config_yaml"])
 
-    if overlay is not None:
-        overlay = Path(overlay)
-        if overlay.exists() and overlay.resolve() not in {path.resolve() for path in paths}:
-            paths.append(overlay)
+    if overlay is not None and overlay.exists() and overlay.resolve() not in {path.resolve() for path in paths}:
+        paths.append(overlay)
     return paths
 
 
@@ -204,7 +221,7 @@ def module_path_under_toolkit(
         return None
 
     parts = list(relative.parts)
-    org_dir = (hints if hints is not None else parse_cdf_toml_hints(project_root)).get("default_organization_dir")
+    org_dir = _organization_dir(hints, project_root)
     if org_dir and parts and parts[0] == org_dir:
         parts = parts[1:]
 
@@ -263,19 +280,10 @@ def apply_version_overrides(variables: dict[str, str], toolkit_version: str | No
     return result
 
 
-def load_toolkit_variables(
-    data_model_dir: Path,
-    *,
-    toolkit_env: str | None = None,
-    toolkit_config: Path | str | None = None,
-    toolkit_version: str | None = None,
-) -> dict[str, str]:
+def load_toolkit_variables(data_model_dir: Path, options: ToolkitReadOptions | None = None) -> dict[str, str]:
     """Load and flatten Toolkit template variables for a data model directory."""
-    return ToolkitProjectContext.load(
-        data_model_dir,
-        toolkit_env=toolkit_env,
-        toolkit_config=toolkit_config,
-    ).variables_for(data_model_dir, toolkit_version)
+    options = options or ToolkitReadOptions()
+    return ToolkitProjectContext.load(data_model_dir, options).variables_for(data_model_dir, options.version)
 
 
 def substitute_toolkit_variables(content: str, variables: dict[str, str], *, source: str) -> str:
@@ -306,20 +314,13 @@ def prepare_toolkit_yaml_content(
     source: Path,
     data_model_dir: Path | None = None,
     variables: dict[str, str] | None = None,
-    toolkit_env: str | None = None,
-    toolkit_config: Path | str | None = None,
-    toolkit_version: str | None = None,
-    enabled: bool = True,
+    options: ToolkitReadOptions | None = None,
 ) -> str:
     """Substitute Toolkit template variables in YAML source before parsing."""
-    if not enabled or "{{" not in content:
+    options = options or ToolkitReadOptions()
+    if not options.substitute or "{{" not in content:
         return content
 
     if variables is None:
-        variables = load_toolkit_variables(
-            data_model_dir or source.parent,
-            toolkit_env=toolkit_env,
-            toolkit_config=toolkit_config,
-            toolkit_version=toolkit_version,
-        )
+        variables = load_toolkit_variables(data_model_dir or source.parent, options)
     return substitute_toolkit_variables(content, variables, source=str(source))
