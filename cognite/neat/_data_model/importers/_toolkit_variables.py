@@ -13,8 +13,10 @@ Strategy (pipeline)
    Toolkit projects for the path being read.
 
 2. **Resolve config chain** — Merge configs in Toolkit order:
-   ``default.config.yaml`` (base) then an environment overlay
-   (``config.<env>.yaml``, explicit ``toolkit_config``, or ``cdf.toml`` hints).
+   ``default.config.yaml`` (project and/or module-local), then an environment overlay.
+   Overlay selection: explicit ``toolkit_config``, then ``config.<toolkit_env>.yaml``,
+   then ``cdf.toml`` ``default_config_yaml`` / ``default_env`` (e.g. sandbox),
+   then ``config.dev.yaml`` / ``config.sandbox.yaml``.
    Prefer the organization directory from ``cdf.toml`` when present
    (e.g. ``beyond-the-plant/config.dev.yaml``).
 
@@ -116,13 +118,20 @@ class ToolkitProjectContext:
         config_paths = resolve_toolkit_config_paths(project_root, hints=hints, options=options)
         if not config_paths and options.config is not None:
             config_paths = [options.config]
+        module_default = find_module_default_config(data_model_dir, project_root)
+        if module_default is not None:
+            already = {path.resolve() for path in config_paths}
+            if module_default.resolve() not in already:
+                project_default = (project_root / "default.config.yaml").resolve()
+                insert_at = 1 if config_paths and config_paths[0].resolve() == project_default else 0
+                config_paths = [*config_paths[:insert_at], module_default, *config_paths[insert_at:]]
 
         # Deep-merge in chain order so env overlays win over default.config.yaml.
         merged_variables: dict[str, Any] = {}
         for config_path in config_paths:
             raw = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-            variable_source = raw.get("variables") or {}
-            if isinstance(variable_source, dict):
+            variable_source = variables_mapping_from_config(raw)
+            if variable_source:
                 merged_variables = deep_merge_dict(merged_variables, variable_source)
 
         return cls(
@@ -178,17 +187,85 @@ def _path_under_toolkit_modules(start: Path, project_root: Path, hints: dict[str
     return bool(org_dir and len(parts) > 1 and parts[0] == org_dir and parts[1] == "modules")
 
 
-def find_toolkit_project_root(start: Path) -> Path | None:
-    """Find the nearest Toolkit project root by walking up from *start*."""
+def _is_filesystem_path(path: object) -> bool:
+    """True for real pathlib objects (not unittest mocks with spec=Path)."""
+    return type(path).__module__.startswith("pathlib")
+
+
+def _as_directory(start: Path) -> Path | None:
+    if not _is_filesystem_path(start):
+        return None
     current = Path(start)
-    if current.is_file():
-        current = current.parent
+    return current.parent if current.is_file() else current
+
+
+def _toolkit_root_markers(candidate: Path) -> tuple[bool, bool, bool]:
+    return (
+        (candidate / "modules").is_dir(),
+        (candidate / "cdf.toml").exists(),
+        (candidate / "default.config.yaml").exists(),
+    )
+
+
+def _is_toolkit_project_root_dir(candidate: Path) -> bool:
+    has_modules, has_cdf, has_default = _toolkit_root_markers(candidate)
+    return has_modules and (has_cdf or has_default)
+
+
+def find_toolkit_project_root(start: Path) -> Path | None:
+    """Find the nearest Toolkit project root by walking up from *start*.
+
+    Prefer a ``cdf.toml`` that owns this path (under ``modules/``), then a
+    ``default.config.yaml`` sitting next to ``modules/``. A *module-local*
+    ``modules/<name>/default.config.yaml`` is only a fallback — it must not
+    hide the real project root where ``config.sandbox.yaml`` / ``cdf.toml`` live.
+
+    The start path itself counts as the root when it contains ``modules/`` plus
+    ``cdf.toml`` or ``default.config.yaml``. If *start* is a parent folder of a
+    single Toolkit project (one child with those markers), that child is used.
+    """
+    current = _as_directory(start)
+    if current is None:
+        return None
+    fallback: Path | None = None
     for candidate in [current, *current.parents]:
-        if (candidate / "default.config.yaml").exists():
+        has_modules, has_cdf, has_default = _toolkit_root_markers(candidate)
+        if has_cdf and (
+            (candidate.resolve() == current.resolve() and has_modules)
+            or _path_under_toolkit_modules(current, candidate)
+        ):
             return candidate
-        # cdf.toml only counts when start is under that project's modules tree.
-        if (candidate / "cdf.toml").exists() and _path_under_toolkit_modules(current, candidate):
+        if has_default and has_modules:
             return candidate
+        if fallback is None and has_default:
+            fallback = candidate
+
+    try:
+        child_roots = [child for child in current.iterdir() if child.is_dir() and _is_toolkit_project_root_dir(child)]
+    except OSError:
+        child_roots = []
+    if len(child_roots) == 1:
+        return child_roots[0]
+    return fallback
+
+
+def find_module_default_config(start: Path, project_root: Path) -> Path | None:
+    """Return a module-local ``default.config.yaml`` between *start* and *project_root*."""
+    current = _as_directory(start)
+    if current is None:
+        return None
+    project_root = project_root.resolve()
+    for ancestor in [current, *current.parents]:
+        resolved = ancestor.resolve()
+        if resolved == project_root:
+            break
+        candidate = ancestor / "default.config.yaml"
+        if candidate.exists():
+            return candidate
+        try:
+            resolved.relative_to(project_root)
+        except ValueError:
+            break
     return None
 
 
@@ -235,9 +312,9 @@ def resolve_toolkit_config_paths(
     """Resolve the ordered Toolkit config chain: base + environment overlay.
 
     Selection order for the overlay when not passed explicitly:
-    1. ``config.<toolkit_env>.yaml``
-    2. ``config.dev.yaml`` if present (default env heuristic)
-    3. ``default_env`` / ``default_config_yaml`` from ``cdf.toml``
+    1. ``config.<toolkit_env>.yaml`` when ``toolkit_env`` is set
+    2. ``default_config_yaml`` / ``default_env`` from ``cdf.toml`` (e.g. sandbox)
+    3. ``config.dev.yaml`` then ``config.sandbox.yaml`` if present
     """
     options = options or ToolkitReadOptions()
     hints = hints if hints is not None else parse_cdf_toml_hints(project_root)
@@ -247,17 +324,18 @@ def resolve_toolkit_config_paths(
     if default_config := _first_existing(search_roots, "default.config.yaml"):
         paths.append(default_config)
 
-    env = options.env
-    if env is None and _first_existing(search_roots, "config.dev.yaml"):
-        env = "dev"
-    if env is None:
-        env = hints.get("default_env")
-
     overlay = options.config
-    if overlay is None and env:
-        overlay = _first_existing(search_roots, f"config.{env}.yaml")
+    if overlay is None and options.env:
+        overlay = _first_existing(search_roots, f"config.{options.env}.yaml")
     if overlay is None and hints.get("default_config_yaml"):
         overlay = _first_existing(search_roots, hints["default_config_yaml"])
+    if overlay is None and hints.get("default_env"):
+        overlay = _first_existing(search_roots, f"config.{hints['default_env']}.yaml")
+    if overlay is None:
+        for heuristic in ("config.dev.yaml", "config.sandbox.yaml"):
+            overlay = _first_existing(search_roots, heuristic)
+            if overlay is not None:
+                break
 
     if overlay is not None and overlay.exists() and overlay.resolve() not in {path.resolve() for path in paths}:
         paths.append(overlay)
@@ -267,6 +345,20 @@ def resolve_toolkit_config_paths(
 # ---------------------------------------------------------------------------
 # Variable flattening and substitution
 # ---------------------------------------------------------------------------
+
+
+def variables_mapping_from_config(raw: dict[str, Any] | None) -> dict[str, Any]:
+    """Return the ``variables:`` mapping, or a flat module ``default.config.yaml`` map."""
+    if not isinstance(raw, dict):
+        return {}
+    nested = raw.get("variables")
+    if isinstance(nested, dict):
+        return nested
+    return {
+        key: value
+        for key, value in raw.items()
+        if value is not None and not isinstance(value, dict | list) and not str(key).startswith("#")
+    }
 
 
 def deep_merge_dict(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:

@@ -12,6 +12,7 @@ from cognite.neat._data_model.importers._base import DMSImporter
 from cognite.neat._data_model.importers._toolkit_variables import (
     ToolkitProjectContext,
     ToolkitReadOptions,
+    _is_filesystem_path,
     prepare_toolkit_yaml_content,
 )
 from cognite.neat._data_model.models.dms import (
@@ -186,6 +187,14 @@ class DMSAPIImporter(DMSImporter):
         return yaml.safe_load(yaml_content)
 
     @classmethod
+    def _is_toolkit_schema_yaml(cls, yaml_file: Path) -> bool:
+        """True for DMS resource files; skip Toolkit config, build_info, and other YAML."""
+        if yaml_file.suffix.lower() not in {".yaml", ".yml", ".json"}:
+            return False
+        stem = yaml_file.stem.casefold()
+        return any(stem.endswith(kind) for kind in ("datamodel", "view", "container", "space", "node"))
+
+    @classmethod
     def _read_yaml_files(
         cls,
         directory: Path,
@@ -197,12 +206,16 @@ class DMSAPIImporter(DMSImporter):
         options = options or ToolkitReadOptions()
         schema_data: dict[str, Any] = {}
         data_model: dict[str, Any] | None = None
-        data_model_file_name = Path(data_model_file).name if data_model_file is not None else None
+        dm_path = Path(data_model_file) if data_model_file is not None else None
+        data_model_file_name = dm_path.name if dm_path is not None else None
+        config_dir = directory
+        if dm_path is not None and _is_filesystem_path(dm_path) and dm_path.is_file():
+            config_dir = dm_path.parent
         variables = None
         if options.substitute:
-            variables = ToolkitProjectContext.load(directory, options).variables_for(directory, options.version)
+            variables = ToolkitProjectContext.load(config_dir, options).variables_for(config_dir, options.version)
         for yaml_file in directory.rglob("**/*"):
-            if yaml_file.suffix.lower() not in {".yaml", ".yml", ".json"}:
+            if not cls._is_toolkit_schema_yaml(yaml_file):
                 continue
             stem = yaml_file.stem.casefold()
             quote_version = stem.endswith("datamodel") or stem.endswith("view")
@@ -211,7 +224,7 @@ class DMSAPIImporter(DMSImporter):
                 options,
                 variables=variables,
                 quote_version=quote_version,
-                data_model_dir=directory,
+                data_model_dir=config_dir,
             )
             list_data = data if isinstance(data, list) else [data]
 
