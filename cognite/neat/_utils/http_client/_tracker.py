@@ -1,5 +1,8 @@
 import threading
 from dataclasses import dataclass, field
+from typing import Annotated
+
+from pydantic import SkipValidation
 
 
 @dataclass
@@ -15,7 +18,7 @@ class ItemsRequestTracker:
     """
 
     max_failures_before_abort: int = -1  # -1 means no early abort
-    lock: threading.Lock = field(default_factory=threading.Lock, init=False)
+    lock: Annotated[threading.Lock, SkipValidation] = field(default_factory=threading.Lock, init=False)
     failed_split_count: int = field(default=0, init=False)
 
     def register_failure(self) -> None:
