@@ -2751,7 +2751,7 @@ def categorize_by_cdm_hierarchy(views, all_views):
 
 
 def classify_view_role(view_id, all_views, relations=None, ref_view_ids=None,
-                       containers_used_for=None, record_view_ids=None):
+                       containers_used_for=None):
     """Classify a view as object, edge (link type), reference, or cdm.
 
     Edge types are views whose own properties are stored on containers with
@@ -2759,11 +2759,8 @@ def classify_view_role(view_id, all_views, relations=None, ref_view_ids=None,
     even when they appear as the start/end of edge properties on other views.
     """
     ref_view_ids = ref_view_ids or set()
-    record_view_ids = record_view_ids or set()
     relations = relations or []
     containers_used_for = containers_used_for or {}
-    if view_id in record_view_ids:
-        return "record"
     if view_id in ref_view_ids:
         return "reference"
     sp, bare, _ = _parse_qualified_id(view_id)
@@ -2779,6 +2776,7 @@ def classify_view_role(view_id, all_views, relations=None, ref_view_ids=None,
     if containers_used_for and own:
         has_edge_container = False
         has_node_container = False
+        has_record_container = False
         for pr in own:
             cont = (pr.get("container") or "").strip()
             if not cont:
@@ -2786,10 +2784,14 @@ def classify_view_role(view_id, all_views, relations=None, ref_view_ids=None,
             uf = _container_used_for_lookup(containers_used_for, cont)
             if uf == "edge":
                 has_edge_container = True
+            elif uf == "record":
+                has_record_container = True
             elif uf in ("node", "all"):
                 has_node_container = True
         if has_edge_container:
             return "edge"
+        if has_record_container:
+            return "record"
         if has_node_container:
             return "object"
 
@@ -4994,7 +4996,7 @@ def generate_property_table(props, view_id, inheritance_depths, all_views):
 
 def generate_card(view_id, view_data, icon, cat_class, inheritance_depths, all_views,
                   view_domains=None, ref_view_ids=None, model_relations=None,
-                  containers_used_for=None, record_view_ids=None):
+                  containers_used_for=None):
     """Generate HTML card for a view with industry domain tags."""
     props = view_data['properties']
     total_count = len(props)
@@ -5076,7 +5078,7 @@ def generate_card(view_id, view_data, icon, cat_class, inheritance_depths, all_v
 
     _role = classify_view_role(
         view_id, all_views, relations=model_relations, ref_view_ids=ref_view_ids,
-        containers_used_for=containers_used_for, record_view_ids=record_view_ids,
+        containers_used_for=containers_used_for,
     )
     _role_labels = {
         'object': ('Object view', 'view-role-object'),
@@ -5566,13 +5568,6 @@ def generate_html(model_name, space, description, views, all_views, inheritance_
                   model_version: str = ""):
     """Generate complete HTML documentation with industry domain categorization."""
 
-    # Detect record models: externalId ends with '_rec' or description mentions Records API.
-    _is_record_model = bool(
-        (external_id or '').lower().endswith('_rec')
-        or 'records api' in (description or '').lower()
-    )
-    record_view_ids = set(views.keys()) if _is_record_model else set()
-
     sections = {}
     for cat, view_ids in categories.items():
         cards = []
@@ -5583,8 +5578,7 @@ def generate_html(model_name, space, description, views, all_views, inheritance_
                 cards.append(generate_card(view_id, views[view_id], icon, cat_class,
                                            inheritance_depths, all_views, view_domains,
                                            ref_view_ids=ref_view_ids, model_relations=direct_relations,
-                                           containers_used_for=containers_used_for,
-                                           record_view_ids=record_view_ids))
+                                           containers_used_for=containers_used_for))
         sections[cat] = '\n'.join(cards)
     
     total_props = sum(len(v.get('properties', [])) for v in views.values())
