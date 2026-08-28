@@ -14,6 +14,7 @@ from cognite.neat._data_model.models.dms import DataModelRequest, RequestSchema,
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._schema import SchemaExtra
 from cognite.neat._data_model.rules.dms._ai_readiness import EnumerationMissingName
+from cognite.neat._data_model.rules.dms._connections import ReverseConnectionContainerMissing
 from cognite.neat._data_model.rules.dms._orchestrator import DmsDataModelRulesOrchestrator
 from cognite.neat._exceptions import FileReadException
 
@@ -24,6 +25,28 @@ CYCLIC_REVERSE_ONLY = Path(__file__).resolve().parents[3] / "data" / "snapshots"
 
 def _import_schema(model_dir: Path, **kwargs: Any) -> RequestSchema:
     return DMSAPIImporter.from_yaml(model_dir, **kwargs).to_data_model()
+
+
+def _write(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def _empty_orchestrator() -> DmsDataModelRulesOrchestrator:
+    return DmsDataModelRulesOrchestrator(
+        cdf_snapshot=SchemaSnapshot(data_model={}, views={}, containers={}, spaces={}, node_types={}),
+        limits=SchemaLimits(),
+        modus_operandi="additive",
+    )
+
+
+def _ent_sol_module(tmp_path: Path) -> tuple[Path, Path, Path]:
+    modeling = tmp_path / "project" / "modules" / "emergency360" / "data_modeling"
+    ent, sol = modeling / "dm_ent", modeling / "dm_sol"
+    ent.mkdir(parents=True)
+    sol.mkdir(parents=True)
+    _write(tmp_path / "project" / "default.config.yaml", "variables:\n  viewVersion: v1\n")
+    return modeling, ent, sol
 
 
 class TestToolkitYamlImport:
@@ -258,6 +281,109 @@ class TestToolkitYamlImport:
     def test_yamale_schema_files_are_not_treated_as_dms_resources(self, tmp_path: Path) -> None:
         assert DMSAPIImporter._is_toolkit_schema_yaml(tmp_path / "data_model_container.yaml") is False
         assert DMSAPIImporter._is_toolkit_schema_yaml(tmp_path / "Tag.Container.yaml") is True
+
+    def test_selected_data_model_does_not_import_sibling_model_spaces(self, tmp_path: Path) -> None:
+        """Enterprise + solution YAML in one module: selecting the enterprise DataModel must not
+        pull solution views/spaces into the schema (those showed up in Excel governedSpaces)."""
+        modeling, ent, sol = _ent_sol_module(tmp_path)
+        _write(
+            ent / "Ent.datamodel.yaml",
+            "space: sp_ent\nexternalId: dm_ent\nversion: v1\n"
+            "views:\n  - space: sp_ent\n    externalId: EntView\n    version: v1\n",
+        )
+        _write(ent / "EntView.view.yaml", "space: sp_ent\nexternalId: EntView\nversion: v1\nproperties: {}\n")
+        _write(
+            sol / "Sol.datamodel.yaml",
+            "space: sp_sol\nexternalId: dm_sol\nversion: v1\n"
+            "views:\n  - space: sp_sol\n    externalId: SolView\n    version: v1\n",
+        )
+        _write(sol / "SolView.view.yaml", "space: sp_sol\nexternalId: SolView\nversion: v1\nproperties: {}\n")
+        _write(sol / "sp_sol.Space.yaml", "space: sp_sol\nname: solution\n")
+
+        schema = _import_schema(modeling, data_model_file="Ent.datamodel.yaml")
+        assert schema.data_model.space == "sp_ent"
+        assert {view.space for view in schema.views} == {"sp_ent"}
+        assert {view.external_id for view in schema.views} == {"EntView"}
+        assert all(space.space != "sp_sol" for space in schema.spaces)
+        assert "sp_sol" not in schema.governed_space_set()
+
+    def test_selected_solution_model_imports_referenced_enterprise_containers(self, tmp_path: Path) -> None:
+        """Solution views map to enterprise containers in a sibling folder. Those containers
+        (and containers they require) must be imported so reverse/direct relations validate."""
+        modeling, ent, sol = _ent_sol_module(tmp_path)
+        _write(
+            ent / "Ent.datamodel.yaml",
+            "space: sp_ent\nexternalId: dm_ent\nversion: v1\n"
+            "views:\n  - space: sp_ent\n    externalId: EntView\n    version: v1\n",
+        )
+        _write(ent / "EntView.view.yaml", "space: sp_ent\nexternalId: EntView\nversion: v1\nproperties: {}\n")
+        _write(
+            ent / "EntContainer.container.yaml",
+            "space: sp_ent\nexternalId: EntContainer\n"
+            "constraints:\n  needsBase:\n    require:\n      space: sp_ent\n"
+            "      externalId: EntBase\n      type: container\n    constraintType: requires\n"
+            "properties:\n  personRel:\n    type:\n      type: direct\n",
+        )
+        _write(
+            ent / "EntBase.container.yaml",
+            "space: sp_ent\nexternalId: EntBase\nproperties:\n  name:\n    type:\n      type: text\n",
+        )
+        _write(
+            ent / "EntUnused.container.yaml",
+            "space: sp_ent\nexternalId: EntUnused\nproperties:\n  name:\n    type:\n      type: text\n",
+        )
+        _write(ent / "sp_ent.Space.yaml", "space: sp_ent\nname: enterprise\n")
+        _write(
+            sol / "Sol.datamodel.yaml",
+            "space: sp_sol\nexternalId: dm_sol\nversion: v1\n"
+            "views:\n  - space: sp_sol\n    externalId: PobStay\n    version: v1\n"
+            "  - space: sp_sol\n    externalId: Person\n    version: v1\n",
+        )
+        _write(
+            sol / "PobStay.view.yaml",
+            "space: sp_sol\nexternalId: PobStay\nversion: v1\n"
+            "filter:\n  hasData:\n    - type: container\n      space: sp_ent\n"
+            "      externalId: EntContainer\n"
+            "properties:\n  personRel:\n    container:\n      space: sp_ent\n"
+            "      externalId: EntContainer\n      type: container\n"
+            "    containerPropertyIdentifier: personRel\n"
+            "    source:\n      space: sp_sol\n      externalId: Person\n"
+            "      version: v1\n      type: view\n",
+        )
+        _write(
+            sol / "Person.view.yaml",
+            "space: sp_sol\nexternalId: Person\nversion: v1\n"
+            "properties:\n  pobStays:\n    connectionType: single_reverse_direct_relation\n"
+            "    source:\n      space: sp_sol\n      externalId: PobStay\n"
+            "      version: v1\n      type: view\n"
+            "    through:\n      source:\n        space: sp_sol\n        externalId: PobStay\n"
+            "        version: v1\n        type: view\n      identifier: personRel\n",
+        )
+        _write(sol / "sp_sol.Space.yaml", "space: sp_sol\nname: solution\n")
+
+        schema = _import_schema(modeling, data_model_file="Sol.datamodel.yaml")
+        assert schema.data_model.space == "sp_sol"
+        assert {view.external_id for view in schema.views} == {"PobStay", "Person"}
+        assert {container.external_id for container in schema.containers} == {"EntContainer", "EntBase"}
+        assert {container.space for container in schema.containers} == {"sp_ent"}
+        assert {space.space for space in schema.spaces} == {"sp_sol", "sp_ent"}
+        assert "sp_ent" in schema.governed_space_set()
+
+        orchestrator = _empty_orchestrator()
+        orchestrator.run(schema)
+        assert orchestrator.issues.by_code().get(ReverseConnectionContainerMissing.code, []) == []
+
+    def test_container_ids_from_view_reads_mapping_not_view_sources(self) -> None:
+        view = {
+            "filter": {"hasData": [{"type": "container", "space": "sp_ent", "externalId": "E360PobStay"}]},
+            "properties": {
+                "personRel": {
+                    "container": {"space": "sp_ent", "externalId": "E360PobStay", "type": "container"},
+                    "source": {"space": "sp_sol", "externalId": "Person", "type": "view"},
+                }
+            },
+        }
+        assert DMSAPIImporter._container_ids_from_view(view) == {("sp_ent", "E360PobStay")}
 
     def test_repo_cdf_toml_does_not_hijack_unrelated_paths(self) -> None:
         assert find_toolkit_project_root(CYCLIC_REVERSE_ONLY) is None

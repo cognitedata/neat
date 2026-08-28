@@ -15,6 +15,8 @@ Non-schema YAML (`config.*.yaml`, `build_info.*.yaml`, Yamale files under `valid
 
 When reading a `modules/` tree, template variables are resolved from each file's module path so nested `variables.modules.<module>.*` keys apply correctly.
 
+When `data_model_file` selects one `*.DataModel.yaml` in a module that contains several (for example enterprise + solution), views and other YAML next to that file are imported. Containers those views map to — and containers they `require` — are also imported from sibling folders in the same tree, so solution views that map to enterprise containers still validate (including reverse direct relations). Sibling *views* are not imported and do not appear in `governedSpaces` or Excel.
+
 ## Template variables
 
 Toolkit modules use `{{ variable }}` placeholders in YAML files. When `format="toolkit"`, NEAT resolves these from Toolkit config before import:
