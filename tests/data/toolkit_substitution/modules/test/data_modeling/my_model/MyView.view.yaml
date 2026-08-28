@@ -1,0 +1,9 @@
+space: {{ schemaSpace }}
+externalId: MyView
+version: {{ viewVersion }}
+properties:
+  name:
+    container:
+      space: {{ schemaSpace }}
+      externalId: MyContainer
+    containerPropertyIdentifier: name

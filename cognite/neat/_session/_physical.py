@@ -18,6 +18,7 @@ from cognite.neat._data_model.exporters import (
 )
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookOptions
 from cognite.neat._data_model.importers import DMSAPICreator, DMSAPIImporter, DMSImporter, DMSTableImporter
+from cognite.neat._data_model.importers._toolkit_variables import TOOLKIT_READ_ARGS_DOC, ToolkitReadOptions
 from cognite.neat._data_model.models.dms import DataModelReference
 from cognite.neat._data_model.rules.dms import DmsDataModelRulesOrchestrator
 from cognite.neat._exceptions import UserInputError
@@ -28,6 +29,14 @@ from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
 
 from ._wrappers import session_wrapper
+
+_TOOLKIT_YAML_READ_NOTES = """
+    !!! note "Toolkit YAML import"
+        When ``format`` is ``\"toolkit\"``, ``{{ variable }}`` placeholders in module YAML are resolved
+        from Toolkit config (``default.config.yaml``, environment overlays such as ``config.dev.yaml``,
+        and module overrides). Use ``toolkit_env``, ``toolkit_config``, and ``toolkit_version`` to control
+        resolution.
+"""
 
 
 @session_wrapper
@@ -136,8 +145,9 @@ class ReadPhysicalDataModel:
         self,
         io: Any,
         format: Literal["neat", "toolkit"] = "neat",
-        data_model_file: Path | None = None,
+        data_model_file: Path | str | None = None,
         fix: bool = False,
+        options: ToolkitReadOptions | None = None,
     ) -> None:
         """Read physical data model from YAML file(s)
 
@@ -146,15 +156,22 @@ class ReadPhysicalDataModel:
             format (Literal["neat", "toolkit"]): The format of the input file(s).
                 - "neat": Neat's DMS table format.
                 - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+            data_model_file (str | Path | None): Optional data model YAML file name or path when reading a toolkit
+                directory. Only the file name is used for matching.
+            fix (bool): If True, automatically apply fixes for fixable issues.
+            options (ToolkitReadOptions | None): Toolkit variable resolution options.
         """
 
         path = NeatReader.create(io).materialize_path()
+        if data_model_file is not None:
+            data_model_file = Path(data_model_file)
+        options = options or ToolkitReadOptions()
 
         reader: DMSImporter
         if format == "neat":
             reader = DMSTableImporter.from_yaml(path)
         elif format == "toolkit":
-            reader = DMSAPIImporter.from_yaml(path, data_model_file=data_model_file)
+            reader = DMSAPIImporter.from_yaml(path, data_model_file=data_model_file, options=options)
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
@@ -322,7 +339,9 @@ class WritePhysicalDataModel:
 
         Args:
             io (Any): The file path or buffer to write to.
-            skip_other_spaces (bool): If true, only properties in the same space as the data model will be written.
+            skip_other_spaces (bool): If ``True`` (default), only view properties in the same space as the
+                data model are written to the Properties sheet. Set to ``False`` when exporting multi-space
+                toolkit modules where views and containers live in spaces other than the data model space.
 
         """
 
@@ -466,17 +485,27 @@ def yaml(
     self: ReadPhysicalDataModel,
     io: Any,
     format: Literal["neat", "toolkit"] = "neat",
+    toolkit_env: str | None = None,
+    toolkit_config: Path | str | None = None,
+    toolkit_version: str | None = None,
 ) -> None:
     """Read physical data model from YAML file(s)
 
-    Args:
-        io (Any): The file or directory path or buffer to read from.
-        format (Literal["neat", "toolkit"]): The format of the input file(s).
-            - "neat": Neat's DMS table format.
-            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+        Args:
+            io (Any): The file or directory path or buffer to read from.
+            format (Literal["neat", "toolkit"]): The format of the input file(s).
+                - "neat": Neat's DMS table format.
+                - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+    <<TOOLKIT_ARGS>>
 
     """
-    self._yaml(io=io, format=format, data_model_file=None, fix=False)
+    self._yaml(
+        io=io,
+        format=format,
+        data_model_file=None,
+        fix=False,
+        options=ToolkitReadOptions.from_args(toolkit_env, toolkit_config, toolkit_version),
+    )
 
 
 def read_yaml_alpha_fix(
@@ -484,39 +513,58 @@ def read_yaml_alpha_fix(
     io: Any,
     format: Literal["neat", "toolkit"] = "neat",
     fix: bool = False,
+    toolkit_env: str | None = None,
+    toolkit_config: Path | str | None = None,
+    toolkit_version: str | None = None,
 ) -> None:
     """Read physical data model from YAML file(s)
 
-    Args:
-        io (Any): The file or directory path or buffer to read from.
-        format (Literal["neat", "toolkit"]): The format of the input file(s).
-            - "neat": Neat's DMS table format.
-            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-        fix (bool): If True, automatically apply fixes for fixable issues.
+        Args:
+            io (Any): The file or directory path or buffer to read from.
+            format (Literal["neat", "toolkit"]): The format of the input file(s).
+                - "neat": Neat's DMS table format.
+                - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+            fix (bool): If True, automatically apply fixes for fixable issues.
+    <<TOOLKIT_ARGS>>
 
     """
-    self._yaml(io=io, format=format, fix=fix)
+    self._yaml(
+        io=io,
+        format=format,
+        fix=fix,
+        options=ToolkitReadOptions.from_args(toolkit_env, toolkit_config, toolkit_version),
+    )
 
 
 def read_yaml_alpha_data_model_file(
     self: ReadPhysicalDataModel,
     io: Any,
     format: Literal["neat", "toolkit"] = "neat",
-    data_model_file: Path | None = None,
+    data_model_file: Path | str | None = None,
+    toolkit_env: str | None = None,
+    toolkit_config: Path | str | None = None,
+    toolkit_version: str | None = None,
 ) -> None:
     """Read physical data model from YAML file(s)
 
-    Args:
-        io (Any): The file or directory path or buffer to read from.
-        format (Literal["neat", "toolkit"]): The format of the input file(s).
-            - "neat": Neat's DMS table format.
-            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-        data_model_file (str | None): Optional specific data model file to read. This is only applicable when format
-            is set to "toolkit", and when io contains multiple data model YAML files.
-            The value should match the file name of the data model YAML file to read.
+        Args:
+            io (Any): The file or directory path or buffer to read from.
+            format (Literal["neat", "toolkit"]): The format of the input file(s).
+                - "neat": Neat's DMS table format.
+                - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+            data_model_file (str | Path | None): Optional specific data model file to read. This is only applicable when
+                format is set to "toolkit", and when io contains multiple data model YAML files.
+                A file name or full path may be given; only the file name is used for matching.
+    <<TOOLKIT_ARGS>>
 
     """
-    self._yaml(io=io, format=format, data_model_file=data_model_file, fix=False)
+    self._yaml(
+        io=io,
+        format=format,
+        data_model_file=data_model_file,
+        fix=False,
+        options=ToolkitReadOptions.from_args(toolkit_env, toolkit_config, toolkit_version),
+    )
 
 
 def json(
@@ -564,3 +612,12 @@ def cdf(
 
     """
     self._cdf(space=space, external_id=external_id, version=version, fix=False)
+
+
+for _yaml_reader in (yaml, read_yaml_alpha_fix, read_yaml_alpha_data_model_file):
+    if _yaml_reader.__doc__:
+        _yaml_reader.__doc__ = _yaml_reader.__doc__.replace("<<TOOLKIT_ARGS>>", TOOLKIT_READ_ARGS_DOC)
+        _yaml_reader.__doc__ += _TOOLKIT_YAML_READ_NOTES
+
+if ReadPhysicalDataModel._yaml.__doc__:
+    ReadPhysicalDataModel._yaml.__doc__ += _TOOLKIT_YAML_READ_NOTES
