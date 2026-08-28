@@ -191,6 +191,10 @@ class TestToolkitYamlImport:
         assert schema.data_model.space == "sandbox_space"
         assert schema.data_model.version == "v1"
 
+    def test_yamale_schema_files_are_not_treated_as_dms_resources(self, tmp_path: Path) -> None:
+        assert DMSAPIImporter._is_toolkit_schema_yaml(tmp_path / "data_model_container.yaml") is False
+        assert DMSAPIImporter._is_toolkit_schema_yaml(tmp_path / "Tag.Container.yaml") is True
+
     def test_repo_cdf_toml_does_not_hijack_unrelated_paths(self) -> None:
         assert find_toolkit_project_root(CYCLIC_REVERSE_ONLY) is None
 

@@ -188,11 +188,19 @@ class DMSAPIImporter(DMSImporter):
 
     @classmethod
     def _is_toolkit_schema_yaml(cls, yaml_file: Path) -> bool:
-        """True for DMS resource files; skip Toolkit config, build_info, and other YAML."""
+        """True for DMS resource files; skip Toolkit config, Yamale schemas, and other YAML.
+
+        Resource files follow Toolkit naming (``*.Container.yaml``, ``*.View.yaml``, …).
+        Names such as ``data_model_container.yaml`` are validation schemas, not DMS resources.
+        """
         if yaml_file.suffix.lower() not in {".yaml", ".yml", ".json"}:
             return False
-        stem = yaml_file.stem.casefold()
-        return any(stem.endswith(kind) for kind in ("datamodel", "view", "container", "space", "node"))
+        name = yaml_file.name.casefold()
+        return any(
+            name.endswith(suffix)
+            for kind in ("datamodel", "view", "container", "space", "node")
+            for suffix in (f".{kind}.yaml", f".{kind}.yml", f".{kind}.json")
+        )
 
     @classmethod
     def _read_yaml_files(
