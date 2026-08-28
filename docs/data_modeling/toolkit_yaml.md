@@ -11,7 +11,9 @@ neat.physical_data_model.read.yaml(
 
 Pass the **module** (or `data_modeling`) directory, not a parent folder of the Toolkit project. `cdf.toml` `default_config_yaml` (often `config.sandbox.yaml`) is used as the environment overlay unless you pass `toolkit_env`. Optional `toolkit_env="sandbox"` selects `config.sandbox.yaml` explicitly.
 
-Non-schema YAML (`config.*.yaml`, `build_info.*.yaml`, …) is ignored during directory reads.
+Non-schema YAML (`config.*.yaml`, `build_info.*.yaml`, Yamale files under `validation/schemas/`, …) is ignored during directory reads. Only files named like Toolkit resources (`*.Container.yaml`, `*.View.yaml`, …) are imported.
+
+When reading a `modules/` tree, template variables are resolved from each file's module path so nested `variables.modules.<module>.*` keys apply correctly.
 
 ## Template variables
 

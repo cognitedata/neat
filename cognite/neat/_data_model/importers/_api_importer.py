@@ -210,7 +210,13 @@ class DMSAPIImporter(DMSImporter):
         *,
         options: ToolkitReadOptions | None = None,
     ) -> dict[str, Any]:
-        """Read all YAML files in a directory and combine them into a single dictionary."""
+        """Read Toolkit DMS YAML files in a directory and combine them into a single schema.
+
+        Template variables are resolved per file from that file's module path, so a read of
+        ``modules/`` still sees nested keys such as ``variables.modules.valve_track.*``.
+        When ``data_model_file`` selects one model, sibling DataModel/view/node files are
+        not parsed.
+        """
         options = options or ToolkitReadOptions()
         schema_data: dict[str, Any] = {}
         data_model: dict[str, Any] | None = None
@@ -219,26 +225,42 @@ class DMSAPIImporter(DMSImporter):
         config_dir = directory
         if dm_path is not None and _is_filesystem_path(dm_path) and dm_path.is_file():
             config_dir = dm_path.parent
-        variables = None
-        if options.substitute:
-            variables = ToolkitProjectContext.load(config_dir, options).variables_for(config_dir, options.version)
-        for yaml_file in directory.rglob("**/*"):
-            if not cls._is_toolkit_schema_yaml(yaml_file):
-                continue
+        context = ToolkitProjectContext.load(config_dir, options) if options.substitute else None
+
+        schema_files = [yaml_file for yaml_file in directory.rglob("**/*") if cls._is_toolkit_schema_yaml(yaml_file)]
+        selected_dm_files = [
+            yaml_file
+            for yaml_file in schema_files
+            if yaml_file.stem.casefold().endswith("datamodel")
+            and (not data_model_file_name or yaml_file.name == data_model_file_name)
+        ]
+        resource_root: Path | None = None
+        if data_model_file_name and len(selected_dm_files) == 1 and _is_filesystem_path(selected_dm_files[0]):
+            resource_root = selected_dm_files[0].parent
+
+        for yaml_file in schema_files:
             stem = yaml_file.stem.casefold()
+            if stem.endswith("datamodel") and data_model_file_name and yaml_file.name != data_model_file_name:
+                continue
+            if (
+                resource_root is not None
+                and stem.endswith(("view", "node"))
+                and not cls._is_path_under(yaml_file, resource_root)
+            ):
+                continue
             quote_version = stem.endswith("datamodel") or stem.endswith("view")
+            file_dir = yaml_file.parent
+            file_variables = context.variables_for(file_dir, options.version) if context is not None else None
             data = cls._load_toolkit_yaml_file(
                 yaml_file,
                 options,
-                variables=variables,
+                variables=file_variables,
                 quote_version=quote_version,
-                data_model_dir=config_dir,
+                data_model_dir=file_dir,
             )
             list_data = data if isinstance(data, list) else [data]
 
             if stem.endswith("datamodel"):
-                if data_model_file_name and yaml_file.name != data_model_file_name:
-                    continue  # skip this file as it doesn't match the specified data model file
                 if data_model is not None and not data_model_file:
                     raise FileReadException(
                         cls._display_name(directory).as_posix(),
@@ -264,6 +286,14 @@ class DMSAPIImporter(DMSImporter):
             )
         schema_data["dataModel"] = data_model
         return schema_data
+
+    @staticmethod
+    def _is_path_under(path: Path, root: Path) -> bool:
+        try:
+            path.resolve().relative_to(root.resolve())
+        except (ValueError, OSError):
+            return False
+        return True
 
 
 class DMSAPICreator(DMSImporter):

@@ -191,6 +191,58 @@ class TestToolkitYamlImport:
         assert schema.data_model.space == "sandbox_space"
         assert schema.data_model.version == "v1"
 
+    def test_modules_tree_resolves_nested_variables_per_file(self, tmp_path: Path) -> None:
+        """Reading modules/ must use each file's module path for nested Toolkit variables.
+
+        Selecting the solution DataModel still imports a mapped container from another
+        module, and must not fail on a sibling DataModel whose version is only defined
+        under that sibling module.
+        """
+        project = tmp_path / "project"
+        e360 = project / "modules" / "emergency360" / "data_modeling" / "dm_sol"
+        lci = project / "modules" / "lci" / "data_modeling" / "dm_ent"
+        valve = project / "modules" / "valve_track" / "data_modeling" / "dm_ent"
+        e360.mkdir(parents=True)
+        lci.mkdir(parents=True)
+        valve.mkdir(parents=True)
+        (project / "cdf.toml").write_text(
+            '[cdf]\ndefault_config_yaml = "config.sandbox.yaml"\n',
+            encoding="utf-8",
+        )
+        (project / "config.sandbox.yaml").write_text(
+            "variables:\n  modules:\n    sp_id_prefix: sp\n    LCI_PREFIX: LCI\n"
+            "    emergency360:\n      E360_SOL_DM_VERSION: 1.0.0\n"
+            "    valve_track:\n      VALVE_MANAGEMENT_ENT_DM_VERSION: 1.18.0\n",
+            encoding="utf-8",
+        )
+        _write(
+            e360 / "Sol.DataModel.yaml",
+            "space: {{ sp_id_prefix }}_sol\nexternalId: dm_sol\nversion: {{ E360_SOL_DM_VERSION }}\n"
+            "views:\n  - space: {{ sp_id_prefix }}_sol\n    externalId: Tag\n"
+            "    version: {{ E360_SOL_DM_VERSION }}\n",
+        )
+        _write(
+            e360 / "Tag.View.yaml",
+            "space: {{ sp_id_prefix }}_sol\nexternalId: Tag\nversion: {{ E360_SOL_DM_VERSION }}\n"
+            "properties:\n  tagName:\n    container:\n      space: {{ sp_id_prefix }}_ent\n"
+            "      externalId: {{ LCI_PREFIX }}Tag\n      type: container\n"
+            "    containerPropertyIdentifier: name\n",
+        )
+        _write(
+            lci / "Tag.Container.yaml",
+            "space: {{ sp_id_prefix }}_ent\nexternalId: {{ LCI_PREFIX }}Tag\n"
+            "properties:\n  name:\n    type:\n      type: text\n",
+        )
+        _write(
+            valve / "Valve.DataModel.yaml",
+            "space: {{ sp_id_prefix }}_ent\nexternalId: dm_valve\n"
+            "version: {{ VALVE_MANAGEMENT_ENT_DM_VERSION }}\nviews: []\n",
+        )
+
+        schema = _import_schema(project / "modules", data_model_file="Sol.DataModel.yaml")
+        assert schema.data_model.version == "1.0.0"
+        assert {container.external_id for container in schema.containers} == {"LCITag"}
+
     def test_yamale_schema_files_are_not_treated_as_dms_resources(self, tmp_path: Path) -> None:
         assert DMSAPIImporter._is_toolkit_schema_yaml(tmp_path / "data_model_container.yaml") is False
         assert DMSAPIImporter._is_toolkit_schema_yaml(tmp_path / "Tag.Container.yaml") is True
