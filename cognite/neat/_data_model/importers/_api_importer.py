@@ -13,6 +13,7 @@ from cognite.neat._data_model.importers._toolkit_variables import (
     ToolkitProjectContext,
     ToolkitReadOptions,
     _is_filesystem_path,
+    populate_toolkit_governed_spaces,
     prepare_toolkit_yaml_content,
 )
 from cognite.neat._data_model.models.dms import (
@@ -41,14 +42,22 @@ class DMSAPIImporter(DMSImporter):
 
     ENCODING = "utf-8"
 
-    def __init__(self, schema: RequestSchema | dict[str, Any]) -> None:
+    def __init__(
+        self,
+        schema: RequestSchema | dict[str, Any],
+        *,
+        derive_governed_spaces: bool = False,
+    ) -> None:
         self._schema = schema
+        self._derive_governed_spaces = derive_governed_spaces
 
     def to_data_model(self) -> RequestSchema:
-        if isinstance(self._schema, RequestSchema):
-            return self._schema
         try:
-            return RequestSchema.model_validate(self._schema)
+            schema = (
+                self._schema
+                if isinstance(self._schema, RequestSchema)
+                else RequestSchema.model_validate(self._schema)
+            )
         except ValidationError as e:
             context = ValidationContext()
             errors = [
@@ -56,6 +65,9 @@ class DMSAPIImporter(DMSImporter):
                 for error in e.errors(include_input=True, include_url=False)
             ]
             raise DataModelImportException(errors) from None
+        if self._derive_governed_spaces:
+            return populate_toolkit_governed_spaces(schema)
+        return schema
 
     @classmethod
     def from_cdf(cls, data_model: DataModelReference, client: NeatClient) -> "DMSAPIImporter":
@@ -144,9 +156,12 @@ class DMSAPIImporter(DMSImporter):
         )
         source = cls._display_name(yaml_file)
         if yaml_file.suffix.lower() in {".yaml", ".yml", ".json"}:
-            return cls(cls._load_toolkit_yaml_file(yaml_file, options))
+            return cls(cls._load_toolkit_yaml_file(yaml_file, options), derive_governed_spaces=True)
         elif yaml_file.is_dir():
-            return cls(cls._read_yaml_files(yaml_file, data_model_file, options=options))
+            return cls(
+                cls._read_yaml_files(yaml_file, data_model_file, options=options),
+                derive_governed_spaces=True,
+            )
         raise FileReadException(source.as_posix(), f"Unsupported file type: {source.suffix}")
 
     @classmethod
@@ -215,7 +230,7 @@ class DMSAPIImporter(DMSImporter):
         Template variables are resolved per file from that file's module path, so a read of
         ``modules/`` still sees nested keys such as ``variables.modules.valve_track.*``.
         When ``data_model_file`` selects one model, sibling DataModel/view/node files are
-        not parsed.
+        not parsed; containers from other modules remain available for mapping.
         """
         options = options or ToolkitReadOptions()
         schema_data: dict[str, Any] = {}
@@ -238,18 +253,24 @@ class DMSAPIImporter(DMSImporter):
         if data_model_file_name and len(selected_dm_files) == 1 and _is_filesystem_path(selected_dm_files[0]):
             resource_root = selected_dm_files[0].parent
 
+        view_items: list[tuple[Path | None, dict[str, Any]]] = []
+        container_items: list[tuple[Path | None, dict[str, Any]]] = []
+        space_items: list[tuple[Path | None, dict[str, Any]]] = []
+        node_items: list[tuple[Path | None, dict[str, Any]]] = []
+
         for yaml_file in schema_files:
             stem = yaml_file.stem.casefold()
+            origin = yaml_file if _is_filesystem_path(yaml_file) else None
             if stem.endswith("datamodel") and data_model_file_name and yaml_file.name != data_model_file_name:
                 continue
             if (
                 resource_root is not None
                 and stem.endswith(("view", "node"))
-                and not cls._is_path_under(yaml_file, resource_root)
+                and (origin is None or not cls._is_path_under(origin, resource_root))
             ):
                 continue
             quote_version = stem.endswith("datamodel") or stem.endswith("view")
-            file_dir = yaml_file.parent
+            file_dir = yaml_file.parent if origin is not None else config_dir
             file_variables = context.variables_for(file_dir, options.version) if context is not None else None
             data = cls._load_toolkit_yaml_file(
                 yaml_file,
@@ -271,13 +292,13 @@ class DMSAPIImporter(DMSImporter):
                 data_model = data
 
             elif stem.endswith("container"):
-                schema_data.setdefault("containers", []).extend(list_data)
+                container_items.extend((origin, item) for item in list_data if isinstance(item, dict))
             elif stem.endswith("view"):
-                schema_data.setdefault("views", []).extend(list_data)
+                view_items.extend((origin, item) for item in list_data if isinstance(item, dict))
             elif stem.endswith("space"):
-                schema_data.setdefault("spaces", []).extend(list_data)
+                space_items.extend((origin, item) for item in list_data if isinstance(item, dict))
             elif stem.endswith("node"):
-                schema_data.setdefault("nodeTypes", []).extend(list_data)
+                node_items.extend((origin, item) for item in list_data if isinstance(item, dict))
             # Ignore other files
         if data_model is None:
             raise FileReadException(
@@ -285,7 +306,136 @@ class DMSAPIImporter(DMSImporter):
                 "No data model file found in directory.",
             )
         schema_data["dataModel"] = data_model
+        views, containers, spaces, nodes = cls._select_resources_for_data_model(
+            resource_root,
+            view_items,
+            container_items,
+            space_items,
+            node_items,
+            data_model,
+        )
+        if views:
+            schema_data["views"] = views
+        if containers:
+            schema_data["containers"] = containers
+        if spaces:
+            schema_data["spaces"] = spaces
+        if nodes:
+            schema_data["nodeTypes"] = nodes
         return schema_data
+
+    @classmethod
+    def _select_resources_for_data_model(
+        cls,
+        resource_root: Path | None,
+        view_items: list[tuple[Path | None, dict[str, Any]]],
+        container_items: list[tuple[Path | None, dict[str, Any]]],
+        space_items: list[tuple[Path | None, dict[str, Any]]],
+        node_items: list[tuple[Path | None, dict[str, Any]]],
+        data_model: dict[str, Any],
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+        """Keep the selected model's folder, plus containers those views map to (often enterprise).
+
+        Solution views typically map to enterprise containers in a sibling folder. Restricting
+        to the DataModel directory dropped those containers and broke reverse/direct relations.
+        Sibling *views* (the other data model) stay excluded.
+        """
+        if resource_root is None:
+            return (
+                [item for _, item in view_items],
+                [item for _, item in container_items],
+                [item for _, item in space_items],
+                [item for _, item in node_items],
+            )
+
+        def is_local(origin: Path | None) -> bool:
+            return origin is not None and cls._is_path_under(origin, resource_root)
+
+        views = [item for origin, item in view_items if is_local(origin)]
+        container_by_id: dict[tuple[str, str], dict[str, Any]] = {}
+        needed_containers: set[tuple[str, str]] = {
+            ref for view in views for ref in cls._container_ids_from_view(view)
+        }
+        for origin, item in container_items:
+            key = (str(item.get("space") or ""), str(item.get("externalId") or ""))
+            if not key[0] or not key[1]:
+                continue
+            container_by_id.setdefault(key, item)
+            if is_local(origin):
+                needed_containers.add(key)
+
+        pending = list(needed_containers)
+        while pending:
+            item = container_by_id.get(pending.pop())
+            if item is None:
+                continue
+            for extra in cls._required_container_ids(item):
+                if extra not in needed_containers:
+                    needed_containers.add(extra)
+                    pending.append(extra)
+
+        containers: list[dict[str, Any]] = []
+        seen_containers: set[tuple[str, str]] = set()
+        for _, item in container_items:
+            key = (str(item.get("space") or ""), str(item.get("externalId") or ""))
+            if key not in needed_containers or key in seen_containers:
+                continue
+            seen_containers.add(key)
+            containers.append(item)
+
+        space_ids = {str(data_model["space"])} if data_model.get("space") else set()
+        space_ids.update(str(view["space"]) for view in views if view.get("space"))
+        space_ids.update(str(container["space"]) for container in containers if container.get("space"))
+        spaces: list[dict[str, Any]] = []
+        seen_spaces: set[str] = set()
+        for origin, item in space_items:
+            space_id = str(item.get("space", ""))
+            if not space_id or space_id in seen_spaces:
+                continue
+            if is_local(origin) or space_id in space_ids:
+                seen_spaces.add(space_id)
+                spaces.append(item)
+
+        nodes = [item for origin, item in node_items if is_local(origin)]
+        return views, containers, spaces, nodes
+
+    @staticmethod
+    def _container_ref(node: object) -> tuple[str, str] | None:
+        if not isinstance(node, dict) or node.get("type", "container") != "container":
+            return None
+        space, external_id = node.get("space"), node.get("externalId")
+        if space and external_id:
+            return str(space), str(external_id)
+        return None
+
+    @classmethod
+    def _container_ids_from_view(cls, view: dict[str, Any]) -> set[tuple[str, str]]:
+        refs: set[tuple[str, str]] = set()
+        has_data = (view.get("filter") or {}).get("hasData") or []
+        if isinstance(has_data, dict):
+            has_data = [has_data]
+        for item in has_data:
+            if ref := cls._container_ref(item):
+                refs.add(ref)
+        for prop in (view.get("properties") or {}).values():
+            if not isinstance(prop, dict):
+                continue
+            if ref := cls._container_ref(prop.get("container")):
+                refs.add(ref)
+            through = prop.get("through")
+            if isinstance(through, dict):
+                if ref := cls._container_ref(through.get("source")):
+                    refs.add(ref)
+        return refs
+
+    @classmethod
+    def _required_container_ids(cls, container: dict[str, Any]) -> set[tuple[str, str]]:
+        refs: set[tuple[str, str]] = set()
+        for constraint in (container.get("constraints") or {}).values():
+            if isinstance(constraint, dict):
+                if ref := cls._container_ref(constraint.get("require")):
+                    refs.add(ref)
+        return refs
 
     @staticmethod
     def _is_path_under(path: Path, root: Path) -> bool:

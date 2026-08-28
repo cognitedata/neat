@@ -167,7 +167,7 @@ class RequiredContainerDoesNotExist(DataModelRule):
         errors: list[ConsistencyError] = []
 
         for container_ref in self.validation_resources.merged.containers:
-            container = self.validation_resources.select_container(container_ref)
+            container = self.validation_resources.select_container(container_ref, source="merged")
 
             if not container:
                 raise RuntimeError(
