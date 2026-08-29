@@ -78,6 +78,12 @@ jobs:
       - name: Run unit tests
         run: export PYTHONPATH=$PYTHONPATH:$(pwd); uv run pytest tests/tests_unit
 
+      - name: Install Cognit-sdk v7
+        run: uv pip install cognite-sdk==7.92.0
+
+      - name: Run test on cognite-sdk v7
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); uv run pytest tests/tests_unit
+
   build-docs:
     runs-on: ubuntu-latest
 
@@ -136,11 +142,24 @@ jobs:
             coverageFile: coverage.xml
             token: ${{ secrets.GITHUB_TOKEN }}
             thresholdAll: 0.9
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: cognitedata/neat
+
+      - name: Install cognite-sdk v7
+        run: uv pip install cognite-sdk==7.92.0
+
+      - name: Create test coverage report with cognite-sdk v7
+        env:
+          CDF_CLUSTER: ${{ vars.CDF_CLUSTER }}
+          CDF_PROJECT: ${{ vars.CDF_PROJECT }}
+          IDP_CLIENT_ID: ${{ vars.IDP_CLIENT_ID }}
+          IDP_CLIENT_SECRET: ${{ secrets.IDP_CLIENT_SECRET }}
+          IDP_TENANT_ID: ${{ vars.IDP_TENANT_ID }}
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); uv run pytest --cov=cognite/ --cov-config=pyproject.toml --cov-report=xml:coverage-sdk7.xml tests/
 
   validate-description:
     name: Validate PR description
