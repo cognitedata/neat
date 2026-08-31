@@ -45,6 +45,9 @@ class ConnectionValueTypeUnexisting(DataModelRule):
             if self.validation_resources.select_view(value_type) is not None:
                 continue
 
+            if self.validation_resources.is_externally_versioned_connection_target(value_type):
+                continue
+
             errors.append(
                 ConsistencyError(
                     message=(

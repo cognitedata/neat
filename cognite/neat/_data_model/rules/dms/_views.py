@@ -183,13 +183,16 @@ class DataModelViewDoesNotExist(DataModelRule):
         errors: list[ConsistencyError] = []
 
         for view_ref in self.validation_resources.merged_data_model.views or []:
-            if self.validation_resources.select_view(view_ref) is None:
-                errors.append(
-                    ConsistencyError(
-                        message=f"View {view_ref!s} is referenced in the data model but does not exist.",
-                        fix="Define the missing view",
-                        code=self.code,
-                    )
+            if self.validation_resources.select_view(view_ref) is not None:
+                continue
+            if self.validation_resources.is_externally_versioned_data_model_view(view_ref):
+                continue
+            errors.append(
+                ConsistencyError(
+                    message=f"View {view_ref!s} is referenced in the data model but does not exist.",
+                    fix="Define the missing view",
+                    code=self.code,
                 )
+            )
 
         return errors
