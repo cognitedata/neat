@@ -301,7 +301,7 @@ class EnumerationMissingName(DataModelRule):
         recommendations: list[Recommendation] = []
 
         for container_ref in self.validation_resources.merged.containers:
-            container = self.validation_resources.select_container(container_ref)
+            container = self.validation_resources.select_container(container_ref, source="merged")
 
             if not container:
                 raise RuntimeError(f"{type(self).__name__}: Container {container_ref!s} not found. This is a bug.")
@@ -361,7 +361,7 @@ class EnumerationMissingDescription(DataModelRule):
         recommendations: list[Recommendation] = []
 
         for container_ref in self.validation_resources.merged.containers:
-            container = self.validation_resources.select_container(container_ref)
+            container = self.validation_resources.select_container(container_ref, source="merged")
             if not container:
                 raise RuntimeError(f"{self.__class__.__name__}: Container {container_ref!s} not found. This is a bug.")
 
