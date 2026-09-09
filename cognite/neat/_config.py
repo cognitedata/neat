@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any, Literal, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field
-from pydantic.functional_validators import model_validator
 
 from cognite.neat._exceptions import UserInputError
 from cognite.neat._issues import ConsistencyError, ModelSyntaxError
@@ -98,44 +97,14 @@ class ModelingConfig(ConfigModel):
 class AlphaFlagConfig(ConfigModel):
     """Alpha feature flags configuration."""
 
-    enable_fix_validation_issues: bool = Field(
-        default=False,
-        description="If enabled, Neat will attempt to automatically fix certain validation issues in the data model.",
-    )
     enable_experimental_validators: bool = Field(
         default=False,
         description="If enabled, Neat will run experimental validators that are still in alpha stage.",
     )
-    enable_solution_model_creation: bool = Field(
-        default=False, description="If enabled, neat.physical_data_model.create() will be available"
-    )
-    enable_cdf_analysis: bool = Field(default=False, description="If enabled, neat.cdf endpoint will be available.")
-
-    enable_datamodel_file_selection: bool = Field(
-        default=False,
-        description="If enabled, when multiple data model YAML files are found in a directory, "
-        "the user can specify which one to use by providing the 'data_model_file' "
-        "argument with the file name of the data model YAML file they want to use.",
-    )
-    enable_governed_spaces: bool = Field(
-        default=False,
-        description="If enabled, Neat will read governedSpaces in the metadata sheet and consider "
-        "all containers and views part in these spaces to be part of the governed data model. This "
-        "means that Neat will check the local data model instead of CDF for containers and views "
-        "in these spaces. In addition, Neat will deploy and not skip containers and views in these spaces. ",
-    )
-
-    enable_plugins: bool = Field(
-        default=False, description="If enabled, external plugins can be attached to NeatSession."
-    )
-
-    enable_caching: bool = Field(
-        default=False, description="If enabled, Neat will cache data models fetched from CDF to improve performance."
-    )
 
     def __setattr__(self, key: str, value: Any) -> None:
         """Set attribute value or raise AttributeError."""
-        if key in self.model_fields or (self.enable_caching and key == "max_cache_age_days"):
+        if key in self.model_fields:
             super().__setattr__(key, value)
         else:
             available_flags = humanize_collection(type(self).model_fields.keys())
@@ -149,13 +118,6 @@ class AlphaFlagConfig(ConfigModel):
             display = "Enabled" if value else "Disabled"
             lines.append(f"<li><b>{field_name}</b>: {display} - {field.description}</li>")
         return "<ul>" + "\n".join(lines) + "</ul>"
-
-    @model_validator(mode="after")
-    def _attach_max_cache_age(self) -> "AlphaFlagConfig":
-        """If caching is enabled, attach max_cache_age_days to the config."""
-        if self.enable_caching and not hasattr(self, "max_cache_age_days"):
-            object.__setattr__(self, "max_cache_age_days", 1)
-        return self
 
 
 class NeatConfig(ConfigModel):

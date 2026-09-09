@@ -35,7 +35,7 @@ class MissingRequiresConstraint(DataModelRule):
 
     code = f"{BASE_CODE}-001"
     issue_type = Recommendation
-    alpha = True
+    alpha = False
     fixable = True
 
     def validate(self) -> list[Recommendation]:
@@ -141,7 +141,7 @@ class SuboptimalRequiresConstraint(DataModelRule):
 
     code = f"{BASE_CODE}-002"
     issue_type = Recommendation
-    alpha = True
+    alpha = False
     fixable = True
 
     def validate(self) -> list[Recommendation]:
@@ -243,7 +243,7 @@ class UnresolvableQueryPerformance(DataModelRule):
 
     code = f"{BASE_CODE}-003"
     issue_type = Recommendation
-    alpha = True
+    alpha = False
 
     def validate(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
@@ -311,7 +311,7 @@ class MissingReverseDirectRelationTargetIndex(DataModelRule):
 
     code = f"{BASE_CODE}-004"
     issue_type = Recommendation
-    alpha = True
+    alpha = False
     fixable = True
 
     def validate(self) -> list[Recommendation]:

@@ -211,7 +211,7 @@ class RequiresConstraintCycle(DataModelRule):
 
     code = f"{BASE_CODE}-005"
     issue_type = ConsistencyError
-    alpha = True  # Still in development
+    alpha = False  # Still in development
     fixable = True
 
     def validate(self) -> list[ConsistencyError]:

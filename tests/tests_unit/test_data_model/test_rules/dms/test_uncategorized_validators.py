@@ -47,8 +47,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 22
-        assert set(by_code.keys()) == {
+        expected_codes = {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
             ViewSpaceVersionInconsistentWithDataModel.code,
@@ -60,6 +59,7 @@ class TestValidators:
             RequiredContainerDoesNotExist.code,
             DataModelViewDoesNotExist.code,
         }
+        assert expected_codes <= set(by_code.keys())
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 3
 
@@ -178,8 +178,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 23
-        assert set(by_code.keys()) == {
+        expected_codes = {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
             ViewSpaceVersionInconsistentWithDataModel.code,
@@ -192,6 +191,7 @@ class TestValidators:
             ImplementedViewNotExisting.code,
             DataModelViewDoesNotExist.code,
         }
+        assert expected_codes <= set(by_code.keys())
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 5
 

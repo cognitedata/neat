@@ -30,15 +30,6 @@ def new_session(neat_config: NeatClientConfig) -> NeatSession:
 
 
 @pytest.fixture()
-def new_session_with_alpha_features(neat_config: NeatClientConfig) -> NeatSession:
-    cfg = NeatConfig.create_predefined("legacy-additive")
-    cfg.alpha.enable_cdf_analysis = True
-    cfg.alpha.enable_plugins = True
-
-    return NeatSession(neat_config, cfg)
-
-
-@pytest.fixture()
 def physical_state_session(new_session: NeatSession, valid_dms_yaml_format: str) -> NeatSession:
     read_yaml = MagicMock(spec=Path)
     read_yaml.read_text.return_value = valid_dms_yaml_format
@@ -243,8 +234,8 @@ class TestNeatSession:
         # we remain in physical state even though we hit Forbidden state, auto-recovery
         assert isinstance(session._store.state, states.PhysicalState)
 
-    def test_plugin_attachment(self, new_session_with_alpha_features: NeatSession) -> None:
-        session = new_session_with_alpha_features
+    def test_plugin_attachment(self, new_session: NeatSession) -> None:
+        session = new_session
         assert hasattr(session.physical_data_model.read, "external_excel")
 
 
@@ -289,7 +280,6 @@ class TestReadPhysicalWithFix:
     ) -> None:
         session = new_session
         store = session._store
-        store._config.alpha.enable_fix_validation_issues = True
 
         request_schema = RequestSchema.model_validate(example_dms_schema_response)
         fix_action = FixAction(
@@ -366,13 +356,10 @@ class TestRender:
 
         assert isinstance(html_repr, str)
 
-    def test_render_issues_with_fix_alpha_flag(
+    def test_render_issues_with_fix(
         self, neat_config: NeatClientConfig, dms_yaml_format_missing_container_constraint: str
     ) -> None:
         config = NeatConfig.create_predefined("deep-rebuild")
-        config.alpha.enable_fix_validation_issues = True
-        config.alpha.enable_experimental_validators = True
-
         read_yaml = MagicMock(spec=Path)
         read_yaml.read_text.return_value = dms_yaml_format_missing_container_constraint
 
@@ -419,8 +406,8 @@ class TestRender:
 
         assert isinstance(html_repr, str)
 
-    def test_render_session_cdf(self, new_session_with_alpha_features: NeatSession) -> None:
-        session = new_session_with_alpha_features
+    def test_render_session_cdf(self, new_session: NeatSession) -> None:
+        session = new_session
         html_repr = session.cdf._repr_html_()
 
         assert isinstance(html_repr, str)
