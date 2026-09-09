@@ -142,7 +142,7 @@ class CyclicImplements(DataModelRule):
 
     code = f"{BASE_CODE}-003"
     issue_type = ConsistencyError
-    alpha = True
+    alpha = False
 
     def validate(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
