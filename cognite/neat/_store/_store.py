@@ -45,7 +45,7 @@ class NeatStore:
         self._cdf_limits: SchemaLimits | None = None
         self._cdf_space_statistics: SpaceStatisticsResponse | None = None
 
-        self._cache = SchemaCache(client, config.alpha.max_cache_age_days) if config.alpha.enable_caching else None  # type: ignore[attr-defined]
+        self._cache = SchemaCache(client)
 
     @property
     def cdf_space_statistics(self) -> SpaceStatisticsResponse:
@@ -64,7 +64,7 @@ class NeatStore:
     @property
     def cdf_snapshot(self) -> SchemaSnapshot:
         if not self._cdf_snapshot:
-            self._cdf_snapshot = self._cache.read() if self._cache else SchemaSnapshot.fetch_entire_cdf(self._client)
+            self._cdf_snapshot = self._cache.read()
         return self._cdf_snapshot
 
     def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None, fix: bool = False) -> None:
@@ -81,13 +81,7 @@ class NeatStore:
 
         self.provenance.append(change)
 
-        if (
-            data_model
-            and fix
-            and self._config.alpha.enable_fix_validation_issues
-            and isinstance(on_success, FixProducingOrchestrator)
-            and on_success.pending_fixes
-        ):
+        if data_model and fix and isinstance(on_success, FixProducingOrchestrator) and on_success.pending_fixes:
             applied_fixes = on_success.pending_fixes
             self.transform_physical(FixApplicator(applied_fixes), on_success.copy())
             if self.provenance.last_change:
@@ -144,11 +138,8 @@ class NeatStore:
             and not on_success.options.dry_run
         ):
             # Update CDF snapshot and space statistics after deployment
-            if self._cache:
-                self._cache.update()
-                self._cdf_snapshot = self._cache.read()
-            else:
-                self._cdf_snapshot = SchemaSnapshot.fetch_entire_cdf(self._client)
+            self._cache.update()
+            self._cdf_snapshot = self._cache.read()
 
             self._cdf_space_statistics = self._client.statistics.space_statistics(
                 [space.space for space in self.cdf_snapshot.spaces.keys()]

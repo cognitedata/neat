@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -14,6 +15,15 @@ from cognite.neat._data_model.models.dms import (
 )
 
 BASE_URL = "http://neat.cognitedata.com"
+
+
+@pytest.fixture(autouse=True)
+def isolate_neat_schema_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep SchemaCache files out of the user cache directory and isolated per test."""
+    monkeypatch.setattr(
+        "cognite.neat._data_model._snapshot.user_cache_path",
+        lambda _name: tmp_path / "neat",
+    )
 
 
 @pytest.fixture(scope="session")

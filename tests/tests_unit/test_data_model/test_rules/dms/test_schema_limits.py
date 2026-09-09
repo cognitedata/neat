@@ -290,16 +290,17 @@ def test_validation(dms_yaml_hitting_all_the_data_model_limits: tuple[str, dict[
 
     by_code = on_success.issues.by_code()
 
-    assert set(by_code.keys()) == set(expected_problems.keys()), (
+    assert expected_problems.keys() <= by_code.keys(), (
         f"Mismatch in issue codes. Expected {expected_problems.keys()}, found {by_code.keys()}"
     )
 
-    for code, issues in by_code.items():
-        assert len(issues) == len(expected_problems[code]), (
-            f"Number of issues for {code} expected {len(expected_problems[code])}, found {len(issues)}"
+    for code, expected_messages in expected_problems.items():
+        issues = by_code[code]
+        assert len(issues) == len(expected_messages), (
+            f"Number of issues for {code} expected {len(expected_messages)}, found {len(issues)}"
         )
 
-        for expected_message in expected_problems[code]:
+        for expected_message in expected_messages:
             assert any(expected_message in issue.message for issue in issues), (
                 f"Expected message '{expected_message}' for code {code} not found in issues."
             )

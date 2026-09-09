@@ -1,7 +1,6 @@
 import inspect
 from collections.abc import Callable
 from pathlib import Path
-from types import MethodType
 from typing import Any, Literal
 
 from cognite.neat._client import NeatClient
@@ -41,9 +40,46 @@ class PhysicalDataModel:
         self.read = ReadPhysicalDataModel(self._store, self._client, self._config)
         self.write = WritePhysicalDataModel(self._store, self._client, self._config)
 
-        # attach alpha methods
-        if self._config.alpha.enable_solution_model_creation:
-            self.create = MethodType(create, self)  # type: ignore[attr-defined]
+    def create(
+        self,
+        space: str,
+        external_id: str,
+        version: str,
+        views: list[str],
+        name: str | None = None,
+        description: str | None = None,
+        kind: Literal["solution"] = "solution",
+    ) -> None:
+        """Create a solution data model in Neat from CDF views.
+
+        Args:
+            space (str): The schema space of the data model.
+            external_id (str): The external id of the data model.
+            version (str): The version of the data model.
+            views (list[str]): List of view external ids to include in the data model in the short string format
+                space:external_id(version=version)
+            name (str | None): The name of the data model. If None, the name will be fetched from CDF.
+            description (str | None): The description of the data model. If None, the description will be fetched
+                from CDF.
+            kind (Literal["solution"]): The kind of the data model. Currently, only "solution" is supported.
+        """
+
+        if not self._store.cdf_snapshot.data_model:
+            raise ValueError("There are no data models in CDF. Cannot create solution model.")
+
+        creator = DMSAPICreator(
+            space=space,
+            external_id=external_id,
+            version=version,
+            views=views,
+            name=name,
+            description=description,
+            kind=kind,
+            cdf_snapshot=self._store.cdf_snapshot,
+        )
+
+        on_success = self.read._create_on_success()
+        return self._store.read_physical(creator, on_success)
 
     def _repr_html_(self) -> str:
         if not isinstance(self._store.state, PhysicalState):
@@ -96,25 +132,7 @@ class ReadPhysicalDataModel:
         self._client = client
         self._config = config
 
-        if self._config.alpha.enable_datamodel_file_selection and self._config.alpha.enable_fix_validation_issues:
-            self.yaml = self._yaml
-        if self._config.alpha.enable_datamodel_file_selection:
-            self.yaml = MethodType(read_yaml_alpha_data_model_file, self)  # type: ignore[attr-defined]
-        elif self._config.alpha.enable_fix_validation_issues:
-            self.yaml = MethodType(read_yaml_alpha_fix, self)  # type: ignore[attr-defined]
-        else:
-            self.yaml = MethodType(yaml, self)  # type: ignore[attr-defined]
-
-        if self._config.alpha.enable_fix_validation_issues:
-            self.json = self._json
-            self.excel = self._excel
-            self.cdf = self._cdf
-        else:
-            self.json = MethodType(json, self)  # type: ignore[attr-defined]
-            self.excel = MethodType(excel, self)  # type: ignore[attr-defined]
-            self.cdf = MethodType(cdf, self)  # type: ignore[attr-defined]
-
-        if self._config.alpha.enable_plugins and (plugins := get_plugin_manager().get(PhysicalDataModelReaderPlugin)):
+        if plugins := get_plugin_manager().get(PhysicalDataModelReaderPlugin):
             for plugin_cls in plugins.values():
                 print(
                     f"Attaching external plugin {plugin_cls.method_name} as method "
@@ -129,10 +147,9 @@ class ReadPhysicalDataModel:
             cdf_snapshot=self._store.cdf_snapshot,
             limits=self._store.cdf_limits,
             can_run_validator=self._config.validation.can_run_validator,
-            alpha_flags=self._config.alpha,
         )
 
-    def _yaml(
+    def yaml(
         self,
         io: Any,
         format: Literal["neat", "toolkit"] = "neat",
@@ -146,6 +163,10 @@ class ReadPhysicalDataModel:
             format (Literal["neat", "toolkit"]): The format of the input file(s).
                 - "neat": Neat's DMS table format.
                 - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+            data_model_file (Path | None): Optional specific data model file to read. This is only applicable when
+                format is set to "toolkit", and when io contains multiple data model YAML files.
+                The value should match the file name of the data model YAML file to read.
+            fix (bool): If True, automatically apply fixes for fixable issues.
         """
 
         path = NeatReader.create(io).materialize_path()
@@ -161,7 +182,7 @@ class ReadPhysicalDataModel:
         on_success = self._create_on_success()
         return self._store.read_physical(reader, on_success, fix=fix)
 
-    def _json(self, io: Any, format: Literal["neat", "toolkit"] = "neat", fix: bool = False) -> None:
+    def json(self, io: Any, format: Literal["neat", "toolkit"] = "neat", fix: bool = False) -> None:
         """Read physical data model from JSON file(s)
 
         Args:
@@ -185,7 +206,7 @@ class ReadPhysicalDataModel:
         on_success = self._create_on_success()
         return self._store.read_physical(reader, on_success, fix=fix)
 
-    def _excel(self, io: Any, fix: bool = False) -> None:
+    def excel(self, io: Any, fix: bool = False) -> None:
         """Read physical data model from Excel file
 
         Args:
@@ -200,7 +221,7 @@ class ReadPhysicalDataModel:
         on_success = self._create_on_success()
         return self._store.read_physical(reader, on_success, fix=fix)
 
-    def _cdf(self, space: str, external_id: str, version: str, fix: bool = False) -> None:
+    def cdf(self, space: str, external_id: str, version: str, fix: bool = False) -> None:
         """Read physical data model from CDF
 
         Args:
@@ -265,9 +286,7 @@ class WritePhysicalDataModel:
         self._client = client
         self._config = config
 
-        if self._config.alpha.enable_plugins and (
-            plugins := get_plugin_manager().get(PhysicalDataModelFileWriterPlugin)
-        ):
+        if plugins := get_plugin_manager().get(PhysicalDataModelFileWriterPlugin):
             for plugin_cls in plugins.values():
                 print(
                     f"Attaching external plugin {plugin_cls.method_name} as method "
@@ -361,7 +380,7 @@ class WritePhysicalDataModel:
             auto_rollback=rollback,
             drop_data=drop_data,
             modus_operandi=self._config.modeling.mode,
-            check_governed_spaces=self._config.alpha.enable_governed_spaces,
+            check_governed_spaces=True,
         )
         on_success = SchemaDeployer(self._client, options)
         return self._store.write_physical(writer, on_success)
@@ -419,148 +438,3 @@ class WritePhysicalDataModel:
                 + docstring[insertion_point:]
             )
         return docstring
-
-
-def create(
-    self: PhysicalDataModel,
-    space: str,
-    external_id: str,
-    version: str,
-    views: list[str],
-    name: str | None = None,
-    description: str | None = None,
-    kind: Literal["solution"] = "solution",
-) -> None:
-    """Create a solution data model in Neat from CDF views.
-
-    Args:
-        space (str): The schema space of the data model.
-        external_id (str): The external id of the data model.
-        version (str): The version of the data model.
-        views (list[str]): List of view external ids to include in the data model in the short string format
-            space:external_id(version=version)
-        name (str | None): The name of the data model. If None, the name will be fetched from CDF.
-        description (str | None): The description of the data model. If None, the description will be fetched from CDF.
-        kind (Literal["solution"]): The kind of the data model. Currently, only "solution" is supported.
-    """
-
-    if not self._store.cdf_snapshot.data_model:
-        raise ValueError("There are no data models in CDF. Cannot create solution model.")
-
-    creator = DMSAPICreator(
-        space=space,
-        external_id=external_id,
-        version=version,
-        views=views,
-        name=name,
-        description=description,
-        kind=kind,
-        cdf_snapshot=self._store.cdf_snapshot,
-    )
-
-    on_success = self.read._create_on_success()
-    return self._store.read_physical(creator, on_success)
-
-
-def yaml(
-    self: ReadPhysicalDataModel,
-    io: Any,
-    format: Literal["neat", "toolkit"] = "neat",
-) -> None:
-    """Read physical data model from YAML file(s)
-
-    Args:
-        io (Any): The file or directory path or buffer to read from.
-        format (Literal["neat", "toolkit"]): The format of the input file(s).
-            - "neat": Neat's DMS table format.
-            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-
-    """
-    self._yaml(io=io, format=format, data_model_file=None, fix=False)
-
-
-def read_yaml_alpha_fix(
-    self: ReadPhysicalDataModel,
-    io: Any,
-    format: Literal["neat", "toolkit"] = "neat",
-    fix: bool = False,
-) -> None:
-    """Read physical data model from YAML file(s)
-
-    Args:
-        io (Any): The file or directory path or buffer to read from.
-        format (Literal["neat", "toolkit"]): The format of the input file(s).
-            - "neat": Neat's DMS table format.
-            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-        fix (bool): If True, automatically apply fixes for fixable issues.
-
-    """
-    self._yaml(io=io, format=format, fix=fix)
-
-
-def read_yaml_alpha_data_model_file(
-    self: ReadPhysicalDataModel,
-    io: Any,
-    format: Literal["neat", "toolkit"] = "neat",
-    data_model_file: Path | None = None,
-) -> None:
-    """Read physical data model from YAML file(s)
-
-    Args:
-        io (Any): The file or directory path or buffer to read from.
-        format (Literal["neat", "toolkit"]): The format of the input file(s).
-            - "neat": Neat's DMS table format.
-            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-        data_model_file (str | None): Optional specific data model file to read. This is only applicable when format
-            is set to "toolkit", and when io contains multiple data model YAML files.
-            The value should match the file name of the data model YAML file to read.
-
-    """
-    self._yaml(io=io, format=format, data_model_file=data_model_file, fix=False)
-
-
-def json(
-    self: ReadPhysicalDataModel,
-    io: Any,
-    format: Literal["neat", "toolkit"] = "neat",
-) -> None:
-    """Read physical data model from JSON file(s)
-
-    Args:
-        io (Any): The file or directory path or buffer to read from.
-        format (Literal["neat", "toolkit"]): The format of the input file(s).
-            - "neat": Neat's DMS table format.
-            - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
-
-    """
-    self._json(io=io, format=format, fix=False)
-
-
-def excel(
-    self: ReadPhysicalDataModel,
-    io: Any,
-) -> None:
-    """Read physical data model from Excel file
-
-    Args:
-        io (Any): The file path or buffer to read from.
-
-    """
-    self._excel(io=io, fix=False)
-
-
-def cdf(
-    self: ReadPhysicalDataModel,
-    space: str,
-    external_id: str,
-    version: str,
-) -> None:
-    """Read physical data model from CDF
-
-    Args:
-        space (str): The schema space of the data model.
-        external_id (str): The external id of the data model.
-        version (str): The version of the data model.
-
-    """
-    self._cdf(space=space, external_id=external_id, version=version, fix=False)
