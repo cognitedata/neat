@@ -64,4 +64,4 @@ def test_with_test_scoped_alpha_validator(monkeypatch: Any, enable: bool) -> Non
     by_code = on_success.issues.by_code()
 
     assert (TestAlphaValidator.code in by_code) == enable
-    assert (CyclicImplements.code in by_code) == enable
+    assert CyclicImplements.code in by_code
