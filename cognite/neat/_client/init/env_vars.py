@@ -11,7 +11,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-LoginFlow: TypeAlias = Literal["client_credentials", "interactive", "token"]
+
+LoginFlow: TypeAlias = Literal["client_credentials", "interactive", "device_code", "token"]
 AVAILABLE_LOGIN_FLOWS: tuple[LoginFlow, ...] = get_args(LoginFlow)
 Provider: TypeAlias = Literal["entra_id", "auth0", "cdf", "other"]
 AVAILABLE_PROVIDERS: tuple[Provider, ...] = get_args(Provider)
@@ -85,6 +86,13 @@ class ClientEnvironmentVariables(BaseModel):
 
     @property
     def idp_scopes(self) -> list[str]:
+        if self.PROVIDER == "entra_id" and self.LOGIN_FLOW == "device_code":
+            return [
+                f"https://{self.CDF_CLUSTER}.cognitedata.com/IDENTITY",
+                f"https://{self.CDF_CLUSTER}.cognitedata.com/user_impersonation",
+                "profile",
+                "openid",
+            ]
         if self.IDP_SCOPES:
             return self.IDP_SCOPES.split(",")
         if self.PROVIDER == "auth0":
