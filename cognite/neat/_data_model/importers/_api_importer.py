@@ -54,9 +54,7 @@ class DMSAPIImporter(DMSImporter):
     def to_data_model(self) -> RequestSchema:
         try:
             schema = (
-                self._schema
-                if isinstance(self._schema, RequestSchema)
-                else RequestSchema.model_validate(self._schema)
+                self._schema if isinstance(self._schema, RequestSchema) else RequestSchema.model_validate(self._schema)
             )
         except ValidationError as e:
             context = ValidationContext()
@@ -353,9 +351,7 @@ class DMSAPIImporter(DMSImporter):
 
         views = [item for origin, item in view_items if is_local(origin)]
         container_by_id: dict[tuple[str, str], dict[str, Any]] = {}
-        needed_containers: set[tuple[str, str]] = {
-            ref for view in views for ref in cls._container_ids_from_view(view)
-        }
+        needed_containers: set[tuple[str, str]] = {ref for view in views for ref in cls._container_ids_from_view(view)}
         for origin, item in container_items:
             key = (str(item.get("space") or ""), str(item.get("externalId") or ""))
             if not key[0] or not key[1]:
