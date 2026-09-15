@@ -147,6 +147,30 @@ class ValidationResources:
 
         return next(candidates, None)
 
+    def is_externally_versioned_data_model_view(self, view_ref: ViewReference) -> bool:
+        """True when ``view_ref`` is listed on the data model at another version or space.
+
+        Toolkit data models commonly reference shared views (for example OPS ``Tag`` at
+        ``1.18.1``) while the data model itself is versioned independently (for example
+        ``1.0.0``). Those references are valid membership declarations and do not require a
+        local ``ViewRequest`` in the imported module.
+        """
+        dm = self.merged_data_model
+        dm_views = dm.views or []
+        if view_ref not in dm_views:
+            return False
+        return view_ref.version != dm.version or view_ref.space != dm.space
+
+    def is_externally_versioned_connection_target(self, view_ref: ViewReference) -> bool:
+        """True when a connection may point at a view outside this data model's version line."""
+        if self.is_externally_versioned_data_model_view(view_ref):
+            return True
+
+        dm = self.merged_data_model
+        if view_ref.space == dm.space and view_ref.version != dm.version:
+            return True
+        return view_ref.space != dm.space
+
     def select_container(
         self, container_ref: ContainerReference, property_: str | None = None, source: ResourceSource = "auto"
     ) -> ContainerRequest | None:
