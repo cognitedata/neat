@@ -1,0 +1,6 @@
+space: {{ schemaSpace }}
+externalId: MyContainer
+properties:
+  name:
+    type:
+      type: text

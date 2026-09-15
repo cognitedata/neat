@@ -1,0 +1,7 @@
+space: {{ schemaSpace }}
+externalId: MyModel
+version: {{ viewVersion }}
+views:
+  - space: {{ schemaSpace }}
+    externalId: MyView
+    version: {{ viewVersion }}

@@ -1,0 +1,10 @@
+space: records_space
+externalId: Record
+version: {{ viewVersion }}
+properties:
+  status:
+    container:
+      space: records_space
+      externalId: Record
+      type: container
+    containerPropertyIdentifier: status

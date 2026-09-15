@@ -253,7 +253,7 @@ class ContainerPropertyCountIsOutOfLimits(DataModelRule):
         recommendations: list[Recommendation] = []
         # Single loop over all containers
         for container_ref in self.validation_resources.merged.containers:
-            container = self.validation_resources.select_container(container_ref)
+            container = self.validation_resources.select_container(container_ref, source="merged")
             limit = self.validation_resources.limits.containers.properties.limit_per_container
 
             if not container:
@@ -317,7 +317,7 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelRule):
 
         # Single loop over all containers
         for container_ref in self.validation_resources.merged.containers:
-            container = self.validation_resources.select_container(container_ref)
+            container = self.validation_resources.select_container(container_ref, source="merged")
 
             if not container:
                 raise RuntimeError(
