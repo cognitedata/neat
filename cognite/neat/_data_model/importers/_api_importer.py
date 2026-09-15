@@ -362,10 +362,10 @@ class DMSAPIImporter(DMSImporter):
 
         pending = list(needed_containers)
         while pending:
-            item = container_by_id.get(pending.pop())
-            if item is None:
+            container_item = container_by_id.get(pending.pop())
+            if container_item is None:
                 continue
-            for extra in cls._required_container_ids(item):
+            for extra in cls._required_container_ids(container_item):
                 if extra not in needed_containers:
                     needed_containers.add(extra)
                     pending.append(extra)
