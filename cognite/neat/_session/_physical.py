@@ -37,9 +37,8 @@ _TOOLKIT_YAML_READ_NOTES = """
           (``default.config.yaml``, environment overlays such as ``config.dev.yaml``, and module overrides).
           Use ``toolkit_env``, ``toolkit_config``, and ``toolkit_version`` to control resolution.
         - Spaces present in the imported module YAML (from ``spaces``, ``views``, and ``containers``) are
-          automatically added to governed spaces metadata. Validators then treat those local module spaces
-          as NEAT-governed without enabling ``enable_governed_spaces`` in ``NeatConfig``. Explicit
-          ``governedSpaces`` from NEAT Excel metadata are not overridden.
+          automatically added to governed spaces metadata so validators treat those module spaces as
+          NEAT-governed. Explicit ``governedSpaces`` from NEAT Excel metadata are not overridden.
 """
 
 
