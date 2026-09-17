@@ -1,6 +1,5 @@
 """Validators for checking containers in the data model."""
 
-from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import EdgeProperty, ViewCorePropertyRequest
 from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._data_model.rules.dms._base import DataModelRule
@@ -201,22 +200,24 @@ class DataModelViewDoesNotExist(DataModelRule):
 
 
 class EdgeTypeViewHasConnectionProperty(DataModelRule):
-    """Validates that edge link-type views do not declare edge connection properties.
+    """Validates that views backed by edge containers do not declare edge connection properties.
 
     ## What it does
-    For views whose container-mapped properties all map to containers with ``usedFor: edge``,
-    validates that the view does not also declare ``single_edge_connection`` or
-    ``multi_edge_connection`` properties.
+    For views where at least one container-mapped property maps to a container with
+    ``usedFor: edge``, validates that the view does not also declare ``single_edge_connection``
+    or ``multi_edge_connection`` properties. Mapping to an edge container requires edge
+    instances; edge connections belong on endpoint node views instead.
 
     ## Why is this bad?
-    In edge-native models, edge link-type views carry relationship facts on the edge container.
-    Endpoint node views expose traversable edge connections. Putting edge connections on the
-    link-type view mixes those roles and breaks the intended traversal pattern.
+    In edge-native models, views backed by edge containers carry relationship facts on the edge
+    container. Endpoint node views expose traversable edge connections. Putting edge connections
+    on a view that already maps to an edge container mixes those roles and breaks the intended
+    traversal pattern.
 
     ## Example
-    View Participation maps only to container Participation with ``usedFor: edge`` and should
-    expose facts such as ``attended``. The ``multi_edge_connection`` from Person to
-    Participation belongs on Person, not on Participation.
+    View Participation maps to container Participation with ``usedFor: edge`` and should expose
+    facts such as ``attended``. The ``multi_edge_connection`` from Person to Participation
+    belongs on Person, not on Participation.
     """
 
     code = f"{BASE_CODE}-005"
@@ -234,7 +235,7 @@ class EdgeTypeViewHasConnectionProperty(DataModelRule):
             if not view or view.properties is None:
                 continue
 
-            if not self._is_edge_type_view(view):
+            if not self._maps_to_edge_container(view):
                 continue
 
             for property_ref, property_ in view.properties.items():
@@ -243,9 +244,10 @@ class EdgeTypeViewHasConnectionProperty(DataModelRule):
                 errors.append(
                     ConsistencyError(
                         message=(
-                            f"View {view_ref!s} is an edge link-type view but declares edge connection "
-                            f"property '{property_ref}' ({property_.connection_type}). "
-                            "Edge connections belong on endpoint node views, not on edge link-type views."
+                            f"View {view_ref!s} maps to at least one edge container but declares edge "
+                            f"connection property '{property_ref}' ({property_.connection_type}). "
+                            "Edge connections belong on endpoint node views, not on views backed by edge "
+                            "containers."
                         ),
                         fix=(
                             "Remove the edge connection property from this view and declare it on the "
@@ -257,18 +259,12 @@ class EdgeTypeViewHasConnectionProperty(DataModelRule):
 
         return errors
 
-    def _is_edge_type_view(self, view: ViewRequest) -> bool:
-        mapped_containers: set[ContainerReference] = set()
+    def _maps_to_edge_container(self, view: ViewRequest) -> bool:
         for property_ in view.properties.values():
-            if isinstance(property_, ViewCorePropertyRequest):
-                mapped_containers.add(property_.container)
+            if not isinstance(property_, ViewCorePropertyRequest):
+                continue
+            container = self.validation_resources.select_container(property_.container)
+            if container is not None and container.used_for == "edge":
+                return True
 
-        if not mapped_containers:
-            return False
-
-        for container_ref in mapped_containers:
-            container = self.validation_resources.select_container(container_ref)
-            if container is None or container.used_for != "edge":
-                return False
-
-        return True
+        return False

@@ -69,6 +69,16 @@ class TestEdgeTypeViewHasConnectionProperty:
             },
         )
 
+    def _all_container(self, external_id: str) -> ContainerRequest:
+        return ContainerRequest(
+            space=SPACE,
+            externalId=external_id,
+            usedFor="all",
+            properties={
+                "shared": ContainerPropertyDefinition(type=TextProperty()),
+            },
+        )
+
     def test_edge_link_view_without_connections_is_valid(self) -> None:
         edge_container = self._edge_container("Participation")
         edge_view = ViewReference(space=SPACE, external_id="Participation", version=VERSION)
@@ -171,6 +181,112 @@ class TestEdgeTypeViewHasConnectionProperty:
                             source=person_view,
                             type=NodeReference(space=SPACE, external_id="Person.attendances"),
                             edge_source=edge_view,
+                        ),
+                    },
+                ),
+            },
+        )
+
+        issues = EdgeTypeViewHasConnectionProperty(resources).validate()
+
+        assert issues == []
+
+    def test_view_with_edge_and_node_containers_flags_edge_connections(self) -> None:
+        edge_container = self._edge_container("Participation")
+        person_container = self._node_container("Person")
+        edge_view = ViewReference(space=SPACE, external_id="Participation", version=VERSION)
+        person_view = ViewReference(space=SPACE, external_id="Person", version=VERSION)
+        resources = self._resources(
+            containers={
+                edge_container.as_reference(): edge_container,
+                person_container.as_reference(): person_container,
+            },
+            views={
+                edge_view: ViewRequest(
+                    space=SPACE,
+                    externalId="Participation",
+                    version=VERSION,
+                    properties={
+                        "fact": ViewCorePropertyRequest(
+                            container=edge_container.as_reference(),
+                            containerPropertyIdentifier="fact",
+                        ),
+                        "name": ViewCorePropertyRequest(
+                            container=person_container.as_reference(),
+                            containerPropertyIdentifier="name",
+                        ),
+                        "attendances": MultiEdgeProperty(
+                            source=person_view,
+                            type=NodeReference(space=SPACE, external_id="Participation.attendances"),
+                            edge_source=edge_view,
+                        ),
+                    },
+                ),
+            },
+        )
+
+        issues = EdgeTypeViewHasConnectionProperty(resources).validate()
+
+        assert len(issues) == 1
+        assert issues[0].code == "NEAT-DMS-VIEW-005"
+
+    def test_view_with_edge_and_all_containers_flags_edge_connections(self) -> None:
+        edge_container = self._edge_container("Participation")
+        shared_container = self._all_container("SharedFacts")
+        edge_view = ViewReference(space=SPACE, external_id="Participation", version=VERSION)
+        person_view = ViewReference(space=SPACE, external_id="Person", version=VERSION)
+        resources = self._resources(
+            containers={
+                edge_container.as_reference(): edge_container,
+                shared_container.as_reference(): shared_container,
+            },
+            views={
+                edge_view: ViewRequest(
+                    space=SPACE,
+                    externalId="Participation",
+                    version=VERSION,
+                    properties={
+                        "fact": ViewCorePropertyRequest(
+                            container=edge_container.as_reference(),
+                            containerPropertyIdentifier="fact",
+                        ),
+                        "shared": ViewCorePropertyRequest(
+                            container=shared_container.as_reference(),
+                            containerPropertyIdentifier="shared",
+                        ),
+                        "attendances": MultiEdgeProperty(
+                            source=person_view,
+                            type=NodeReference(space=SPACE, external_id="Participation.attendances"),
+                            edge_source=edge_view,
+                        ),
+                    },
+                ),
+            },
+        )
+
+        issues = EdgeTypeViewHasConnectionProperty(resources).validate()
+
+        assert len(issues) == 1
+        assert issues[0].code == "NEAT-DMS-VIEW-005"
+
+    def test_view_with_only_all_container_allows_edge_connections(self) -> None:
+        shared_container = self._all_container("SharedFacts")
+        node_view = ViewReference(space=SPACE, external_id="NodeView", version=VERSION)
+        resources = self._resources(
+            containers={shared_container.as_reference(): shared_container},
+            views={
+                node_view: ViewRequest(
+                    space=SPACE,
+                    externalId="NodeView",
+                    version=VERSION,
+                    properties={
+                        "shared": ViewCorePropertyRequest(
+                            container=shared_container.as_reference(),
+                            containerPropertyIdentifier="shared",
+                        ),
+                        "related": MultiEdgeProperty(
+                            source=node_view,
+                            type=NodeReference(space=SPACE, external_id="NodeView.related"),
                         ),
                     },
                 ),
