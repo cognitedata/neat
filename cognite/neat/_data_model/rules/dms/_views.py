@@ -1,6 +1,8 @@
 """Validators for checking containers in the data model."""
 
-from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
+from cognite.neat._data_model.models.dms._references import ContainerReference
+from cognite.neat._data_model.models.dms._view_property import EdgeProperty, ViewCorePropertyRequest
+from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import ConsistencyError
 
@@ -196,3 +198,77 @@ class DataModelViewDoesNotExist(DataModelRule):
             )
 
         return errors
+
+
+class EdgeTypeViewHasConnectionProperty(DataModelRule):
+    """Validates that edge link-type views do not declare edge connection properties.
+
+    ## What it does
+    For views whose container-mapped properties all map to containers with ``usedFor: edge``,
+    validates that the view does not also declare ``single_edge_connection`` or
+    ``multi_edge_connection`` properties.
+
+    ## Why is this bad?
+    In edge-native models, edge link-type views carry relationship facts on the edge container.
+    Endpoint node views expose traversable edge connections. Putting edge connections on the
+    link-type view mixes those roles and breaks the intended traversal pattern.
+
+    ## Example
+    View Participation maps only to container Participation with ``usedFor: edge`` and should
+    expose facts such as ``attended``. The ``multi_edge_connection`` from Person to
+    Participation belongs on Person, not on Participation.
+    """
+
+    code = f"{BASE_CODE}-005"
+    issue_type = ConsistencyError
+
+    def validate(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+
+        if not self.validation_resources.merged_data_model.views:
+            return errors
+
+        for view_ref in self.validation_resources.merged_data_model.views:
+            view = self.validation_resources.select_view(view_ref)
+
+            if not view or view.properties is None:
+                continue
+
+            if not self._is_edge_type_view(view):
+                continue
+
+            for property_ref, property_ in view.properties.items():
+                if not isinstance(property_, EdgeProperty):
+                    continue
+                errors.append(
+                    ConsistencyError(
+                        message=(
+                            f"View {view_ref!s} is an edge link-type view but declares edge connection "
+                            f"property '{property_ref}' ({property_.connection_type}). "
+                            "Edge connections belong on endpoint node views, not on edge link-type views."
+                        ),
+                        fix=(
+                            "Remove the edge connection property from this view and declare it on the "
+                            "endpoint node view(s) instead, with edgeSource pointing at this edge link-type view."
+                        ),
+                        code=self.code,
+                    )
+                )
+
+        return errors
+
+    def _is_edge_type_view(self, view: ViewRequest) -> bool:
+        mapped_containers: set[ContainerReference] = set()
+        for property_ in view.properties.values():
+            if isinstance(property_, ViewCorePropertyRequest):
+                mapped_containers.add(property_.container)
+
+        if not mapped_containers:
+            return False
+
+        for container_ref in mapped_containers:
+            container = self.validation_resources.select_container(container_ref)
+            if container is None or container.used_for != "edge":
+                return False
+
+        return True

@@ -44,7 +44,12 @@ from ._performance import (
     SuboptimalRequiresConstraint,
     UnresolvableQueryPerformance,
 )
-from ._views import DataModelViewDoesNotExist, ImplementedViewNotExisting, ViewToContainerMappingNotPossible
+from ._views import (
+    DataModelViewDoesNotExist,
+    EdgeTypeViewHasConnectionProperty,
+    ImplementedViewNotExisting,
+    ViewToContainerMappingNotPossible,
+)
 
 __all__ = [
     "ConnectionValueTypeUndefined",
@@ -58,6 +63,7 @@ __all__ = [
     "DataModelViewCountIsOutOfLimits",
     "DataModelViewDoesNotExist",
     "DmsDataModelRulesOrchestrator",
+    "EdgeTypeViewHasConnectionProperty",
     "EnumerationMissingDescription",
     "EnumerationMissingName",
     "ExternalContainerDoesNotExist",
