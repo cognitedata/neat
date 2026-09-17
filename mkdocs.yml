@@ -25,6 +25,7 @@ nav:
   - Data Modeling:
       - Principles: data_modeling/principles.md
       - Modes: data_modeling/modes.md
+      - Toolkit YAML: data_modeling/toolkit_yaml.md
       - Data Modeling in Excel:
         - Overview: data_modeling/excel/data_model.md
         - Physical Data Model:

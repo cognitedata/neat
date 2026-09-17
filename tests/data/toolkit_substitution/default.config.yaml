@@ -1,0 +1,7 @@
+variables:
+  version: "1"
+  viewVersion: "1"
+  schemaSpace: global_space
+  modules:
+    test:
+      schemaSpace: module_space

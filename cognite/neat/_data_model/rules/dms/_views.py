@@ -1,6 +1,7 @@
 """Validators for checking containers in the data model."""
 
-from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
+from cognite.neat._data_model.models.dms._view_property import EdgeProperty, ViewCorePropertyRequest
+from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._data_model.rules.dms._base import DataModelRule
 from cognite.neat._issues import ConsistencyError
 
@@ -183,13 +184,87 @@ class DataModelViewDoesNotExist(DataModelRule):
         errors: list[ConsistencyError] = []
 
         for view_ref in self.validation_resources.merged_data_model.views or []:
-            if self.validation_resources.select_view(view_ref) is None:
+            if self.validation_resources.select_view(view_ref) is not None:
+                continue
+            if self.validation_resources.is_externally_versioned_data_model_view(view_ref):
+                continue
+            errors.append(
+                ConsistencyError(
+                    message=f"View {view_ref!s} is referenced in the data model but does not exist.",
+                    fix="Define the missing view",
+                    code=self.code,
+                )
+            )
+
+        return errors
+
+
+class EdgeTypeViewHasConnectionProperty(DataModelRule):
+    """Validates that views backed by edge containers do not declare edge connection properties.
+
+    ## What it does
+    For views where at least one container-mapped property maps to a container with
+    ``usedFor: edge``, validates that the view does not also declare ``single_edge_connection``
+    or ``multi_edge_connection`` properties. Mapping to an edge container requires edge
+    instances; edge connections belong on endpoint node views instead.
+
+    ## Why is this bad?
+    In edge-native models, views backed by edge containers carry relationship facts on the edge
+    container. Endpoint node views expose traversable edge connections. Putting edge connections
+    on a view that already maps to an edge container mixes those roles and breaks the intended
+    traversal pattern.
+
+    ## Example
+    View Participation maps to container Participation with ``usedFor: edge`` and should expose
+    facts such as ``attended``. The ``multi_edge_connection`` from Person to Participation
+    belongs on Person, not on Participation.
+    """
+
+    code = f"{BASE_CODE}-005"
+    issue_type = ConsistencyError
+
+    def validate(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+
+        if not self.validation_resources.merged_data_model.views:
+            return errors
+
+        for view_ref in self.validation_resources.merged_data_model.views:
+            view = self.validation_resources.select_view(view_ref)
+
+            if not view or view.properties is None:
+                continue
+
+            if not self._maps_to_edge_container(view):
+                continue
+
+            for property_ref, property_ in view.properties.items():
+                if not isinstance(property_, EdgeProperty):
+                    continue
                 errors.append(
                     ConsistencyError(
-                        message=f"View {view_ref!s} is referenced in the data model but does not exist.",
-                        fix="Define the missing view",
+                        message=(
+                            f"View {view_ref!s} maps to at least one edge container but declares edge "
+                            f"connection property '{property_ref}' ({property_.connection_type}). "
+                            "Edge connections belong on endpoint node views, not on views backed by edge "
+                            "containers."
+                        ),
+                        fix=(
+                            "Remove the edge connection property from this view and declare it on the "
+                            "endpoint node view(s) instead, with edgeSource pointing at this edge link-type view."
+                        ),
                         code=self.code,
                     )
                 )
 
         return errors
+
+    def _maps_to_edge_container(self, view: ViewRequest) -> bool:
+        for property_ in view.properties.values():
+            if not isinstance(property_, ViewCorePropertyRequest):
+                continue
+            container = self.validation_resources.select_container(property_.container)
+            if container is not None and container.used_for == "edge":
+                return True
+
+        return False
